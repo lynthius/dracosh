@@ -90,7 +90,9 @@ export function PixelGrid({ grid, palette }) {
   return html`<${React.Fragment}>${rows}<//>`;
 }
 
-const LOCKED = { B: "#3a3f47", L: "#454b54", D: "#31363d", O: "#23272d", E: "#1f2328", C: "#3a3f47", T: "#3a3f47", H: "#4a5058", W: "#4a5058", P: "#4a5058", S: "#4a5058", G: "#4a5058" };
+// A form you haven't reached: one flat color, no eyes or shading, so only the outline gives it away
+const SILHOUETTE = "#2c3038";
+const LOCKED = Object.fromEntries([..."BLDOECTHWPSG"].map((key) => [key, SILHOUETTE]));
 
 function paletteFor({ locked, flash, hot, flicker, stage }) {
   if (locked) return LOCKED;

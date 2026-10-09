@@ -1,26 +1,16 @@
-import { Fragment, useState } from "react";
+import { Fragment } from "react";
 import { Box, Text, useInput } from "ink";
 import { STAGES } from "../progress.js";
 import { html, PANEL_WIDTH, theme } from "./kit.js";
-import { Mascot, MASCOT_WIDTH } from "./Mascot.js";
-
-const MOODS = [
-  { face: "idle", label: "calm" },
-  { face: "smile", label: "content" },
-  { face: "happy", label: "right!" },
-  { face: "sad", label: "wrong" },
-  { face: "happy", label: "combo", hot: true }
-];
+import { Mascot } from "./Mascot.js";
 
 const requirement = (stage, locked) => (stage.from === 0 ? "from the start" : `${locked ? "needs " : ""}${stage.from} days`);
 
-// Every form of the companion (dark silhouettes for the ones you haven't reached) and its moods.
+// Every form of the companion. Forms you haven't reached are flat silhouettes named "???".
+// Its moods aren't listed here on purpose: you find them out by playing.
 export function Companion({ current, best, onClose }) {
-  const [shown, setShown] = useState(current);
   useInput((input, key) => {
-    if (key.escape || input === "q") return onClose();
-    if (key.leftArrow) return setShown((s) => Math.max(0, s - 1));
-    if (key.rightArrow) return setShown((s) => Math.min(STAGES.length - 1, s + 1));
+    if (key.escape || key.return || input === "q") onClose();
   });
 
   return html`
@@ -35,26 +25,14 @@ export function Companion({ current, best, onClose }) {
             return html`
               <${Box} key=${stage.name} width=${22} flexDirection="column" marginBottom=${1}>
                 <${Box} flexDirection="column"><${Mascot} stage=${i} locked=${locked} face=${locked ? "idle" : "smile"} /><//>
-                <${Text} bold=${i === current} color=${i === current ? theme.accent : undefined} dimColor=${locked}>${stage.name}${i === current ? "  ← now" : ""}<//>
+                <${Text} bold=${i === current} color=${i === current ? theme.accent : undefined} dimColor=${locked}>${locked ? "???" : stage.name}${i === current ? "  ← now" : ""}<//>
                 <${Text} dimColor>${requirement(stage, locked)}<//>
               <//>
             `;
           })}
         <//>
-
-        <${Text} bold>Moods <${Text} dimColor>of ${STAGES[shown].name} · ←/→ to switch form<//><//>
-        <${Box} marginTop=${1}>
-          ${MOODS.map(
-            (mood) => html`
-              <${Box} key=${mood.label} width=${MASCOT_WIDTH + 1} flexDirection="column">
-                <${Mascot} stage=${shown} face=${mood.face} hot=${Boolean(mood.hot)} locked=${shown > current} />
-                <${Text} dimColor>${mood.label}<//>
-              <//>
-            `
-          )}
-        <//>
       <//>
-      <${Box} paddingX=${1}><${Text} dimColor>←/→ form · esc back<//><//>
+      <${Box} paddingX=${1}><${Text} dimColor>esc back<//><//>
     <//>
   `;
 }

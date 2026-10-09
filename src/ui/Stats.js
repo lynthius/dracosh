@@ -73,7 +73,7 @@ export function Stats({ stats, getMonth, onClose }) {
   const accuracy = today.asked ? Math.round((today.correct / today.asked) * 100) : null;
   const unlocked = stats.badges.filter((b) => b.unlockedOn).length;
   const month = getMonth(offset);
-  const next = companion.nextAt ? ` · ${companion.nextName} at a ${companion.nextAt}-day streak` : " · fully evolved";
+  const next = companion.nextAt ? ` · next form at a ${companion.nextAt}-day streak` : " · fully evolved";
 
   return html`
     <${Fragment}>
