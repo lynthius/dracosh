@@ -24,7 +24,10 @@ Stack (kept as is)
   Plenty for tens of thousands of cards; revisit SQLite (`node:sqlite`) only if it ever isn't.
 - Few dependencies (today: ink, react, htm). AI providers are called with plain `fetch`, no SDKs.
 - Type safety without a build: JSDoc types checked by `tsc --checkJs` in CI (dev-only).
-- The app's own UI is in English. The cards can be in any language.
+- The app's UI comes in English, Polish, German, French and Ukrainian. Every text lives under a
+  key in one file per language (`locales/<lang>.json`), English is the fallback for anything
+  missing, and native speakers can improve a translation with a pull request. Grammar tips stay
+  in English; they are about English.
 
 Product (decided 2026-10-09)
 - Dracosh keeps its own card library. Anki is an import source and an export target; it never
@@ -96,6 +99,9 @@ migration, backups and progress mapping.
 
 Branch `feature/card-types`.
 
+- [ ] UI text groundwork, first, before new screens are built: a `t("key")` helper,
+      `locales/en.json` with every existing UI string, plural rules through the built-in
+      `Intl.PluralRules` (Polish and Ukrainian have three plural forms)
 - [ ] Card types translation, definition and Q&A in the model and the quiz screen
 - [ ] Typed mode as today; for definition decks the definition is shown and the term is typed
 - [ ] Self-graded mode: show the question, reveal on Enter, then "knew it" / "didn't";
@@ -158,7 +164,11 @@ Anki unchanged; a JSON backup restores everything.
 
 Branch `feature/onboarding`. Everything a new user needs, without reading the README.
 
-- [ ] First run, after the hatching: choose the language you speak and the one you're learning
+- [ ] First run, after the hatching: choose the app's language, the language you speak and the
+      one you're learning
+- [ ] UI translations: Polish, German, French and Ukrainian (`locales/*.json`), each marked as
+      open for corrections; a short "Help translate" note in the README
+- [ ] `/settings`: app language
 - [ ] Then: start with a demo deck, import a file, or create an empty deck
 - [ ] Short interactive tour of the quiz screen (answer, `/` commands, the dragon); skippable
 - [ ] `/decks`: list, create, rename, delete, pick the active deck, deck settings (type,
@@ -251,7 +261,6 @@ Good ideas with no stage yet. They move into a stage only by a plan change.
 - Homebrew install (`brew install dracosh`)
 - Voice answers: say the answer instead of typing it (speech-to-text through a local Whisper
   model or the user's API key), which also makes it pronunciation practice
-- Translations of the app's own UI
 
 ## Brand protection
 
