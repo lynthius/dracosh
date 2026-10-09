@@ -71,7 +71,7 @@ UX and data (decided 2026-10-09)
 
 Branch `feature/card-library`. Dracosh stops reading Anki live and quizzes from its own library.
 
-- [ ] Library file `~/.dracosh/library.json` with a schema version:
+- [x] Library file `~/.dracosh/library.json` with a schema version:
       decks `{ id, name, type, languages: { front, back }, answerMode, directions }` and
       cards `{ id, deckId, front, back[], example, tags, created, updated, ankiNoteId? }`
 - [ ] The quiz reads the active deck (or all decks) from the library
@@ -86,14 +86,11 @@ Branch `feature/card-library`. Dracosh stops reading Anki live and quizzes from 
 - [ ] `dracosh add "word" "translation"` to add a card from any terminal, also while the quiz
       runs in another pane: the library is re-read before each question, so new cards show up
       without a restart
-- [ ] Migration from 0.1.0: copy the deck used before (from Anki if it's running, otherwise
-      from the cached `words.json`) into the library, keeping progress; back up the old
-      files first
-- [ ] `--deck` picks a library deck; live AnkiConnect reading is removed
+- [ ] `--deck` picks a library deck; live AnkiConnect reading is removed. No migration from
+      0.1.0 (it had no users besides the author); Anki decks come in through import in stage 4
 
-Done when: a fresh install quizzes the "Getting started" deck with no Anki; an 0.1.0 user keeps
-their words and streak; backups are written and restorable; tests cover the library, the
-migration, backups and progress mapping.
+Done when: a fresh install quizzes the "Getting started" deck with no Anki; backups are written
+and restorable; tests cover the library, backups and progress mapping.
 
 ## Stage 2: Card types and answer modes (0.3.0)
 
@@ -171,6 +168,7 @@ Branch `feature/onboarding`. Everything a new user needs, without reading the RE
 - [ ] `/settings`: app language
 - [ ] Then: start with a demo deck, import a file, or create an empty deck
 - [ ] Short interactive tour of the quiz screen (answer, `/` commands, the dragon); skippable
+- [ ] `--preview` plays the whole welcome flow on made-up data
 - [ ] `/decks`: list, create, rename, delete, pick the active deck, deck settings (type,
       languages, answer mode, directions)
 - [ ] `/cards`: browse and search the active deck, add, edit and delete cards

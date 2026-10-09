@@ -2,9 +2,11 @@ import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { dayKey } from "./dates.js";
+import { upgradeLibrary } from "./library.js";
 import { itemKey, newToday } from "./scheduler.js";
 
 export const HOME = process.env.DRACOSH_HOME || join(homedir(), ".dracosh");
+const LIBRARY_FILE = join(HOME, "library.json");
 const STATE_FILE = join(HOME, "state.json");
 const WORDS_FILE = join(HOME, "words.json");
 const SETTINGS_FILE = join(HOME, "settings.json");
@@ -35,6 +37,9 @@ function writeJson(file, data) {
   writes = job.catch(() => {}); // one failed write must not block the next ones
   return job;
 }
+
+export const loadLibrary = async () => upgradeLibrary(await readJson(LIBRARY_FILE, null));
+export const saveLibrary = (library) => writeJson(LIBRARY_FILE, library);
 
 export const loadState = () => readJson(STATE_FILE, emptyState());
 export const saveState = (state) => writeJson(STATE_FILE, state);
