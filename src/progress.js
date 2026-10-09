@@ -148,7 +148,7 @@ export const BADGES = [
   { id: "fortnight", name: "Fortnight", desc: "14-day streak", test: (s) => s.bestStreak >= 14 },
   { id: "month", name: "Iron habit", desc: "30-day streak", test: (s) => s.bestStreak >= 30 },
   { id: "hundred-days", name: "Centurion", desc: "100-day streak", test: (s) => s.bestStreak >= 100 },
-  { id: "year-of-the-dragon", name: "Year of the dragon", desc: "365-day streak", test: (s) => s.bestStreak >= 365 },
+  { id: "dragonheart", name: "Dragonheart", desc: "180-day streak", test: (s) => s.bestStreak >= 180 },
 
   { id: "keeper", name: "Word keeper", desc: "10 cards mastered", test: (s) => s.mastered >= 10 },
   { id: "collector", name: "Collector", desc: "50 cards mastered", test: (s) => s.mastered >= 50 },
@@ -176,7 +176,6 @@ export const BADGES = [
   { id: "machine", name: "The machine", desc: "goal on 25 days in one month", test: (s) => s.goalDaysThisMonth >= 25 },
   { id: "hundred-club", name: "Hundred club", desc: "goal reached on 100 days in total", test: (s) => s.totalGoalDays >= 100 },
 
-  { id: "both-ways", name: "Both ways", desc: "50 correct in each direction", test: (s) => s.correctByDirection["en-pl"] >= 50 && s.correctByDirection["pl-en"] >= 50 },
 
   // keep this one last: it checks the others, including any unlocked earlier in the same answer
   { id: "one-ring", name: "The One", desc: "every other badge", test: (s) => BADGES.every((b) => b.id === "one-ring" || s.badges[b.id]) }
@@ -187,8 +186,6 @@ function collectStats(state, now, goal) {
   const todayKey = dayKey(now);
   const today = progress.days[todayKey] ?? { asked: 0, correct: 0 };
   const items = Object.entries(state.items);
-  const correctByDirection = { "en-pl": 0, "pl-en": 0 };
-  for (const [key, entry] of items) correctByDirection[key.split(":")[1]] += entry.correct;
 
   // words missed today that were answered correctly again later the same day (one per card)
   const lastMissByKey = new Map();
@@ -209,7 +206,6 @@ function collectStats(state, now, goal) {
     freezesUsed: progress.streak.freezesUsed ?? 0,
     mastered: items.filter(([, e]) => e.box === MAX_BOX).length,
     practiced: items.length,
-    correctByDirection,
     goalDaysThisMonth: goalDaysInMonth(progress, todayKey),
     totalGoalDays: Object.values(progress.days).filter((d) => d.goalMet).length,
     recoveredToday,

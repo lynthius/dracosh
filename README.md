@@ -16,7 +16,7 @@ It's made for people who live in a terminal or spend most of the day at a comput
 - Asks both ways: EN → PL and PL → EN
 - Forgiving answer checks: case and Polish diacritics don't matter, one typo is fine on longer words, and after a miss you see letter by letter where you went wrong
 - Leitner boxes, so the words you know come back less and less often
-- Daily goal, streaks (weekends and vacations don't break them) and 36 badges
+- Daily goal, streaks (weekends and vacations don't break them) and 35 badges
 - A pixel dragon that hatches from an egg, evolves over a year of streaks, blinks, and falls asleep if you ignore it
 - 8-bit sound effects, generated from code
 - A short grammar tip while you wait for the next word

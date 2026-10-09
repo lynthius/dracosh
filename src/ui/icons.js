@@ -122,19 +122,6 @@ const ICONS = {
       "........"
     ]
   },
-  arrows: {
-    palette: { A: "#4ade80", B: "#9d7cd8" },
-    grid: [
-      "..A.....",
-      ".AA.....",
-      "AAAAAAA.",
-      ".AA.....",
-      ".....BB.",
-      ".BBBBBBB",
-      ".....BB.",
-      "....B..."
-    ]
-  },
   heart: {
     palette: { H: "#f87171", W: "#fecaca" },
     grid: [
@@ -192,7 +179,7 @@ const ICON_FOR = {
   fortnight: "flame",
   month: "flame",
   "hundred-days": "flame",
-  "year-of-the-dragon": "flame",
+  dragonheart: "flame",
   keeper: "book",
   collector: "book",
   dictionary: "book",
@@ -214,7 +201,6 @@ const ICON_FOR = {
   regular: "calendar",
   machine: "calendar",
   "hundred-club": "calendar",
-  "both-ways": "arrows",
   "one-ring": "ring"
 };
 
