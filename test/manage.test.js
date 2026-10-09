@@ -55,3 +55,13 @@ test("more decks can follow, and each one lists its cards", async () => {
   assert.deepEqual(await ownDecks(), [{ name: "Spanish", cards: 1 }, { name: "Biology", cards: 1 }]);
   assert.deepEqual(await allDecks(), [{ name: "Spanish", cards: 1, tour: false }, { name: "Biology", cards: 1, tour: false }]);
 });
+
+test("a reset is backed up first; everything brings the tour back", async () => {
+  const { backupBeforeReset, resetLibrary } = await import("../src/manage.js");
+  await backupBeforeReset();
+  assert.ok((await listBackups()).some((b) => b.reason === "before-reset" && b.decks === 2));
+  assert.equal(await resetLibrary(), STARTER_DECK);
+  const library = await loadLibrary();
+  assert.deepEqual(library.decks.map((d) => d.name), [STARTER_DECK]);
+  assert.ok(library.decks[0].tour);
+});

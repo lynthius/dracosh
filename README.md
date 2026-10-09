@@ -53,7 +53,7 @@ Type the answer and press Enter. Press `/` for commands:
 | `/hint` | reveal one more letter |
 | `/correct` | your answer was right after all; it's accepted from now on |
 | `/skip` | skip this card |
-| `/settings` | interval, daily goal, sound, quiet hours, weekends, tips, direction |
+| `/settings` | interval, daily goal, sound, quiet hours, weekends, tips, direction, and a reset |
 | `/stats` | streak and a calendar of your month |
 | `/badges` | all badges and how to get them |
 | `/companion` | your dragon, its element and the forms ahead |
@@ -67,7 +67,7 @@ They're slash commands because "skip" and "quit" are perfectly good English answ
 
 ## Your data
 
-Everything stays on your machine, in `~/.dracosh`. Progress is saved after every answer, so you can quit any time. The first start of each day also saves a backup of your cards, progress and settings to `~/.dracosh/backups` (the last 7 are kept); `dracosh restore` brings one back, and backs up what you have first, so a restore can be undone too. To use Dracosh on two computers, put that folder somewhere synced and point `DRACOSH_HOME` at it.
+Everything stays on your machine, in `~/.dracosh`. Progress is saved after every answer, so you can quit any time. The first start of each day also saves a backup of your cards, progress and settings to `~/.dracosh/backups` (the last 7 are kept); `dracosh restore` brings one back, and backs up what you have first, so a restore can be undone too. To start over, `/settings` → Reset clears your progress only (badges, streak, the dragon) or everything; a backup is made first. To use Dracosh on two computers, put that folder somewhere synced and point `DRACOSH_HOME` at it.
 
 Sounds currently play on macOS only.
 

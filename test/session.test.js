@@ -185,3 +185,20 @@ test("/badges lights up badges won since the last visit, in the order they were 
   assert.deepEqual(await session.openBadges(), [], "seen now, so it doesn't light up again");
   assert.ok(state.progress.seenBadges.includes("hello"));
 });
+
+test("a progress reset starts the game over and keeps what you know; everything clears it all", async () => {
+  const { session, state } = setup();
+  const q = await session.next();
+  await session.answer(q, q.expected[0]);
+  assert.ok(state.progress && Object.keys(state.items).length === 1);
+
+  await session.reset("progress");
+  assert.equal(state.progress, undefined);
+  assert.equal(Object.keys(state.items).length, 1, "the card keeps its box");
+  assert.equal(session.stats().badges.filter((b) => b.unlockedOn).length, 0);
+
+  state.hatched = true;
+  await session.reset("everything");
+  assert.deepEqual(state.items, {});
+  assert.equal(session.isFirstRun(), true, "the egg hatches again");
+});

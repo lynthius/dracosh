@@ -1,5 +1,6 @@
 import { backupNow } from "./backup.js";
-import { addCard, cardsOf, createDeck, findDeck, findDuplicate, removeDeck } from "./library.js";
+import { seedLibrary } from "./starter.js";
+import { addCard, cardsOf, createDeck, emptyLibrary, findDeck, findDuplicate, removeDeck } from "./library.js";
 import { loadLibrary, saveLibrary } from "./store.js";
 
 // Library changes made from inside the app (/add for now). Each one reads the library fresh, so
@@ -37,6 +38,17 @@ export async function existingCard(deckName, front) {
   const library = await loadLibrary();
   const deck = findDeck(library, deckName);
   return deck ? findDuplicate(library, deck.id, front) : null;
+}
+
+// a reset is always preceded by a backup, so `dracosh restore` can undo it
+export const backupBeforeReset = () => backupNow("before-reset");
+
+// "Everything" in the reset: your decks and cards go, and the tour comes back as on a fresh install
+export async function resetLibrary() {
+  const library = emptyLibrary();
+  seedLibrary(library);
+  await saveLibrary(library);
+  return library.decks[0].name;
 }
 
 // → { card, duplicate }, like addCard

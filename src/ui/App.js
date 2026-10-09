@@ -17,6 +17,7 @@ import { Evolution } from "./Evolution.js";
 import { Hatch } from "./Hatch.js";
 import { AddCard } from "./AddCard.js";
 import { Decks } from "./Decks.js";
+import { Reset } from "./Reset.js";
 import { Help } from "./Help.js";
 import { Missed } from "./Missed.js";
 import { Settings } from "./Settings.js";
@@ -133,7 +134,7 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
   const [settings, setSettings] = useState(initialSettings);
   const [deck, setDeck] = useState(initialDeck);
   const [empty, setEmpty] = useState(null); // { tour } when the deck has nothing to ask: a finished tour or no cards yet
-  // quiz | settings | add | decks | stats | badges | companion | help | missed | evolve | the-one | die | summary | hatch
+  // quiz | settings | reset | add | decks | stats | badges | companion | help | missed | evolve | the-one | die | summary | hatch
   const [screen, setScreen] = useState(() => (session.isFirstRun() ? "hatch" : "quiz"));
   const [tip, setTip] = useState(null);
   const [phase, setPhase] = useState("loading"); // loading | asking | waiting | empty
@@ -355,6 +356,23 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
     ask();
   }
 
+  // Reset (from /settings), after a backup. Everything brings back the tour and the hatching egg.
+  async function reset(scope) {
+    await library.backupBeforeReset();
+    await session.reset(scope);
+    setFreshBadges([]);
+    if (scope === "progress") {
+      setScreen("quiz");
+      return setNotice("Your progress starts over. Your cards are all still here.");
+    }
+    const tour = await library.resetLibrary();
+    onSwitchDeck?.(tour);
+    setDeck(tour);
+    changeSettings({ deck: null });
+    setScreen("hatch");
+    ask();
+  }
+
   // after /add: a first deck of your own replaces the tour (and a new deck replaces an empty one
   // on screen); new cards end an empty state
   function addDone({ deck: started, removed, added }) {
@@ -405,10 +423,11 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
     <${Box} flexDirection="column" marginY=${1}>
       <${Header} deck=${deck} everyMs=${settings.everyMs} wordCount=${question?.wordCount} stats=${stats} combo=${session.totals.combo} face=${face} event=${petEvent} tick=${tick} asleep=${asleep} />
       <${Box} marginTop=${1} flexDirection="column">
-        ${screen === "settings" && html`<${Settings} settings=${settings} onChange=${changeSettings} onClose=${() => setScreen("quiz")} />`}
+        ${screen === "settings" && html`<${Settings} settings=${settings} onChange=${changeSettings} onClose=${() => setScreen("quiz")} onAction=${library ? () => setScreen("reset") : null} />`}
+        ${screen === "reset" && html`<${Reset} stats=${stats} actions=${library} onConfirm=${reset} onClose=${() => setScreen("settings")} />`}
         ${screen === "add" && html`<${AddCard} current=${deck} actions=${library} onDone=${addDone} />`}
         ${screen === "decks" && html`<${Decks} current=${deck} actions=${library} onPick=${switchDeck} onClose=${() => setScreen("quiz")} />`}
-        ${screen !== "settings" && screen !== "add" && screen !== "decks" &&
+        ${!["settings", "reset", "add", "decks"].includes(screen) &&
           html`
               <${Fragment}>
               ${question &&

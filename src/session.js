@@ -140,6 +140,22 @@ export function createSession({ loadWords, state, getSettings, save = saveState,
     await save(state);
   }
 
+  // Reset from /settings (the caller makes a backup first). "progress" starts the game over: badges,
+  // streak, stats and the dragon's form and element; your cards and their boxes stay. "everything"
+  // empties the state as on a fresh install, so the egg hatches again.
+  async function reset(scope) {
+    if (scope === "everything") {
+      for (const key of Object.keys(state)) delete state[key];
+      Object.assign(state, { version: 1, items: {}, newToday: { date: "", count: 0 } });
+    } else {
+      delete state.progress;
+      delete state.tips;
+    }
+    totals.combo = 0;
+    lastWrong = null;
+    await save(state);
+  }
+
   // the hatching intro plays once ever: on a brand-new state that has never answered anything
   const isFirstRun = () => !state.hatched && Object.keys(state.items).length === 0;
 
@@ -158,5 +174,5 @@ export function createSession({ loadWords, state, getSettings, save = saveState,
     return fresh;
   }
 
-  return { totals, next, answer, overrule, canOverrule, stats, month, missed, nextTip, vacation, isFirstRun, markHatched, openBadges, forget };
+  return { totals, next, answer, overrule, canOverrule, stats, month, missed, nextTip, vacation, isFirstRun, markHatched, openBadges, forget, reset };
 }
