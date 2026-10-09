@@ -3,9 +3,9 @@ import { Box, Text, useInput } from "ink";
 import { Choice, CHOICE_KEYS } from "./Choice.js";
 import { html, PANEL_WIDTH, theme } from "./kit.js";
 
-// /decks: your decks with their card counts; Enter quizzes the chosen one from now on.
-// Creating, renaming and deleting decks come later; a new deck starts in /add.
-export function Decks({ current, actions, onPick, onClose }) {
+// /decks: your decks with their card counts; Enter quizzes the chosen one from now on, and
+// "+ New deck" starts one (`onNew`). Renaming and deleting decks come later.
+export function Decks({ current, actions, onPick, onNew, onClose }) {
   const [decks, setDecks] = useState(null);
   const [picked, setPicked] = useState(0);
   const [error, setError] = useState("");
@@ -32,15 +32,14 @@ export function Decks({ current, actions, onPick, onClose }) {
         html`
           <${Box} marginTop=${1}>
             <${Choice}
-              options=${decks.map((d) => ({ label: d.name, note: `${d.cards} card${d.cards === 1 ? "" : "s"}${d.tour ? " · the tour" : ""}${d.name === current ? " · now" : ""}` }))}
+              options=${[...decks.map((d) => ({ label: d.name, note: `${d.cards} card${d.cards === 1 ? "" : "s"}${d.tour ? " · the tour" : ""}${d.name === current ? " · now" : ""}` })), { label: "+ New deck" }]}
               selected=${picked}
               onMove=${setPicked}
-              onPick=${(i) => onPick(decks[i].name)}
+              onPick=${(i) => (i === decks.length ? onNew() : onPick(decks[i].name))}
               onCancel=${onClose}
             />
           <//>
         `}
-        <${Box} marginTop=${1}><${Text} dimColor>A new deck starts in /add.<//><//>
         ${error && html`<${Box} marginTop=${1}><${Text} color=${theme.bad}>${error}<//><//>`}
       <//>
       <${Box} paddingX=${1}><${Text} dimColor>${`${CHOICE_KEYS} · esc back`}<//><//>

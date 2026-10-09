@@ -133,6 +133,7 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
   const { stdout } = useStdout();
   const [settings, setSettings] = useState(initialSettings);
   const [deck, setDeck] = useState(initialDeck);
+  const [addNew, setAddNew] = useState(false); // /add opened from "+ New deck" in /decks
   const [empty, setEmpty] = useState(null); // { tour } when the deck has nothing to ask: a finished tour or no cards yet
   // quiz | settings | reset | add | decks | stats | badges | companion | help | missed | evolve | the-one | die | summary | hatch
   const [screen, setScreen] = useState(() => (session.isFirstRun() ? "hatch" : "quiz"));
@@ -284,7 +285,7 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
     if (name === "/companion") return setScreen("companion");
     if (name === "/missed") return setScreen("missed");
     if (name === "/help") return setScreen("help");
-    if (name === "/add") return library ? setScreen("add") : setNotice("The preview can't add cards; run dracosh for that.");
+    if (name === "/add") return library ? (setAddNew(false), setScreen("add")) : setNotice("The preview can't add cards; run dracosh for that.");
     if (name === "/decks") return library ? setScreen("decks") : setNotice("The preview has one demo deck; run dracosh for yours.");
     if (name === "/hint" && phase === "asking") return setHintLevel((level) => level + 1);
     if (name === "/vacation") {
@@ -373,12 +374,12 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
     ask();
   }
 
-  // after /add: a first deck of your own replaces the tour (and a new deck replaces an empty one
-  // on screen); new cards end an empty state
+  // after /add: a first deck of your own replaces the tour; a deck started from /decks (or in place
+  // of an empty one) becomes the one you practise; new cards end an empty state
   function addDone({ deck: started, removed, added }) {
     setScreen("quiz");
     if (removed.length) session.forget(removed).catch(() => {});
-    if (started && (removed.length || phase === "empty")) return switchDeck(started);
+    if (started && (removed.length || phase === "empty" || addNew)) return switchDeck(started);
     if (phase === "empty" && added) ask();
   }
 
@@ -425,8 +426,8 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
       <${Box} marginTop=${1} flexDirection="column">
         ${screen === "settings" && html`<${Settings} settings=${settings} onChange=${changeSettings} onClose=${() => setScreen("quiz")} onAction=${library ? () => setScreen("reset") : null} />`}
         ${screen === "reset" && html`<${Reset} stats=${stats} actions=${library} onConfirm=${reset} onClose=${() => setScreen("settings")} />`}
-        ${screen === "add" && html`<${AddCard} current=${deck} actions=${library} onDone=${addDone} />`}
-        ${screen === "decks" && html`<${Decks} current=${deck} actions=${library} onPick=${switchDeck} onClose=${() => setScreen("quiz")} />`}
+        ${screen === "add" && html`<${AddCard} current=${deck} actions=${library} onDone=${addDone} startNew=${addNew} />`}
+        ${screen === "decks" && html`<${Decks} current=${deck} actions=${library} onPick=${switchDeck} onNew=${() => (setAddNew(true), setScreen("add"))} onClose=${() => setScreen("quiz")} />`}
         ${!["settings", "reset", "add", "decks"].includes(screen) &&
           html`
               <${Fragment}>

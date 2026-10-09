@@ -49,7 +49,7 @@ Type the answer and press Enter. Press `/` for commands:
 | Command | What it does |
 | --- | --- |
 | `/add` | add cards to one of your decks, or start a new deck |
-| `/decks` | switch to another deck; Dracosh remembers it |
+| `/decks` | switch to another deck (Dracosh remembers it), or start a new one |
 | `/hint` | reveal one more letter |
 | `/correct` | your answer was right after all; it's accepted from now on |
 | `/skip` | skip this card |

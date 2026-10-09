@@ -17,7 +17,8 @@ const NEW_DECK = "+ New deck";
 
 // /add: a small form inside the app. You pick one of your decks or start a new one (your first one
 // replaces the tour), then add cards one after another until Esc. `actions` reads and writes the library.
-export function AddCard({ current, actions, onDone }) {
+// `startNew` skips the deck list and goes straight to a new deck ("+ New deck" in /decks).
+export function AddCard({ current, actions, onDone, startNew = false }) {
   const [step, setStep] = useState("loading"); // loading | pick | deck | ways | front | back | example | saving
   const [decks, setDecks] = useState([]);
   const [picked, setPicked] = useState(0);
@@ -34,7 +35,7 @@ export function AddCard({ current, actions, onDone }) {
       (own) => {
         setDecks(own);
         setPicked(Math.max(0, own.findIndex((d) => d.name === current)));
-        setStep(own.length ? "pick" : "deck");
+        setStep(own.length && !startNew ? "pick" : "deck");
       },
       (err) => setError(err.message)
     );
