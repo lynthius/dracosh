@@ -31,6 +31,47 @@ const PALETTES = {
 const ACCESSORY_COLORS = { H: "#e8dcc8", W: "#2f6b45", P: "#e6d79a", S: "#d9a441", G: "#fcd34d" };
 const FLASH_ACCESSORIES = { H: "#ffffff", W: "#cfe6d4", P: "#ffffff", S: "#ffffff", G: "#ffffff" };
 
+// The dragon's element, rolled once with "Dragon's die": its own body and accessory colors, plus a few
+// details (X, Y) drawn before the evolution accessories, so horns, wings and the halo always show.
+const ELEMENT_LOOKS = {
+  earth: {
+    body: { B: "#8b6d47", L: "#b8955f", D: "#5e4630", O: "#2e2216" },
+    accents: { H: "#d9cbb0", W: "#4d6b35", P: "#c9b48a", S: "#7a8f3d" },
+    colors: { X: "#7fb045", Y: "#6b5a44" },
+    details: [[2, 3, "X"], [2, 4, "X"], [2, 8, "X"], [6, 2, "Y"], [6, 9, "Y"]] // moss on the head, pebbles below
+  },
+  wind: {
+    body: { B: "#a8d8cf", L: "#e0f5f0", D: "#76b0a6", O: "#3a5f59" },
+    accents: { H: "#ffffff", W: "#cfeee8", P: "#e0f5f0", S: "#ffffff" },
+    colors: { X: "#e6fffb" },
+    details: [[1, 0, "X"], [1, 1, "X"], [8, 0, "X"], [8, 11, "X"]] // wisps of air around it
+  },
+  water: {
+    body: { B: "#3b82c4", L: "#7cb8e8", D: "#245d94", O: "#13304d" },
+    accents: { H: "#cfe8ff", W: "#1e5a8f", P: "#a5d3f5", S: "#7cb8e8" },
+    colors: { X: "#5fb3f0", Y: "#bfe3ff" },
+    details: [[1, 5, "X"], [1, 6, "X"], [1, 11, "Y"]] // a fin on the head, a drop of water
+  },
+  ice: {
+    body: { B: "#bfe6f5", L: "#ffffff", D: "#86c0d8", O: "#3d6f86" },
+    accents: { H: "#e0f7ff", W: "#86c0d8", P: "#ffffff", S: "#e0f7ff" },
+    colors: { X: "#e0f7ff", Y: "#ffffff" },
+    details: [[0, 2, "X"], [0, 9, "X"], [6, 3, "Y"], [6, 8, "Y"]] // crystal spikes, frost
+  },
+  fire: {
+    body: { B: "#e4572e", L: "#f59e5b", D: "#a8341c", O: "#4a140a" },
+    accents: { H: "#fde68a", W: "#a8341c", P: "#fbbf24", S: "#fbbf24" },
+    colors: { X: "#fbbf24", Y: "#fde68a" },
+    details: [[0, 4, "X"], [0, 7, "X"], [1, 0, "Y"], [1, 11, "Y"]] // flame tips, embers
+  },
+  cosmos: {
+    body: { B: "#3b2f7a", L: "#5b4bb0", D: "#30266a", O: "#2a2163", E: "#e0e7ff", C: "#c084fc" },
+    accents: { H: "#c4b5fd", W: "#261d55", P: "#5b4bb0", S: "#c4b5fd" },
+    colors: { X: "#fef3c7" },
+    details: [[2, 2, "X"], [2, 9, "X"], [5, 9, "X"], [6, 2, "X"]] // stars on its body, glowing eyes
+  }
+};
+
 // What each evolution stage adds on top of the previous one: [row, col, pixel]
 const STAGE_EDITS = [
   [], // 0 Hatchling
@@ -59,9 +100,10 @@ const FACES = {
 };
 
 // `shift` nudges the whole grid by dx columns / dy pixel rows (half a text row) for jump and shake frames
-export function drawSprite(face, stage = 0, { dx = 0, dy = 0 } = {}) {
+export function drawSprite(face, stage = 0, { dx = 0, dy = 0, element = null } = {}) {
   const grid = BASE.map((row) => [...row]);
   const apply = (edits) => edits.forEach(([r, c, pixel]) => (grid[r][c] = pixel));
+  if (ELEMENT_LOOKS[element]) apply(ELEMENT_LOOKS[element].details);
   STAGE_EDITS.slice(0, stage + 1).forEach(apply);
   apply(FACES[face] ?? FACES.idle);
   if (!dx && !dy) return grid;
@@ -92,22 +134,24 @@ export function PixelGrid({ grid, palette }) {
 
 // A form you haven't reached: one flat color, no eyes or shading, so only the outline gives it away
 const SILHOUETTE = "#2c3038";
-const LOCKED = Object.fromEntries([..."BLDOECTHWPSG"].map((key) => [key, SILHOUETTE]));
+const LOCKED = Object.fromEntries([..."BLDOECTHWPSGXY"].map((key) => [key, SILHOUETTE]));
 
-function paletteFor({ locked, flash, hot, flicker, stage }) {
+function paletteFor({ locked, flash, hot, flicker, stage, element }) {
   if (locked) return LOCKED;
-  if (flash) return { ...FLASH_ACCESSORIES, ...PALETTES.flash };
-  const body = hot ? (flicker ? PALETTES.hot2 : PALETTES.hot) : PALETTES.normal;
-  const palette = { ...ACCESSORY_COLORS, ...body };
+  if (flash) return { ...FLASH_ACCESSORIES, ...PALETTES.flash, X: "#ffffff", Y: "#ffffff" };
+  const look = ELEMENT_LOOKS[element];
+  const body = hot ? (flicker ? PALETTES.hot2 : PALETTES.hot) : { ...PALETTES.normal, ...look?.body };
+  const palette = { ...ACCESSORY_COLORS, ...look?.accents, ...look?.colors, ...body };
   if (stage >= LEGEND) palette.H = ACCESSORY_COLORS.G; // Legend: golden horns under the halo
   return palette;
 }
 
 // `locked` draws a dark silhouette (a form you haven't reached yet); `flash` whites it out (evolution);
 // `flicker` alternates the hot palette; `scale: 2` draws one text row per pixel row, two chars per pixel.
-export function Mascot({ face = "idle", hot = false, stage = 0, locked = false, flash = false, flicker = false, scale = 1, dx = 0, dy = 0 }) {
-  const palette = paletteFor({ locked, flash, hot, flicker, stage });
-  const grid = drawSprite(face, stage, { dx, dy });
+// `element` is the dragon's rolled element ("earth" … "cosmos"), or null for the default green dragon
+export function Mascot({ face = "idle", hot = false, stage = 0, locked = false, flash = false, flicker = false, scale = 1, dx = 0, dy = 0, element = null }) {
+  const palette = paletteFor({ locked, flash, hot, flicker, stage, element });
+  const grid = drawSprite(face, stage, { dx, dy, element });
   const rows = [];
   if (scale === 2) {
     for (let r = 0; r < grid.length; r++) {

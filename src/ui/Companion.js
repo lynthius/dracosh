@@ -8,7 +8,7 @@ const requirement = (stage, locked) => (stage.from === 0 ? "from the start" : `$
 
 // Every form of the companion. Forms you haven't reached are flat silhouettes named "???".
 // Its moods aren't listed here on purpose: you find them out by playing.
-export function Companion({ current, best, onClose }) {
+export function Companion({ current, best, element = null, onClose }) {
   useInput((input, key) => {
     if (key.escape || key.return || input === "q") onClose();
   });
@@ -24,7 +24,7 @@ export function Companion({ current, best, onClose }) {
             const locked = i > current;
             return html`
               <${Box} key=${stage.name} width=${22} flexDirection="column" marginBottom=${1}>
-                <${Box} flexDirection="column"><${Mascot} stage=${i} locked=${locked} face=${locked ? "idle" : "smile"} /><//>
+                <${Box} flexDirection="column"><${Mascot} stage=${i} locked=${locked} face=${locked ? "idle" : "smile"} element=${element} /><//>
                 <${Text} bold=${i === current} color=${i === current ? theme.accent : undefined} dimColor=${locked}>${locked ? "???" : stage.name}${i === current ? "  ← now" : ""}<//>
                 <${Text} dimColor>${requirement(stage, locked)}<//>
               <//>

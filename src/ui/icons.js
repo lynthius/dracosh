@@ -168,6 +168,36 @@ ICONS.ring = {
 
 export const RING = ICONS.ring;
 
+// "Dragon's die": a die showing five
+ICONS.die = {
+  palette: { W: "#f4f4f5", D: "#c7c9d1", P: "#2a2440" },
+  grid: [
+    ".WWWWWW.",
+    "WPPWWPPW",
+    "WPPWWPPW",
+    "WWWPPWWD",
+    "WWWPPWWD",
+    "WPPWWPPD",
+    "WPPWWPPD",
+    ".DDDDDD."
+  ]
+};
+
+// what a hidden badge shows until it's won
+ICONS.secret = {
+  palette: { Q: "#6b7280" },
+  grid: [
+    "..QQQQ..",
+    ".QQ..QQ.",
+    ".....QQ.",
+    "....QQ..",
+    "...QQ...",
+    "...QQ...",
+    "........",
+    "...QQ..."
+  ]
+};
+
 // which icon each badge gets, by badge id
 const ICON_FOR = {
   hello: "trophy",
@@ -204,7 +234,8 @@ const ICON_FOR = {
   regular: "calendar",
   machine: "calendar",
   "hundred-club": "calendar",
-  "one-ring": "ring"
+  "one-ring": "ring",
+  "dragons-die": "die"
 };
 
 const LOCKED_COLOR = "#4a5058";
@@ -245,8 +276,10 @@ function paletteFor(id, icon) {
 // the color that stands for an unlocked badge in lists: its rank color, or gold for untiered ones
 export const badgeColor = (id) => tierOf(id)?.main ?? TIERS[2].main;
 
-// `locked` greys the icon out; `flash` whites it out (a frame of a badge lighting up in /badges)
-export function BadgeIcon({ id, locked = false, flash = false }) {
+// `locked` greys the icon out; `flash` whites it out (a frame of a badge lighting up in /badges);
+// `secret` replaces a hidden badge that isn't won yet with a question mark
+export function BadgeIcon({ id, locked = false, flash = false, secret = false }) {
+  if (secret) return html`<${PixelGrid} grid=${ICONS.secret.grid.map((row) => [...row])} palette=${ICONS.secret.palette} />`;
   const icon = ICONS[ICON_FOR[id]] ?? ICONS.star;
   const flat = (color) => Object.fromEntries(Object.keys(icon.palette).map((k) => [k, color]));
   const palette = flash ? flat("#ffffff") : locked ? flat(LOCKED_COLOR) : paletteFor(id, icon);

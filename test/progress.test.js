@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { addDays, daysBetween, dayKey, weekStart } from "../src/dates.js";
-import { applyAnswer, BADGES, calendarMonth, currentStreak, ensureProgress, missedOn, recordMiss, snapshot, stageFor, undoMiss } from "../src/progress.js";
+import { applyAnswer, BADGES, calendarMonth, currentStreak, ELEMENTS, ensureProgress, missedOn, recordMiss, snapshot, stageFor, undoMiss } from "../src/progress.js";
 
 const at = (day, hour = 10) => new Date(`${day}T${String(hour).padStart(2, "0")}:00:00`).getTime();
 const freshState = (now) => {
@@ -253,3 +253,41 @@ test("badges unlocked before seen-tracking existed count as seen, so they don't 
   assert.deepEqual(state.progress.seenBadges.sort(), ["hello", "week"]);
 });
 
+test("Dragon's die: a lost 30+ day streak, then a longer one, rolls the dragon's element once", () => {
+  const state = freshState(at("2026-10-01"));
+  const streak = state.progress.streak;
+  Object.assign(streak, { count: 35, best: 35, lastGoalDay: "2026-10-01", freezes: 0 });
+
+  answer(state, at("2026-10-06")); // working days missed and no freeze: the 35-day streak is lost
+  assert.equal(streak.fallen, 35);
+  assert.equal(streak.count, 1);
+  assert.equal(state.progress.badges["dragons-die"], undefined);
+
+  Object.assign(streak, { count: 35, lastGoalDay: "2026-11-09" }); // built back up to the old length
+  answer(state, at("2026-11-10"));
+  assert.equal(streak.count, 36);
+  assert.equal(state.progress.badges["dragons-die"], "2026-11-10");
+  assert.ok(ELEMENTS.includes(state.progress.element));
+
+  const rolled = state.progress.element;
+  delete state.progress.badges["dragons-die"]; // even if it were won again, the element never rerolls
+  applyAnswer(state, { result: "exact", goal: 1, now: at("2026-11-11"), random: () => 0.99 });
+  assert.equal(state.progress.element, rolled);
+});
+
+test("the die's faces map to the six elements in order", () => {
+  const state = freshState(at("2026-10-01"));
+  Object.assign(state.progress.streak, { count: 40, best: 40, lastGoalDay: "2026-10-01", freezes: 0, fallen: 40 });
+  applyAnswer(state, { result: "exact", goal: 1, now: at("2026-10-02"), random: () => 3.5 / 6 }); // 41 > 40
+  assert.equal(state.progress.element, "ice"); // face 4
+  assert.deepEqual(ELEMENTS, ["earth", "wind", "water", "ice", "fire", "cosmos"]);
+});
+
+test("hidden badges stay out of The One and are flagged for the UI", () => {
+  const state = freshState(at("2026-10-05"));
+  for (const badge of BADGES) if (!badge.hidden && !["one-ring", "hello"].includes(badge.id)) state.progress.badges[badge.id] = "2026-10-01";
+  answer(state, at("2026-10-05"));
+  assert.ok(state.progress.badges["one-ring"], "The One... without the hidden die");
+  const die = snapshot(state, { goal: 1, now: at("2026-10-05") }).badges.find((b) => b.id === "dragons-die");
+  assert.equal(die.hidden, true);
+});

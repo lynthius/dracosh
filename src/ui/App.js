@@ -12,6 +12,7 @@ import { Badges } from "./Badges.js";
 import { Companion } from "./Companion.js";
 import { Confetti } from "./Confetti.js";
 import { BadgeUnlock } from "./BadgeUnlock.js";
+import { DieRoll } from "./DieRoll.js";
 import { Evolution } from "./Evolution.js";
 import { Hatch } from "./Hatch.js";
 import { Missed } from "./Missed.js";
@@ -112,7 +113,7 @@ export function App({ session, deck, initialSettings, alerts, persistSettings, o
   const exit = onExit ?? exitApp; // the preview gallery runs the quiz as a scene and takes quitting back to its menu
   const { stdout } = useStdout();
   const [settings, setSettings] = useState(initialSettings);
-  // quiz | settings | stats | badges | companion | tip | missed | evolve | the-one | summary | hatch
+  // quiz | settings | stats | badges | companion | tip | missed | evolve | the-one | die | summary | hatch
   const [screen, setScreen] = useState(() => (session.isFirstRun() ? "hatch" : "quiz"));
   const [tip, setTip] = useState(null);
   const [phase, setPhase] = useState("loading"); // loading | asking | waiting
@@ -180,7 +181,7 @@ export function App({ session, deck, initialSettings, alerts, persistSettings, o
   }, []);
 
   useEffect(() => {
-    if (phase !== "waiting" || screen === "summary" || screen === "evolve" || screen === "the-one") return;
+    if (phase !== "waiting" || screen === "summary" || screen === "evolve" || screen === "the-one" || screen === "die") return;
     if (now >= nextAt && !pauseEnd(now)) {
       alerts.ask();
       ask();
@@ -220,9 +221,10 @@ export function App({ session, deck, initialSettings, alerts, persistSettings, o
     const queue = [];
     if (result.cheers.some((c) => c.kind === "evolve")) {
       const companion = session.stats().companion;
-      setEvolution({ from: Math.max(0, companion.index - 1), to: companion.index, name: companion.name });
+      setEvolution({ from: Math.max(0, companion.index - 1), to: companion.index, name: companion.name, element: companion.element });
       queue.push("evolve");
     }
+    if (result.cheers.some((c) => c.id === "dragons-die")) queue.push("die");
     if (result.cheers.some((c) => c.id === "one-ring")) queue.push("the-one");
     if (queue.length) {
       setCeremonies(queue.slice(1));
@@ -342,9 +344,11 @@ export function App({ session, deck, initialSettings, alerts, persistSettings, o
       setEvolution(null);
       nextCeremony();
     }} /><//>`;
+  if (screen === "die")
+    return html`<${Box} flexDirection="column" marginY=${1}><${DieRoll} element=${stats.companion.element} stage=${stats.companion.index} play=${alerts.play} onClose=${nextCeremony} /><//>`;
   if (screen === "the-one") return html`<${Box} flexDirection="column" marginY=${1}><${TheOne} play=${alerts.play} onClose=${nextCeremony} /><//>`;
   if (screen === "stats") return html`<${Box} flexDirection="column" marginY=${1}><${Stats} stats=${stats} getMonth=${session.month} onClose=${() => setScreen("quiz")} /><//>`;
-  if (screen === "companion") return html`<${Box} flexDirection="column" marginY=${1}><${Companion} current=${stats.companion.index} best=${stats.streak.best} onClose=${() => setScreen("quiz")} /><//>`;
+  if (screen === "companion") return html`<${Box} flexDirection="column" marginY=${1}><${Companion} current=${stats.companion.index} best=${stats.streak.best} element=${stats.companion.element} onClose=${() => setScreen("quiz")} /><//>`;
   if (screen === "tip") return html`<${Box} flexDirection="column" marginY=${1}><${Tip} nextTip=${session.nextTip} onClose=${() => setScreen("quiz")} /><//>`;
   if (screen === "missed") return html`<${Box} flexDirection="column" marginY=${1}><${Missed} getMissed=${session.missed} onClose=${() => setScreen("quiz")} /><//>`;
   if (screen === "badges") return html`<${Box} flexDirection="column" marginY=${1}><${Badges} badges=${stats.badges} fresh=${freshBadges} onClose=${() => setScreen("quiz")} /><//>`;

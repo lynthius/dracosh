@@ -6,6 +6,11 @@ const MAX_BOX = BOX_INTERVALS_DAYS.length;
 const AT_RISK_HOUR = 19;
 const COMEBACK_AFTER_DAYS = 7;
 const MISSED_KEEP_DAYS = 14;
+const FALL_MIN = 30; // a lost streak this long counts as a fall for "Dragon's die"
+
+// The die's faces: winning "Dragon's die" rolls one, and the dragon keeps that element for good.
+export const ELEMENTS = ["earth", "wind", "water", "ice", "fire", "cosmos"];
+export const rollElement = (random = Math.random) => ELEMENTS[Math.floor(random() * ELEMENTS.length)];
 
 // The companion evolves permanently with your best streak, so a broken streak never takes a form away.
 export const STAGES = [
@@ -85,6 +90,7 @@ function completeDay(progress, today, rules) {
       streak.freezesUsed = (streak.freezesUsed ?? 0) + missed;
       streak.count += 1;
     } else {
+      if (streak.count >= FALL_MIN) streak.fallen = streak.count; // the most recent long streak that was lost
       streak.count = 1;
     }
   }
@@ -180,7 +186,16 @@ export const BADGES = [
 
 
   // keep this one last: it checks the others, including any unlocked earlier in the same answer
-  { id: "one-ring", name: "The One...", desc: "every other badge", test: (s) => BADGES.every((b) => b.id === "one-ring" || s.badges[b.id]) }
+  { id: "one-ring", name: "The One...", desc: "every other badge", test: (s) => BADGES.every((b) => b.id === "one-ring" || b.hidden || s.badges[b.id]) },
+
+  // hidden: shown as "???" until won, and not needed for The One
+  {
+    id: "dragons-die",
+    name: "Dragon's die",
+    desc: "lost a 30+ day streak, then built a longer one",
+    hidden: true,
+    test: (s) => s.fallenStreak >= FALL_MIN && s.streakCount > s.fallenStreak
+  }
 ];
 
 function collectStats(state, now, goal) {
@@ -202,6 +217,8 @@ function collectStats(state, now, goal) {
   return {
     goal,
     badges: progress.badges, // live: badges unlocked earlier in the same award pass count too
+    fallenStreak: progress.streak.fallen ?? 0,
+    streakCount: progress.streak.count,
     totalCorrect: Object.values(progress.days).reduce((sum, d) => sum + d.correct, 0),
     bestStreak: progress.streak.best,
     bestCombo: progress.bestCombo ?? 0,
@@ -218,7 +235,7 @@ function collectStats(state, now, goal) {
 }
 
 // Goal check, evolution and badges after something was credited today → cheers
-function award(state, progress, day, today, { correct, goal, rules, now, daysAway = 0 }) {
+function award(state, progress, day, today, { correct, goal, rules, now, daysAway = 0, random = Math.random }) {
   const cheers = [];
   if (correct && !day.goalMet && day.correct >= goal) {
     day.goalMet = true;
@@ -235,6 +252,8 @@ function award(state, progress, day, today, { correct, goal, rules, now, daysAwa
     if (!progress.badges[badge.id] && badge.test(stats)) {
       progress.badges[badge.id] = today;
       cheers.push({ kind: "badge", id: badge.id, name: badge.name, desc: badge.desc, text: `Badge unlocked: ${badge.name} · ${badge.desc}` });
+      // rolled and saved right away, before any animation, so quitting mid-roll can't reroll it
+      if (badge.id === "dragons-die" && !progress.element && !progress.elementDropped) progress.element = rollElement(random);
     }
   }
   return cheers;
@@ -243,7 +262,7 @@ function award(state, progress, day, today, { correct, goal, rules, now, daysAwa
 const dayOf = (progress, today) => (progress.days[today] ??= { asked: 0, correct: 0 });
 
 // Records one answer in the progress log → { cheers[] }. `state.items` must already include this answer.
-export function applyAnswer(state, { result, goal, rules = NO_RULES, combo = 0, now = Date.now() }) {
+export function applyAnswer(state, { result, goal, rules = NO_RULES, combo = 0, now = Date.now(), random = Math.random }) {
   const progress = ensureProgress(state, now);
   const today = dayKey(now);
   const day = dayOf(progress, today);
@@ -254,18 +273,18 @@ export function applyAnswer(state, { result, goal, rules = NO_RULES, combo = 0, 
   day.correct += correct ? 1 : 0;
   progress.bestCombo = Math.max(progress.bestCombo ?? 0, combo);
   progress.lastActiveDay = today;
-  return { cheers: award(state, progress, day, today, { correct, goal, rules, now, daysAway }) };
+  return { cheers: award(state, progress, day, today, { correct, goal, rules, now, daysAway, random }) };
 }
 
 // A wrong answer the user then declared right: it was already counted as asked, so only credit the correct one
-export function applyOverrule(state, { goal, rules = NO_RULES, combo = 0, now = Date.now() }) {
+export function applyOverrule(state, { goal, rules = NO_RULES, combo = 0, now = Date.now(), random = Math.random }) {
   const progress = ensureProgress(state, now);
   const today = dayKey(now);
   const day = dayOf(progress, today);
 
   day.correct += 1;
   progress.bestCombo = Math.max(progress.bestCombo ?? 0, combo);
-  return { cheers: award(state, progress, day, today, { correct: true, goal, rules, now }) };
+  return { cheers: award(state, progress, day, today, { correct: true, goal, rules, now, random }) };
 }
 
 // everything the screens display, derived from state
@@ -288,11 +307,11 @@ export function snapshot(state, { goal, rules = NO_RULES, now = Date.now() }) {
     restToday,
     skipWeekends: rules.skipWeekends,
     vacation: vacationInfo(progress, today),
-    companion: stageFor(progress.streak.best),
+    companion: { ...stageFor(progress.streak.best), element: progress.element ?? null },
     totalCorrect: stats.totalCorrect,
     mastered: stats.mastered,
     practiced: stats.practiced,
-    badges: BADGES.map((b) => ({ id: b.id, name: b.name, desc: b.desc, unlockedOn: progress.badges[b.id] ?? null }))
+    badges: BADGES.map((b) => ({ id: b.id, name: b.name, desc: b.desc, hidden: Boolean(b.hidden), unlockedOn: progress.badges[b.id] ?? null }))
   };
 }
 

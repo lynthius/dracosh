@@ -15,7 +15,7 @@ export function Summary({ stats, totals, bestCombo, onDone }) {
     <${Fragment}>
       <${Box} borderStyle="round" borderColor=${theme.accent} paddingX=${2} paddingY=${1} width=${PANEL_WIDTH}>
         <${Box} flexDirection="column" width=${MASCOT_WIDTH + 3}>
-          <${Mascot} face=${face} stage=${companion.index} />
+          <${Mascot} face=${face} stage=${companion.index} element=${companion.element} />
         <//>
         <${Box} flexDirection="column" justifyContent="center">
           <${Box}><${Text} bold color=${theme.accent}>Session over<//><//>

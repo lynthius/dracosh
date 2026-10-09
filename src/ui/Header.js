@@ -87,7 +87,7 @@ export function Header({ deck, everyMs, wordCount, stats, combo, face, event, ti
     <${Box} paddingX=${1}>
       <${Box} width=${MASCOT_WIDTH + 3}>
         <${Box} flexDirection="column" width=${MASCOT_WIDTH}>
-          <${Mascot} face=${shown} hot=${hot} flicker=${hot && tick % 2 === 0} stage=${companion.index} dx=${move.dx ?? 0} dy=${move.dy ?? 0} />
+          <${Mascot} face=${shown} hot=${hot} flicker=${hot && tick % 2 === 0} stage=${companion.index} element=${companion.element} dx=${move.dx ?? 0} dy=${move.dy ?? 0} />
         <//>
         ${asleep && html`<${Snore} tick=${tick} />`}
       <//>

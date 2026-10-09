@@ -2,9 +2,10 @@ import { Fragment, useEffect, useMemo, useState } from "react";
 import { Box, Text, useApp, useInput } from "ink";
 import { DEMO_WORDS } from "../demo.js";
 import { addDays, dayKey } from "../dates.js";
-import { BADGES, ensureProgress, STAGES } from "../progress.js";
+import { BADGES, ELEMENTS, ensureProgress, rollElement, STAGES } from "../progress.js";
 import { createSession } from "../session.js";
 import { DEFAULTS } from "../settings.js";
+import { DieRoll } from "./DieRoll.js";
 import { App } from "./App.js";
 import { BadgeUnlock } from "./BadgeUnlock.js";
 import { Badges } from "./Badges.js";
@@ -55,6 +56,7 @@ function MascotLab({ onBack }) {
   const [stage, setStage] = useState(0);
   const [face, setFace] = useState(0);
   const [hot, setHot] = useState(false);
+  const [element, setElement] = useState(-1); // -1: the default green dragon
   const [event, setEvent] = useState(null);
   const [tick, setTick] = useState(0);
   const move = useMove(event);
@@ -68,6 +70,7 @@ function MascotLab({ onBack }) {
     if (input === "j") return setEvent({ kind: "jump", at: Date.now() });
     if (input === "s") return setEvent({ kind: "shake", at: Date.now() });
     if (input === "h") return setHot((h) => !h);
+    if (input === "e") return setElement((e) => (e + 2) % (ELEMENTS.length + 1) - 1);
     if (input === " ") return setTick((t) => t + 1); // hand-cranked flicker frame
   });
   const shownFace = blinking && FACES[face] === "idle" ? "blink" : FACES[face];
@@ -76,12 +79,12 @@ function MascotLab({ onBack }) {
       <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.accent} paddingX=${2} paddingY=${1} width=${PANEL_WIDTH} alignItems="center">
         <${Text} bold color=${theme.accent}>Mascot lab<//>
         <${Box} marginY=${1} flexDirection="column" alignItems="center">
-          <${Mascot} stage=${stage} face=${shownFace} hot=${hot} flicker=${hot && tick % 2 === 0} scale=${2} dx=${move.dx ?? 0} dy=${move.dy ?? 0} />
+          <${Mascot} stage=${stage} face=${shownFace} hot=${hot} flicker=${hot && tick % 2 === 0} scale=${2} dx=${move.dx ?? 0} dy=${move.dy ?? 0} element=${ELEMENTS[element] ?? null} />
         <//>
         ${FACES[face] === "sleep" && html`<${Box}><${Mascot} stage=${stage} face="sleep" /><${Snore} tick=${clock} /><//>`}
-        <${Text}>${STAGES[stage].name}<${Text} dimColor> · face ${FACES[face]}${hot ? " · combo glow" : ""}<//><//>
+        <${Text}>${STAGES[stage].name}<${Text} dimColor> · face ${FACES[face]} · ${ELEMENTS[element] ?? "no element"}${hot ? " · combo glow" : ""}<//><//>
       <//>
-      <${Box} paddingX=${1}><${Text} dimColor>←/→ form · ↑/↓ face · j jump · s shake · h glow · space flicker · esc back<//><//>
+      <${Box} paddingX=${1}><${Text} dimColor>←/→ form · ↑/↓ face · e element · j jump · s shake · h glow · esc back<//><//>
     <//>
   `;
 }
@@ -127,10 +130,11 @@ function ConfettiLab({ onBack }) {
 const SCENES = [
   { id: "hatch", label: "Hatching", hint: "the first-launch intro" },
   ...STAGES.slice(1).map((stage, i) => ({ id: `evolve-${i + 1}`, label: `Evolution → ${stage.name}`, hint: `reached at a ${stage.from}-day best streak` })),
-  { id: "mascot", label: "Mascot lab", hint: "forms, faces, sleep, hop, shake, glow" },
+  { id: "mascot", label: "Mascot lab", hint: "forms, faces, elements, moves, glow" },
   { id: "quiz", label: "Quiz", hint: "a live round on demo words, goal at 5" },
   { id: "unlock", label: "Badge unlocked", hint: "three badges won at once" },
   { id: "the-one", label: "The One...", hint: "the ring rises from the lava" },
+  { id: "die", label: "Dragon's die", hint: "the secret badge: a roll for an element" },
   { id: "confetti", label: "Confetti", hint: "the daily-goal burst" },
   { id: "stats", label: "Stats", hint: "calendar tiles, weeks of fake history" },
   { id: "badges", label: "Badges", hint: "all unlocked, three of them new" },
@@ -175,6 +179,7 @@ export function Preview({ alerts }) {
   const back = () => setScene(null);
   const history = useMemo(() => fakeSession({ progress: true }), []);
   const quizSession = useMemo(() => fakeSession(), [run]); // every quiz run starts from zero
+  const dieElement = useMemo(() => rollElement(), [run]); // a fresh roll every time the scene plays
 
   const wrap = (content) => html`<${Box} flexDirection="column" marginY=${1}>${content}<//>`;
 
@@ -196,6 +201,7 @@ export function Preview({ alerts }) {
   if (scene === "mascot") return wrap(html`<${MascotLab} onBack=${back} />`);
   if (scene === "confetti") return wrap(html`<${ConfettiLab} onBack=${back} />`);
   if (scene === "unlock") return wrap(html`<${BadgeUnlockLab} onBack=${back} />`);
+  if (scene === "die") return wrap(html`<${DieRoll} key=${run} element=${dieElement} stage=${2} play=${alerts.play} onClose=${back} />`);
   if (scene === "the-one") return wrap(html`<${TheOne} key=${run} play=${alerts.play} onClose=${back} />`);
   if (scene === "stats") return wrap(html`<${Stats} stats=${history.stats()} getMonth=${history.month} onClose=${back} />`);
   if (scene === "badges") {

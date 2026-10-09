@@ -74,6 +74,11 @@ Branch `feature/card-library`. Dracosh stops reading Anki live and quizzes from 
 - [x] Badge unlocks animate under the card (the name flashes into its rank color); "The One"
       gets a full-screen ceremony, a ring rising from lava; badges won since the last visit
       light up one by one when `/badges` opens; all of it in `--preview`
+- [x] Hidden badge "Dragon's die" (shown as "???" until won): lose a streak of 30+ days, then
+      build a new one longer than the lost one. Winning it rolls a die once (the result is saved
+      before the animation, so quitting can't reroll): 1 earth, 2 wind, 3 water, 4 ice, 5 fire,
+      6 cosmos. The dragon takes that element for good: its own colors plus a few element
+      details on every form. Not required for "The One...". Roll ceremony in `--preview`
 - [x] Library file `~/.dracosh/library.json` with a schema version:
       decks `{ id, name, type, languages: { front, back }, answerMode, directions }` and
       cards `{ id, deckId, front, back[], example, tags, created, updated, ankiNoteId? }`
@@ -181,6 +186,9 @@ Branch `feature/onboarding`. Everything a new user needs, without reading the RE
 - [ ] Deleting decks and cards as decided above: confirmation with counts, undo key, trash
       (`/trash` to restore); also moving cards between decks and merging decks
 - [ ] `dracosh reset` removes all data after a confirmation, offering an export first
+- [ ] `/settings` → reset progress: badges, streaks, stats, the dragon's form and element start
+      over; cards and how well you know them stay. Confirmation and a backup first
+- [ ] `/settings` → default dragon look: drops the element for good (no way back), confirmed
 - [ ] README: a short "Your data" section (where it lives, backups, uninstalling keeps it)
 
 Done when: someone who has never seen Dracosh installs it and reaches their first question

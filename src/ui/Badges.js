@@ -12,6 +12,10 @@ const STAGGER = 7; // frames between two badges
 const FLASH_FRAMES = [2, 4];
 const LIT_FROM = 5;
 const GREY = "#4a5058";
+
+// a hidden badge reveals nothing until it's won
+const SECRET = { name: "???", desc: "A secret. Keep playing." };
+const display = (badge) => (badge.hidden && !badge.unlockedOn ? { ...badge, ...SECRET } : badge);
 const WHITE = "#ffffff";
 
 // where a fresh badge is in its little animation: "waiting" (still looks locked), "flash", or "lit"
@@ -61,7 +65,7 @@ export function Badges({ badges, fresh = [], onClose }) {
   });
 
   const unlocked = badges.filter((b) => b.unlockedOn).length;
-  const badge = badges[selected];
+  const badge = display(badges[selected]);
   const phase = phaseOf(fresh.indexOf(badge.id), frame);
   const shownUnlocked = badge.unlockedOn && phase === "lit";
 
@@ -76,7 +80,7 @@ export function Badges({ badges, fresh = [], onClose }) {
 
         <${Box} marginTop=${1}>
           <${Box} flexDirection="column" width=${ICON_WIDTH + 3}>
-            <${BadgeIcon} id=${badge.id} locked=${!badge.unlockedOn || phase === "waiting"} flash=${phase === "flash"} />
+            <${BadgeIcon} id=${badge.id} locked=${!badge.unlockedOn || phase === "waiting"} flash=${phase === "flash"} secret=${badge.hidden && !badge.unlockedOn} />
           <//>
           <${Box} flexDirection="column" justifyContent="center">
             <${Box}><${Text} bold color=${shownUnlocked ? badgeColor(badge.id) : undefined} dimColor=${!shownUnlocked}>${badge.name}<//><//>
@@ -101,7 +105,7 @@ export function Badges({ badges, fresh = [], onClose }) {
                       <${Text} bold=${current} dimColor=${!current && !shown} wrap="truncate">
                         <${Text} color=${current ? theme.accent : undefined}>${current ? "❯" : " "} <//>
                         <${Text} color=${dotColor ?? (b.unlockedOn ? GREY : undefined)}>${shown ? "●" : "○"} <//>
-                        <${Text} color=${nameColor}>${b.name}<//>
+                        <${Text} color=${nameColor}>${display(b).name}<//>
                       <//>
                     <//>
                   `;
