@@ -5,8 +5,9 @@ import { html, PANEL_WIDTH, theme } from "./kit.js";
 import { Mascot } from "./Mascot.js";
 
 const FRAME_MS = 80;
-// pip top-left corners on an 8×8 die (each pip is 2×2)
-const PIPS = { tl: [1, 1], tr: [1, 5], ml: [3, 1], c: [3, 3], mr: [3, 5], bl: [5, 1], br: [5, 5] };
+// single-pixel pips on a 9×9 die, with a pixel of space between any two, so six reads as six
+const SIZE = 9;
+const PIPS = { tl: [2, 2], tr: [2, 6], ml: [4, 2], c: [4, 4], mr: [4, 6], bl: [6, 2], br: [6, 6] };
 const FACES = {
   1: ["c"],
   2: ["tl", "br"],
@@ -25,12 +26,13 @@ const REVEAL_AT = 40;
 const BOUNCE = [2, 1, 0, 0, 1, 2, 2, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0];
 
 function dieGrid(face, pipColor) {
-  const grid = Array.from({ length: 8 }, (_, r) => Array.from({ length: 8 }, (_, c) => ((r === 0 || r === 7) && (c === 0 || c === 7) ? null : "#f4f4f5")));
-  for (let r = 1; r < 7; r++) grid[r][7] = "#c7c9d1"; // a shaded edge
-  for (let c = 1; c < 7; c++) grid[7][c] = "#c7c9d1";
+  const last = SIZE - 1;
+  const grid = Array.from({ length: SIZE }, (_, r) => Array.from({ length: SIZE }, (_, c) => ((r === 0 || r === last) && (c === 0 || c === last) ? null : "#f4f4f5")));
+  for (let r = 1; r < last; r++) grid[r][last] = "#c7c9d1"; // a shaded edge
+  for (let c = 1; c < last; c++) grid[last][c] = "#c7c9d1";
   for (const pip of FACES[face]) {
     const [r, c] = PIPS[pip];
-    grid[r][c] = grid[r][c + 1] = grid[r + 1][c] = grid[r + 1][c + 1] = pipColor;
+    grid[r][c] = pipColor;
   }
   return grid;
 }
