@@ -1,132 +1,270 @@
 # Roadmap
 
-Where Dracosh is headed: a vocabulary trainer for the terminal that works for anyone, out of
-the box. Dracosh keeps its own card library; Anki becomes something you can import from and
-export to, not something that has to be running. Clean architecture, tests, CI and a good
-README along the way.
+Mission: a vocabulary and quiz trainer for the terminal that anyone can install and enjoy in a
+minute. It walks you through setup, works with any popular language pair and with any kind of
+deck (words, term and definition, question and answer), and moves cards freely to and from
+Anki. A pixel dragon grows with your progress. macOS first, then Linux and Windows.
+
+## How we work
+
+- One stage at a time, in the order below. Each stage has its own branch, ends with a pull
+  request into `main`, and usually with an npm release.
+- A stage is done when everything in its "Done when" list is true: tests pass, README and this
+  file are updated, and the feature has been tried in the real app or in `dracosh --preview`.
+- Anything not in this plan gets added here first, then built. No improvising mid-stage.
+- `main` is always stable. Small fixes (typos, docs) can go straight to `main`.
+
+## Decisions
+
+Stack (kept as is)
+- Plain JavaScript (ES modules) on Node, no build step: clone, `npm install`, run.
+- UI: [Ink](https://github.com/vadimdemedes/ink) (React for the terminal) with `htm` templates
+  instead of JSX, which is what keeps the build step away.
+- Storage: JSON files in `~/.dracosh`, written atomically, with a schema version and migrations.
+  Plenty for tens of thousands of cards; revisit SQLite (`node:sqlite`) only if it ever isn't.
+- Few dependencies (today: ink, react, htm). AI providers are called with plain `fetch`, no SDKs.
+- Type safety without a build: JSDoc types checked by `tsc --checkJs` in CI (dev-only).
+- The app's own UI is in English. The cards can be in any language.
+
+Product (decided 2026-10-09)
+- Dracosh keeps its own card library. Anki is an import source and an export target; it never
+  has to be running.
+- Three card types: translation (word and its translations), definition (term and definition),
+  Q&A (question and answer).
+- Two answer modes, set per deck: typed (the app checks your answer, shows the letter diff) and
+  self-graded (reveal the answer, say whether you knew it). Translation and definition decks
+  default to typed, Q&A decks to self-graded. For definition decks the typed answer is always
+  the term.
+- Languages: full answer checking for European languages in Latin script and Cyrillic (EN, ES,
+  FR, DE, IT, PT, PL, NL, SV, DA, NO, FI, CS, SK, HU, RO, HR, TR, UK, RU and similar). Chinese,
+  Japanese and Korean display and can be typed, without special handling. Right-to-left
+  scripts (Arabic, Hebrew) later; terminals render them poorly.
+- AI is optional, and the user brings their own: an Anthropic API key, or any OpenAI-compatible
+  endpoint, which covers OpenAI, OpenRouter, Groq and local models through Ollama and LM Studio.
+- First run: a "Getting started" deck (a few arithmetic cards plus cards about Dracosh itself,
+  so it works in any language), import a file, start an empty deck, or (with AI set up)
+  generate a starter deck for any pair.
+- Two study rhythms, chosen in settings: "every few minutes" (the default, for working in a
+  spare pane) and "session" (the next card right after you answer).
+
+UX and data (decided 2026-10-09)
+- Simple by default. The quiz screen stays calm; everything else lives behind `/` commands and
+  settings. A new feature earns a place on the main screen only if most people need it.
+- Your data is yours and stays put: uninstalling Dracosh never touches `~/.dracosh`, so
+  reinstalling brings everything back. `dracosh --data` shows where it lives.
+- Nothing is lost by accident: automatic backups, confirmations that say what will be removed
+  ("Delete deck Spanish and its 340 cards?"), an undo key right after deleting, and a trash
+  that keeps deleted decks and cards (with their progress) for 30 days.
 
 ## Status
 
-- [x] Cloned from the private `anki-quiz` project and rebranded (name, `~/.dracosh`, `DRACOSH_HOME`)
-- [x] Own visual identity: violet accent, green pixel dragon, gold combo fire, `❯` prompt, pixel spinner
-- [x] `/stats` calendar: even month grid, one tile per day, color-only states
-- [x] First-launch intro: the dragon hatches from an egg (`src/ui/Hatch.js`)
-- [x] `dracosh --preview`: a gallery of every scene/animation on made-up data (`src/ui/Preview.js`)
-- [x] Random natural blinking (2.5–7 s gaps, occasional double blink)
-- [x] Falls asleep after 3 idle minutes (z's drifting up), wakes on any key
-- [x] License: Apache-2.0 (code), with the name and mascot reserved as trademarks in NOTICE/README
+- [x] 0.1.0 on npm (2026-10-09): quiz from a live Anki deck through AnkiConnect, EN ↔ PL
+- [x] Pixel dragon (hatching, six forms, evolution ceremony, moods, blinking, sleeping),
+      chiptune sounds, streaks, badges, stats calendar, `--preview` gallery
 - [x] Anki notes are read by field position, so any Anki language and note type works
-- [x] 0.1.0 published on npm (2026-10-09); words still come live from AnkiConnect
+- [x] License: Apache-2.0, name and mascot reserved (NOTICE)
 
-## Phase 0: Housekeeping
+## Stage 1: Card library (0.2.0)
 
-- [x] Local git repository, `.gitignore`
-- [x] `LICENSE` (Apache-2.0) and `NOTICE`
-- [x] `package.json`: `author`, `repository`, `homepage`, `bugs`, `keywords`, `license`
-- [x] Package ready for npm: `files` whitelist, no `"private"`
-- [x] Publish 0.1.0 to npm to claim the `dracosh` name
-- [ ] Panels narrower than `PANEL_WIDTH` should shrink on small terminals (today only the question card does)
-- [ ] JSDoc type annotations + `tsc --checkJs` in CI: type safety without a build step; the runtime stays pure JS
+Branch `feature/card-library`. Dracosh stops reading Anki live and quizzes from its own library.
 
-## Phase 1: Own card library, with import and export
+- [ ] Library file `~/.dracosh/library.json` with a schema version:
+      decks `{ id, name, type, languages: { front, back }, answerMode, directions }` and
+      cards `{ id, deckId, front, back[], example, tags, created, updated, ankiNoteId? }`
+- [ ] The quiz reads the active deck (or all decks) from the library
+- [ ] Progress keyed by card id; cards that came from Anki keep their Anki note id, so their
+      progress survives a re-import
+- [ ] Bundled "Getting started" deck: a few arithmetic cards (`2 + 2`, `6 × 7`) and cards
+      about Dracosh itself (`Which key opens the commands?` → `/`)
+- [ ] Automatic backups of the library and progress to `~/.dracosh/backups/`: once a day on
+      start, and right before a migration, import, deletion or reset. The last 7 daily backups
+      are kept; `dracosh restore` lists them and brings one back
+- [ ] `dracosh --data` prints where everything is stored
+- [ ] `dracosh add "word" "translation"` to add a card from any terminal, also while the quiz
+      runs in another pane: the library is re-read before each question, so new cards show up
+      without a restart
+- [ ] Migration from 0.1.0: copy the deck used before (from Anki if it's running, otherwise
+      from the cached `words.json`) into the library, keeping progress; back up the old
+      files first
+- [ ] `--deck` picks a library deck; live AnkiConnect reading is removed
 
-Requiring a running Anki with AnkiConnect is the biggest adoption blocker. Dracosh gets its own
-library; Anki stays fully interoperable through files.
+Done when: a fresh install quizzes the "Getting started" deck with no Anki; an 0.1.0 user keeps
+their words and streak; backups are written and restorable; tests cover the library, the
+migration, backups and progress mapping.
 
-The library
-- [ ] Card store in `~/.dracosh/cards.json`: `{ id, front, back[], example, deck, tags, created }`,
-      several decks in one library; the quiz runs on one deck or all of them
-- [ ] The quiz reads the library instead of AnkiConnect (`loadWords` becomes a library read)
-- [ ] Progress stays keyed by card id; cards imported from Anki keep their Anki note id,
-      so re-importing the same deck doesn't reset progress
-- [ ] Bundled demo deck, so `npx dracosh` works with zero setup
-- [ ] First run, after the hatching: start with the demo deck, import a file, or add cards yourself
-- [ ] Manage cards in the app: `/add`, plus a `/cards` browser to search, edit and delete
-- [ ] Also from the shell: `dracosh add "word" "translation"`
+## Stage 2: Card types and answer modes (0.3.0)
 
-Import (`dracosh import <file>`, format picked by extension)
-- [ ] `.txt` / `.tsv`: Anki's "Notes in Plain Text" export (tab-separated, first field = front,
-      HTML inside fields). `#separator`, `#html`, `#deck`, `#columns` headers honoured when present
-- [ ] `.csv`: `front,back,example` with an optional header row, for spreadsheets and other apps
-- [ ] `.apkg` / `.colpkg`: decks shared on AnkiWeb. A zip with an SQLite collection inside
-      (`collection.anki21b` is zstd-compressed); both are built into recent Node. Zip reading
-      needs `fflate` or a small own reader. Media is skipped
-- [ ] One-time copy from a running Anki: `dracosh import --anki "Deck name"` (AnkiConnect,
-      picker if no name is given)
-- [ ] Duplicates (same front in the same deck) are merged, not doubled; a summary says what
-      was added, updated and skipped
+Branch `feature/card-types`.
 
-Export (`dracosh export <file>`)
-- [ ] `.txt`: Anki-ready plain text with `#separator:Tab`, `#html:true`, `#notetype:Basic`,
-      `#deck:<name>` headers, so File → Import in Anki (2.1.54+) needs no setup
-- [ ] `.csv`: for spreadsheets
-- [ ] `.json`: full backup of cards and progress, restorable with `dracosh import`
-- [ ] Not planned for now: writing `.apkg` (Anki's internal schema is complex and changes
-      between versions; plain text covers the same need)
+- [ ] Card types translation, definition and Q&A in the model and the quiz screen
+- [ ] Typed mode as today; for definition decks the definition is shown and the term is typed
+- [ ] Self-graded mode: show the question, reveal on Enter, then "knew it" / "didn't";
+      it feeds the same Leitner boxes, goal, combo and badges
+- [ ] Per-deck default answer mode, switchable in deck settings
+- [ ] Study rhythm in settings: "every few minutes" or "session" (next card right away,
+      optionally a set number of cards); the setting sticks until changed
+- [ ] `--preview` shows a definition card and a self-graded card
 
-Migration and cleanup
-- [ ] Users of 0.1.0: on first start, offer to import the deck they used (`--deck`) from Anki,
-      or from the cached `words.json` when Anki is closed
-- [ ] Live AnkiConnect reading goes away; `--deck` selects a deck of the library instead
-- [ ] Set the minimum Node version to what zstd + `node:sqlite` need without flags (verify;
-      likely Node 24 LTS)
+Done when: all three types can be quizzed in both modes, and scoring stays consistent.
 
-Definition cards
-- [ ] Card type "definition": shows the definition, you type the term (judging free-text
-      definitions isn't reliable, so the answer is always the term)
-- [ ] Import keeps definition cards instead of skipping them
+## Stage 3: Language pairs (0.4.0)
 
-## Phase 2: AI-assisted cards
+Branch `feature/languages`.
 
-With its own library, Dracosh needs a fast way to add cards; typing translations by hand
-isn't it.
-
-- [ ] `/add <word>`: AI returns a translation for the configured language pair, an example
-      sentence and alternatives; you confirm or edit before it's saved
-- [ ] Bring your own key (`ANTHROPIC_API_KEY`, Claude Haiku for cost); without a key, `/add`
-      asks for the translation manually
-- [ ] Same card format as the browser-extension pipeline, so both can feed one library
-
-## Phase 3: Generic language pairs
-
-- [ ] Language pair in settings (direction labels instead of hardcoded EN/PL); imported decks
-      can be in any language
-- [ ] `judge.js`: NFD folding is nearly generic already; extend the hand-mapped set
-      (`ł`, plus `ø`, `ß`, `đ`, …)
-- [ ] Tips as swappable packs; the current pack becomes `tips-en-for-pl`, open for community packs
+- [ ] Each deck has a front and back language (ISO codes); direction labels come from them
+      instead of the hardcoded EN → PL
+- [ ] Answer checking: diacritic folding for the supported languages, plus the letters that
+      don't fold on their own (ł, ø, ß, đ, æ, œ, ı, ё and others), with tests per language
+- [ ] Grammar tips become packs: the current one is `en-for-pl`; tips only show when a pack
+      matches the deck's languages
+- [ ] Pronunciation (optional, in settings): the word is spoken after the answer with a voice
+      for the deck's language; macOS `say` first, other systems in stage 7
 - [ ] UI copy audited for EN/PL assumptions
 
-## Phase 4: Cross-platform
+Done when: a deck in any supported pair quizzes correctly both ways, with fair answer checking.
 
-- [ ] Sound player fallback: `afplay` (macOS) → `paplay`/`aplay`/`ffplay` (Linux); the chiptune
-      WAVs stay as they are
-- [ ] Notifications: `osascript` (macOS) → `notify-send` (Linux)
-- [ ] Verify rendering on common terminals (iTerm2, Terminal.app, GNOME Terminal, Alacritty, kitty)
-- [ ] CI matrix: macOS + Ubuntu (`node --test`)
+## Stage 4: Import and export (0.5.0)
 
-## Phase 5: Release polish
+Branch `feature/import-export`. Moving cards between Dracosh and Anki in both directions.
 
-- [ ] README: hero GIF (recorded with `vhs`), quickstart (`npx dracosh`), short architecture notes
-- [ ] GitHub Actions: tests on push and PR
-- [ ] macOS notification icon = the mascot: PNG generated from the sprite grid (current evolution
-      stage) via `terminal-notifier -contentImage`; optionally an app bundle with a mascot `.icns`
-- [ ] CONTRIBUTING.md (short), issue templates (optional)
+Import (`dracosh import <file>`, or from the app)
+- [ ] `.txt` / `.tsv`: Anki's "Notes in Plain Text" export (tab-separated, first field = front,
+      HTML inside fields); `#separator`, `#html`, `#deck`, `#columns` headers honoured when present
+- [ ] `.csv`: `front,back,example` with an optional header row
+- [ ] `.apkg` / `.colpkg`: decks shared on AnkiWeb (a zip with an SQLite collection inside,
+      `collection.anki21b` is zstd-compressed). Media is skipped
+- [ ] Paste: copy rows from Quizlet's export, Google Sheets, Excel or any list and paste them
+      in (or `dracosh import --clipboard`). The separator is detected (tab, comma, semicolon,
+      ` - `, ` = `), and a preview of the first rows split into columns must be confirmed
+      before anything is saved. Tested with real exports from each of those sources
+- [ ] `dracosh import --anki ["Deck"]`: one-time copy from a running Anki through AnkiConnect,
+      with a deck picker
+- [ ] On import: pick or create the target deck, guess the card type, confirm the languages;
+      duplicates are merged; a summary shows what was added, updated and skipped
+
+Export (`dracosh export <file>`, or from the app)
+- [ ] `.txt`: Anki-ready, with `#separator:Tab`, `#html:true`, `#notetype:Basic`, `#deck:<name>`
+      headers, so File → Import in Anki (2.1.54+) needs no setup
+- [ ] `.csv` for spreadsheets
+- [ ] `.json`: a full backup of the library and progress, restorable with `dracosh import`
+- [ ] Not planned: writing `.apkg` (Anki's internal schema is complex and changes between
+      versions; plain text covers the same need)
+- [ ] Set the minimum Node version to what zstd and `node:sqlite` need without flags
+
+Done when: an AnkiWeb deck imports and quizzes; a Dracosh deck exported to `.txt` imports into
+Anki unchanged; a JSON backup restores everything.
+
+## Stage 5: Welcome flow and deck management (0.6.0)
+
+Branch `feature/onboarding`. Everything a new user needs, without reading the README.
+
+- [ ] First run, after the hatching: choose the language you speak and the one you're learning
+- [ ] Then: start with a demo deck, import a file, or create an empty deck
+- [ ] Short interactive tour of the quiz screen (answer, `/` commands, the dragon); skippable
+- [ ] `/decks`: list, create, rename, delete, pick the active deck, deck settings (type,
+      languages, answer mode, directions)
+- [ ] `/cards`: browse and search the active deck, add, edit and delete cards
+- [ ] Adding a card is the most-used flow and must feel effortless: `/add`, type or paste a
+      phrase, see the card preview, Enter saves, Tab edits a field, Esc cancels. Same flow from
+      the shell with `dracosh add`. Warns about duplicates
+- [ ] Deleting decks and cards as decided above: confirmation with counts, undo key, trash
+      (`/trash` to restore); also moving cards between decks and merging decks
+- [ ] `dracosh reset` removes all data after a confirmation, offering an export first
+- [ ] README: a short "Your data" section (where it lives, backups, uninstalling keeps it)
+
+Done when: someone who has never seen Dracosh installs it and reaches their first question
+without help, can manage decks and cards entirely in the app, and can't lose data by accident.
+
+## Stage 6: AI assistance (0.7.0)
+
+Branch `feature/ai`. Optional; everything works without it.
+
+- [ ] Settings: provider (Anthropic, or OpenAI-compatible with a base URL), model and API key;
+      key from an environment variable or stored in `~/.dracosh` with owner-only permissions,
+      never logged or exported
+- [ ] Presets for OpenAI, OpenRouter, Ollama (`http://localhost:11434/v1`) and LM Studio
+      (`http://localhost:1234/v1`)
+- [ ] `/add <word>`: suggests translations, an example sentence and alternatives for the deck's
+      languages; you accept, edit or reject before anything is saved
+- [ ] Help for definition and Q&A cards: suggest a definition, rephrase a question, check a card
+- [ ] With AI, adding a card takes two keys: paste a phrase, the translation and an example
+      appear in the preview, Enter saves
+- [ ] Generate a starter deck for any pair (offered in the welcome flow when AI is set up)
+- [ ] Natural voices (optional): pronunciation through the user's ElevenLabs or OpenAI key
+      instead of the system voice. Each card's audio is generated once and cached in
+      `~/.dracosh/audio`, so cost is per new card, not per review
+- [ ] Clear errors for a missing key, an unreachable local model or rate limits; costs stay
+      visible (small default models)
+
+Done when: the same `/add` flow works with an Anthropic key and with a local Ollama model, and
+a pasted phrase becomes a saved card in a few seconds.
+
+## Stage 7: Linux and Windows (0.8.0)
+
+Branch `feature/cross-platform`. macOS stays the reference.
+
+- [ ] Sounds: `afplay` (macOS), `paplay` / `aplay` / `ffplay` (Linux), PowerShell `SoundPlayer`
+      (Windows); silent if none is available
+- [ ] Notifications: `osascript` (macOS), `notify-send` (Linux), terminal bell on Windows
+      (native toasts later, if wanted)
+- [ ] Check rendering in common terminals: iTerm2, Terminal.app, GNOME Terminal, Alacritty,
+      kitty, Windows Terminal
+- [ ] Pronunciation on Linux (`espeak-ng`) and Windows (built-in speech through PowerShell)
+- [ ] `dracosh doctor`: checks Node, the sound player, speech, the data folder and the AI
+      connection, and says what to fix
+- [ ] `dracosh bug`: opens a GitHub issue prefilled with the version, OS, Node, terminal and
+      the doctor's report (never cards or personal data); plus an issue template on GitHub
+- [ ] CI matrix: macOS, Ubuntu, Windows
+
+Done when: CI is green on all three systems and the quiz plays sounds on each.
+
+## Stage 8: 1.0
+
+Branch `release/1.0`.
+
+- [ ] README: hero GIF (recorded with `vhs`), quickstart (`npx dracosh`), screenshots
+- [ ] GitHub Actions: tests and type checks on every push and PR
+- [ ] Panels shrink gracefully on narrow terminals
+- [ ] Vision setting: a colorblind-friendly mode (wrong letters underlined, not only red) and a
+      high-contrast palette
+- [ ] New version notice: at most once a day, a quiet line on start when npm has a newer
+      version; can be turned off
+- [ ] macOS notifications with the mascot as the icon (PNG generated from the sprite grid)
+- [ ] CONTRIBUTING.md, `good first issue` labels, issue templates
+- [ ] "Dracosh™" in the README header
+
+## Known issues
+
+UI bugs found along the way. Fixed on `main` if they affect the released version, otherwise on
+the current stage's branch.
+
+- (none listed yet)
+
+## Later
+
+Good ideas with no stage yet. They move into a stage only by a plan change.
+
+- FSRS scheduling (the algorithm modern Anki uses) as an alternative to Leitner boxes
+- Import from Kindle Vocabulary Builder (`vocab.db`: words with the sentence you met them in;
+  translations filled in by AI)
+- Markdown flashcards (`front :: back`, as used by Obsidian spaced-repetition plugins)
+- Homebrew install (`brew install dracosh`)
+- Voice answers: say the answer instead of typing it (speech-to-text through a local Whisper
+  model or the user's API key), which also makes it pronunciation practice
+- Translations of the app's own UI
 
 ## Brand protection
 
-Decided: Apache-2.0 for the code; the name and mascot are reserved as trademarks (NOTICE, README).
-A license never stops forks; what keeps the community here is being the active original.
+Apache-2.0 for the code; the name and mascot are reserved (NOTICE, README). A license never
+stops forks; what keeps the community here is being the active original.
 
-- [x] Claim the npm name `dracosh` with an early real release
-- [ ] Use "Dracosh™" in the README header (™ needs no registration; ® does)
+- [x] Claim the npm name `dracosh`
 - [ ] Register the domain `dracosh.com`
 - [ ] Later, if the project takes off: register the trademark (UPRP for Poland, or EUIPO for the
       whole EU), class 9 (software); check the EUIPO SME Fund for a fee refund first
-- [ ] Community: CONTRIBUTING.md, `good first issue` labels, quick replies to issues and PRs
+- [ ] Community: quick replies to issues and PRs
 
-## Open questions
+## Notes
 
-- **Repo name/handle**: `lynthius/dracosh`.
-  The GitHub username `dracosh` itself is taken by a dormant 2012 account, so no `dracosh` org.
-- **Naming neighbour**: `dbuzatto/dracoshell` (a tiling terminal, 2026) is the closest name in
-  the same space; different name, but worth knowing about.
+- Repo: `lynthius/dracosh`. The GitHub username `dracosh` is taken by a dormant 2012 account.
+- Naming neighbour: `dbuzatto/dracoshell` (a tiling terminal, 2026).

@@ -2,6 +2,14 @@
 
 A gamified language or definitions trainer for your terminal. It sits in a spare pane, challenges you every few minutes, and a small pixel dragon grows up as you keep your streak going.
 
+## Why Dracosh
+
+Learning a language usually means another hour in the evening, after a full day at the computer. I spent plenty of those evenings myself, and I wanted something that fits into the working day instead.
+
+The day is full of short waits: a build that takes a minute, tests running, an AI agent finishing a task for you. Dracosh turns those moments into practice. Instead of reaching for your phone, you answer a word or two, the dragon cheers, and you're back to work. A few minutes here and there add up, and your evenings stay yours.
+
+It's made for people who live in a terminal or spend most of the day at a computer, and it's meant to be fun, not one more chore.
+
 ## Features
 
 - Words come from your Anki deck (read-only, through AnkiConnect), so your Anki cards and schedule stay untouched
@@ -74,7 +82,16 @@ The quiz logic in `src/session.js` and `src/progress.js` does no I/O, which keep
 
 ## What's next
 
-Dracosh is moving away from needing a running Anki. Next up is its own card library, with import from Anki (plain-text exports and `.apkg` decks from AnkiWeb), CSV and JSON, and export back to Anki, so your cards can move between the two freely. After that: adding cards with AI translations, any language pair, and Linux support. See [PLAN.md](PLAN.md) for the details.
+Dracosh is moving away from needing a running Anki. Next up is its own card library, then:
+
+- term and definition cards and question and answer decks, not just words
+- any popular language pair, not just English and Polish
+- import from Anki (plain-text exports and `.apkg` decks from AnkiWeb), CSV and JSON, and export back to Anki
+- a guided first run, and managing decks and cards right in the app
+- optional AI help for writing cards, with your own API key or a local model
+- Linux and Windows
+
+See [PLAN.md](PLAN.md) for the stages.
 
 ## License
 
