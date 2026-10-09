@@ -20,7 +20,7 @@ const HELP = `Dracosh: a vocabulary and quiz trainer for your terminal
 Usage: dracosh [options]
        dracosh restore [number]   list your backups, or bring one back
 
-  --deck <name>    which deck of your library to quiz (default: the first one)
+  --deck <name>    quiz this deck of your library, this run only (default: the first one)
   --every <time>   pause between questions: 30s, 10m, 1h (default: ${formatInterval(DEFAULTS.everyMs)})
   --no-sound       turn sound effects off
   --volume <0-1>   sound volume (default: ${DEFAULTS.volume})

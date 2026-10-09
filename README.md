@@ -36,7 +36,7 @@ Want a tour first? `dracosh --preview` shows every screen and animation on made-
 ## Usage
 
 ```bash
-dracosh --deck "Spanish"   # quiz this deck from your library (default: the first one)
+dracosh --deck "Spanish"   # quiz this deck, this run only (default: the first one)
 dracosh --every 5m         # a word every 5 minutes instead of 10, this run only
 dracosh --no-sound
 dracosh --stats            # print your progress and exit

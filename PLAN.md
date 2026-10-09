@@ -54,6 +54,11 @@ Product (decided 2026-10-09)
 UX and data (decided 2026-10-09)
 - Simple by default. The quiz screen stays calm; everything else lives behind `/` commands and
   settings. A new feature earns a place on the main screen only if most people need it.
+- Each thing has one home. Everyday work happens inside the app (answering, `/add`, `/decks`,
+  `/settings`, `/help`) and choices made there are saved. Flags only set up one run
+  (`--deck`, `--every`, `--no-sound`) and are never saved. Shell commands are for data jobs
+  (`restore`, `--data`, later `import` and `export`). Nothing is added to the shell when the
+  app already does it.
 - Your data is yours and stays put: uninstalling Dracosh never touches `~/.dracosh`, so
   reinstalling brings everything back. `dracosh --data` shows where it lives.
 - Nothing is lost by accident: automatic backups, confirmations that say what will be removed
