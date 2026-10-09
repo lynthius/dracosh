@@ -86,16 +86,14 @@ The quiz logic in `src/session.js` and `src/progress.js` does no I/O, which keep
 
 ## What's next
 
-Dracosh now keeps its own card library. Next up:
+Dracosh now keeps its own card library, with a short tour and `/add` to start your own deck. Coming next, roughly in this order:
 
-- term and definition cards and question and answer decks, not just words
-- any popular language pair, not just English and Polish
-- import from Anki (plain-text exports and `.apkg` decks from AnkiWeb), CSV and JSON, and export back to Anki
-- a guided first run, and managing decks and cards right in the app
-- optional AI help for writing cards, with your own API key or a local model
-- Linux and Windows
-
-See [PLAN.md](PLAN.md) for the stages.
+- Card types: definitions and question and answer decks, not just words. For each deck you choose whether you type the answer or just check yourself.
+- More languages: decks in any language, with answer checking that forgives a missing accent in European languages and Cyrillic (other scripts are checked exactly), and the app itself in English, Polish, German, French and Ukrainian.
+- Import and export: Anki (plain-text exports and `.apkg` decks from AnkiWeb), CSV, JSON and pasted lists, and export back to Anki.
+- Decks and cards in the app: browse, edit and delete with undo, plus a welcome flow for new users.
+- Optional AI help for writing cards, with your own API key or a local model.
+- Linux and Windows.
 
 ## License
 
