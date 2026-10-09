@@ -50,15 +50,16 @@ Type the answer and press Enter. Press `/` for commands:
 | --- | --- |
 | `/hint` | reveal one more letter |
 | `/correct` | your answer was right after all; it's accepted from now on |
-| `/skip` | skip this word |
+| `/skip` | skip this card |
 | `/settings` | interval, daily goal, sound, quiet hours, weekends, tips, direction |
 | `/stats` | streak and a calendar of your month |
 | `/badges` | all badges and how to get them |
-| `/companion` | every form your dragon can take |
-| `/missed` | words you got wrong today |
+| `/companion` | your dragon, its element and the forms ahead |
+| `/missed` | cards you got wrong today |
 | `/tip` | a random grammar tip |
 | `/snooze 30m` | pause questions for a while |
 | `/vacation 7` | days off that keep your streak safe |
+| `/help` | the keys, how cards come back, the streak |
 | `/quit` | quit (you'll get a short session summary) |
 
 They're slash commands because "skip" and "quit" are perfectly good English answers.

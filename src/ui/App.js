@@ -15,6 +15,7 @@ import { BadgeUnlock } from "./BadgeUnlock.js";
 import { DieRoll } from "./DieRoll.js";
 import { Evolution } from "./Evolution.js";
 import { Hatch } from "./Hatch.js";
+import { Help } from "./Help.js";
 import { Missed } from "./Missed.js";
 import { Settings } from "./Settings.js";
 import { Stats } from "./Stats.js";
@@ -256,6 +257,7 @@ export function App({ session, deck, initialSettings, alerts, persistSettings, o
     if (name === "/companion") return setScreen("companion");
     if (name === "/tip") return setScreen("tip");
     if (name === "/missed") return setScreen("missed");
+    if (name === "/help") return setScreen("help");
     if (name === "/hint" && phase === "asking") return setHintLevel((level) => level + 1);
     if (name === "/vacation") {
       return session
@@ -350,6 +352,7 @@ export function App({ session, deck, initialSettings, alerts, persistSettings, o
   if (screen === "stats") return html`<${Box} flexDirection="column" marginY=${1}><${Stats} stats=${stats} getMonth=${session.month} onClose=${() => setScreen("quiz")} /><//>`;
   if (screen === "companion") return html`<${Box} flexDirection="column" marginY=${1}><${Companion} current=${stats.companion.index} best=${stats.streak.best} element=${stats.companion.element} roll=${stats.companion.roll} onClose=${() => setScreen("quiz")} /><//>`;
   if (screen === "tip") return html`<${Box} flexDirection="column" marginY=${1}><${Tip} nextTip=${session.nextTip} onClose=${() => setScreen("quiz")} /><//>`;
+  if (screen === "help") return html`<${Box} flexDirection="column" marginY=${1}><${Help} onClose=${() => setScreen("quiz")} /><//>`;
   if (screen === "missed") return html`<${Box} flexDirection="column" marginY=${1}><${Missed} getMissed=${session.missed} onClose=${() => setScreen("quiz")} /><//>`;
   if (screen === "badges") return html`<${Box} flexDirection="column" marginY=${1}><${Badges} badges=${stats.badges} fresh=${freshBadges} onClose=${() => setScreen("quiz")} /><//>`;
 

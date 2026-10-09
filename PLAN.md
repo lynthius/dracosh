@@ -101,7 +101,7 @@ Branch `feature/card-library`. Dracosh stops reading Anki live and quizzes from 
       don't exist yet: they call `backupNow()` when they land in stages 4 and 5. There is no
       library migration yet either, since this is format 1.)
 - [ ] `dracosh --data` prints where everything is stored
-- [ ] `/help`: keys (Enter, Esc, q, any key wakes the dragon), how it works (boxes, typos, daily
+- [x] `/help`: keys (Enter, Esc, q, any key wakes the dragon), how it works (boxes, typos, daily
       goal, streak, freezes) and the commands for your data outside the quiz. Up-to-date
       descriptions in the command menu
 - [ ] `/add` in the app, simple first version: with no deck of your own yet it asks for a deck

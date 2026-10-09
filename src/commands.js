@@ -4,12 +4,13 @@ export const COMMANDS = [
   { name: "/settings", hint: "Interval, quiet hours, sound, goal, tips" },
   { name: "/stats", hint: "Streak, month calendar and badges summary" },
   { name: "/badges", hint: "All badges and what unlocks them" },
-  { name: "/companion", hint: "Your companion's forms and moods" },
+  { name: "/companion", hint: "Your dragon, its element and the forms ahead" },
   { name: "/tip", aliases: ["/grammar"], hint: "Grammar tip: show a random one" },
-  { name: "/missed", hint: "Words you got wrong today" },
+  { name: "/missed", hint: "Cards you got wrong today" },
   { name: "/snooze", hint: "Pause questions: /snooze 30m, 2h, off" },
   { name: "/vacation", hint: "Days off that keep your streak: 7, 24.12 2.01, off" },
-  { name: "/skip", only: "asking", hint: "Skip this word" },
+  { name: "/skip", only: "asking", hint: "Skip this card" },
+  { name: "/help", aliases: ["/?"], hint: "Keys, how cards come back, the streak" },
   { name: "/quit", hint: "Exit Dracosh" }
 ];
 
