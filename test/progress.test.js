@@ -246,3 +246,10 @@ test("the ring stays locked while any other badge is missing", () => {
   answer(state, at("2026-10-05"));
   assert.equal(state.progress.badges["one-ring"], undefined);
 });
+
+test("badges unlocked before seen-tracking existed count as seen, so they don't all flash at once", () => {
+  const state = { items: {}, newToday: { date: "", count: 0 }, progress: { days: {}, streak: { count: 0, best: 0, lastGoalDay: null, freezes: 1, freezeWeek: "2026-10-05", freezesUsed: 0 }, badges: { hello: "2026-10-01", week: "2026-10-03" } } };
+  ensureProgress(state, at("2026-10-06"));
+  assert.deepEqual(state.progress.seenBadges.sort(), ["hello", "week"]);
+});
+

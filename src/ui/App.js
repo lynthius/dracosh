@@ -11,12 +11,14 @@ import { shouldShowTip } from "../tips.js";
 import { Badges } from "./Badges.js";
 import { Companion } from "./Companion.js";
 import { Confetti } from "./Confetti.js";
+import { BadgeUnlock } from "./BadgeUnlock.js";
 import { Evolution } from "./Evolution.js";
 import { Hatch } from "./Hatch.js";
 import { Missed } from "./Missed.js";
 import { Settings } from "./Settings.js";
 import { Stats } from "./Stats.js";
 import { Summary } from "./Summary.js";
+import { TheOne } from "./TheOne.js";
 import { Tip } from "./Tip.js";
 
 const SPINNER = ["⣾", "⣽", "⣻", "⢿", "⡿", "⣟", "⣯", "⣷"];
@@ -66,13 +68,18 @@ function Verdict({ outcome, question }) {
   `;
 }
 
+const BADGE_STAGGER_MS = 700; // several badges at once light up one after another
+
 function Cheers({ cheers }) {
+  const lines = cheers.filter((cheer) => cheer.kind !== "badge");
+  const badges = cheers.filter((cheer) => cheer.kind === "badge");
   return html`
     <${Box} flexDirection="column" paddingX=${1} marginTop=${1}>
-      ${cheers.map((cheer, i) => {
+      ${lines.map((cheer, i) => {
         const style = CHEER_STYLE[cheer.kind] ?? CHEER_STYLE.combo;
         return html`<${Text} key=${i} color=${style.color} bold>${style.icon} ${cheer.text}<//>`;
       })}
+      ${badges.map((badge, i) => html`<${BadgeUnlock} key=${badge.id} ...${badge} delay=${i * BADGE_STAGGER_MS} />`)}
     <//>
   `;
 }
@@ -105,7 +112,7 @@ export function App({ session, deck, initialSettings, alerts, persistSettings, o
   const exit = onExit ?? exitApp; // the preview gallery runs the quiz as a scene and takes quitting back to its menu
   const { stdout } = useStdout();
   const [settings, setSettings] = useState(initialSettings);
-  // quiz | settings | stats | badges | companion | tip | missed | evolve | summary | hatch
+  // quiz | settings | stats | badges | companion | tip | missed | evolve | the-one | summary | hatch
   const [screen, setScreen] = useState(() => (session.isFirstRun() ? "hatch" : "quiz"));
   const [tip, setTip] = useState(null);
   const [phase, setPhase] = useState("loading"); // loading | asking | waiting
@@ -121,6 +128,8 @@ export function App({ session, deck, initialSettings, alerts, persistSettings, o
   const [petEvent, setPetEvent] = useState(null); // { kind: "jump" | "shake", at } → a little hop or head-shake
   const [confetti, setConfetti] = useState(false);
   const [evolution, setEvolution] = useState(null); // { from, to, name } while the ceremony plays
+  const [freshBadges, setFreshBadges] = useState([]); // won since /badges was last opened; they light up there
+  const [ceremonies, setCeremonies] = useState([]); // full-screen moments still to show: "evolve", "the-one"
   const [lastActive, setLastActive] = useState(Date.now()); // last key press or new question: the dragon sleeps after a long gap
   const busy = useRef(false);
   const asleepRef = useRef(false);
@@ -171,7 +180,7 @@ export function App({ session, deck, initialSettings, alerts, persistSettings, o
   }, []);
 
   useEffect(() => {
-    if (phase !== "waiting" || screen === "summary" || screen === "evolve") return;
+    if (phase !== "waiting" || screen === "summary" || screen === "evolve" || screen === "the-one") return;
     if (now >= nextAt && !pauseEnd(now)) {
       alerts.ask();
       ask();
@@ -208,11 +217,24 @@ export function App({ session, deck, initialSettings, alerts, persistSettings, o
     bestCombo.current = Math.max(bestCombo.current, result.combo);
     setPetEvent({ kind: result.result === "wrong" ? "shake" : "jump", at: Date.now() });
     if (result.cheers.some((c) => c.kind === "goal")) setConfetti(true);
+    const queue = [];
     if (result.cheers.some((c) => c.kind === "evolve")) {
       const companion = session.stats().companion;
       setEvolution({ from: Math.max(0, companion.index - 1), to: companion.index, name: companion.name });
-      setScreen("evolve");
+      queue.push("evolve");
     }
+    if (result.cheers.some((c) => c.id === "one-ring")) queue.push("the-one");
+    if (queue.length) {
+      setCeremonies(queue.slice(1));
+      setScreen(queue[0]);
+    }
+  }
+
+  // after a full-screen ceremony: the next one if both happened at once, otherwise back to the quiz
+  function nextCeremony() {
+    const [next, ...rest] = ceremonies;
+    setCeremonies(rest);
+    setScreen(next ?? "quiz");
   }
 
   function runCommand(name, args = "") {
@@ -220,7 +242,15 @@ export function App({ session, deck, initialSettings, alerts, persistSettings, o
     if (name === "/quit") return requestExit();
     if (name === "/settings") return setScreen("settings");
     if (name === "/stats") return setScreen("stats");
-    if (name === "/badges") return setScreen("badges");
+    if (name === "/badges") {
+      return session
+        .openBadges()
+        .then((fresh) => {
+          setFreshBadges(fresh);
+          setScreen("badges");
+        })
+        .catch((err) => setProblem(err.message));
+    }
     if (name === "/companion") return setScreen("companion");
     if (name === "/tip") return setScreen("tip");
     if (name === "/missed") return setScreen("missed");
@@ -310,13 +340,14 @@ export function App({ session, deck, initialSettings, alerts, persistSettings, o
   if (screen === "evolve" && evolution)
     return html`<${Box} flexDirection="column" marginY=${1}><${Evolution} ...${evolution} onClose=${() => {
       setEvolution(null);
-      setScreen("quiz");
+      nextCeremony();
     }} /><//>`;
+  if (screen === "the-one") return html`<${Box} flexDirection="column" marginY=${1}><${TheOne} play=${alerts.play} onClose=${nextCeremony} /><//>`;
   if (screen === "stats") return html`<${Box} flexDirection="column" marginY=${1}><${Stats} stats=${stats} getMonth=${session.month} onClose=${() => setScreen("quiz")} /><//>`;
   if (screen === "companion") return html`<${Box} flexDirection="column" marginY=${1}><${Companion} current=${stats.companion.index} best=${stats.streak.best} onClose=${() => setScreen("quiz")} /><//>`;
   if (screen === "tip") return html`<${Box} flexDirection="column" marginY=${1}><${Tip} nextTip=${session.nextTip} onClose=${() => setScreen("quiz")} /><//>`;
   if (screen === "missed") return html`<${Box} flexDirection="column" marginY=${1}><${Missed} getMissed=${session.missed} onClose=${() => setScreen("quiz")} /><//>`;
-  if (screen === "badges") return html`<${Box} flexDirection="column" marginY=${1}><${Badges} badges=${stats.badges} onClose=${() => setScreen("quiz")} /><//>`;
+  if (screen === "badges") return html`<${Box} flexDirection="column" marginY=${1}><${Badges} badges=${stats.badges} fresh=${freshBadges} onClose=${() => setScreen("quiz")} /><//>`;
 
   return html`
     <${Box} flexDirection="column" marginY=${1}>

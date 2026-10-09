@@ -171,3 +171,13 @@ test("the hatching intro plays only on a brand-new state, and only once", async 
   assert.equal(veteran.session.isFirstRun(), false, "someone who already answered never sees the egg");
   assert.equal(state.hatched, true);
 });
+
+test("/badges lights up badges won since the last visit, in the order they were won, once", async () => {
+  const { session, state } = setup();
+  assert.deepEqual(await session.openBadges(), [], "nothing won yet");
+  const q = await session.next();
+  await session.answer(q, q.expected[0]); // first correct answer: "Hello!"
+  assert.deepEqual(await session.openBadges(), ["hello"]);
+  assert.deepEqual(await session.openBadges(), [], "seen now, so it doesn't light up again");
+  assert.ok(state.progress.seenBadges.includes("hello"));
+});

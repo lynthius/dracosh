@@ -34,6 +34,8 @@ export function ensureProgress(state, now = Date.now()) {
     vacations: []
   };
   state.progress.vacations ??= [];
+  // badges already shown in /badges; ones unlocked before this was tracked count as seen, so they don't all flash at once
+  state.progress.seenBadges ??= Object.keys(state.progress.badges);
   // one free freeze per calendar week, never more than MAX_FREEZES in stock
   const week = weekStart(dayKey(now));
   const { streak } = state.progress;
@@ -178,7 +180,7 @@ export const BADGES = [
 
 
   // keep this one last: it checks the others, including any unlocked earlier in the same answer
-  { id: "one-ring", name: "The One", desc: "every other badge", test: (s) => BADGES.every((b) => b.id === "one-ring" || s.badges[b.id]) }
+  { id: "one-ring", name: "The One...", desc: "every other badge", test: (s) => BADGES.every((b) => b.id === "one-ring" || s.badges[b.id]) }
 ];
 
 function collectStats(state, now, goal) {
@@ -232,7 +234,7 @@ function award(state, progress, day, today, { correct, goal, rules, now, daysAwa
   for (const badge of BADGES) {
     if (!progress.badges[badge.id] && badge.test(stats)) {
       progress.badges[badge.id] = today;
-      cheers.push({ kind: "badge", text: `Badge unlocked: ${badge.name} · ${badge.desc}` });
+      cheers.push({ kind: "badge", id: badge.id, name: badge.name, desc: badge.desc, text: `Badge unlocked: ${badge.name} · ${badge.desc}` });
     }
   }
   return cheers;
@@ -363,4 +365,20 @@ export function missedOn(state, { offset = 0, now = Date.now() } = {}) {
     })
     .sort((a, b) => b.at - a.at);
   return { date, items };
+}
+
+// ---- badges you haven't looked at yet (they light up when /badges opens) ----------------------------------
+
+// → ids of badges unlocked but not yet seen in /badges, in the order they were won
+export function unseenBadges(state, now = Date.now()) {
+  const progress = ensureProgress(state, now);
+  return BADGES.map((badge, index) => ({ id: badge.id, index, on: progress.badges[badge.id] }))
+    .filter((b) => b.on && !progress.seenBadges.includes(b.id))
+    .sort((a, b) => (a.on === b.on ? a.index - b.index : a.on < b.on ? -1 : 1))
+    .map((b) => b.id);
+}
+
+export function markBadgesSeen(state, now = Date.now()) {
+  const progress = ensureProgress(state, now);
+  progress.seenBadges = Object.keys(progress.badges);
 }

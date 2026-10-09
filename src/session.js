@@ -1,6 +1,6 @@
 import { directionsFor } from "./settings.js";
 import { closestCandidate, judge } from "./judge.js";
-import { addVacation, applyAnswer, applyOverrule, calendarMonth, cancelVacations, ensureProgress, missedOn, recordMiss, snapshot, undoMiss, vacationInfo } from "./progress.js";
+import { addVacation, applyAnswer, applyOverrule, calendarMonth, cancelVacations, ensureProgress, markBadgesSeen, missedOn, recordMiss, snapshot, undoMiss, unseenBadges, vacationInfo } from "./progress.js";
 import { describeDue, grade, itemKey, pickNext } from "./scheduler.js";
 import { recordAnswer, saveState } from "./store.js";
 import { createTipDeck } from "./tips.js";
@@ -125,5 +125,15 @@ export function createSession({ loadWords, state, getSettings, save = saveState,
     await save(state);
   }
 
-  return { totals, next, answer, overrule, canOverrule, stats, month, missed, nextTip, vacation, isFirstRun, markHatched };
+  // /badges: the ones won since it was last opened, which light up one by one; opening it marks them seen
+  async function openBadges() {
+    const fresh = unseenBadges(state, now());
+    if (fresh.length) {
+      markBadgesSeen(state, now());
+      await save(state);
+    }
+    return fresh;
+  }
+
+  return { totals, next, answer, overrule, canOverrule, stats, month, missed, nextTip, vacation, isFirstRun, markHatched, openBadges };
 }

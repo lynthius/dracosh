@@ -71,6 +71,9 @@ UX and data (decided 2026-10-09)
 
 Branch `feature/card-library`. Dracosh stops reading Anki live and quizzes from its own library.
 
+- [x] Badge unlocks animate under the card (the name flashes into its rank color); "The One"
+      gets a full-screen ceremony, a ring rising from lava; badges won since the last visit
+      light up one by one when `/badges` opens; all of it in `--preview`
 - [x] Library file `~/.dracosh/library.json` with a schema version:
       decks `{ id, name, type, languages: { front, back }, answerMode, directions }` and
       cards `{ id, deckId, front, back[], example, tags, created, updated, ankiNoteId? }`

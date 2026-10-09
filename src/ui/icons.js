@@ -166,6 +166,8 @@ ICONS.ring = {
   ]
 };
 
+export const RING = ICONS.ring;
+
 // which icon each badge gets, by badge id
 const ICON_FOR = {
   hello: "trophy",
@@ -243,9 +245,11 @@ function paletteFor(id, icon) {
 // the color that stands for an unlocked badge in lists: its rank color, or gold for untiered ones
 export const badgeColor = (id) => tierOf(id)?.main ?? TIERS[2].main;
 
-export function BadgeIcon({ id, locked = false }) {
+// `locked` greys the icon out; `flash` whites it out (a frame of a badge lighting up in /badges)
+export function BadgeIcon({ id, locked = false, flash = false }) {
   const icon = ICONS[ICON_FOR[id]] ?? ICONS.star;
-  const palette = locked ? Object.fromEntries(Object.keys(icon.palette).map((k) => [k, LOCKED_COLOR])) : paletteFor(id, icon);
+  const flat = (color) => Object.fromEntries(Object.keys(icon.palette).map((k) => [k, color]));
+  const palette = flash ? flat("#ffffff") : locked ? flat(LOCKED_COLOR) : paletteFor(id, icon);
   return html`<${PixelGrid} grid=${icon.grid.map((row) => [...row])} palette=${palette} />`;
 }
 

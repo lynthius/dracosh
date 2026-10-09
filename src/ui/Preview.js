@@ -6,6 +6,7 @@ import { BADGES, ensureProgress, STAGES } from "../progress.js";
 import { createSession } from "../session.js";
 import { DEFAULTS } from "../settings.js";
 import { App } from "./App.js";
+import { BadgeUnlock } from "./BadgeUnlock.js";
 import { Badges } from "./Badges.js";
 import { Confetti } from "./Confetti.js";
 import { Evolution } from "./Evolution.js";
@@ -15,6 +16,7 @@ import { html, PANEL_WIDTH, theme } from "./kit.js";
 import { Mascot } from "./Mascot.js";
 import { Stats } from "./Stats.js";
 import { Summary } from "./Summary.js";
+import { TheOne } from "./TheOne.js";
 
 // Everything here runs on made-up data in memory: nothing is read from or written to ~/.dracosh.
 
@@ -84,6 +86,27 @@ function MascotLab({ onBack }) {
   `;
 }
 
+// three badges won with one answer, lighting up one after another, as under the quiz card
+const UNLOCK_SAMPLE = ["thousand", "hot-streak", "dragons-hoard"];
+
+function BadgeUnlockLab({ onBack }) {
+  const [run, setRun] = useState(1);
+  useInput((input, key) => {
+    if (key.escape || input === "q") return onBack();
+    if (key.return || input === " ") setRun((r) => r + 1);
+  });
+  const badges = UNLOCK_SAMPLE.map((id) => BADGES.find((badge) => badge.id === id));
+  return html`
+    <${Fragment}>
+      <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.good} paddingX=${2} width=${PANEL_WIDTH}>
+        <${Text} color=${theme.good} bold>✓ dragon<//>
+        ${badges.map((badge, i) => html`<${BadgeUnlock} key=${`${run}-${badge.id}`} id=${badge.id} name=${badge.name} desc=${badge.desc} delay=${i * 700} />`)}
+      <//>
+      <${Box} paddingX=${1}><${Text} dimColor>enter replay · esc back<//><//>
+    <//>
+  `;
+}
+
 function ConfettiLab({ onBack }) {
   const [run, setRun] = useState(1);
   useInput((input, key) => {
@@ -106,9 +129,11 @@ const SCENES = [
   ...STAGES.slice(1).map((stage, i) => ({ id: `evolve-${i + 1}`, label: `Evolution → ${stage.name}`, hint: `reached at a ${stage.from}-day best streak` })),
   { id: "mascot", label: "Mascot lab", hint: "forms, faces, sleep, hop, shake, glow" },
   { id: "quiz", label: "Quiz", hint: "a live round on demo words, goal at 5" },
+  { id: "unlock", label: "Badge unlocked", hint: "three badges won at once" },
+  { id: "the-one", label: "The One...", hint: "the ring rises from the lava" },
   { id: "confetti", label: "Confetti", hint: "the daily-goal burst" },
   { id: "stats", label: "Stats", hint: "calendar tiles, weeks of fake history" },
-  { id: "badges", label: "Badges", hint: "all of them unlocked, in color" },
+  { id: "badges", label: "Badges", hint: "all unlocked, three of them new" },
   { id: "summary", label: "Session summary", hint: "what you see when quitting" }
 ];
 
@@ -170,11 +195,13 @@ export function Preview({ alerts }) {
   }
   if (scene === "mascot") return wrap(html`<${MascotLab} onBack=${back} />`);
   if (scene === "confetti") return wrap(html`<${ConfettiLab} onBack=${back} />`);
+  if (scene === "unlock") return wrap(html`<${BadgeUnlockLab} onBack=${back} />`);
+  if (scene === "the-one") return wrap(html`<${TheOne} key=${run} play=${alerts.play} onClose=${back} />`);
   if (scene === "stats") return wrap(html`<${Stats} stats=${history.stats()} getMonth=${history.month} onClose=${back} />`);
   if (scene === "badges") {
     // every badge unlocked, so each icon and rank color can be seen
     const all = history.stats().badges.map((badge) => ({ ...badge, unlockedOn: badge.unlockedOn ?? dayKey(Date.now()) }));
-    return wrap(html`<${Badges} badges=${all} onClose=${back} />`);
+    return wrap(html`<${Badges} key=${run} badges=${all} fresh=${["thousand", "hot-streak", "dragonheart"]} onClose=${back} />`);
   }
   if (scene === "summary")
     return wrap(html`<${Summary} stats=${history.stats()} totals=${{ asked: 23, correct: 20 }} bestCombo=${9} onDone=${back} />`);
