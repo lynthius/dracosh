@@ -101,13 +101,22 @@ Branch `feature/card-library`. Dracosh stops reading Anki live and quizzes from 
       don't exist yet: they call `backupNow()` when they land in stages 4 and 5. There is no
       library migration yet either, since this is format 1.)
 - [ ] `dracosh --data` prints where everything is stored
-- [ ] `dracosh add "word" "translation"` to add a card from any terminal, also while the quiz
-      runs in another pane
+- [ ] `/help`: keys (Enter, Esc, q, any key wakes the dragon), how it works (boxes, typos, daily
+      goal, streak, freezes) and the commands for your data outside the quiz. Up-to-date
+      descriptions in the command menu
+- [ ] `/add` in the app, simple first version: with no deck of your own yet it asks for a deck
+      name first, then front and back (an example is optional). Everything is done inside the
+      app; shell commands are only for data jobs (restore, data, later import and export)
+- [ ] The tour is asked once, card by card: its cards never come back as reviews (a "get this
+      one wrong" card returning later only confuses). It ends with "Now make it yours: type /add".
+      Once you have a deck of your own, Dracosh switches to it and removes the tour (a backup is
+      made first)
 - [x] `--deck` picks a library deck; live AnkiConnect reading is removed. No migration from
       0.1.0 (it had no users besides the author); Anki decks come in through import in stage 4
 
-Done when: a fresh install quizzes the "Getting started" deck with no Anki; backups are written
-and restorable; tests cover the library, backups and progress mapping.
+Done when: a fresh install quizzes the "Getting started" deck with no Anki and leads you to your
+own first deck and card without leaving the app; backups are written and restorable; tests cover
+the library, backups and progress mapping.
 
 ## Stage 2: Card types and answer modes (0.3.0)
 
@@ -190,13 +199,15 @@ Branch `feature/onboarding`. Everything a new user needs, without reading the RE
       languages, answer mode, directions)
 - [ ] `/cards`: browse and search the active deck, add, edit and delete cards
 - [ ] Adding a card is the most-used flow and must feel effortless: `/add`, type or paste a
-      phrase, see the card preview, Enter saves, Tab edits a field, Esc cancels. Same flow from
-      the shell with `dracosh add`. Warns about duplicates
+      phrase, see the card preview, Enter saves, Tab edits a field, Esc cancels. Builds on the
+      simple `/add` from stage 1. Warns about duplicates. (`dracosh add` from the shell: later,
+      if people ask for it)
 - [ ] Deleting decks and cards as decided above: confirmation with counts, undo key, trash
       (`/trash` to restore); also moving cards between decks and merging decks
-- [ ] `dracosh reset` removes all data after a confirmation, offering an export first
-- [ ] `/settings` → reset progress: badges, streaks, stats, the dragon's form and element start
-      over; cards and how well you know them stay. Confirmation and a backup first
+- [ ] `/settings` → Reset asks what to clear: "Progress" (badges, streak, stats, the dragon's
+      form and element start over; decks, cards and their boxes stay) or "Everything" (a fresh
+      install with the tour). Shows what goes ("2 decks · 349 cards · 41 badges"), asks for a
+      confirmation and makes a backup first, so `dracosh restore` can undo it
 - [ ] `/settings` → default dragon look: drops the element for good (no way back), confirmed
 - [ ] README: a short "Your data" section (where it lives, backups, uninstalling keeps it)
 
