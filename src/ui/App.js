@@ -166,7 +166,8 @@ export function App({ session, deck, initialSettings, alerts, persistSettings, o
       setOutcome(null);
       setPhase("asking");
     } catch (err) {
-      setProblem(err.message);
+      if (err.tourDone) setNotice(err.message);
+      else setProblem(err.message);
       waitForNext();
     }
   }, [session, waitForNext]);

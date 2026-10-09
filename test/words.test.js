@@ -68,15 +68,18 @@ test("a one-way deck is never asked in reverse and shows its name on the card", 
   }
 });
 
-test("the tour comes in order, and every card says what to type", async () => {
+test("the tour is asked once, in order, and every card says what to type", async () => {
   const { words } = await loadWords(STARTER_DECK);
   const session = sessionOn(STARTER_DECK);
   for (const word of words) {
     const q = await session.next();
     assert.equal(q.word.noteId, word.noteId);
-    assert.ok(word.translations.some((t) => word.word.toLowerCase().includes(t.toLowerCase())), `"${word.word}" names its answer`);
-    await session.answer(q, q.expected[0]);
+    const onPurpose = word.word.includes("wrong on purpose");
+    const named = word.translations.some((t) => word.word.toLowerCase().includes(t.toLowerCase()));
+    assert.equal(named, !onPurpose, `"${word.word}" names its answer, unless you're meant to miss it`);
+    await session.answer(q, onPurpose ? "dog" : q.expected[0]);
   }
+  await assert.rejects(session.next(), (err) => err.tourDone === true, "once through, the tour is done: nothing comes back as a review");
 });
 
 test("a language deck labels the card with its pair, both ways", async () => {

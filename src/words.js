@@ -10,5 +10,5 @@ export async function loadWords(deckRef) {
     const names = library.decks.map((d) => `"${d.name}"`).join(", ");
     throw new Error(deckRef ? `There's no deck called "${deckRef}". Your decks: ${names || "none yet"}.` : "Your library has no decks yet.");
   }
-  return { words: toWords(cardsOf(library, deck.id)), deck: { name: deck.name, languages: deck.languages, directions: deck.directions, ordered: Boolean(deck.ordered) } };
+  return { words: toWords(cardsOf(library, deck.id)), deck: { name: deck.name, languages: deck.languages, directions: deck.directions, tour: Boolean(deck.tour) } };
 }

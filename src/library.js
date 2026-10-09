@@ -36,7 +36,7 @@ export function upgradeLibrary(raw) {
 export const findDeck = (library, nameOrId) =>
   library.decks.find((deck) => deck.id === nameOrId) ?? library.decks.find((deck) => sameName(deck.name, nameOrId)) ?? null;
 
-export function createDeck(library, { name, type = "translation", languages = { front: "en", back: "pl" }, answerMode, directions = "both", ordered = false, now = Date.now() }) {
+export function createDeck(library, { name, type = "translation", languages = { front: "en", back: "pl" }, answerMode, directions = "both", tour = false, now = Date.now() }) {
   const trimmed = String(name ?? "").trim();
   if (!trimmed) throw new Error("A deck needs a name.");
   if (findDeck(library, trimmed)) throw new Error(`There is already a deck called "${trimmed}".`);
@@ -44,7 +44,7 @@ export function createDeck(library, { name, type = "translation", languages = { 
   const mode = answerMode ?? DEFAULT_ANSWER_MODE[type];
   if (!ANSWER_MODES.includes(mode)) throw new Error(`Unknown answer mode "${mode}".`);
 
-  const deck = { id: newId("d"), name: trimmed, type, languages: languages ? { ...languages } : null, answerMode: mode, directions, ordered, created: now };
+  const deck = { id: newId("d"), name: trimmed, type, languages: languages ? { ...languages } : null, answerMode: mode, directions, tour, created: now };
   library.decks.push(deck);
   return deck;
 }

@@ -28,7 +28,8 @@ export function createSession({ loadWords, state, getSettings, save = saveState,
 
   async function next() {
     const { words, deck } = await loadWords();
-    const item = pickNext({ words, state, now: now(), lastNoteId, directions: directionsOf(deck), ordered: deck?.ordered });
+    const item = pickNext({ words, state, now: now(), lastNoteId, directions: directionsOf(deck), tour: deck?.tour });
+    if (!item && deck?.tour) throw Object.assign(new Error("You've finished the tour."), { tourDone: true });
     if (!item) throw new Error(words.length ? "No words to ask about." : `The deck "${deck?.name}" has no cards yet.`);
     lastNoteId = item.word.noteId;
     lastWrong = null;
