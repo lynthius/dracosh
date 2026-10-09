@@ -1,0 +1,57 @@
+import assert from "node:assert/strict";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { test } from "node:test";
+
+process.env.DRACOSH_HOME = mkdtempSync(join(tmpdir(), "dracosh-"));
+const { loadLibrary, saveLibrary } = await import("../src/store.js");
+const { seedLibrary, STARTER_DECK } = await import("../src/starter.js");
+const { addCardTo, allDecks, existingCard, ownDecks, startDeck } = await import("../src/manage.js");
+const { listBackups } = await import("../src/backup.js");
+const { loadWords } = await import("../src/words.js");
+const { createSession } = await import("../src/session.js");
+const { DEFAULTS } = await import("../src/settings.js");
+
+test("with only the tour there is no deck to add to yet", async () => {
+  const library = await loadLibrary();
+  seedLibrary(library);
+  await saveLibrary(library);
+  assert.deepEqual(await ownDecks(), []);
+});
+
+test("your first deck replaces the tour, after a backup, and drops the tour's progress", async () => {
+  const tourIds = (await loadLibrary()).cards.map((c) => c.id);
+  const state = { items: Object.fromEntries(tourIds.map((id) => [`${id}:en-pl`, { box: 1 }])), newToday: { date: "", count: 0 } };
+
+  const { deck, removed } = await startDeck({ name: "Spanish", bothWays: true });
+  assert.deepEqual(removed.sort(), [...tourIds].sort());
+  const library = await loadLibrary();
+  assert.deepEqual(library.decks.map((d) => d.name), ["Spanish"]);
+  assert.equal(library.cards.length, 0);
+  assert.equal(deck.directions, "both");
+  assert.ok((await listBackups()).some((b) => b.reason === "before-delete" && b.cards === tourIds.length));
+
+  const session = createSession({ loadWords: () => loadWords(), state, getSettings: () => DEFAULTS, save: async () => {} });
+  await session.forget(removed);
+  assert.deepEqual(state.items, {});
+  await assert.rejects(session.next(), (err) => err.empty && !err.tour, "an empty deck of your own is a state, not a crash");
+  assert.equal(seedLibrary(await loadLibrary()), false, "the tour doesn't come back");
+});
+
+test("cards go into your deck, and a front that's already there is caught", async () => {
+  const { card } = await addCardTo("Spanish", { front: "gato", back: ["cat", "kitty"], example: "" });
+  assert.ok(card);
+  assert.equal((await existingCard("Spanish", "Gato")).id, card.id);
+  assert.equal(await existingCard("Spanish", "perro"), null);
+  assert.ok((await addCardTo("Spanish", { front: "gato", back: ["cat"] })).duplicate);
+  assert.equal((await loadWords()).words.length, 1);
+});
+
+test("more decks can follow, and each one lists its cards", async () => {
+  const { removed } = await startDeck({ name: "Biology", bothWays: false });
+  assert.deepEqual(removed, [], "no tour left to remove");
+  await addCardTo("Biology", { front: "What do mitochondria make?", back: ["energy", "ATP"] });
+  assert.deepEqual(await ownDecks(), [{ name: "Spanish", cards: 1 }, { name: "Biology", cards: 1 }]);
+  assert.deepEqual(await allDecks(), [{ name: "Spanish", cards: 1, tour: false }, { name: "Biology", cards: 1, tour: false }]);
+});

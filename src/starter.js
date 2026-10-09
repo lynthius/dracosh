@@ -16,7 +16,7 @@ const STARTER_CARDS = [
   { front: "Type / at any time to see all commands. Try /badges after this card. For now, type: ok", back: ["ok", "okay"], example: "/stats shows your calendar, /companion your dragon, /settings how often cards come." },
   { front: "Answer cards every day to keep your streak. Your dragon grows with it. Type: every day", back: ["every day", "everyday", "daily"], example: "Miss a day and a freeze saves your streak, if you have one left." },
   { front: "Need a break? /snooze 1h pauses the cards for an hour. For now, type: later", back: ["later"], example: "Leave Dracosh alone for a few minutes and the dragon dozes off. Any key wakes it." },
-  { front: "That's the tour! Your own decks are next: see dracosh --help. Type: done", back: ["done"], example: "This deck stays here for practice. Have fun!" }
+  { front: "That's the tour! Type: done", back: ["done"], example: "Now make it yours: type /add to start your own deck. The tour makes room for it." }
 ];
 
 // the tour as an earlier version created it (the first one had no version number yet)

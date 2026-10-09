@@ -29,7 +29,7 @@ You need Node 22 or newer.
 npm install -g dracosh
 ```
 
-A fresh install starts with a short "Getting started" deck: a tour where every card tells you what to type and shows you one more thing Dracosh can do. Importing your own decks (from Anki, CSV and more) and adding cards in the app are next on the list, see [What's next](#whats-next).
+A fresh install starts with a short "Getting started" deck: a tour where every card tells you what to type and shows you one more thing Dracosh can do. When you're through, `/add` starts your own deck and the tour makes room for it. Importing decks (from Anki, CSV and more) is on the way, see [What's next](#whats-next).
 
 Want a tour first? `dracosh --preview` shows every screen and animation on made-up data.
 
@@ -48,6 +48,8 @@ Type the answer and press Enter. Press `/` for commands:
 
 | Command | What it does |
 | --- | --- |
+| `/add` | add cards to one of your decks, or start a new deck |
+| `/decks` | switch to another deck; Dracosh remembers it |
 | `/hint` | reveal one more letter |
 | `/correct` | your answer was right after all; it's accepted from now on |
 | `/skip` | skip this card |

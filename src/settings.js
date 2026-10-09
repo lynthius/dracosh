@@ -1,4 +1,4 @@
-export const DEFAULTS = { everyMs: 600_000, sound: true, volume: 0.5, dailyGoal: 20, directions: "both", tips: "always", quiet: null, skipWeekends: true };
+export const DEFAULTS = { everyMs: 600_000, sound: true, volume: 0.5, dailyGoal: 20, directions: "both", tips: "always", quiet: null, skipWeekends: true, deck: null };
 
 export const INTERVALS = [60_000, 120_000, 300_000, 600_000, 900_000, 1_200_000, 1_800_000, 2_700_000, 3_600_000];
 export const GOALS = [5, 10, 15, 20, 25, 30, 40, 50, 75, 100, 150, 200];
@@ -34,7 +34,8 @@ export function normalizeSettings(raw = {}) {
     directions: DIRECTION_OPTIONS.includes(raw.directions) ? raw.directions : DEFAULTS.directions,
     tips: normalizeTips(raw.tips),
     skipWeekends: typeof raw.skipWeekends === "boolean" ? raw.skipWeekends : DEFAULTS.skipWeekends,
-    quiet: raw.quiet && isHour(raw.quiet.from) && isHour(raw.quiet.to) ? { from: raw.quiet.from, to: raw.quiet.to } : null
+    quiet: raw.quiet && isHour(raw.quiet.from) && isHour(raw.quiet.to) ? { from: raw.quiet.from, to: raw.quiet.to } : null,
+    deck: typeof raw.deck === "string" && raw.deck.trim() ? raw.deck : null // picked in /decks; null = your first deck
   };
 }
 

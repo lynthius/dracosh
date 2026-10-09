@@ -49,6 +49,14 @@ export function createDeck(library, { name, type = "translation", languages = { 
   return deck;
 }
 
+// → the ids of the cards that went with it, so their progress can be dropped too
+export function removeDeck(library, deckId) {
+  const removed = cardsOf(library, deckId).map((card) => card.id);
+  library.decks = library.decks.filter((deck) => deck.id !== deckId);
+  library.cards = library.cards.filter((card) => card.deckId !== deckId);
+  return removed;
+}
+
 export const cardsOf = (library, deckId) => library.cards.filter((card) => card.deckId === deckId);
 
 // a card with the same front (ignoring case, accents and punctuation) in the same deck

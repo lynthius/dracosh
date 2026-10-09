@@ -1,6 +1,8 @@
 // `only` limits a command to one phase: "asking" (a question is open) or "waiting" (between questions)
 export const COMMANDS = [
   { name: "/hint", only: "asking", hint: "Reveal another letter (the card won't climb a box)" },
+  { name: "/add", hint: "Add cards to a deck, or start a new one" },
+  { name: "/decks", hint: "Switch to another deck" },
   { name: "/settings", hint: "Interval, quiet hours, sound, goal, tips" },
   { name: "/stats", hint: "Streak, month calendar and badges summary" },
   { name: "/badges", hint: "All badges and what unlocks them" },

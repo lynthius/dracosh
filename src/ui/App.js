@@ -15,6 +15,8 @@ import { BadgeUnlock } from "./BadgeUnlock.js";
 import { DieRoll } from "./DieRoll.js";
 import { Evolution } from "./Evolution.js";
 import { Hatch } from "./Hatch.js";
+import { AddCard } from "./AddCard.js";
+import { Decks } from "./Decks.js";
 import { Help } from "./Help.js";
 import { Missed } from "./Missed.js";
 import { Settings } from "./Settings.js";
@@ -100,6 +102,20 @@ function CardTop({ label, width, color }) {
   `;
 }
 
+// what the quiz shows when the deck has nothing to ask: no countdown, just the way on
+function EmptyDeck({ deck, tour, width }) {
+  const [title, next] = tour ? ["You've finished the tour.", "Now make it yours: type /add to start your own deck."] : [`"${deck}" has no cards yet.`, "Type /add to add the first one."];
+  return html`
+    <${Box} flexDirection="column" width=${width}>
+      <${CardTop} label=${deck} width=${width} color=${theme.accent} />
+      <${Box} flexDirection="column" borderStyle="round" borderTop=${false} borderColor=${theme.accent} paddingX=${2} paddingY=${1}>
+        <${Text} bold>${title}<//>
+        <${Text}>${next}<//>
+      <//>
+    <//>
+  `;
+}
+
 function TipBox({ tip, width }) {
   return html`
     <${Box} flexDirection="column" paddingX=${1} marginTop=${2} width=${width}>
@@ -109,15 +125,19 @@ function TipBox({ tip, width }) {
   `;
 }
 
-export function App({ session, deck, initialSettings, alerts, persistSettings, onExit }) {
+// `library` holds the /add actions (src/manage.js) and `onSwitchDeck` points the session at another
+// deck; the preview gallery passes neither.
+export function App({ session, deck: initialDeck, initialSettings, alerts, persistSettings, onExit, library, onSwitchDeck }) {
   const { exit: exitApp } = useApp();
   const exit = onExit ?? exitApp; // the preview gallery runs the quiz as a scene and takes quitting back to its menu
   const { stdout } = useStdout();
   const [settings, setSettings] = useState(initialSettings);
-  // quiz | settings | stats | badges | companion | tip | missed | evolve | the-one | die | summary | hatch
+  const [deck, setDeck] = useState(initialDeck);
+  const [empty, setEmpty] = useState(null); // { tour } when the deck has nothing to ask: a finished tour or no cards yet
+  // quiz | settings | add | decks | stats | badges | companion | tip | help | missed | evolve | the-one | die | summary | hatch
   const [screen, setScreen] = useState(() => (session.isFirstRun() ? "hatch" : "quiz"));
   const [tip, setTip] = useState(null);
-  const [phase, setPhase] = useState("loading"); // loading | asking | waiting
+  const [phase, setPhase] = useState("loading"); // loading | asking | waiting | empty
   const [question, setQuestion] = useState(null);
   const [outcome, setOutcome] = useState(null);
   const [problem, setProblem] = useState("");
@@ -164,11 +184,17 @@ export function App({ session, deck, initialSettings, alerts, persistSettings, o
       const next = await session.next();
       setQuestion(next);
       setOutcome(null);
+      setEmpty(null);
       setPhase("asking");
     } catch (err) {
-      if (err.tourDone) setNotice(err.message);
-      else setProblem(err.message);
-      waitForNext();
+      if (!err.empty) {
+        setProblem(err.message);
+        return waitForNext();
+      }
+      setQuestion(null);
+      setOutcome(null);
+      setEmpty({ tour: err.tour });
+      setPhase("empty");
     }
   }, [session, waitForNext]);
 
@@ -203,10 +229,10 @@ export function App({ session, deck, initialSettings, alerts, persistSettings, o
   });
 
   useInput((input, key) => {
-    if (screen !== "quiz" || phase !== "waiting" || commandMode) return;
+    if (screen !== "quiz" || (phase !== "waiting" && phase !== "empty") || commandMode) return;
     if (input === "/") return setCommandMode(true);
     if (key.escape || input === "q") return requestExit();
-    if (key.return) ask();
+    if (key.return && phase === "waiting") ask();
   });
 
   const clearProblem = useCallback(() => {
@@ -259,6 +285,8 @@ export function App({ session, deck, initialSettings, alerts, persistSettings, o
     if (name === "/tip") return setScreen("tip");
     if (name === "/missed") return setScreen("missed");
     if (name === "/help") return setScreen("help");
+    if (name === "/add") return library ? setScreen("add") : setNotice("The preview can't add cards; run dracosh for that.");
+    if (name === "/decks") return library ? setScreen("decks") : setNotice("The preview has one demo deck; run dracosh for yours.");
     if (name === "/hint" && phase === "asking") return setHintLevel((level) => level + 1);
     if (name === "/vacation") {
       return session
@@ -319,6 +347,25 @@ export function App({ session, deck, initialSettings, alerts, persistSettings, o
     }
   }
 
+  // /decks and a first deck from /add: quiz another deck from now on, and remember it
+  function switchDeck(name) {
+    setScreen("quiz");
+    if (name === deck) return;
+    onSwitchDeck?.(name);
+    setDeck(name);
+    changeSettings({ deck: name });
+    ask();
+  }
+
+  // after /add: a first deck of your own replaces the tour (and a new deck replaces an empty one
+  // on screen); new cards end an empty state
+  function addDone({ deck: started, removed, added }) {
+    setScreen("quiz");
+    if (removed.length) session.forget(removed).catch(() => {});
+    if (started && (removed.length || phase === "empty")) return switchDeck(started);
+    if (phase === "empty" && added) ask();
+  }
+
   const width = Math.min((stdout?.columns || PANEL_WIDTH + 2) - 2, PANEL_WIDTH);
   const border = !outcome ? theme.accent : outcome.result === "wrong" ? theme.bad : outcome.result === "skipped" ? "gray" : theme.good;
   const pausedUntil = pauseEnd(now);
@@ -361,9 +408,11 @@ export function App({ session, deck, initialSettings, alerts, persistSettings, o
     <${Box} flexDirection="column" marginY=${1}>
       <${Header} deck=${deck} everyMs=${settings.everyMs} wordCount=${question?.wordCount} stats=${stats} combo=${session.totals.combo} face=${face} event=${petEvent} tick=${tick} asleep=${asleep} />
       <${Box} marginTop=${1} flexDirection="column">
-        ${screen === "settings"
-          ? html`<${Settings} settings=${settings} onChange=${changeSettings} onClose=${() => setScreen("quiz")} />`
-          : html`
+        ${screen === "settings" && html`<${Settings} settings=${settings} onChange=${changeSettings} onClose=${() => setScreen("quiz")} />`}
+        ${screen === "add" && html`<${AddCard} current=${deck} actions=${library} onDone=${addDone} />`}
+        ${screen === "decks" && html`<${Decks} current=${deck} actions=${library} onPick=${switchDeck} onClose=${() => setScreen("quiz")} />`}
+        ${screen !== "settings" && screen !== "add" && screen !== "decks" &&
+          html`
               <${Fragment}>
               ${question &&
               html`
@@ -379,6 +428,7 @@ export function App({ session, deck, initialSettings, alerts, persistSettings, o
                   <//>
                 <//>
               `}
+              ${phase === "empty" && html`<${EmptyDeck} deck=${deck} tour=${empty?.tour} width=${width} />`}
               ${confetti && html`<${Confetti} width=${width} onDone=${() => setConfetti(false)} />`}
               ${outcome?.cheers?.length > 0 && html`<${Cheers} cheers=${outcome.cheers} />`}
               ${phase === "waiting" && tip && html`<${TipBox} tip=${tip} width=${width} />`}
@@ -393,11 +443,11 @@ export function App({ session, deck, initialSettings, alerts, persistSettings, o
                   <${Text}>
                     <${Text} color=${theme.accent}>${frame} <//>
                     <${Bar} value=${Math.max(0, nextAt - now)} max=${settings.everyMs} width=${14} color="#6b5e8a" />
-                    <${Text} dimColor>  next word in ${clock(nextAt - now)}<//>
+                    <${Text} dimColor>  next card in ${clock(nextAt - now)}<//>
                   <//>
                 `}
-                ${phase === "waiting" && commandMode && html`<${AnswerInput} commandOnly initial="/" commands=${commandsFor({ phase: "waiting", canOverrule: session.canOverrule() })} onCommand=${runCommand} onCancel=${() => setCommandMode(false)} onEdit=${clearProblem} />`}
-                ${phase !== "loading" && !commandMode && html`<${Text} dimColor>${phase === "asking" ? "enter submit · / commands · esc quit" : `${session.canOverrule() ? "/correct if you were right · " : ""}enter ask now · / commands · q quit`}<//>`}
+                ${(phase === "waiting" || phase === "empty") && commandMode && html`<${AnswerInput} commandOnly initial="/" commands=${commandsFor({ phase: "waiting", canOverrule: session.canOverrule() })} onCommand=${runCommand} onCancel=${() => setCommandMode(false)} onEdit=${clearProblem} />`}
+                ${phase !== "loading" && !commandMode && html`<${Text} dimColor>${phase === "asking" ? "enter submit · / commands · esc quit" : phase === "empty" ? "/add · / commands · q quit" : `${session.canOverrule() ? "/correct if you were right · " : ""}enter ask now · / commands · q quit`}<//>`}
               <//>
               <//>
             `}

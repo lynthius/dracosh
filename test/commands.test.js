@@ -14,7 +14,7 @@ test("'/' lists every command and a prefix narrows the list", () => {
 
 test("the menu only offers commands that make sense right now", () => {
   const names = (opts) => commandsFor(opts).map((c) => c.name);
-  const common = ["/settings", "/stats", "/badges", "/companion", "/tip", "/missed", "/snooze", "/vacation"];
+  const common = ["/add", "/decks", "/settings", "/stats", "/badges", "/companion", "/tip", "/missed", "/snooze", "/vacation"];
   assert.deepEqual(names({ phase: "asking" }), ["/hint", ...common, "/skip", "/help", "/quit"]);
   assert.deepEqual(names({ phase: "waiting" }), [...common, "/help", "/quit"]);
   assert.deepEqual(names({ phase: "waiting", canOverrule: true }), ["/correct", ...common, "/help", "/quit"]);
@@ -22,7 +22,7 @@ test("the menu only offers commands that make sense right now", () => {
 
 test("normalizeSettings falls back to defaults for invalid values", () => {
   const settings = normalizeSettings({ everyMs: "soon", sound: "yes", volume: 7, dailyGoal: 0, directions: "sideways" });
-  assert.deepEqual(settings, { everyMs: 600_000, sound: true, volume: 0.5, dailyGoal: 20, directions: "both", tips: "always", quiet: null, skipWeekends: true });
+  assert.deepEqual(settings, { everyMs: 600_000, sound: true, volume: 0.5, dailyGoal: 20, directions: "both", tips: "always", quiet: null, skipWeekends: true, deck: null });
   assert.equal(normalizeSettings({ everyMs: 300_000, sound: false, volume: 0.2, dailyGoal: 20, directions: "pl-en" }).dailyGoal, 20);
 });
 

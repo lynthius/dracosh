@@ -13,6 +13,7 @@ import { seedLibrary } from "./starter.js";
 import { loadLibrary, loadSettingsRaw, loadState, patchSettings, saveLibrary } from "./store.js";
 import { App } from "./ui/App.js";
 import { Preview } from "./ui/Preview.js";
+import * as manage from "./manage.js";
 import { loadWords } from "./words.js";
 
 const HELP = `Dracosh: a vocabulary and quiz trainer for your terminal
@@ -143,12 +144,13 @@ async function main() {
   const library = await loadLibrary();
   if (seedLibrary(library)) await saveLibrary(library);
 
-  // fail fast (and readably) when there is nothing to quiz on, before taking over the screen
-  const { words, deck } = await loadWords(values.deck);
-  if (!words.length) throw new Error(`The deck "${deck.name}" has no cards yet.`);
+  // --deck must exist (fail fast, before taking over the screen); a deck saved in /decks that has
+  // since gone just falls back to the first one
+  const { deck } = values.deck ? await loadWords(values.deck) : await loadWords(settings.deck).catch(() => loadWords());
 
   let current = settings; // the session reads settings live, so /settings changes apply immediately
-  const session = createSession({ loadWords: () => loadWords(deck.name), state, getSettings: () => current });
+  let active = deck.name; // /add can switch to your first own deck
+  const session = createSession({ loadWords: () => loadWords(active), state, getSettings: () => current });
   const alerts = createAlerts({ sound: settings.sound, volume: settings.volume });
   const persistSettings = async (patch) => {
     current = { ...current, ...patch };
@@ -156,7 +158,7 @@ async function main() {
   };
 
   // the session summary screen stays on screen after exit, so nothing more to print here
-  const app = render(React.createElement(App, { session, deck: deck.name, initialSettings: settings, alerts, persistSettings }));
+  const app = render(React.createElement(App, { session, deck: deck.name, initialSettings: settings, alerts, persistSettings, library: manage, onSwitchDeck: (name) => (active = name) }));
   await app.waitUntilExit();
 }
 

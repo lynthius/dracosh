@@ -29,8 +29,8 @@ export function createSession({ loadWords, state, getSettings, save = saveState,
   async function next() {
     const { words, deck } = await loadWords();
     const item = pickNext({ words, state, now: now(), lastNoteId, directions: directionsOf(deck), tour: deck?.tour });
-    if (!item && deck?.tour) throw Object.assign(new Error("You've finished the tour."), { tourDone: true });
-    if (!item) throw new Error(words.length ? "No words to ask about." : `The deck "${deck?.name}" has no cards yet.`);
+    // nothing to ask is a normal state (a finished tour, a new deck), not an error: the UI shows a way on
+    if (!item) throw Object.assign(new Error(deck?.tour ? "You've finished the tour." : `The deck "${deck?.name}" has no cards yet.`), { empty: true, tour: Boolean(deck?.tour) });
     lastNoteId = item.word.noteId;
     lastWrong = null;
 
@@ -133,6 +133,13 @@ export function createSession({ loadWords, state, getSettings, save = saveState,
     return tip;
   }
 
+  // progress of cards that are gone (a removed deck) is dropped with them
+  async function forget(cardIds) {
+    const ids = new Set(cardIds);
+    for (const key of Object.keys(state.items)) if (ids.has(key.slice(0, key.lastIndexOf(":")))) delete state.items[key];
+    await save(state);
+  }
+
   // the hatching intro plays once ever: on a brand-new state that has never answered anything
   const isFirstRun = () => !state.hatched && Object.keys(state.items).length === 0;
 
@@ -151,5 +158,5 @@ export function createSession({ loadWords, state, getSettings, save = saveState,
     return fresh;
   }
 
-  return { totals, next, answer, overrule, canOverrule, stats, month, missed, nextTip, vacation, isFirstRun, markHatched, openBadges };
+  return { totals, next, answer, overrule, canOverrule, stats, month, missed, nextTip, vacation, isFirstRun, markHatched, openBadges, forget };
 }

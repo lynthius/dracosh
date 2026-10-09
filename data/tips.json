@@ -3,6 +3,8 @@
   { "id": "keys-esc", "cat": "Keys", "text": "Esc clears what you typed. Press it on an empty line to quit." },
   { "id": "keys-wake", "cat": "Keys", "text": "Leave Dracosh alone for a few minutes and your dragon dozes off. Any key wakes it." },
   { "id": "keys-filter", "cat": "Keys", "text": "Type / and a letter or two to narrow the commands: /sn finds /snooze." },
+  { "id": "cards-decks", "cat": "Cards", "text": "/decks switches to another deck. Dracosh starts with that one next time too." },
+  { "id": "cards-add", "cat": "Cards", "text": "/add puts new cards into the deck you're practising. Esc when you're done." },
   { "id": "cards-typo", "cat": "Cards", "text": "One wrong letter in a longer word still counts as right. Dracosh shows you the correct spelling." },
   { "id": "cards-boxes", "cat": "Cards", "text": "A right answer sends a card to a later box: it comes back in 1, 3, 7, 14, then 30 days." },
   { "id": "cards-miss", "cat": "Cards", "text": "A missed card goes back to the first box and comes back within minutes, until it sticks." },

@@ -79,7 +79,7 @@ test("the tour is asked once, in order, and every card says what to type", async
     assert.equal(named, !onPurpose, `"${word.word}" names its answer, unless you're meant to miss it`);
     await session.answer(q, onPurpose ? "dog" : q.expected[0]);
   }
-  await assert.rejects(session.next(), (err) => err.tourDone === true, "once through, the tour is done: nothing comes back as a review");
+  await assert.rejects(session.next(), (err) => err.empty && err.tour, "once through, the tour is done: nothing comes back as a review");
 });
 
 test("a language deck labels the card with its pair, both ways", async () => {
