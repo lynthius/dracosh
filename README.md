@@ -1,6 +1,6 @@
 # Dracosh
 
-A vocabulary trainer that lives in your terminal. It sits in a spare pane, asks you a word every few minutes, and a small pixel dragon grows up as you keep your streak going.
+A gamified language or definitions trainer for your terminal. It sits in a spare pane, challenges you every few minutes, and a small pixel dragon grows up as you keep your streak going.
 
 ## Features
 
