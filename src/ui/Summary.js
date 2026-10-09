@@ -1,6 +1,7 @@
 import { Fragment } from "react";
 import { Box, Text, useInput } from "ink";
 import { Bar, html, PANEL_WIDTH, theme } from "./kit.js";
+import { Flame } from "./icons.js";
 import { Mascot, MASCOT_WIDTH } from "./Mascot.js";
 
 // The end-of-session screen: how this run went, shown on quit. Any key leaves for real.
@@ -25,7 +26,10 @@ export function Summary({ stats, totals, bestCombo, onDone }) {
             <${Text} dimColor>  ${Math.min(today.correct, goal)}/${goal}<//>
             ${today.goalMet && html`<${Text} color=${theme.good}>  goal reached<//>`}
           <//>
-          <${Box}><${Text} dimColor>${streak.days > 0 ? `🔥 ${streak.days}-day streak` : "no streak yet"}${streak.atRisk ? " · still at risk today" : ""}<//><//>
+          <${Box}>
+            ${streak.days > 0 && html`<${Box}><${Flame} /><${Text}> <//><//>`}
+            <${Text} dimColor>${streak.days > 0 ? `${streak.days}-day streak` : "no streak yet"}${streak.atRisk ? " · still at risk today" : ""}<//>
+          <//>
         <//>
       <//>
       <${Box} paddingX=${1}><${Text} dimColor>see you later · any key to leave<//><//>

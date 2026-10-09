@@ -3,6 +3,7 @@ import { Box, Text } from "ink";
 import { formatInterval } from "../settings.js";
 import { formatDay } from "../vacation.js";
 import { AnimatedBar, html, theme } from "./kit.js";
+import { Flame } from "./icons.js";
 import { Mascot, MASCOT_WIDTH } from "./Mascot.js";
 
 const FRAME_MS = 90;
@@ -97,7 +98,7 @@ export function Header({ deck, everyMs, wordCount, stats, combo, face, event, ti
         <//>
         <${Box}>
           ${streak.days > 0
-            ? html`<${Text} color=${theme.warn} bold>🔥 ${streak.days}-day streak<//>`
+            ? html`<${Box}><${Flame} /><${Text} color=${theme.warn} bold> ${streak.days}-day streak<//><//>`
             : html`<${Text} dimColor>no streak yet<//>`}
           ${streak.atRisk && html`<${Text} color=${theme.warn}> · at risk today<//>`}
           ${stats.vacation.activeUntil && html`<${Text} color=${theme.accent}> · on vacation until ${formatDay(stats.vacation.activeUntil)}<//>`}
