@@ -23,7 +23,6 @@ import { Settings } from "./Settings.js";
 import { Stats } from "./Stats.js";
 import { Summary } from "./Summary.js";
 import { TheOne } from "./TheOne.js";
-import { Tip } from "./Tip.js";
 
 const SPINNER = ["⣾", "⣽", "⣻", "⢿", "⡿", "⣟", "⣯", "⣷"];
 const TICK_MS = 250; // the steady redraw: slow enough to stay idle for hours, fast enough for the spinner
@@ -134,7 +133,7 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
   const [settings, setSettings] = useState(initialSettings);
   const [deck, setDeck] = useState(initialDeck);
   const [empty, setEmpty] = useState(null); // { tour } when the deck has nothing to ask: a finished tour or no cards yet
-  // quiz | settings | add | decks | stats | badges | companion | tip | help | missed | evolve | the-one | die | summary | hatch
+  // quiz | settings | add | decks | stats | badges | companion | help | missed | evolve | the-one | die | summary | hatch
   const [screen, setScreen] = useState(() => (session.isFirstRun() ? "hatch" : "quiz"));
   const [tip, setTip] = useState(null);
   const [phase, setPhase] = useState("loading"); // loading | asking | waiting | empty
@@ -282,7 +281,6 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
         .catch((err) => setProblem(err.message));
     }
     if (name === "/companion") return setScreen("companion");
-    if (name === "/tip") return setScreen("tip");
     if (name === "/missed") return setScreen("missed");
     if (name === "/help") return setScreen("help");
     if (name === "/add") return library ? setScreen("add") : setNotice("The preview can't add cards; run dracosh for that.");
@@ -399,7 +397,6 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
   if (screen === "the-one") return html`<${Box} flexDirection="column" marginY=${1}><${TheOne} play=${alerts.play} onClose=${nextCeremony} /><//>`;
   if (screen === "stats") return html`<${Box} flexDirection="column" marginY=${1}><${Stats} stats=${stats} getMonth=${session.month} onClose=${() => setScreen("quiz")} /><//>`;
   if (screen === "companion") return html`<${Box} flexDirection="column" marginY=${1}><${Companion} current=${stats.companion.index} best=${stats.streak.best} element=${stats.companion.element} roll=${stats.companion.roll} onClose=${() => setScreen("quiz")} /><//>`;
-  if (screen === "tip") return html`<${Box} flexDirection="column" marginY=${1}><${Tip} nextTip=${session.nextTip} onClose=${() => setScreen("quiz")} /><//>`;
   if (screen === "help") return html`<${Box} flexDirection="column" marginY=${1}><${Help} onClose=${() => setScreen("quiz")} /><//>`;
   if (screen === "missed") return html`<${Box} flexDirection="column" marginY=${1}><${Missed} getMissed=${session.missed} onClose=${() => setScreen("quiz")} /><//>`;
   if (screen === "badges") return html`<${Box} flexDirection="column" marginY=${1}><${Badges} badges=${stats.badges} fresh=${freshBadges} onClose=${() => setScreen("quiz")} /><//>`;

@@ -58,7 +58,6 @@ Type the answer and press Enter. Press `/` for commands:
 | `/badges` | all badges and how to get them |
 | `/companion` | your dragon, its element and the forms ahead |
 | `/missed` | cards you got wrong today |
-| `/tip` | a tip about Dracosh |
 | `/snooze 30m` | pause questions for a while |
 | `/vacation 7` | days off that keep your streak safe |
 | `/help` | the keys, how cards come back, the streak |
