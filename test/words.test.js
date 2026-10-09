@@ -8,7 +8,7 @@ process.env.DRACOSH_HOME = mkdtempSync(join(tmpdir(), "dracosh-"));
 const { loadLibrary, saveLibrary } = await import("../src/store.js");
 const { loadWords } = await import("../src/words.js");
 const { seedLibrary, STARTER_DECK } = await import("../src/starter.js");
-const { addCard, createDeck } = await import("../src/library.js");
+const { addCard, cardsOf, createDeck } = await import("../src/library.js");
 const { createSession } = await import("../src/session.js");
 const { DEFAULTS } = await import("../src/settings.js");
 
@@ -21,6 +21,22 @@ test("a fresh library gets the Getting started deck, once", async () => {
   assert.equal(deck.name, STARTER_DECK);
   assert.ok(words.length >= 8);
   assert.ok(words.every((w) => !w.translations.some((t) => t.startsWith("/"))), "no answer starts with the command key");
+});
+
+test("an older copy of the tour is replaced by the current one, once", async () => {
+  const { emptyLibrary } = await import("../src/library.js");
+  const library = emptyLibrary();
+  const old = createDeck(library, { name: STARTER_DECK, type: "qa", languages: null, directions: "forward" });
+  addCard(library, old.id, { front: "What wakes a sleeping dragon?", back: ["any key"] });
+  const mine = createDeck(library, { name: "Spanish", languages: { front: "es", back: "en" } });
+  addCard(library, mine.id, { front: "gato", back: ["cat"] });
+
+  assert.equal(seedLibrary(library), true);
+  assert.equal(seedLibrary(library), false);
+  assert.equal(library.decks.length, 2, "no second tour");
+  const tour = cardsOf(library, old.id);
+  assert.ok(tour.length >= 8 && !tour.some((c) => c.front.startsWith("What wakes")));
+  assert.equal(cardsOf(library, mine.id).length, 1, "your own decks stay as they are");
 });
 
 test("decks are picked by name, and a wrong name lists the real ones", async () => {

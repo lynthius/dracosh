@@ -4,6 +4,8 @@ import { addCard, createDeck } from "./library.js";
 // exactly what to type, and the line shown after the answer explains the next thing. The deck is
 // ordered, so new cards come in this order. Answers never start with "/", because "/" opens the commands.
 export const STARTER_DECK = "Getting started";
+// bump it when the cards below change: an older copy of the tour in someone's library gets replaced
+const STARTER_VERSION = 2;
 
 const STARTER_CARDS = [
   { front: "Welcome! Every few minutes a card asks you something. Type the answer and press Enter. Try it: type hello", back: ["hello"], example: "Press Enter now for the next card, or wait and it will come by itself." },
@@ -17,10 +19,19 @@ const STARTER_CARDS = [
   { front: "That's the tour! Your own decks are next: see dracosh --help. Type: done", back: ["done"], example: "This deck stays here for practice. Have fun!" }
 ];
 
-// Adds the starter deck to an empty library; returns true when it did.
+// the tour as an earlier version created it (the first one had no version number yet)
+const isStarter = (deck) => deck.starter !== undefined || (deck.name === STARTER_DECK && deck.type === "qa" && !deck.languages);
+
+// Adds the tour to an empty library, or brings an older copy of it up to date (its progress is
+// dropped with the old cards). Returns true when the library changed and needs saving.
 export function seedLibrary(library, now = Date.now()) {
-  if (library.decks.length) return false;
-  const deck = createDeck(library, { name: STARTER_DECK, type: "qa", answerMode: "typed", languages: null, directions: "forward", ordered: true, now });
+  let deck = library.decks.find(isStarter);
+  if (library.decks.length && !deck) return false;
+  if (deck && (deck.starter ?? 1) >= STARTER_VERSION) return false;
+
+  if (deck) library.cards = library.cards.filter((card) => card.deckId !== deck.id);
+  else deck = createDeck(library, { name: STARTER_DECK, type: "qa", answerMode: "typed", languages: null, directions: "forward", ordered: true, now });
+  Object.assign(deck, { ordered: true, starter: STARTER_VERSION });
   for (const card of STARTER_CARDS) addCard(library, deck.id, { ...card, now });
   return true;
 }
