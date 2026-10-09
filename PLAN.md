@@ -26,8 +26,9 @@ Stack (kept as is)
 - Type safety without a build: JSDoc types checked by `tsc --checkJs` in CI (dev-only).
 - The app's UI comes in English, Polish, German, French and Ukrainian. Every text lives under a
   key in one file per language (`locales/<lang>.json`), English is the fallback for anything
-  missing, and native speakers can improve a translation with a pull request. Grammar tips stay
-  in English; they are about English.
+  missing, and native speakers can improve a translation with a pull request. The tips shown
+  while you wait are about Dracosh itself (keys, commands, streak), so they are UI text and get
+  translated with the rest. The English grammar tips of 0.1.0 are gone: they only fit one pair.
 
 Product (decided 2026-10-09)
 - Dracosh keeps its own card library. Anki is an import source and an export target; it never
@@ -104,6 +105,8 @@ Branch `feature/card-library`. Dracosh stops reading Anki live and quizzes from 
 - [x] `/help`: keys (Enter, Esc, q, any key wakes the dragon), how it works (boxes, typos, daily
       goal, streak, freezes) and the commands for your data outside the quiz. Up-to-date
       descriptions in the command menu
+- [x] Tips about Dracosh (keys, cards, streak, the dragon, breaks, your data) replace the English
+      grammar tips, in the same place: while you wait, and with `/tip`. Your own tips file is gone
 - [ ] `/add` in the app, simple first version: with no deck of your own yet it asks for a deck
       name first, then front and back (an example is optional). Everything is done inside the
       app; shell commands are only for data jobs (restore, data, later import and export)
@@ -144,8 +147,6 @@ Branch `feature/languages`.
       instead of the hardcoded EN → PL
 - [ ] Answer checking: diacritic folding for the supported languages, plus the letters that
       don't fold on their own (ł, ø, ß, đ, æ, œ, ı, ё and others), with tests per language
-- [ ] Grammar tips become packs: the current one is `en-for-pl`; tips only show when a pack
-      matches the deck's languages
 - [ ] Pronunciation (optional, in settings): the word is spoken after the answer with a voice
       for the deck's language; macOS `say` first, other systems in stage 7
 - [ ] UI copy audited for EN/PL assumptions

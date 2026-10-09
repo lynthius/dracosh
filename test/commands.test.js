@@ -6,7 +6,7 @@ import { directionsFor, formatInterval, normalizeSettings } from "../src/setting
 test("'/' lists every command and a prefix narrows the list", () => {
   assert.equal(matchCommands("/").length, COMMANDS.length);
   assert.deepEqual(matchCommands("/s").map((c) => c.name), ["/settings", "/stats", "/snooze", "/skip"]);
-  assert.deepEqual(matchCommands("/gram").map((c) => c.name), ["/tip"]); // alias
+  assert.deepEqual(matchCommands("/?").map((c) => c.name), ["/help"]); // alias
   assert.deepEqual(matchCommands("/snooze 30m").map((c) => c.name), ["/snooze"]); // arguments don't break matching
   assert.deepEqual(matchCommands("/SK").map((c) => c.name), ["/skip"]);
   assert.deepEqual(matchCommands("/nope"), []);

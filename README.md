@@ -19,7 +19,7 @@ It's made for people who live in a terminal or spend most of the day at a comput
 - Daily goal, streaks (weekends and vacations don't break them) and 36 badges (one of them a secret)
 - A pixel dragon that hatches from an egg, evolves over a year of streaks, blinks, and falls asleep if you ignore it
 - 8-bit sound effects, generated from code
-- A short grammar tip while you wait for the next word
+- A short tip about Dracosh while you wait for the next card
 
 ## Install
 
@@ -56,7 +56,7 @@ Type the answer and press Enter. Press `/` for commands:
 | `/badges` | all badges and how to get them |
 | `/companion` | your dragon, its element and the forms ahead |
 | `/missed` | cards you got wrong today |
-| `/tip` | a random grammar tip |
+| `/tip` | a tip about Dracosh |
 | `/snooze 30m` | pause questions for a while |
 | `/vacation 7` | days off that keep your streak safe |
 | `/help` | the keys, how cards come back, the streak |

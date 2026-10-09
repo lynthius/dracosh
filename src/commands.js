@@ -5,7 +5,7 @@ export const COMMANDS = [
   { name: "/stats", hint: "Streak, month calendar and badges summary" },
   { name: "/badges", hint: "All badges and what unlocks them" },
   { name: "/companion", hint: "Your dragon, its element and the forms ahead" },
-  { name: "/tip", aliases: ["/grammar"], hint: "Grammar tip: show a random one" },
+  { name: "/tip", hint: "A tip about Dracosh" },
   { name: "/missed", hint: "Cards you got wrong today" },
   { name: "/snooze", hint: "Pause questions: /snooze 30m, 2h, off" },
   { name: "/vacation", hint: "Days off that keep your streak: 7, 24.12 2.01, off" },
