@@ -316,7 +316,7 @@ export function App({ session, deck, initialSettings, alerts, persistSettings, o
     }
   }
 
-  const width = Math.min((stdout?.columns ?? PANEL_WIDTH + 2) - 2, PANEL_WIDTH);
+  const width = Math.min((stdout?.columns || PANEL_WIDTH + 2) - 2, PANEL_WIDTH);
   const border = !outcome ? theme.accent : outcome.result === "wrong" ? theme.bad : outcome.result === "skipped" ? "gray" : theme.good;
   const pausedUntil = pauseEnd(now);
   const tick = Math.floor(now / TICK_MS);
