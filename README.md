@@ -53,7 +53,7 @@ Type the answer and press Enter. Press `/` for commands:
 | `/hint` | reveal one more letter |
 | `/correct` | your answer was right after all; it's accepted from now on |
 | `/skip` | skip this card |
-| `/settings` | interval, daily goal, sound, quiet hours, weekends, tips, direction, and a reset |
+| `/settings` | interval, daily goal, sound, quiet hours, weekends, tips, and a reset |
 | `/stats` | streak and a calendar of your month |
 | `/badges` | all badges and how to get them |
 | `/companion` | your dragon, its element and the forms ahead |

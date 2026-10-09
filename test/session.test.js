@@ -36,11 +36,6 @@ test("asks in both directions with matching expected answers", async () => {
   assert.deepEqual([...seen].sort(), ["en-pl", "pl-en"]);
 });
 
-test("respects the direction setting", async () => {
-  const { session } = setup({ directions: "pl-en" });
-  for (let i = 0; i < 10; i++) assert.equal((await session.next()).direction, "pl-en");
-});
-
 test("never asks the same note twice in a row", async () => {
   const { session } = setup();
   let last = null;

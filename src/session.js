@@ -1,4 +1,3 @@
-import { directionsFor } from "./settings.js";
 import { closestCandidate, judge } from "./judge.js";
 import { addVacation, applyAnswer, applyOverrule, calendarMonth, cancelVacations, ensureProgress, markBadgesSeen, missedOn, recordMiss, snapshot, undoMiss, unseenBadges, vacationInfo } from "./progress.js";
 import { describeDue, grade, itemKey, pickNext } from "./scheduler.js";
@@ -45,11 +44,10 @@ export function createSession({ loadWords, state, getSettings, save = saveState,
     };
   }
 
-  // A deck asked one way only ("2 + 2" → "4") never comes back reversed. The front-to-back direction
-  // is still keyed "en-pl" internally, whatever the deck's languages.
+  // Each deck decides which way it's asked (set when it's made): both ways, or one way only
+  // ("2 + 2" → "4"). The front-to-back direction is keyed "en-pl" internally, whatever the languages.
   function directionsOf(deck) {
-    const chosen = directionsFor(getSettings().directions);
-    return deck?.directions === "forward" ? ["en-pl"] : chosen;
+    return deck?.directions === "forward" ? ["en-pl"] : ["en-pl", "pl-en"];
   }
 
   async function answer(question, text, { hinted = false } = {}) {

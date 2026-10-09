@@ -1,6 +1,6 @@
 import { Fragment, useState } from "react";
 import { Box, Text, useInput } from "ink";
-import { DIRECTION_LABELS, DIRECTION_OPTIONS, GOALS, INTERVALS, QUIET_PRESETS, TIP_LABELS, TIP_MODES, VOLUMES, formatInterval } from "../settings.js";
+import { GOALS, INTERVALS, QUIET_PRESETS, TIP_LABELS, TIP_MODES, VOLUMES, formatInterval } from "../settings.js";
 import { formatQuiet } from "../quiet.js";
 import { Bar, html, PANEL_WIDTH, theme } from "./kit.js";
 
@@ -16,7 +16,6 @@ const ALL_ROWS = [
   { key: "tips", label: "Tips", options: TIP_MODES, format: (v) => TIP_LABELS[v], hint: "a short tip about Dracosh while you wait" },
   { key: "skipWeekends", label: "Weekends", options: [true, false], format: (v) => (v ? "rest days" : "count like other days"), hint: "rest days never break your streak (doing them still counts)", toggle: true },
   { key: "quiet", label: "Quiet hours", options: QUIET_PRESETS, format: formatQuiet, hint: "no questions, sounds or banners during these hours" },
-  { key: "directions", label: "Direction", options: DIRECTION_OPTIONS, format: (v) => DIRECTION_LABELS[v], hint: "which way to ask" },
   { key: "reset", label: "Reset", action: true, format: () => "press enter", hint: "start over: your progress only, or everything (a backup is made first)" }
 ];
 
