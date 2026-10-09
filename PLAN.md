@@ -44,8 +44,8 @@ Product (decided 2026-10-09)
   scripts (Arabic, Hebrew) later; terminals render them poorly.
 - AI is optional, and the user brings their own: an Anthropic API key, or any OpenAI-compatible
   endpoint, which covers OpenAI, OpenRouter, Groq and local models through Ollama and LM Studio.
-- First run: a "Getting started" deck (a few arithmetic cards plus cards about Dracosh itself,
-  so it works in any language), import a file, start an empty deck, or (with AI set up)
+- First run: a "Getting started" deck, a short tour where every card says what to type
+  and teaches one thing (typos, hints, commands, streaks), import a file, start an empty deck, or (with AI set up)
   generate a starter deck for any pair.
 - Two study rhythms, chosen in settings: "every few minutes" (the default, for working in a
   spare pane) and "session" (the next card right after you answer).
@@ -86,19 +86,22 @@ Branch `feature/card-library`. Dracosh stops reading Anki live and quizzes from 
 - [x] Library file `~/.dracosh/library.json` with a schema version:
       decks `{ id, name, type, languages: { front, back }, answerMode, directions }` and
       cards `{ id, deckId, front, back[], example, tags, created, updated, ankiNoteId? }`
-- [ ] The quiz reads the active deck (or all decks) from the library
-- [ ] Progress keyed by card id; cards that came from Anki keep their Anki note id, so their
+- [x] The quiz reads a deck from the library (`--deck`, default the first), fresh before every
+      question, so cards added meanwhile show up without a restart
+- [x] Progress keyed by card id; cards that came from Anki keep their Anki note id, so their
       progress survives a re-import
-- [ ] Bundled "Getting started" deck: a few arithmetic cards (`2 + 2`, `6 × 7`) and cards
-      about Dracosh itself (`Which key opens the commands?` → `/`)
+- [x] Bundled "Getting started" deck, created on first start: a tour in 9 cards, asked in order.
+      Every card says what to type ("Try it: type hello") and the line after the answer explains
+      the next thing (typos, /hint, /correct, commands, streaks, /snooze). Answers never start
+      with `/`, which opens the command menu. Asked one way, labelled with its name
+- [ ] Choosing to quiz all decks at once (in `/decks`, stage 5)
 - [ ] Automatic backups of the library and progress to `~/.dracosh/backups/`: once a day on
       start, and right before a migration, import, deletion or reset. The last 7 daily backups
       are kept; `dracosh restore` lists them and brings one back
 - [ ] `dracosh --data` prints where everything is stored
 - [ ] `dracosh add "word" "translation"` to add a card from any terminal, also while the quiz
-      runs in another pane: the library is re-read before each question, so new cards show up
-      without a restart
-- [ ] `--deck` picks a library deck; live AnkiConnect reading is removed. No migration from
+      runs in another pane
+- [x] `--deck` picks a library deck; live AnkiConnect reading is removed. No migration from
       0.1.0 (it had no users besides the author); Anki decks come in through import in stage 4
 
 Done when: a fresh install quizzes the "Getting started" deck with no Anki; backups are written

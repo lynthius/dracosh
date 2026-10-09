@@ -8,6 +8,15 @@ import { dayKey } from "./dates.js";
 import { formatRange, parseVacation } from "./vacation.js";
 
 const LABELS = { "en-pl": "EN → PL", "pl-en": "PL → EN" };
+
+// the tag on the card's border: the language pair for a language deck, the deck's name otherwise
+function labelOf(deck, direction) {
+  if (!deck) return LABELS[direction];
+  if (!deck.languages) return deck.name;
+  const { front, back } = deck.languages;
+  const [from, to] = direction === "en-pl" ? [front, back] : [back, front];
+  return `${from.toUpperCase()} → ${to.toUpperCase()}`;
+}
 const COMBO_CHEER_EVERY = 5;
 
 // Quiz logic without any I/O of its own: words, settings and persistence are injected, the UI only renders what this returns.
@@ -18,22 +27,28 @@ export function createSession({ loadWords, state, getSettings, save = saveState,
   let lastWrong = null; // the latest wrong answer, until the next question: /correct can still overrule it
 
   async function next() {
-    const { words, cached } = await loadWords();
-    const item = pickNext({ words, state, now: now(), lastNoteId, directions: directionsFor(getSettings().directions) });
-    if (!item) throw new Error("No words to ask about.");
+    const { words, deck } = await loadWords();
+    const item = pickNext({ words, state, now: now(), lastNoteId, directions: directionsOf(deck), ordered: deck?.ordered });
+    if (!item) throw new Error(words.length ? "No words to ask about." : `The deck "${deck?.name}" has no cards yet.`);
     lastNoteId = item.word.noteId;
     lastWrong = null;
 
-    const toPolish = item.direction === "en-pl";
+    const forward = item.direction === "en-pl";
     return {
       word: item.word,
       direction: item.direction,
-      label: LABELS[item.direction],
-      prompt: toPolish ? item.word.word : item.word.translations.join(", "),
-      expected: toPolish ? item.word.translations : [item.word.word],
-      wordCount: words.length,
-      cached
+      label: labelOf(deck, item.direction),
+      prompt: forward ? item.word.word : item.word.translations.join(", "),
+      expected: forward ? item.word.translations : [item.word.word],
+      wordCount: words.length
     };
+  }
+
+  // A deck asked one way only ("2 + 2" → "4") never comes back reversed. The front-to-back direction
+  // is still keyed "en-pl" internally, whatever the deck's languages.
+  function directionsOf(deck) {
+    const chosen = directionsFor(getSettings().directions);
+    return deck?.directions === "forward" ? ["en-pl"] : chosen;
   }
 
   async function answer(question, text, { hinted = false } = {}) {

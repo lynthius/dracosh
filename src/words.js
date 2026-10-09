@@ -1,16 +1,14 @@
-import { fetchNotes } from "./anki.js";
-import { parseNotes } from "./parse.js";
-import { loadWordsCache, saveWordsCache } from "./store.js";
+import { cardsOf, findDeck, toWords } from "./library.js";
+import { loadLibrary } from "./store.js";
 
-// words come from Anki; if it's closed, fall back to the last successful read
-export async function loadWords(deck) {
-  try {
-    const { words, skipped } = parseNotes(await fetchNotes(deck));
-    await saveWordsCache(deck, words);
-    return { words, skipped, cached: false };
-  } catch (err) {
-    const cache = await loadWordsCache();
-    if (cache?.deck === deck && cache.words.length) return { words: cache.words, skipped: 0, cached: true };
-    throw err;
+// The words of one library deck, read fresh every time, so cards added from another terminal
+// (`dracosh add`) show up at the next question. `deckRef` is a deck name or id; empty = the first deck.
+export async function loadWords(deckRef) {
+  const library = await loadLibrary();
+  const deck = deckRef ? findDeck(library, deckRef) : library.decks[0];
+  if (!deck) {
+    const names = library.decks.map((d) => `"${d.name}"`).join(", ");
+    throw new Error(deckRef ? `There's no deck called "${deckRef}". Your decks: ${names || "none yet"}.` : "Your library has no decks yet.");
   }
+  return { words: toWords(cardsOf(library, deck.id)), deck: { name: deck.name, languages: deck.languages, directions: deck.directions, ordered: Boolean(deck.ordered) } };
 }

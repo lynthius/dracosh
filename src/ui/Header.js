@@ -94,7 +94,7 @@ export function Header({ deck, everyMs, wordCount, stats, combo, face, event, ti
       <${Box} flexDirection="column" justifyContent="center">
         <${Box}>
           <${Text} bold color=${theme.accent}>Dracosh<//>
-          <${Text} dimColor>  ${deck}${wordCount ? ` · ${wordCount} words` : ""} · every ${formatInterval(everyMs)}<//>
+          <${Text} dimColor>  ${deck}${wordCount ? ` · ${wordCount} cards` : ""} · every ${formatInterval(everyMs)}<//>
         <//>
         <${Box}>
           ${streak.days > 0

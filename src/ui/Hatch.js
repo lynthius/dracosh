@@ -87,7 +87,7 @@ export function Hatch({ onDone, play = () => {} }) {
             ? html`
                 <${Fragment}>
                   <${Text} bold color=${theme.good}>Your dragon has hatched!<//>
-                  <${Text} dimColor>Answer words to keep it happy. It grows with your streak.<//>
+                  <${Text} dimColor>Answer cards to keep it happy. It grows with your streak.<//>
                 <//>
               `
             : html`<${Text} dimColor>${caption}<//>`}

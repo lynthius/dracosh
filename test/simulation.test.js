@@ -11,7 +11,7 @@ test("a long random run keeps the progress data consistent", async () => {
   let seed = 42;
   const random = () => ((seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296);
   const session = createSession({
-    loadWords: async () => ({ words, cached: false }),
+    loadWords: async () => ({ words }),
     state,
     getSettings: () => ({ ...DEFAULTS, dailyGoal: 15 }),
     save: async () => {},

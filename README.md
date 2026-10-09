@@ -12,8 +12,8 @@ It's made for people who live in a terminal or spend most of the day at a comput
 
 ## Features
 
-- Words come from your Anki deck (read-only, through AnkiConnect), so your Anki cards and schedule stay untouched
-- Asks both ways: EN → PL and PL → EN
+- Your cards live in Dracosh's own library, organised in decks; no other app needs to be running
+- Language decks are asked both ways (Spanish → English and English → Spanish); other decks one way
 - Forgiving answer checks: case and Polish diacritics don't matter, one typo is fine on longer words, and after a miss you see letter by letter where you went wrong
 - Leitner boxes, so the words you know come back less and less often
 - Daily goal, streaks (weekends and vacations don't break them) and 36 badges (one of them a secret)
@@ -29,14 +29,14 @@ You need Node 22 or newer.
 npm install -g dracosh
 ```
 
-Words are read from [Anki](https://apps.ankiweb.net/) with the [AnkiConnect](https://git.sr.ht/~foosoft/anki-connect) add-on, so Anki has to be running. If it's closed, Dracosh uses the last word list it saw.
+A fresh install starts with a short "Getting started" deck: a tour where every card tells you what to type and shows you one more thing Dracosh can do. Importing your own decks (from Anki, CSV and more) and adding cards in the app are next on the list, see [What's next](#whats-next).
 
-Just want to look around? `dracosh --preview` shows every screen and animation on made-up data, no Anki needed.
+Want a tour first? `dracosh --preview` shows every screen and animation on made-up data.
 
 ## Usage
 
 ```bash
-dracosh --deck "My Deck"   # quiz from this Anki deck (default: "English")
+dracosh --deck "Spanish"   # quiz this deck from your library (default: the first one)
 dracosh --every 5m         # a word every 5 minutes instead of 10, this run only
 dracosh --no-sound
 dracosh --stats            # print your progress and exit
@@ -82,7 +82,7 @@ The quiz logic in `src/session.js` and `src/progress.js` does no I/O, which keep
 
 ## What's next
 
-Dracosh is moving away from needing a running Anki. Next up is its own card library, then:
+Dracosh now keeps its own card library. Next up:
 
 - term and definition cards and question and answer decks, not just words
 - any popular language pair, not just English and Polish

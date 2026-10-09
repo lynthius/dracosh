@@ -8,7 +8,6 @@ import { itemKey, newToday } from "./scheduler.js";
 export const HOME = process.env.DRACOSH_HOME || join(homedir(), ".dracosh");
 const LIBRARY_FILE = join(HOME, "library.json");
 const STATE_FILE = join(HOME, "state.json");
-const WORDS_FILE = join(HOME, "words.json");
 const SETTINGS_FILE = join(HOME, "settings.json");
 
 const emptyState = () => ({ version: 1, items: {}, newToday: { date: "", count: 0 } });
@@ -43,10 +42,6 @@ export const saveLibrary = (library) => writeJson(LIBRARY_FILE, library);
 
 export const loadState = () => readJson(STATE_FILE, emptyState());
 export const saveState = (state) => writeJson(STATE_FILE, state);
-
-// last successful read from Anki, so the quiz still works while Anki is closed
-export const loadWordsCache = () => readJson(WORDS_FILE, null);
-export const saveWordsCache = (deck, words) => writeJson(WORDS_FILE, { deck, words });
 
 export function recordAnswer(state, noteId, direction, entry, now = Date.now()) {
   const key = itemKey(noteId, direction);

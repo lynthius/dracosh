@@ -7,18 +7,17 @@ import { ensureProgress, snapshot } from "./progress.js";
 import { BOX_INTERVALS_DAYS } from "./scheduler.js";
 import { createSession } from "./session.js";
 import { DEFAULTS, formatInterval, normalizeSettings } from "./settings.js";
-import { loadSettingsRaw, loadState, patchSettings } from "./store.js";
+import { seedLibrary } from "./starter.js";
+import { loadLibrary, loadSettingsRaw, loadState, patchSettings, saveLibrary } from "./store.js";
 import { App } from "./ui/App.js";
 import { Preview } from "./ui/Preview.js";
 import { loadWords } from "./words.js";
 
-const DEFAULT_DECK = "English";
-
-const HELP = `Dracosh: vocabulary quiz from your Anki deck (read-only)
+const HELP = `Dracosh: a vocabulary and quiz trainer for your terminal
 
 Usage: dracosh [options]
 
-  --deck <name>    Anki deck to take words from (default: ${DEFAULT_DECK})
+  --deck <name>    which deck of your library to quiz (default: the first one)
   --every <time>   pause between questions: 30s, 10m, 1h (default: ${formatInterval(DEFAULTS.everyMs)})
   --no-sound       turn sound effects off
   --volume <0-1>   sound volume (default: ${DEFAULTS.volume})
@@ -64,7 +63,7 @@ function printStats(state, settings) {
 async function main() {
   const { values } = parseArgs({
     options: {
-      deck: { type: "string", default: DEFAULT_DECK },
+      deck: { type: "string" },
       every: { type: "string" },
       volume: { type: "string" },
       "no-sound": { type: "boolean", default: false },
@@ -93,12 +92,16 @@ async function main() {
   if (values.stats) return printStats(state, settings);
   if (!process.stdin.isTTY) throw new Error("dracosh needs an interactive terminal.");
 
+  // a fresh install starts with the "Getting started" deck
+  const library = await loadLibrary();
+  if (seedLibrary(library)) await saveLibrary(library);
+
   // fail fast (and readably) when there is nothing to quiz on, before taking over the screen
-  const { words } = await loadWords(values.deck);
-  if (!words.length) throw new Error(`No translation cards found in deck "${values.deck}".`);
+  const { words, deck } = await loadWords(values.deck);
+  if (!words.length) throw new Error(`The deck "${deck.name}" has no cards yet.`);
 
   let current = settings; // the session reads settings live, so /settings changes apply immediately
-  const session = createSession({ loadWords: () => loadWords(values.deck), state, getSettings: () => current });
+  const session = createSession({ loadWords: () => loadWords(deck.name), state, getSettings: () => current });
   const alerts = createAlerts({ sound: settings.sound, volume: settings.volume });
   const persistSettings = async (patch) => {
     current = { ...current, ...patch };
@@ -106,7 +109,7 @@ async function main() {
   };
 
   // the session summary screen stays on screen after exit, so nothing more to print here
-  const app = render(React.createElement(App, { session, deck: values.deck, initialSettings: settings, alerts, persistSettings }));
+  const app = render(React.createElement(App, { session, deck: deck.name, initialSettings: settings, alerts, persistSettings }));
   await app.waitUntilExit();
 }
 

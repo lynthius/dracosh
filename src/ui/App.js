@@ -379,7 +379,6 @@ export function App({ session, deck, initialSettings, alerts, persistSettings, o
               ${outcome?.cheers?.length > 0 && html`<${Cheers} cheers=${outcome.cheers} />`}
               ${phase === "waiting" && tip && html`<${TipBox} tip=${tip} width=${width} />`}
               <${Box} paddingX=${1} marginTop=${1} flexDirection="column">
-                ${question?.cached && html`<${Text} color=${theme.warn}>Anki is offline, using the saved word list<//>`}
                 ${problem && html`<${Text} color=${theme.bad}>${problem}<//>`}
                 ${phase === "loading" && html`<${Text}><${Text} color=${theme.accent}>${frame}<//><${Text} dimColor> loading…<//><//>`}
                 ${notice && html`<${Text} color=${theme.accent}>${notice}<//>`}

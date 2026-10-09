@@ -35,8 +35,9 @@ function pickDue(due, now, random) {
 }
 
 // Mixes due reviews with new words (up to the daily cap), at random; with nothing to do, practises a soon-due item.
-// Never asks the same note twice in a row when there is any alternative.
-export function pickNext({ words, state, now = Date.now(), lastNoteId = null, directions = DIRECTIONS, random = Math.random }) {
+// Never asks the same note twice in a row when there is any alternative. An `ordered` deck (a tutorial)
+// introduces its new cards first and in deck order.
+export function pickNext({ words, state, now = Date.now(), lastNoteId = null, directions = DIRECTIONS, ordered = false, random = Math.random }) {
   const candidates = words.flatMap((word) => directions.map((direction) => ({ word, direction, entry: state.items[itemKey(word.noteId, direction)] })));
   if (!candidates.length) return null;
 
@@ -45,6 +46,7 @@ export function pickNext({ words, state, now = Date.now(), lastNoteId = null, di
   const due = pool.filter((c) => c.entry && c.entry.due <= now);
   const unseen = pool.filter((c) => !c.entry);
   const canIntroduce = unseen.length > 0 && newToday(state, now) < NEW_PER_DAY;
+  if (ordered && canIntroduce) return unseen[0];
 
   if (due.length && canIntroduce && random() < NEW_RATIO) return pickRandom(unseen, random);
 

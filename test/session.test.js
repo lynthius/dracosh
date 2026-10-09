@@ -12,7 +12,7 @@ function setup(settings = {}) {
   const saves = [];
   const state = { items: {}, newToday: { date: "", count: 0 } };
   const session = createSession({
-    loadWords: async () => ({ words, cached: false }),
+    loadWords: async () => ({ words }),
     state,
     getSettings: () => ({ ...DEFAULTS, ...settings }),
     save: async (s) => saves.push(structuredClone(s))

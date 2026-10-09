@@ -38,7 +38,7 @@ function fakeSession({ settings = {}, progress = false } = {}) {
     p.streak = { ...p.streak, count: 12, best: 34, lastGoalDay: addDays(today, -2) };
     BADGES.slice(0, 13).forEach((b, i) => (p.badges[b.id] = addDays(today, -i * 3)));
   }
-  return createSession({ loadWords: async () => ({ words: DEMO_WORDS, cached: false }), state, getSettings: () => all, save: async () => {} });
+  return createSession({ loadWords: async () => ({ words: DEMO_WORDS }), state, getSettings: () => all, save: async () => {} });
 }
 
 // a 250 ms tick for the lab's own little animations (the snoring z's)
