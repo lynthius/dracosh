@@ -79,6 +79,8 @@ Branch `feature/card-library`. Dracosh stops reading Anki live and quizzes from 
       before the animation, so quitting can't reroll): 1 earth, 2 wind, 3 water, 4 ice, 5 fire,
       6 cosmos. The dragon takes that element for good: its own colors plus a few element
       details on every form. Not required for "The One...". Roll ceremony in `--preview`
+- [x] Dragon redrawn: bat wings raised over the shoulders, upright horns, a crest and a tail
+      with a spade, so the later forms no longer look like a maned lion
 - [x] Library file `~/.dracosh/library.json` with a schema version:
       decks `{ id, name, type, languages: { front, back }, answerMode, directions }` and
       cards `{ id, deckId, front, back[], example, tags, created, updated, ankiNoteId? }`
