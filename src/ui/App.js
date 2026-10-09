@@ -27,8 +27,8 @@ const TICK_MS = 250; // the steady redraw: slow enough to stay idle for hours, f
 const SLEEP_AFTER_MS = 3 * 60_000; // no key pressed for this long while waiting → the dragon dozes off
 const PAUSED_SLEEP_AFTER_MS = 15_000; // during snooze or quiet hours it nods off again much sooner
 const CHEER_STYLE = {
-  goal: { icon: "★", color: theme.good },
-  evolve: { icon: "▲", color: theme.accent },
+  goal: { icon: "▪", color: theme.good },
+  evolve: { icon: "▴", color: theme.accent },
   badge: { icon: "✦", color: theme.warn },
   combo: { icon: "»", color: theme.warn }
 };

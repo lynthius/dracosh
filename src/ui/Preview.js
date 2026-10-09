@@ -150,7 +150,7 @@ function ConfettiLab({ onBack }) {
   return html`
     <${Fragment}>
       <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.good} paddingX=${2} width=${PANEL_WIDTH}>
-        <${Text} color=${theme.good} bold>★ Daily goal reached · 12-day streak<//>
+        <${Text} color=${theme.good} bold>▪ Daily goal reached · 12-day streak<//>
       <//>
       <${Box} height=${5}><${Confetti} key=${run} width=${PANEL_WIDTH} onDone=${() => {}} /><//>
       <${Box} paddingX=${1}><${Text} dimColor>enter replay · esc back<//><//>
