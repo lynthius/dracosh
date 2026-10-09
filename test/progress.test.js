@@ -228,3 +228,21 @@ test("old misses are pruned", () => {
   assert.equal(state.progress.days["2026-10-01"].missed, undefined);
   assert.equal(state.progress.days["2026-10-30"].missed.length, 1);
 });
+
+test("the ring unlocks with the last other badge, in the same answer", () => {
+  const state = freshState(at("2026-10-05"));
+  for (const badge of BADGES) if (badge.id !== "one-ring" && badge.id !== "hello") state.progress.badges[badge.id] = "2026-10-01";
+  assert.equal(state.progress.badges["one-ring"], undefined);
+
+  const { cheers } = answer(state, at("2026-10-05")); // the first correct answer unlocks "Hello!"
+  assert.ok(state.progress.badges.hello);
+  assert.equal(state.progress.badges["one-ring"], "2026-10-05");
+  assert.ok(cheers.some((c) => c.text.includes("The One")));
+});
+
+test("the ring stays locked while any other badge is missing", () => {
+  const state = freshState(at("2026-10-05"));
+  for (const badge of BADGES) if (!["one-ring", "dragons-hoard"].includes(badge.id)) state.progress.badges[badge.id] = "2026-10-01";
+  answer(state, at("2026-10-05"));
+  assert.equal(state.progress.badges["one-ring"], undefined);
+});

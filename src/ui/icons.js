@@ -1,3 +1,4 @@
+import { BADGES } from "../progress.js";
 import { html } from "./kit.js";
 import { PixelGrid } from "./Mascot.js";
 
@@ -162,22 +163,40 @@ const ICONS = {
   }
 };
 
+// the ring for the badge that needs every other one
+ICONS.ring = {
+  palette: { G: "#fcd34d", D: "#b45309", W: "#fef9c3" },
+  grid: [
+    "..GGGG..",
+    ".GW..GG.",
+    "GW....DG",
+    "G......G",
+    "G......G",
+    "GG....DG",
+    ".GD..DG.",
+    "..DDDD.."
+  ]
+};
+
 // which icon each badge gets, by badge id
 const ICON_FOR = {
   hello: "trophy",
   "first-steps": "trophy",
   century: "trophy",
-  "five-hundred": "trophy",
   thousand: "trophy",
-  "two-thousand": "trophy",
+  "five-thousand": "trophy",
+  "ten-thousand": "trophy",
+  "dragons-hoard": "trophy",
   "on-a-roll": "flame",
   week: "flame",
   fortnight: "flame",
   month: "flame",
   "hundred-days": "flame",
+  "year-of-the-dragon": "flame",
   keeper: "book",
   collector: "book",
   dictionary: "book",
+  lexicon: "book",
   explorer: "compass",
   flawless: "star",
   overachiever: "star",
@@ -195,15 +214,56 @@ const ICON_FOR = {
   regular: "calendar",
   machine: "calendar",
   "hundred-club": "calendar",
-  "both-ways": "arrows"
+  "both-ways": "arrows",
+  "one-ring": "ring"
 };
 
 const LOCKED_COLOR = "#4a5058";
 
+// Rank colors for the badge groups that climb (more answers, longer streaks…): the higher, the rarer.
+const TIERS = [
+  { name: "bronze", main: "#d08a4e", shade: "#8a4f1c", light: "#f3c9a0" },
+  { name: "silver", main: "#c9d1d9", shade: "#7d8794", light: "#ffffff" },
+  { name: "gold", main: "#fcd34d", shade: "#b45309", light: "#fef3c7" },
+  { name: "emerald", main: "#34d399", shade: "#047857", light: "#d1fae5" },
+  { name: "diamond", main: "#7dd3fc", shade: "#2b6f99", light: "#e0f2fe" },
+  { name: "amethyst", main: "#c084fc", shade: "#6b21a8", light: "#f3e8ff" },
+  { name: "ruby", main: "#f87171", shade: "#991b1b", light: "#fee2e2" }
+];
+// which palette letters of a tiered icon take the tier's main / shade / light color
+const TIER_ROLES = {
+  trophy: { G: "main", D: "shade", W: "light" },
+  flame: { Y: "main", R: "shade", W: "light" },
+  book: { B: "main", D: "shade" },
+  bolt: { Y: "main", W: "light" }
+};
+
+// the badge's rank within its group, in the order BADGES lists them (easiest first); null if the group isn't tiered
+function tierOf(id) {
+  const icon = ICON_FOR[id];
+  if (!TIER_ROLES[icon]) return null;
+  const group = BADGES.filter((badge) => ICON_FOR[badge.id] === icon).map((badge) => badge.id);
+  return TIERS[Math.min(group.indexOf(id), TIERS.length - 1)];
+}
+
+function paletteFor(id, icon) {
+  const tier = tierOf(id);
+  if (!tier) return icon.palette;
+  const roles = TIER_ROLES[ICON_FOR[id]];
+  return Object.fromEntries(Object.entries(icon.palette).map(([key, color]) => [key, roles[key] ? tier[roles[key]] : color]));
+}
+
+// the color that stands for an unlocked badge in lists: its rank color, or gold for untiered ones
+export const badgeColor = (id) => tierOf(id)?.main ?? TIERS[2].main;
+
 export function BadgeIcon({ id, locked = false }) {
   const icon = ICONS[ICON_FOR[id]] ?? ICONS.star;
-  const palette = locked ? Object.fromEntries(Object.keys(icon.palette).map((k) => [k, LOCKED_COLOR])) : icon.palette;
+  const palette = locked ? Object.fromEntries(Object.keys(icon.palette).map((k) => [k, LOCKED_COLOR])) : paletteFor(id, icon);
   return html`<${PixelGrid} grid=${icon.grid.map((row) => [...row])} palette=${palette} />`;
 }
+
+// A flame two pixels tall that fits in one line of text: orange edges, a yellow core, an orange tip.
+const FLAME = { grid: [".R.", "RYR"], palette: { R: "#f97316", Y: "#fbbf24" } };
+export const Flame = () => html`<${PixelGrid} grid=${FLAME.grid.map((row) => [...row])} palette=${FLAME.palette} />`;
 
 export const ICON_WIDTH = 8;

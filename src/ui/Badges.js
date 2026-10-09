@@ -1,7 +1,7 @@
 import { Fragment, useState } from "react";
 import { Box, Text, useInput } from "ink";
 import { html, PANEL_WIDTH, theme } from "./kit.js";
-import { BadgeIcon, ICON_WIDTH } from "./icons.js";
+import { badgeColor, BadgeIcon, ICON_WIDTH } from "./icons.js";
 
 // Two columns of badges with a pixel-icon preview of the selected one.
 // ↑/↓ walk a column, ←/→ jump between columns, esc closes.
@@ -32,7 +32,7 @@ export function Badges({ badges, onClose }) {
             <${BadgeIcon} id=${badge.id} locked=${!badge.unlockedOn} />
           <//>
           <${Box} flexDirection="column" justifyContent="center">
-            <${Box}><${Text} bold color=${badge.unlockedOn ? theme.warn : undefined} dimColor=${!badge.unlockedOn}>${badge.name}<//><//>
+            <${Box}><${Text} bold color=${badge.unlockedOn ? badgeColor(badge.id) : undefined} dimColor=${!badge.unlockedOn}>${badge.name}<//><//>
             <${Box}><${Text}>${badge.desc}<//><//>
             <${Box}><${Text} dimColor>${badge.unlockedOn ? `unlocked ${badge.unlockedOn}` : "still locked"}<//><//>
           <//>
@@ -47,8 +47,10 @@ export function Badges({ badges, onClose }) {
                   const current = index === selected;
                   return html`
                     <${Box} key=${b.id}>
-                      <${Text} color=${current ? theme.accent : b.unlockedOn ? theme.warn : undefined} bold=${current} dimColor=${!current && !b.unlockedOn}>
-                        ${current ? "❯" : " "} ${b.unlockedOn ? "●" : "○"} ${b.name}
+                      <${Text} bold=${current} dimColor=${!current && !b.unlockedOn}>
+                        <${Text} color=${current ? theme.accent : undefined}>${current ? "❯" : " "} <//>
+                        <${Text} color=${b.unlockedOn ? badgeColor(b.id) : undefined}>${b.unlockedOn ? "●" : "○"} <//>
+                        <${Text} color=${current ? theme.accent : b.unlockedOn ? theme.text : undefined}>${b.name}<//>
                       <//>
                     <//>
                   `;

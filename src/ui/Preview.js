@@ -108,7 +108,7 @@ const SCENES = [
   { id: "quiz", label: "Quiz", hint: "a live round on demo words, goal at 5" },
   { id: "confetti", label: "Confetti", hint: "the daily-goal burst" },
   { id: "stats", label: "Stats", hint: "calendar tiles, weeks of fake history" },
-  { id: "badges", label: "Badges", hint: "the badge browser with pixel icons" },
+  { id: "badges", label: "Badges", hint: "all of them unlocked, in color" },
   { id: "summary", label: "Session summary", hint: "what you see when quitting" }
 ];
 
@@ -171,7 +171,11 @@ export function Preview({ alerts }) {
   if (scene === "mascot") return wrap(html`<${MascotLab} onBack=${back} />`);
   if (scene === "confetti") return wrap(html`<${ConfettiLab} onBack=${back} />`);
   if (scene === "stats") return wrap(html`<${Stats} stats=${history.stats()} getMonth=${history.month} onClose=${back} />`);
-  if (scene === "badges") return wrap(html`<${Badges} badges=${history.stats().badges} onClose=${back} />`);
+  if (scene === "badges") {
+    // every badge unlocked, so each icon and rank color can be seen
+    const all = history.stats().badges.map((badge) => ({ ...badge, unlockedOn: badge.unlockedOn ?? dayKey(Date.now()) }));
+    return wrap(html`<${Badges} badges=${all} onClose=${back} />`);
+  }
   if (scene === "summary")
     return wrap(html`<${Summary} stats=${history.stats()} totals=${{ asked: 23, correct: 20 }} bestCombo=${9} onDone=${back} />`);
   if (scene === "quiz") {

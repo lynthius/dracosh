@@ -138,19 +138,22 @@ export const BADGES = [
   { id: "hello", name: "Hello!", desc: "your first correct answer", test: (s) => s.totalCorrect >= 1 },
   { id: "first-steps", name: "First steps", desc: "10 correct answers", test: (s) => s.totalCorrect >= 10 },
   { id: "century", name: "Century", desc: "100 correct answers", test: (s) => s.totalCorrect >= 100 },
-  { id: "five-hundred", name: "Five hundred", desc: "500 correct answers", test: (s) => s.totalCorrect >= 500 },
-  { id: "thousand", name: "Thousand", desc: "1000 correct answers", test: (s) => s.totalCorrect >= 1000 },
-  { id: "two-thousand", name: "Two thousand", desc: "2000 correct answers", test: (s) => s.totalCorrect >= 2000 },
+  { id: "thousand", name: "Thousand", desc: "1,000 correct answers", test: (s) => s.totalCorrect >= 1000 },
+  { id: "five-thousand", name: "Five thousand", desc: "5,000 correct answers", test: (s) => s.totalCorrect >= 5000 },
+  { id: "ten-thousand", name: "Ten thousand", desc: "10,000 correct answers", test: (s) => s.totalCorrect >= 10000 },
+  { id: "dragons-hoard", name: "Dragon's hoard", desc: "25,000 correct answers", test: (s) => s.totalCorrect >= 25000 },
 
   { id: "on-a-roll", name: "On a roll", desc: "3-day streak", test: (s) => s.bestStreak >= 3 },
   { id: "week", name: "Full week", desc: "7-day streak", test: (s) => s.bestStreak >= 7 },
   { id: "fortnight", name: "Fortnight", desc: "14-day streak", test: (s) => s.bestStreak >= 14 },
   { id: "month", name: "Iron habit", desc: "30-day streak", test: (s) => s.bestStreak >= 30 },
   { id: "hundred-days", name: "Centurion", desc: "100-day streak", test: (s) => s.bestStreak >= 100 },
+  { id: "year-of-the-dragon", name: "Year of the dragon", desc: "365-day streak", test: (s) => s.bestStreak >= 365 },
 
   { id: "keeper", name: "Word keeper", desc: "10 cards mastered", test: (s) => s.mastered >= 10 },
   { id: "collector", name: "Collector", desc: "50 cards mastered", test: (s) => s.mastered >= 50 },
   { id: "dictionary", name: "Walking dictionary", desc: "100 cards mastered", test: (s) => s.mastered >= 100 },
+  { id: "lexicon", name: "Living lexicon", desc: "500 cards mastered", test: (s) => s.mastered >= 500 },
   { id: "explorer", name: "Explorer", desc: "250 cards practiced", test: (s) => s.practiced >= 250 },
 
   { id: "flawless", name: "Flawless", desc: "10+ answers in a day, no miss", test: (s) => s.today.asked >= 10 && s.today.correct === s.today.asked },
@@ -173,7 +176,10 @@ export const BADGES = [
   { id: "machine", name: "The machine", desc: "goal on 25 days in one month", test: (s) => s.goalDaysThisMonth >= 25 },
   { id: "hundred-club", name: "Hundred club", desc: "goal reached on 100 days in total", test: (s) => s.totalGoalDays >= 100 },
 
-  { id: "both-ways", name: "Both ways", desc: "50 correct in each direction", test: (s) => s.correctByDirection["en-pl"] >= 50 && s.correctByDirection["pl-en"] >= 50 }
+  { id: "both-ways", name: "Both ways", desc: "50 correct in each direction", test: (s) => s.correctByDirection["en-pl"] >= 50 && s.correctByDirection["pl-en"] >= 50 },
+
+  // keep this one last: it checks the others, including any unlocked earlier in the same answer
+  { id: "one-ring", name: "The One", desc: "every other badge", test: (s) => BADGES.every((b) => b.id === "one-ring" || s.badges[b.id]) }
 ];
 
 function collectStats(state, now, goal) {
@@ -196,6 +202,7 @@ function collectStats(state, now, goal) {
   const isSunday = new Date(`${todayKey}T12:00:00`).getDay() === 0;
   return {
     goal,
+    badges: progress.badges, // live: badges unlocked earlier in the same award pass count too
     totalCorrect: Object.values(progress.days).reduce((sum, d) => sum + d.correct, 0),
     bestStreak: progress.streak.best,
     bestCombo: progress.bestCombo ?? 0,
