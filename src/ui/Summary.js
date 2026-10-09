@@ -1,6 +1,7 @@
 import { Fragment } from "react";
 import { Box, Text, useInput } from "ink";
 import { Bar, html, PANEL_WIDTH, theme } from "./kit.js";
+import { dragonName } from "../progress.js";
 import { Flame } from "./icons.js";
 import { Mascot, MASCOT_WIDTH } from "./Mascot.js";
 
@@ -30,6 +31,7 @@ export function Summary({ stats, totals, bestCombo, onDone }) {
             ${streak.days > 0 && html`<${Box}><${Flame} /><${Text}> <//><//>`}
             <${Text} dimColor>${streak.days > 0 ? `${streak.days}-day streak` : "no streak yet"}${streak.atRisk ? " · still at risk today" : ""}<//>
           <//>
+          <${Box}><${Text} dimColor>Your ${dragonName(companion.index, companion.element)} will be waiting.<//><//>
         <//>
       <//>
       <${Box} paddingX=${1}><${Text} dimColor>see you later · any key to leave<//><//>

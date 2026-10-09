@@ -72,6 +72,9 @@ const ELEMENT_LOOKS = {
   }
 };
 
+// one color that stands for each element in text (names, the die's pips)
+export const ELEMENT_COLOR = { earth: "#a07c4f", wind: "#b4bfbc", water: "#3b82c4", ice: "#bfe6f5", fire: "#e4572e", cosmos: "#8b7cf6" };
+
 // What each evolution stage adds on top of the previous one: [row, col, pixel]. The wings rise over
 // the shoulders and never frame the face, so the later forms read as a dragon, not a maned lion.
 const STAGE_EDITS = [

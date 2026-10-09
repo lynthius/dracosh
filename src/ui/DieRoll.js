@@ -2,7 +2,7 @@ import React, { Fragment, useEffect, useState } from "react";
 import { Box, Text, useInput } from "ink";
 import { ELEMENTS } from "../progress.js";
 import { html, PANEL_WIDTH, theme } from "./kit.js";
-import { Mascot } from "./Mascot.js";
+import { ELEMENT_COLOR, Mascot } from "./Mascot.js";
 
 const FRAME_MS = 80;
 // single-pixel pips on a 9×9 die, with a pixel of space between any two, so six reads as six
@@ -16,7 +16,6 @@ const FACES = {
   5: ["tl", "tr", "c", "bl", "br"],
   6: ["tl", "tr", "ml", "mr", "bl", "br"]
 };
-const ELEMENT_COLOR = { earth: "#a07c4f", wind: "#a8d8cf", water: "#3b82c4", ice: "#bfe6f5", fire: "#e4572e", cosmos: "#8b7cf6" };
 const ELEMENT_NAME = { earth: "Earth", wind: "Wind", water: "Water", ice: "Ice", fire: "Fire", cosmos: "Cosmos" };
 
 // timeline, in frames: tumbling (faces change, slower and slower, bouncing lower) → landed → the dragon changes

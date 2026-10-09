@@ -81,6 +81,8 @@ Branch `feature/card-library`. Dracosh stops reading Anki live and quizzes from 
       details on every form. Not required for "The One...". Roll ceremony in `--preview`
 - [x] Dragon redrawn: bat wings raised over the shoulders, upright horns, a crest and a tail
       with a spade, so the later forms no longer look like a maned lion
+- [x] The dragon has a name made of its form and element ("Ice Drake"), shown in `/companion`
+      (with the die roll), `/stats` and the goodbye summary
 - [x] Library file `~/.dracosh/library.json` with a schema version:
       decks `{ id, name, type, languages: { front, back }, answerMode, directions }` and
       cards `{ id, deckId, front, back[], example, tags, created, updated, ankiNoteId? }`

@@ -11,6 +11,10 @@ const FALL_MIN = 30; // a lost streak this long counts as a fall for "Dragon's d
 // The die's faces: winning "Dragon's die" rolls one, and the dragon keeps that element for good.
 export const ELEMENTS = ["earth", "wind", "water", "ice", "fire", "cosmos"];
 export const rollElement = (random = Math.random) => ELEMENTS[Math.floor(random() * ELEMENTS.length)];
+export const ELEMENT_ADJECTIVE = { earth: "Earth", wind: "Wind", water: "Water", ice: "Ice", fire: "Fire", cosmos: "Cosmic" };
+
+// what the dragon is called: its form, with its element in front once it has one ("Ice Drake")
+export const dragonName = (stage, element = null) => (element ? `${ELEMENT_ADJECTIVE[element]} ${STAGES[stage].name}` : STAGES[stage].name);
 
 // The companion evolves permanently with your best streak, so a broken streak never takes a form away.
 export const STAGES = [
@@ -253,7 +257,10 @@ function award(state, progress, day, today, { correct, goal, rules, now, daysAwa
       progress.badges[badge.id] = today;
       cheers.push({ kind: "badge", id: badge.id, name: badge.name, desc: badge.desc, text: `Badge unlocked: ${badge.name} · ${badge.desc}` });
       // rolled and saved right away, before any animation, so quitting mid-roll can't reroll it
-      if (badge.id === "dragons-die" && !progress.element && !progress.elementDropped) progress.element = rollElement(random);
+      if (badge.id === "dragons-die" && !progress.element && !progress.elementDropped) {
+        progress.element = rollElement(random);
+        progress.elementRoll = { face: ELEMENTS.indexOf(progress.element) + 1, on: today };
+      }
     }
   }
   return cheers;
@@ -307,7 +314,7 @@ export function snapshot(state, { goal, rules = NO_RULES, now = Date.now() }) {
     restToday,
     skipWeekends: rules.skipWeekends,
     vacation: vacationInfo(progress, today),
-    companion: { ...stageFor(progress.streak.best), element: progress.element ?? null },
+    companion: { ...stageFor(progress.streak.best), element: progress.element ?? null, roll: progress.elementRoll ?? null },
     totalCorrect: stats.totalCorrect,
     mastered: stats.mastered,
     practiced: stats.practiced,

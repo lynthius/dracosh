@@ -291,3 +291,18 @@ test("hidden badges stay out of The One and are flagged for the UI", () => {
   const die = snapshot(state, { goal: 1, now: at("2026-10-05") }).badges.find((b) => b.id === "dragons-die");
   assert.equal(die.hidden, true);
 });
+
+test("the dragon is named by its form, with its element in front once it has one", async () => {
+  const { dragonName } = await import("../src/progress.js");
+  assert.equal(dragonName(0), "Hatchling");
+  assert.equal(dragonName(3, "ice"), "Ice Drake");
+  assert.equal(dragonName(5, "cosmos"), "Cosmic Legend");
+});
+
+test("the die's roll is recorded with its face and day", () => {
+  const state = freshState(at("2026-10-01"));
+  Object.assign(state.progress.streak, { count: 40, best: 40, lastGoalDay: "2026-10-01", freezes: 0, fallen: 40 });
+  applyAnswer(state, { result: "exact", goal: 1, now: at("2026-10-02"), random: () => 0.9 });
+  assert.deepEqual(state.progress.elementRoll, { face: 6, on: "2026-10-02" });
+  assert.equal(state.progress.element, "cosmos");
+});

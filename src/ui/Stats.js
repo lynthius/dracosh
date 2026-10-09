@@ -1,5 +1,6 @@
 import { Fragment, useState } from "react";
 import { Box, Text, useInput } from "ink";
+import { dragonName } from "../progress.js";
 import { formatRange } from "../vacation.js";
 import { html, PANEL_WIDTH, theme } from "./kit.js";
 
@@ -74,6 +75,7 @@ export function Stats({ stats, getMonth, onClose }) {
   const unlocked = stats.badges.filter((b) => b.unlockedOn).length;
   const month = getMonth(offset);
   const next = companion.nextAt ? ` · next form at a ${companion.nextAt}-day streak` : " · fully evolved";
+  const title = dragonName(companion.index, companion.element);
 
   return html`
     <${Fragment}>
@@ -87,7 +89,7 @@ export function Stats({ stats, getMonth, onClose }) {
           <//>
           <${Text} dimColor>today      ${today.correct}/${goal} correct${accuracy === null ? "" : ` · ${accuracy}% accuracy`}<//>
           <${Text} dimColor>cards      ${stats.mastered} mastered · ${stats.practiced} practiced · ${stats.totalCorrect} correct in total<//>
-          <${Text} dimColor>companion  ${companion.name} (${companion.index + 1}/6)${next}<//>
+          <${Text} dimColor>companion  ${title} (${companion.index + 1}/6)${next}<//>
           <${Text} dimColor>rest days  ${stats.skipWeekends ? "weekends" : "no weekends"}${stats.vacation.upcoming.length ? ` · vacation ${stats.vacation.upcoming.map((v) => formatRange(v.from, v.to)).join(", ")}` : ""}<//>
         <//>
 
