@@ -10,6 +10,7 @@ export const theme = {
   good: "#4ade80",
   bad: "#f87171",
   warn: "#fbbf24",
+  text: "#c9ccd3",
   track: "#3a3f47"
 };
 

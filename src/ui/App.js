@@ -19,7 +19,7 @@ import { Stats } from "./Stats.js";
 import { Summary } from "./Summary.js";
 import { Tip } from "./Tip.js";
 
-const SPINNER = ["▘", "▝", "▗", "▖"]; // a rotating pixel, in keeping with the sprite work
+const SPINNER = ["⣾", "⣽", "⣻", "⢿", "⡿", "⣟", "⣯", "⣷"];
 const TICK_MS = 250; // the steady redraw: slow enough to stay idle for hours, fast enough for the spinner
 const SLEEP_AFTER_MS = 3 * 60_000; // no key pressed for this long while waiting → the dragon dozes off
 const PAUSED_SLEEP_AFTER_MS = 15_000; // during snooze or quiet hours it nods off again much sooner
@@ -35,13 +35,13 @@ function clock(ms) {
   return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
 }
 
-// your answer with every letter judged: green lined up with the expected word, red didn't
+// your answer with every letter judged: green lined up with the expected word, underlined didn't
 function AnswerDiff({ given, closest }) {
   const parts = diffChars(given, closest);
   return html`
     <${Text}>
-      <${Text} dimColor>you wrote  <//>
-      ${parts.map((p, i) => html`<${Text} key=${i} color=${p.ok ? theme.good : theme.bad} bold=${!p.ok}>${p.ch}<//>`)}
+      <${Text} dimColor>you wrote <//>
+      ${parts.map((p, i) => html`<${Text} key=${i} color=${p.ok ? theme.good : theme.text} underline=${!p.ok}>${p.ch}<//>`)}
     <//>
   `;
 }
@@ -54,7 +54,7 @@ function Verdict({ outcome, question }) {
     <${Box} flexDirection="column">
       <${Text} color=${wrong ? theme.bad : theme.good} bold>${wrong ? "✗" : "✓"} ${question.expected.join(", ")}${outcome.result === "typo" ? "  (close enough)" : ""}<//>
       ${showDiff && html`<${AnswerDiff} given=${outcome.given} closest=${outcome.closest} />`}
-      ${question.word.example && html`<${Text} dimColor>${question.word.example}<//>`}
+      ${question.word.example && html`<${Box} marginTop=${1}><${Text} dimColor italic>“${question.word.example}”<//><//>`}
       ${(outcome.hinted || outcome.overruled) &&
       html`
         <${Box} marginTop=${1} flexDirection="column">
@@ -346,14 +346,14 @@ export function App({ session, deck, initialSettings, alerts, persistSettings, o
               <${Box} paddingX=${1} marginTop=${1} flexDirection="column">
                 ${question?.cached && html`<${Text} color=${theme.warn}>Anki is offline, using the saved word list<//>`}
                 ${problem && html`<${Text} color=${theme.bad}>${problem}<//>`}
-                ${phase === "loading" && html`<${Text} dimColor>${frame} loading…<//>`}
+                ${phase === "loading" && html`<${Text}><${Text} color=${theme.accent}>${frame}<//><${Text} dimColor> loading…<//><//>`}
                 ${notice && html`<${Text} color=${theme.accent}>${notice}<//>`}
                 ${phase === "waiting" && paused && html`<${Text} dimColor>paused until ${formatClock(pausedUntil)}${inQuietHours(now, settings.quiet) ? " (quiet hours)" : ""}<//>`}
                 ${phase === "waiting" &&
                 !paused &&
                 html`
                   <${Text}>
-                    <${Text} dimColor>${frame} <//>
+                    <${Text} color=${theme.accent}>${frame} <//>
                     <${Bar} value=${Math.max(0, nextAt - now)} max=${settings.everyMs} width=${14} color="#6b5e8a" />
                     <${Text} dimColor>  next word in ${clock(nextAt - now)}<//>
                   <//>
