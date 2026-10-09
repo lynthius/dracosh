@@ -1,0 +1,49 @@
+{
+  "name": "dracosh",
+  "version": "0.1.0",
+  "description": "A gamified personal language trainer for your terminal. Your own pixel dragon grows with your progress.",
+  "author": "Tomasz Przyborowski (https://github.com/lynthius)",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lynthius/dracosh.git"
+  },
+  "homepage": "https://github.com/lynthius/dracosh#readme",
+  "bugs": {
+    "url": "https://github.com/lynthius/dracosh/issues"
+  },
+  "keywords": [
+    "cli",
+    "tui",
+    "vocabulary",
+    "flashcards",
+    "spaced-repetition",
+    "anki",
+    "ink",
+    "pixel-art",
+    "language-learning"
+  ],
+  "type": "module",
+  "bin": {
+    "dracosh": "src/cli.js"
+  },
+  "files": [
+    "src",
+    "assets",
+    "data",
+    "NOTICE"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node src/cli.js",
+    "test": "node --test test/",
+    "sounds": "node scripts/make-sounds.js"
+  },
+  "dependencies": {
+    "htm": "3.1.1",
+    "ink": "7.1.1",
+    "react": "19.2.4"
+  }
+}
