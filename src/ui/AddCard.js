@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useState } from "react";
-import { Box, Text, useInput } from "ink";
+import { Box, Text } from "ink";
 import { AnswerInput } from "./AnswerInput.js";
+import { Choice, CHOICE_KEYS } from "./Choice.js";
 import { html, PANEL_WIDTH, theme } from "./kit.js";
 
 const FIELDS = {
@@ -20,6 +21,7 @@ export function AddCard({ current, actions, onDone }) {
   const [step, setStep] = useState("loading"); // loading | pick | deck | ways | front | back | example | saving
   const [decks, setDecks] = useState([]);
   const [picked, setPicked] = useState(0);
+  const [ways, setWays] = useState(0);
   const [deck, setDeck] = useState(null);
   const [newDeck, setNewDeck] = useState(null); // { name, removed } once a first deck was started here
   const [draft, setDraft] = useState({ front: "", back: [] });
@@ -96,24 +98,11 @@ export function AddCard({ current, actions, onDone }) {
     if (step === "example") save(value);
   }
 
-  useInput((input, key) => {
-    if (step !== "pick") return;
-    if (key.upArrow) setPicked((i) => Math.max(0, i - 1));
-    else if (key.downArrow) setPicked((i) => Math.min(decks.length, i + 1));
-    else if (key.escape) finish();
-    else if (key.return) {
-      if (picked === decks.length) return setStep("deck");
-      setDeck(decks[picked].name);
-      setStep("front");
-    }
-  });
-
-  useInput((input, key) => {
-    if (step !== "ways") return;
-    if (input === "y" || key.return) startDeck(true);
-    else if (input === "n") startDeck(false);
-    else if (key.escape) finish();
-  });
+  function pickDeck(index) {
+    if (index === decks.length) return setStep("deck");
+    setDeck(decks[index].name);
+    setStep("front");
+  }
 
   const title = step === "pick" ? "Add cards to…" : step === "deck" || step === "ways" ? (decks.length ? "New deck" : "Start your first deck") : `Add a card · ${deck}`;
   const field = FIELDS[step];
@@ -133,27 +122,37 @@ export function AddCard({ current, actions, onDone }) {
         `}
         ${step === "pick" &&
         html`
-          <${Box} flexDirection="column" marginTop=${1}>
-            ${[...decks.map((d) => ({ label: d.name, note: `${d.cards} card${d.cards === 1 ? "" : "s"}` })), { label: NEW_DECK, note: "" }].map(
-              (row, i) => html`
-                <${Box} key=${row.label}>
-                  <${Text} color=${i === picked ? theme.accent : undefined} bold=${i === picked}>${i === picked ? "❯" : " "} ${row.label.padEnd(24)}<//>
-                  <${Text} dimColor>${row.note}<//>
-                <//>
-              `
-            )}
+          <${Box} marginTop=${1}>
+            <${Choice}
+              options=${[...decks.map((d) => ({ label: d.name, note: `${d.cards} card${d.cards === 1 ? "" : "s"}` })), { label: NEW_DECK }]}
+              selected=${picked}
+              onMove=${setPicked}
+              onPick=${pickDeck}
+              onCancel=${finish}
+            />
           <//>
         `}
         ${step === "ways" &&
         html`
           <${Box} flexDirection="column" marginTop=${1}>
-            <${Text} bold>Ask "${deck}" both ways?<//>
-            <${Text} dimColor>Yes for words (gato → cat, and cat → gato). No for questions that only make sense one way.<//>
+            <${Text} bold>How should "${deck}" be asked?<//>
+            <${Box} marginTop=${1}>
+              <${Choice}
+                options=${[
+                  { label: "Both ways", note: "for words: gato → cat, and cat → gato", key: "y" },
+                  { label: "One way only", note: "for questions: front → back", key: "n" }
+                ]}
+                selected=${ways}
+                onMove=${setWays}
+                onPick=${(i) => startDeck(i === 0)}
+                onCancel=${finish}
+              />
+            <//>
           <//>
         `}
         ${error && html`<${Box} marginTop=${1}><${Text} color=${theme.bad}>${error}<//><//>`}
       <//>
-      <${Box} paddingX=${1}><${Text} dimColor>${step === "pick" ? "↑/↓ choose · enter pick · esc cancel" : step === "ways" ? "y yes · n no · esc cancel" : "enter next · esc " + (added || newDeck ? "done" : "cancel")}<//><//>
+      <${Box} paddingX=${1}><${Text} dimColor>${step === "pick" || step === "ways" ? `${CHOICE_KEYS} · esc cancel` : "enter next · esc " + (added || newDeck ? "done" : "cancel")}<//><//>
     <//>
   `;
 }
