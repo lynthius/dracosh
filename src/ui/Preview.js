@@ -12,7 +12,7 @@ import { Badges } from "./Badges.js";
 import { Confetti } from "./Confetti.js";
 import { Evolution } from "./Evolution.js";
 import { Hatch } from "./Hatch.js";
-import { Snore, useBlink, useMove } from "./Header.js";
+import { Header, Snore, useBlink, useMove } from "./Header.js";
 import { html, PANEL_WIDTH, theme } from "./kit.js";
 import { Mascot } from "./Mascot.js";
 import { Stats } from "./Stats.js";
@@ -110,6 +110,37 @@ function BadgeUnlockLab({ onBack }) {
   `;
 }
 
+// The quiz screen's header with any form and element, to check how the dragon looks and fits there
+function QuizLookLab({ onBack }) {
+  const [stage, setStage] = useState(STAGES.length - 1);
+  const [element, setElement] = useState(-1);
+  const [combo, setCombo] = useState(0);
+  useInput((input, key) => {
+    if (key.escape || input === "q") return onBack();
+    if (key.leftArrow) return setStage((s) => Math.max(0, s - 1));
+    if (key.rightArrow) return setStage((s) => Math.min(STAGES.length - 1, s + 1));
+    if (input === "e") return setElement((e) => (e + 2) % (ELEMENTS.length + 1) - 1);
+    if (input === "c") return setCombo((c) => (c ? 0 : 7));
+  });
+  const stats = {
+    streak: { days: 42, best: 120, freezes: 1, atRisk: false },
+    today: { correct: 13, asked: 15, goalMet: false },
+    goal: 20,
+    vacation: { activeUntil: null },
+    companion: { index: stage, name: STAGES[stage].name, element: ELEMENTS[element] ?? null }
+  };
+  return html`
+    <${Fragment}>
+      <${Header} deck="Spanish" everyMs=${600000} wordCount=${340} stats=${stats} combo=${combo} face="idle" event=${null} tick=${0} />
+      <${Box} marginTop=${1} flexDirection="column" borderStyle="round" borderColor=${theme.accent} paddingX=${2} paddingY=${1} width=${PANEL_WIDTH}>
+        <${Text} bold>la mariposa<//>
+        <${Box} marginTop=${1}><${Text} color=${theme.accent}>❯ <//><${Text} inverse> <//><//>
+      <//>
+      <${Box} paddingX=${1}><${Text} dimColor>${STAGES[stage].name} · ${ELEMENTS[element] ?? "no element"} · ←/→ form · e element · c combo · esc back<//><//>
+    <//>
+  `;
+}
+
 function ConfettiLab({ onBack }) {
   const [run, setRun] = useState(1);
   useInput((input, key) => {
@@ -132,6 +163,7 @@ const SCENES = [
   ...STAGES.slice(1).map((stage, i) => ({ id: `evolve-${i + 1}`, label: `Evolution → ${stage.name}`, hint: `reached at a ${stage.from}-day best streak` })),
   { id: "mascot", label: "Mascot lab", hint: "forms, faces, elements, moves, glow" },
   { id: "quiz", label: "Quiz", hint: "a live round on demo words, goal at 5" },
+  { id: "quiz-look", label: "Quiz screen", hint: "the header with any form and element" },
   { id: "unlock", label: "Badge unlocked", hint: "three badges won at once" },
   { id: "the-one", label: "The One...", hint: "the ring rises from the lava" },
   { id: "die", label: "Dragon's die", hint: "the secret badge: a roll for an element" },
@@ -199,6 +231,7 @@ export function Preview({ alerts }) {
     return wrap(html`<${Evolution} key=${run} from=${to - 1} to=${to} name=${STAGES[to].name} onClose=${back} />`);
   }
   if (scene === "mascot") return wrap(html`<${MascotLab} onBack=${back} />`);
+  if (scene === "quiz-look") return wrap(html`<${QuizLookLab} onBack=${back} />`);
   if (scene === "confetti") return wrap(html`<${ConfettiLab} onBack=${back} />`);
   if (scene === "unlock") return wrap(html`<${BadgeUnlockLab} onBack=${back} />`);
   if (scene === "die") return wrap(html`<${DieRoll} key=${run} element=${dieElement} stage=${2} play=${alerts.play} onClose=${back} />`);
