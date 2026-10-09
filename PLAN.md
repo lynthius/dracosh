@@ -95,9 +95,11 @@ Branch `feature/card-library`. Dracosh stops reading Anki live and quizzes from 
       the next thing (typos, /hint, /correct, commands, streaks, /snooze). Answers never start
       with `/`, which opens the command menu. Asked one way, labelled with its name
 - [ ] Choosing to quiz all decks at once (in `/decks`, stage 5)
-- [ ] Automatic backups of the library and progress to `~/.dracosh/backups/`: once a day on
+- [x] Automatic backups of the library and progress to `~/.dracosh/backups/`: once a day on
       start, and right before a migration, import, deletion or reset. The last 7 daily backups
-      are kept; `dracosh restore` lists them and brings one back
+      are kept; `dracosh restore` lists them and brings one back. (Import, deletion and reset
+      don't exist yet: they call `backupNow()` when they land in stages 4 and 5. There is no
+      library migration yet either, since this is format 1.)
 - [ ] `dracosh --data` prints where everything is stored
 - [ ] `dracosh add "word" "translation"` to add a card from any terminal, also while the quiz
       runs in another pane

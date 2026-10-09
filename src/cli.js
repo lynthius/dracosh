@@ -2,7 +2,9 @@
 import { render } from "ink";
 import React from "react";
 import { parseArgs } from "node:util";
+import { createInterface } from "node:readline/promises";
 import { createAlerts } from "./alerts.js";
+import { BACKUP_DIR, dailyBackup, listBackups, restoreBackup } from "./backup.js";
 import { ensureProgress, snapshot } from "./progress.js";
 import { BOX_INTERVALS_DAYS } from "./scheduler.js";
 import { createSession } from "./session.js";
@@ -16,6 +18,7 @@ import { loadWords } from "./words.js";
 const HELP = `Dracosh: a vocabulary and quiz trainer for your terminal
 
 Usage: dracosh [options]
+       dracosh restore [number]   list your backups, or bring one back
 
   --deck <name>    which deck of your library to quiz (default: the first one)
   --every <time>   pause between questions: 30s, 10m, 1h (default: ${formatInterval(DEFAULTS.everyMs)})
@@ -23,6 +26,7 @@ Usage: dracosh [options]
   --volume <0-1>   sound volume (default: ${DEFAULTS.volume})
   --stats          print progress and exit
   --preview        browse every animation and screen on made-up data (nothing is saved)
+  -y, --yes        restore without asking first
   -h, --help       show this help
 
 Flags override your saved settings for this run only. Change the saved ones with /settings.
@@ -60,8 +64,45 @@ function printStats(state, settings) {
   console.log(perBox.join("  "));
 }
 
+const formatTime = (ms) => new Date(ms).toLocaleString("sv").slice(0, 16);
+const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
+
+async function confirm(question) {
+  const rl = createInterface({ input: process.stdin, output: process.stdout });
+  try {
+    return /^y(es)?$/i.test((await rl.question(`${question} [y/N] `)).trim());
+  } finally {
+    rl.close();
+  }
+}
+
+async function restore(choice, { yes }) {
+  const backups = await listBackups();
+  if (!backups.length) return console.log(`No backups yet. Dracosh makes one every day you use it, in ${BACKUP_DIR}`);
+  if (!choice) {
+    console.log(`Backups in ${BACKUP_DIR}, newest first:\n`);
+    backups.forEach((b, i) => {
+      const what = `${plural(b.decks, "deck")} · ${plural(b.cards, "card")} · ${b.practiced} practiced`;
+      console.log(`  ${String(i + 1).padStart(2)}  ${formatTime(b.created)}  ${b.reason.padEnd(14)}  ${what}`);
+    });
+    return console.log(`\nBring one back with: dracosh restore <number>`);
+  }
+
+  const backup = backups[Number(choice) - 1];
+  if (!backup) throw new Error(`There's no backup number ${choice}. Run "dracosh restore" to see the list.`);
+  console.log(`This replaces your cards, progress and settings with the backup from ${formatTime(backup.created)}.`);
+  console.log("What you have now is backed up first, so you can undo this. Close any running Dracosh before you go on.");
+  if (!yes) {
+    if (!process.stdin.isTTY) throw new Error("Add --yes to restore without a prompt.");
+    if (!(await confirm("Restore it?"))) return console.log("Nothing changed.");
+  }
+  await restoreBackup(backup.file);
+  console.log("Restored.");
+}
+
 async function main() {
-  const { values } = parseArgs({
+  const { values, positionals } = parseArgs({
+    allowPositionals: true,
     options: {
       deck: { type: "string" },
       every: { type: "string" },
@@ -69,10 +110,14 @@ async function main() {
       "no-sound": { type: "boolean", default: false },
       stats: { type: "boolean", default: false },
       preview: { type: "boolean", default: false },
+      yes: { type: "boolean", short: "y", default: false },
       help: { type: "boolean", short: "h", default: false }
     }
   });
   if (values.help) return console.log(HELP);
+  const [command, ...args] = positionals;
+  if (command === "restore") return restore(args[0], values);
+  if (command) throw new Error(`Unknown command "${command}". See dracosh --help.`);
 
   const saved = normalizeSettings(await loadSettingsRaw());
   const settings = {
@@ -91,6 +136,8 @@ async function main() {
   const state = await loadState();
   if (values.stats) return printStats(state, settings);
   if (!process.stdin.isTTY) throw new Error("dracosh needs an interactive terminal.");
+
+  await dailyBackup();
 
   // a fresh install starts with the "Getting started" deck
   const library = await loadLibrary();

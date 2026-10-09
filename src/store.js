@@ -1,6 +1,6 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { dayKey } from "./dates.js";
 import { upgradeLibrary } from "./library.js";
 import { itemKey, newToday } from "./scheduler.js";
@@ -9,10 +9,12 @@ export const HOME = process.env.DRACOSH_HOME || join(homedir(), ".dracosh");
 const LIBRARY_FILE = join(HOME, "library.json");
 const STATE_FILE = join(HOME, "state.json");
 const SETTINGS_FILE = join(HOME, "settings.json");
+// everything a backup holds, by name
+export const DATA_FILES = { library: LIBRARY_FILE, state: STATE_FILE, settings: SETTINGS_FILE };
 
 const emptyState = () => ({ version: 1, items: {}, newToday: { date: "", count: 0 } });
 
-async function readJson(file, fallback) {
+export async function readJson(file, fallback) {
   try {
     return JSON.parse(await readFile(file, "utf8"));
   } catch (err) {
@@ -25,10 +27,10 @@ async function readJson(file, fallback) {
 // and two saves in quick succession (an answer and a shown tip, say) can't trip over each other's temp file.
 let writes = Promise.resolve();
 
-function writeJson(file, data) {
+export function writeJson(file, data) {
   const json = JSON.stringify(data, null, 2); // snapshot now: the state object keeps changing
   const job = writes.then(async () => {
-    await mkdir(HOME, { recursive: true });
+    await mkdir(dirname(file), { recursive: true });
     const tmp = `${file}.tmp`;
     await writeFile(tmp, json);
     await rename(tmp, file);
