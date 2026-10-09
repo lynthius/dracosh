@@ -1,3 +1,4 @@
+import { Text } from "ink";
 import { BADGES } from "../progress.js";
 import { html } from "./kit.js";
 import { PixelGrid } from "./Mascot.js";
@@ -248,8 +249,8 @@ export function BadgeIcon({ id, locked = false }) {
   return html`<${PixelGrid} grid=${icon.grid.map((row) => [...row])} palette=${palette} />`;
 }
 
-// A flame two pixels tall that fits in one line of text: orange edges, a yellow core, an orange tip.
-const FLAME = { grid: [".R.", "RYR"], palette: { R: "#f97316", Y: "#fbbf24" } };
-export const Flame = () => html`<${PixelGrid} grid=${FLAME.grid.map((row) => [...row])} palette=${FLAME.palette} />`;
+// The streak flame: a small triangle in fire orange, the height of the letters next to it.
+// (Pixel blocks fill the whole line height and look too big beside text.)
+export const Flame = () => html`<${Text} color="#f97316">▴<//>`;
 
 export const ICON_WIDTH = 8;
