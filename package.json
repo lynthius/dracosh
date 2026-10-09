@@ -1,7 +1,7 @@
 {
   "name": "dracosh",
   "version": "0.1.0",
-  "description": "A gamified personal language trainer for your terminal. Your own pixel dragon grows with your progress.",
+  "description": "A gamified language or definitions trainer for your terminal. Your personal pixel dragon grows with your progress.",
   "author": "Tomasz Przyborowski (https://github.com/lynthius)",
   "license": "Apache-2.0",
   "repository": {
