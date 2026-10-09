@@ -8,14 +8,18 @@ const words = [
   { noteId: 2, word: "software", translations: ["oprogramowanie"], example: "" }
 ];
 
-function setup(settings = {}) {
+// a fixed midday clock, so time-of-day badges (night owl, early bird) never sneak into the results
+const NOON = new Date("2026-03-04T12:00:00").getTime();
+
+function setup(settings = {}, now = () => NOON) {
   const saves = [];
   const state = { items: {}, newToday: { date: "", count: 0 } };
   const session = createSession({
     loadWords: async () => ({ words }),
     state,
     getSettings: () => ({ ...DEFAULTS, ...settings }),
-    save: async (s) => saves.push(structuredClone(s))
+    save: async (s) => saves.push(structuredClone(s)),
+    now
   });
   return { session, state, saves };
 }
