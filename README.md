@@ -28,11 +28,10 @@ Just want to look around? `dracosh --preview` shows every screen and animation o
 ## Usage
 
 ```bash
-dracosh                  # deck "English", a word every 10 minutes
-dracosh --deck Spanish   # another deck
-dracosh --every 5m       # change the interval for this run
+dracosh --deck "My Deck"   # quiz from this Anki deck (default: "English")
+dracosh --every 5m         # a word every 5 minutes instead of 10, this run only
 dracosh --no-sound
-dracosh --stats          # print your progress and exit
+dracosh --stats            # print your progress and exit
 dracosh --preview
 ```
 

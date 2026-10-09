@@ -1,7 +1,5 @@
 // Read-only AnkiConnect client: the quiz never writes to Anki.
 const ANKI_URL = process.env.ANKI_CONNECT_URL || "http://localhost:8765";
-const FRONT = "Przód";
-const BACK = "Tył";
 
 async function invoke(action, params = {}) {
   let res;
@@ -26,11 +24,13 @@ export async function fetchNotes(deck) {
   const ids = await invoke("findNotes", { query: `deck:"${escapeQuery(deck)}"` });
   if (!ids.length) return [];
   const infos = await invoke("notesInfo", { notes: ids });
-  return infos
-    .filter((info) => info.fields?.[FRONT] && info.fields?.[BACK])
-    .map((info) => ({
-      noteId: info.noteId,
-      front: info.fields[FRONT].value,
-      back: info.fields[BACK].value
-    }));
+  return infos.map(toFrontBack).filter(Boolean);
+}
+
+// The first two fields of a note, by position: field names depend on the note type and on
+// Anki's UI language ("Front"/"Back", "Przód"/"Tył", "Vorderseite"/"Rückseite"…).
+export function toFrontBack(info) {
+  const fields = Object.values(info.fields ?? {}).sort((a, b) => a.order - b.order);
+  if (fields.length < 2) return null;
+  return { noteId: info.noteId, front: fields[0].value, back: fields[1].value };
 }
