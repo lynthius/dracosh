@@ -131,7 +131,7 @@ function QuizLookLab({ onBack }) {
   };
   return html`
     <${Fragment}>
-      <${Header} deck="Spanish" everyMs=${600000} wordCount=${340} stats=${stats} combo=${combo} face="idle" event=${null} tick=${0} />
+      <${Header} deck="Polish" everyMs=${600000} wordCount=${340} stats=${stats} combo=${combo} face="idle" event=${null} tick=${0} />
       <${Box} marginTop=${1} flexDirection="column" borderStyle="round" borderColor=${theme.accent} paddingX=${2} paddingY=${1} width=${PANEL_WIDTH}>
         <${Text} bold>la mariposa<//>
         <${Box} marginTop=${1}><${Text} color=${theme.accent}>❯ <//><${Text} inverse> <//><//>

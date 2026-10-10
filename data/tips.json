@@ -28,5 +28,5 @@
   { "id": "settings-sound", "cat": "Settings", "text": "Sound and volume are in /settings. dracosh --no-sound turns sound off for one run." },
   { "id": "data-backup", "cat": "Your data", "text": "Dracosh backs up your cards and progress every day. dracosh restore brings a backup back." },
   { "id": "data-sync", "cat": "Your data", "text": "Everything lives in ~/.dracosh. Point DRACOSH_HOME at a synced folder to use two computers." },
-  { "id": "data-deck", "cat": "Your data", "text": "dracosh --deck \"Spanish\" starts with another deck, for this run only." }
+  { "id": "data-deck", "cat": "Your data", "text": "dracosh --deck \"Polish\" starts with another deck, for this run only." }
 ]

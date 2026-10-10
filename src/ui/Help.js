@@ -20,7 +20,7 @@ const HOW = [
 ];
 
 const OUTSIDE = [
-  ['dracosh --deck "Spanish"', "quiz another deck"],
+  ['dracosh --deck "Polish"', "quiz another deck"],
   ["dracosh restore", "bring back a backup"],
   ["dracosh --help", "every option"]
 ];

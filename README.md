@@ -13,7 +13,7 @@ It's made for people who live in a terminal or spend most of the day at a comput
 ## Features
 
 - Your cards live in Dracosh's own library, organised in decks; no other app needs to be running
-- Language decks are asked both ways (Spanish → English and English → Spanish); other decks one way
+- Each deck is asked both ways (kot → cat and cat → kot) or one way only, as you choose when you make it
 - Forgiving answer checks: case and Polish diacritics don't matter, one typo is fine on longer words, and after a miss you see letter by letter where you went wrong
 - Leitner boxes, so the words you know come back less and less often
 - Daily goal, streaks (weekends and vacations don't break them) and 36 badges (one of them a secret)
@@ -36,7 +36,7 @@ Want a tour first? `dracosh --preview` shows every screen and animation on made-
 ## Usage
 
 ```bash
-dracosh --deck "Spanish"   # quiz this deck, this run only (default: the first one)
+dracosh --deck "Polish"    # quiz this deck, this run only (default: the first one)
 dracosh --every 5m         # a word every 5 minutes instead of 10, this run only
 dracosh --no-sound
 dracosh --stats            # print your progress and exit

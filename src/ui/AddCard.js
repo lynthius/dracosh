@@ -5,8 +5,8 @@ import { Choice, CHOICE_KEYS } from "./Choice.js";
 import { html, KeyHints, PANEL_WIDTH, theme } from "./kit.js";
 
 const FIELDS = {
-  deck: { label: "Name your deck", hint: "Spanish, Biology, Capitals… whatever you want to learn" },
-  front: { label: "Front", hint: "the word or question, e.g. gato" },
+  deck: { label: "Name your deck", hint: "Polish, Biology, Capitals… whatever you want to learn" },
+  front: { label: "Front", hint: "the word or question, e.g. kot" },
   back: { label: "Back", hint: "the answer; separate several with commas, e.g. cat, kitty" },
   example: { label: "Example", hint: "optional: a sentence that helps you remember. Enter skips it" }
 };
@@ -140,7 +140,7 @@ export function AddCard({ current, actions, onDone, startNew = false }) {
             <${Box} marginTop=${1}>
               <${Choice}
                 options=${[
-                  { label: "Both ways", note: "for words: gato → cat, and cat → gato", key: "y" },
+                  { label: "Both ways", note: "for words: kot → cat, and cat → kot", key: "y" },
                   { label: "One way only", note: "for questions: front → back", key: "n" }
                 ]}
                 selected=${ways}
