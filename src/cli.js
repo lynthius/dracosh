@@ -159,14 +159,13 @@ async function main() {
   const state = await loadState();
   if (values.stats) return printStats(state, settings);
   if (!process.stdin.isTTY) throw new Error("dracosh needs an interactive terminal.");
-  acquireLock();
-
-  await dailyBackup();
-
   // a fresh install starts with the "Getting started" deck
   const library = await loadLibrary();
   const seeded = seedLibrary(library);
   if (values.deck && !findDeck(library, values.deck)) throw missingDeck(library, values.deck); // before anything is written
+
+  acquireLock();
+  await dailyBackup();
   if (seeded) await saveLibrary(library);
 
   // --deck must exist (fail fast, before taking over the screen); a deck saved in /decks that has
@@ -188,6 +187,10 @@ async function main() {
 }
 
 main().catch((err) => {
+  if (err.code === "EACCES" || err.code === "EPERM") {
+    console.error(`Dracosh can't write to ${HOME} (${err.code}). Point DRACOSH_HOME at a folder you can write to.`);
+    process.exit(1);
+  }
   console.error(err.message);
   process.exit(1);
 });

@@ -1,4 +1,4 @@
-import { readFileSync, rmSync, writeFileSync, mkdirSync } from "node:fs";
+import { mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { HOME } from "./store.js";
 
@@ -28,17 +28,29 @@ export function runningPid() {
 
 export const ALREADY_RUNNING = (pid) => `Dracosh is already running in another window (process ${pid}). Close it first: two windows would overwrite each other's progress.`;
 
-// → a release function; throws when another quiz holds the lock
+// → a release function; throws when another quiz holds the lock. The lock file is created exclusively
+// ("wx"), so of two windows started at the same moment only one gets it; a stale one is replaced once.
 export function acquireLock() {
-  const pid = runningPid();
-  if (pid) throw new Error(ALREADY_RUNNING(pid));
   mkdirSync(HOME, { recursive: true });
-  writeFileSync(LOCK_FILE, JSON.stringify({ pid: process.pid, since: new Date().toISOString() }));
+  const lock = JSON.stringify({ pid: process.pid, since: new Date().toISOString() });
+  for (let attempt = 0; ; attempt++) {
+    try {
+      writeFileSync(LOCK_FILE, lock, { flag: "wx" });
+      break;
+    } catch (err) {
+      if (err.code !== "EEXIST" || attempt > 0) throw err.code === "EEXIST" ? new Error(ALREADY_RUNNING(runningPid() ?? "?")) : err;
+      const pid = runningPid();
+      if (pid) throw new Error(ALREADY_RUNNING(pid));
+      rmSync(LOCK_FILE, { force: true }); // left behind by a window that crashed
+    }
+  }
   const release = () => {
     try {
       if (Number(JSON.parse(readFileSync(LOCK_FILE, "utf8")).pid) === process.pid) rmSync(LOCK_FILE);
     } catch {}
   };
   process.on("exit", release);
+  // with the lock held no other window writes here: temp files left by a crash can go
+  for (const name of readdirSync(HOME)) if (name.endsWith(".tmp")) rmSync(join(HOME, name), { force: true });
   return release;
 }
