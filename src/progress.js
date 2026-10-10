@@ -177,7 +177,7 @@ export const BADGES = [
   { id: "collector", name: "Collector", desc: "25 cards mastered", test: (s) => s.mastered >= 25 },
   { id: "dictionary", name: "Walking dictionary", desc: "50 cards mastered", test: (s) => s.mastered >= 50 },
   { id: "lexicon", name: "Living lexicon", desc: "150 cards mastered", test: (s) => s.mastered >= 150 },
-  { id: "explorer", name: "Explorer", desc: "250 cards practiced", test: (s) => s.practiced >= 250 },
+  { id: "explorer", name: "Explorer", desc: "250 cards practised", test: (s) => s.practiced >= 250 },
 
   { id: "flawless", name: "Flawless", desc: "10+ answers in a day, no miss", test: (s) => s.today.asked >= 10 && s.today.correct === s.today.asked },
   { id: "overachiever", name: "Overachiever", desc: "double your daily goal in a day", test: (s) => s.today.correct >= s.goal * 2 },

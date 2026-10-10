@@ -89,7 +89,7 @@ export function Stats({ stats, getMonth, onClose }) {
             <${Text} dimColor> · best ${streak.best} · ${streak.freezes} freeze${streak.freezes === 1 ? "" : "s"} in stock<//>
           <//>
           <${Text} dimColor>today      ${today.correct}/${goal} correct${accuracy === null ? "" : ` · ${accuracy}% accuracy`}<//>
-          <${Text} dimColor>cards      ${stats.mastered} mastered · ${stats.practiced} practiced · ${stats.totalCorrect} correct in total<//>
+          <${Text} dimColor>cards      ${stats.mastered} mastered · ${stats.practiced} practised · ${stats.totalCorrect} correct in total<//>
           <${Text} dimColor>companion  ${title} (${companion.index + 1}/6)${next}<//>
           <${Text} dimColor>rest days  ${stats.skipWeekends ? "weekends" : "no weekends"}${stats.vacation.upcoming.length ? ` · days off ${stats.vacation.upcoming.map((v) => formatRange(v.from, v.to)).join(", ")}` : ""}<//>
         <//>

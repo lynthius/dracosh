@@ -64,7 +64,7 @@ function printStats(state, settings) {
   const perBox = BOX_INTERVALS_DAYS.map((days, i) => `box ${i + 1} (${days}d): ${entries.filter((e) => e.box === i + 1).length}`);
   const correct = entries.reduce((sum, e) => sum + e.correct, 0);
   const total = entries.reduce((sum, e) => sum + e.seen, 0);
-  console.log(`${entries.length} cards practiced, ${correct}/${total} correct (${Math.round((correct / total) * 100)}%)`);
+  console.log(`${entries.length} cards practised, ${correct}/${total} correct (${Math.round((correct / total) * 100)}%)`);
   console.log(perBox.join("  "));
 }
 
@@ -100,7 +100,7 @@ async function restore(choice, { yes }) {
   if (!choice) {
     console.log(`Backups in ${BACKUP_DIR}, newest first:\n`);
     backups.forEach((b, i) => {
-      const what = `${plural(b.decks, "deck")} · ${plural(b.cards, "card")} · ${b.practiced} practiced`;
+      const what = `${plural(b.decks, "deck")} · ${plural(b.cards, "card")} · ${b.practiced} practised`;
       console.log(`  ${String(i + 1).padStart(2)}  ${formatTime(b.created)}  ${b.reason.padEnd(14)}  ${what}`);
     });
     return console.log(`\nBring one back with: dracosh restore <number>`);
