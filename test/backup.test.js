@@ -90,3 +90,13 @@ test("no daily backup while a data file is damaged, so the good ones are kept", 
   assert.deepEqual((await listBackups()).filter((b) => b.reason === "daily").map((b) => b.file), before);
   writeFileSync(DATA_FILES.library, good);
 });
+
+test("broken settings don't stop the daily backup of cards and progress", async () => {
+  const { writeFileSync } = await import("node:fs");
+  writeFileSync(DATA_FILES.settings, "{bad");
+  const file = await dailyBackup(start + 70 * DAY);
+  assert.ok(file, "a backup is still made");
+  const [latest] = await listBackups();
+  assert.ok(latest.cards > 0);
+  writeFileSync(DATA_FILES.settings, "{}");
+});

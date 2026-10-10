@@ -24,6 +24,7 @@ export async function backupNow(reason, now = Date.now(), { skipDamaged = false 
       const data = await readJson(file, null);
       if (data) files[name] = data;
     } catch {
+      if (name === "settings") continue; // broken settings just mean the defaults: back up the rest
       if (skipDamaged) return null;
       await copyFile(file, `${file}.damaged-${dayKey(now)}`);
     }
