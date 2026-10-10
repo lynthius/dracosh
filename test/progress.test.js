@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { addDays, daysBetween, dayKey, weekStart } from "../src/dates.js";
-import { applyAnswer, BADGES, calendarMonth, currentStreak, ELEMENTS, ensureProgress, missedOn, recordMiss, snapshot, stageFor, undoMiss } from "../src/progress.js";
+import { addVacation, applyAnswer, BADGES, calendarMonth, currentStreak, ELEMENTS, ensureProgress, missedOn, recordMiss, snapshot, stageFor, undoMiss } from "../src/progress.js";
 
 const at = (day, hour = 10) => new Date(`${day}T${String(hour).padStart(2, "0")}:00:00`).getTime();
 const freshState = (now) => {
@@ -314,4 +314,17 @@ test("badges count cards, not directions: a card is mastered once both ways reac
   state.items = { "c1:en-pl": top, "c1:pl-en": { ...top, box: 3 }, "c2:en-pl": top, "c3:en-pl": top, "c3:pl-en": top };
   const stats = snapshot(state, { goal: 20, now: at("2026-10-05") });
   assert.equal(stats.mastered, 2, "c2 (asked one way) and c3 (both ways); c1 is halfway");
+});
+
+test("Welcome back counts after 5+ days away, a vacation too", () => {
+  const state = freshState(at("2026-10-05"));
+  answer(state, at("2026-10-05"), { goal: 99 });
+  addVacation(state, "2026-10-06", "2026-10-11", at("2026-10-05"));
+  assert.ok(badgeIds(answer(state, at("2026-10-12"), { goal: 99 }).cheers).some((t) => /Welcome back/.test(t)));
+});
+
+test("4 days away is not yet a comeback", () => {
+  const state = freshState(at("2026-10-05"));
+  answer(state, at("2026-10-05"), { goal: 99 });
+  assert.ok(!badgeIds(answer(state, at("2026-10-09"), { goal: 99 }).cheers).some((t) => /Welcome back/.test(t)));
 });
