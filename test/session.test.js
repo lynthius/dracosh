@@ -199,3 +199,23 @@ test("a progress reset starts the game over and keeps what you know; everything 
   assert.deepEqual(state.items, {});
   assert.equal(session.isFirstRun(), true, "the egg hatches again");
 });
+
+test("when everything for today is done, the day counts as the goal; a missed card still comes back today", async () => {
+  let clock = NOON;
+  const one = [{ noteId: "c1", word: "kot", translations: ["cat"], example: "" }];
+  const state = { items: {}, newToday: { date: "", count: 0 } };
+  const session = createSession({ loadWords: async () => ({ words: one, deck: { name: "Polish", languages: null, directions: "forward" } }), state, getSettings: () => DEFAULTS, save: async () => {}, now: () => clock });
+
+  await session.answer(await session.next(), "dog"); // a miss: back in 10 minutes
+  let empty = await session.next().catch((err) => err);
+  assert.ok(empty.empty && empty.nextDue > clock && empty.nextDue < clock + 3_600_000, "the missed card is due later today");
+  assert.deepEqual(empty.cheers, [], "not done yet");
+
+  clock += 600_000;
+  await session.answer(await session.next(), "cat");
+  empty = await session.next().catch((err) => err);
+  assert.ok(empty.empty && empty.nextDue > clock + 3_600_000, "nothing more today");
+  assert.match(empty.cheers.find((c) => c.kind === "goal").text, /All done for today · 1-day streak/);
+  assert.equal(session.stats().today.goalMet, true);
+  assert.deepEqual((await session.next().catch((err) => err)).cheers, [], "celebrated once");
+});

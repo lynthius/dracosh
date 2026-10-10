@@ -249,13 +249,16 @@ function collectStats(state, now, goal) {
 }
 
 // Goal check, evolution and badges after something was credited today → cheers
-function award(state, progress, day, today, { correct, goal, rules, now, daysAway = 0, random = Math.random }) {
+// `caughtUp`: nothing is left to practise today, which counts as reaching the goal (a small deck can't
+// give 20 answers a day, and doing everything there is to do shouldn't cost a streak).
+function award(state, progress, day, today, { correct, goal, rules, now, daysAway = 0, caughtUp = false, random = Math.random }) {
   const cheers = [];
-  if (correct && !day.goalMet && day.correct >= goal) {
+  if (((correct && day.correct >= goal) || caughtUp) && !day.goalMet) {
     day.goalMet = true;
+    if (caughtUp) day.caughtUp = true;
     const stageBefore = stageFor(progress.streak.best);
     const streak = completeDay(progress, today, rules);
-    cheers.push({ kind: "goal", text: `Daily goal reached · ${streak}-day streak` });
+    cheers.push({ kind: "goal", text: `${caughtUp ? "All done for today" : "Daily goal reached"} · ${streak}-day streak` });
     const stageAfter = stageFor(progress.streak.best);
     if (stageAfter.index > stageBefore.index)
       cheers.push({ kind: "evolve", text: `Your companion evolved into a${/^[aeiou]/i.test(stageAfter.name) ? "n" : ""} ${stageAfter.name}!` });
@@ -302,6 +305,15 @@ export function applyOverrule(state, { goal, rules = NO_RULES, combo = 0, now = 
   day.correct += 1;
   progress.bestCombo = Math.max(progress.bestCombo ?? 0, combo);
   return { cheers: award(state, progress, day, today, { correct: true, goal, rules, now, random }) };
+}
+
+// Nothing left to practise today (see award) → cheers; nothing happens if the goal is already met
+export function applyCaughtUp(state, { goal, rules = NO_RULES, now = Date.now(), random = Math.random }) {
+  const progress = ensureProgress(state, now);
+  const today = dayKey(now);
+  const day = dayOf(progress, today);
+  if (day.goalMet) return { cheers: [] };
+  return { cheers: award(state, progress, day, today, { correct: false, goal, rules, now, caughtUp: true, random }) };
 }
 
 // everything the screens display, derived from state

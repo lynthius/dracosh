@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { BOX_INTERVALS_DAYS, describeDue, grade, itemKey, pickNext, RELEARN_DELAY } from "../src/scheduler.js";
+import { BOX_INTERVALS_DAYS, describeDue, grade, itemKey, nextDueAt, pickNext, RELEARN_DELAY, startOfTomorrow } from "../src/scheduler.js";
 
 const DAY = 86_400_000;
 const NOW = new Date("2026-10-09T10:00:00").getTime();
@@ -54,36 +54,39 @@ test("new words are mixed in among due reviews", () => {
   assert.equal(pick(0.9).word.noteId, 1); // otherwise a due review (note 1)
 });
 
-test("falls back to unseen items, then to a random soon-due one", () => {
+test("cards are never asked before they're due: with nothing waiting there is nothing to ask", () => {
   const state = emptyState();
-  assert.ok(pickNext({ words, state, now: NOW }));
+  assert.ok(pickNext({ words, state, now: NOW }), "unseen cards are waiting");
   for (const w of words) for (const d of ["en-pl", "pl-en"]) state.items[itemKey(w.noteId, d)] = { box: 2, due: NOW + (w.noteId + (d === "en-pl" ? 0 : 1)) * DAY };
-  const seen = new Set();
-  for (let i = 0; i < 60; i++) {
-    const next = pickNext({ words, state, now: NOW });
-    seen.add(`${next.word.noteId}:${next.direction}`);
-  }
-  assert.ok(seen.size > 1, "extra practice should not always return the same item");
+  assert.equal(pickNext({ words, state, now: NOW }), null);
+  assert.equal(nextDueAt({ words, state, now: NOW }), NOW + DAY, "the earliest due card");
 });
 
-test("a lone due card does not monopolize the quiz when there is other material", () => {
+test("a lone due card is asked even right after itself, when nothing else is waiting", () => {
   const state = emptyState();
-  state.items[itemKey(1, "en-pl")] = { box: 1, due: NOW - DAY }; // the word you keep missing
+  state.items[itemKey(1, "en-pl")] = { box: 1, due: NOW - DAY }; // the card you keep missing
   state.items[itemKey(2, "en-pl")] = { box: 2, due: NOW + DAY };
-  state.items[itemKey(3, "en-pl")] = { box: 3, due: NOW + 2 * DAY };
-  const picked = new Set();
-  for (let i = 0; i < 100; i++) picked.add(pickNext({ words, state, now: NOW, directions: ["en-pl"] }).word.noteId);
-  assert.ok(picked.has(1), "the due card still gets asked");
-  assert.ok(picked.size > 1, `other cards must be mixed in, got only ${[...picked]}`);
+  const next = pickNext({ words: words.slice(0, 2), state, now: NOW, directions: ["en-pl"], lastNoteId: 1 });
+  assert.equal(next.word.noteId, 1);
+});
+
+test("a card answered right after a miss starts over at box 1, back tomorrow", () => {
+  const missed = grade(grade(undefined, true, NOW), false, NOW);
+  const relearned = grade(missed, true, NOW + 600_000);
+  assert.equal(relearned.box, 1);
+  assert.equal(relearned.due, NOW + 600_000 + DAY);
+  assert.equal(grade(relearned, true, NOW + DAY).box, 2, "after that it climbs as usual");
 });
 
 test("respects the daily cap on new items and avoids repeating the last note", () => {
   const state = emptyState();
   state.newToday = { date: new Date(NOW).toLocaleDateString("sv"), count: 20 };
-  state.items[itemKey(1, "en-pl")] = { box: 1, due: NOW + DAY };
-  state.items[itemKey(2, "en-pl")] = { box: 1, due: NOW + 2 * DAY };
-  const next = pickNext({ words, state, now: NOW, lastNoteId: 1 });
+  state.items[itemKey(1, "en-pl")] = { box: 1, due: NOW - DAY };
+  state.items[itemKey(2, "en-pl")] = { box: 1, due: NOW - 2 * DAY };
+  const next = pickNext({ words, state, now: NOW, directions: ["en-pl"], lastNoteId: 1 });
   assert.equal(next.word.noteId, 2); // cap reached → no unseen; note 1 is excluded as last
+  state.items[itemKey(2, "en-pl")].due = NOW + DAY;
+  assert.equal(nextDueAt({ words: words.slice(1, 3), state, now: NOW, directions: ["en-pl"] }), startOfTomorrow(NOW), "only new cards left: tomorrow");
 });
 
 test("describeDue picks a readable unit and never says 24 h", () => {

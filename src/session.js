@@ -1,6 +1,6 @@
 import { closestCandidate, judge } from "./judge.js";
-import { addVacation, applyAnswer, applyOverrule, calendarMonth, cancelVacations, ensureProgress, markBadgesSeen, missedOn, recordMiss, snapshot, undoMiss, unseenBadges, vacationInfo } from "./progress.js";
-import { describeDue, grade, itemKey, pickNext } from "./scheduler.js";
+import { addVacation, applyAnswer, applyCaughtUp, applyOverrule, calendarMonth, cancelVacations, ensureProgress, markBadgesSeen, missedOn, recordMiss, snapshot, undoMiss, unseenBadges, vacationInfo } from "./progress.js";
+import { describeDue, grade, itemKey, nextDueAt, pickNext, startOfTomorrow } from "./scheduler.js";
 import { recordAnswer, saveState } from "./store.js";
 import { createTipDeck } from "./tips.js";
 import { dayKey } from "./dates.js";
@@ -31,8 +31,20 @@ export function createSession({ loadWords, state, getSettings, save = saveState,
     const { words, deck } = await loadWords();
     inTour = Boolean(deck?.tour);
     const item = pickNext({ words, state, now: now(), lastNoteId, directions: directionsOf(deck), tour: deck?.tour });
-    // nothing to ask is a normal state (a finished tour, a new deck), not an error: the UI shows a way on
-    if (!item) throw Object.assign(new Error(deck?.tour ? "You've finished the tour." : `The deck "${deck?.name}" has no cards yet.`), { empty: true, tour: Boolean(deck?.tour) });
+    // nothing to ask is a normal state, not an error: the UI shows a way on (a finished tour, a new
+    // deck) or when the next card is due. Done with everything for today counts as the daily goal.
+    if (!item) {
+      const empty = { empty: true, tour: Boolean(deck?.tour), count: words.length, nextDue: null, cheers: [] };
+      if (!deck?.tour && words.length) {
+        empty.nextDue = nextDueAt({ words, state, now: now(), directions: directionsOf(deck) });
+        if (empty.nextDue >= startOfTomorrow(now())) {
+          empty.cheers = applyCaughtUp(state, { goal: getSettings().dailyGoal, rules: rules(), now: now() }).cheers;
+          if (empty.cheers.length) await save(state);
+        }
+      }
+      const message = deck?.tour ? "You've finished the tour." : words.length ? "Nothing to practise right now." : `The deck "${deck?.name}" has no cards yet.`;
+      throw Object.assign(new Error(message), empty);
+    }
     lastNoteId = item.word.noteId;
     lastWrong = null;
 

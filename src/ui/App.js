@@ -6,7 +6,8 @@ import { AnswerInput } from "./AnswerInput.js";
 import { Header } from "./Header.js";
 import { Bar, html, KeyHints, Marked, PANEL_WIDTH, theme, Typewriter } from "./kit.js";
 import { hintTarget, makeHint } from "../hint.js";
-import { formatClock, inQuietHours, parseSnooze, quietEnd } from "../quiet.js";
+import { formatClock, inQuietHours, quietEnd } from "../quiet.js";
+import { startOfTomorrow } from "../scheduler.js";
 import { shouldShowTip } from "../tips.js";
 import { Badges } from "./Badges.js";
 import { Companion } from "./Companion.js";
@@ -103,8 +104,14 @@ function CardTop({ label, width, color }) {
 }
 
 // what the quiz shows when the deck has nothing to ask: no countdown, just the way on
-function EmptyDeck({ deck, tour, width }) {
-  const [title, next] = tour ? ["You've finished the tour.", "Now make it yours: type /add to start your own deck."] : [`"${deck}" has no cards yet.`, "Type /add to add the first one."];
+function EmptyDeck({ deck, tour, count, nextDue, now, width }) {
+  const [title, next] = tour
+    ? ["You've finished the tour.", "Now make it yours: type /add to start your own deck."]
+    : !count
+      ? [`"${deck}" has no cards yet.`, "Type /add to add the first one."]
+      : nextDue >= startOfTomorrow(now)
+        ? ["All done for today.", "Your cards come back tomorrow. Want more today? /add some new ones."]
+        : ["Nothing to practise right now.", `The next card is due at ${formatClock(nextDue)}. It will come by itself.`];
   return html`
     <${Box} flexDirection="column" width=${width}>
       <${CardTop} label=${deck} width=${width} color=${theme.accent} />
@@ -134,7 +141,7 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
   const [settings, setSettings] = useState(initialSettings);
   const [deck, setDeck] = useState(initialDeck);
   const [addNew, setAddNew] = useState(false); // /add opened from "+ New deck" in /decks
-  const [empty, setEmpty] = useState(null); // { tour } when the deck has nothing to ask: a finished tour or no cards yet
+  const [empty, setEmpty] = useState(null); // { tour, count, nextDue } when there is nothing to ask right now
   // quiz | settings | reset | add | decks | stats | badges | companion | help | missed | evolve | the-one | die | summary | hatch
   const [screen, setScreen] = useState(() => (session.isFirstRun() ? "hatch" : "quiz"));
   const [tip, setTip] = useState(null);
@@ -193,8 +200,9 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
         return waitForNext();
       }
       setQuestion(null);
-      setOutcome(null);
-      setEmpty({ tour: err.tour });
+      setEmpty({ tour: err.tour, count: err.count, nextDue: err.nextDue });
+      setOutcome(err.cheers.length ? { result: "done", cheers: err.cheers } : null);
+      if (err.cheers.length) celebrate({ result: "exact", cheers: err.cheers, combo: session.totals.combo });
       setPhase("empty");
     }
   }, [session, waitForNext]);
@@ -208,6 +216,13 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
     const id = setInterval(() => setNow(Date.now()), TICK_MS);
     return () => clearInterval(id);
   }, []);
+
+  // with nothing to practise, the quiz picks up again by itself once the next card is due
+  useEffect(() => {
+    if (phase !== "empty" || !empty?.nextDue || screen !== "quiz" || now < empty.nextDue || pauseEnd(now)) return;
+    alerts.ask();
+    ask();
+  }, [now, phase, empty, screen, ask, alerts]);
 
   useEffect(() => {
     if (phase !== "waiting" || screen === "summary" || screen === "evolve" || screen === "the-one" || screen === "die") return;
@@ -417,7 +432,7 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
 
   return html`
     <${Box} flexDirection="column" marginY=${1}>
-      <${Header} deck=${deck} everyMs=${settings.everyMs} wordCount=${question?.wordCount} stats=${stats} combo=${session.totals.combo} face=${face} event=${petEvent} tick=${tick} asleep=${asleep} />
+      <${Header} deck=${deck} everyMs=${settings.everyMs} wordCount=${question?.wordCount ?? empty?.count} stats=${stats} combo=${session.totals.combo} face=${face} event=${petEvent} tick=${tick} asleep=${asleep} />
       <${Box} marginTop=${1} flexDirection="column">
         ${screen === "settings" && html`<${Settings} settings=${settings} onChange=${changeSettings} onClose=${() => setScreen("quiz")} onAction=${library ? () => setScreen("reset") : null} />`}
         ${screen === "reset" && html`<${Reset} stats=${stats} actions=${library} onConfirm=${reset} onClose=${() => setScreen("settings")} />`}
@@ -440,7 +455,7 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
                   <//>
                 <//>
               `}
-              ${phase === "empty" && html`<${EmptyDeck} deck=${deck} tour=${empty?.tour} width=${width} />`}
+              ${phase === "empty" && html`<${EmptyDeck} deck=${deck} ...${empty} now=${now} width=${width} />`}
               ${confetti && html`<${Confetti} width=${width} onDone=${() => setConfetti(false)} />`}
               ${outcome?.cheers?.length > 0 && html`<${Cheers} cheers=${outcome.cheers} play=${alerts.play} />`}
               ${phase === "waiting" && tip && html`<${TipBox} tip=${tip} width=${width} />`}
