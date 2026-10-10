@@ -15,14 +15,17 @@ const alive = (pid) => {
   }
 };
 
-// the pid of a Dracosh quiz running on this data folder, or null
-export function runningPid() {
-  let pid;
+const readPid = () => {
   try {
-    pid = Number(JSON.parse(readFileSync(LOCK_FILE, "utf8")).pid);
+    return Number(JSON.parse(readFileSync(LOCK_FILE, "utf8")).pid) || null;
   } catch {
     return null; // no lock, or an unreadable one
   }
+};
+
+// the pid of a Dracosh quiz running on this data folder, or null
+export function runningPid() {
+  const pid = readPid();
   return pid && pid !== process.pid && alive(pid) ? pid : null; // a lock left by a crash doesn't count
 }
 
@@ -44,6 +47,10 @@ export function acquireLock() {
       rmSync(LOCK_FILE, { force: true }); // left behind by a window that crashed
     }
   }
+  // Two windows that both found the same stale lock may each have removed it and written their own:
+  // after a moment only one of them is still in the file, and the other one stops here.
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 60);
+  if (readPid() !== process.pid) throw new Error(ALREADY_RUNNING(readPid() ?? "?"));
   const release = () => {
     try {
       if (Number(JSON.parse(readFileSync(LOCK_FILE, "utf8")).pid) === process.pid) rmSync(LOCK_FILE);
@@ -51,6 +58,6 @@ export function acquireLock() {
   };
   process.on("exit", release);
   // with the lock held no other window writes here: temp files left by a crash can go
-  for (const name of readdirSync(HOME)) if (name.endsWith(".tmp")) rmSync(join(HOME, name), { force: true });
+  for (const name of readdirSync(HOME)) if (/^(library|state|settings)\.json\.\d+\.tmp$/.test(name)) rmSync(join(HOME, name), { force: true });
   return release;
 }
