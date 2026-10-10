@@ -45,11 +45,12 @@ export function parseVacation(args, today) {
   if (parts.length < 1 || parts.length > 2) return null;
   const dates = parts.map((part) => parseDate(part, today));
   if (dates.some((date) => !date)) return null;
-  let [a, b = a] = dates;
-  // "28.12 3.01" on 30 December: the start was moved to next year only because it already passed,
-  // but it's the one just behind us
-  const rolled = /^\d{1,2}\.\d{1,2}$/.test(parts[0]) && a.slice(0, 4) > today.slice(0, 4);
-  if (a > b && rolled) a = valid(`${Number(a.slice(0, 4)) - 1}${a.slice(4)}`) ?? a;
-  const [from, to] = a <= b ? [a, b] : [b, a];
+  const [a, b = a] = dates;
+  // A day and month without a year means the next one to come, so a range that already started
+  // ("28.12 3.01" on 30 December, "24.12 2.01" on New Year's Day) gets its start back a year.
+  // Of the readings that make sense, the shortest wins; a reversed range is read the other way round.
+  const back = (key, part) => (/^\d{1,2}\.\d{1,2}$/.test(part) ? valid(`${Number(key.slice(0, 4)) - 1}${key.slice(4)}`) : null);
+  const readings = [[a, b], [back(a, parts[0]), b], [b, a]].filter(([x, y]) => x && y && x <= y);
+  const [from, to] = readings.sort(([x1, y1], [x2, y2]) => daysBetween(x1, y1) - daysBetween(x2, y2))[0];
   return daysBetween(from, to) < MAX_DAYS ? { action: "add", from, to } : null;
 }
