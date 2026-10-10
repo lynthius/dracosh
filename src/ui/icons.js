@@ -46,7 +46,7 @@ const ICONS = {
     ]
   },
   star: {
-    palette: { S: "#fbbf24", W: "#fef3c7" },
+    palette: { S: "#fbbf24", W: "#fef3c7", R: "#60a5fa" },
     grid: [
       "...S....",
       "..SSS...",
@@ -250,12 +250,55 @@ const TIERS = [
   { name: "amethyst", main: "#c084fc", shade: "#6b21a8", light: "#f3e8ff" },
   { name: "ruby", main: "#f87171", shade: "#991b1b", light: "#fee2e2" }
 ];
+// Badges that share an icon but need telling apart get their own grid: the calendars mark the days
+// each one asks for, from a weekend to a month nearly full; the day badges are a star (no miss),
+// a crown (double the goal) and a medal (a marathon); a heart with a mended crack is a mistake put right.
+const CALENDAR_PAGE = (days) => [".C.CC.C.", "RRRRRRRR", ...days.map((row) => `C${row}C`), "CCCCCCCC", "........"];
+const OWN_GRIDS = {
+  weekend: CALENDAR_PAGE(["WWWWWW", "WWWWGG", "WWWWWW", "WWWWGG"]),
+  "perfect-week": CALENDAR_PAGE(["WWWWWW", "GGGGGG", "WWWWWW", "WWWWWW"]),
+  regular: CALENDAR_PAGE(["GWGGWG", "GGWGGW", "WGGWGG", "WWWWWW"]),
+  machine: CALENDAR_PAGE(["GGGGGG", "GGGGWG", "GGGGGG", "GGWWWW"]),
+  "hundred-club": CALENDAR_PAGE(["GGGGGG", "GGGGGG", "GGGGGG", "GGGGGG"]),
+  overachiever: [
+    "........",
+    "W..W..W.",
+    "S..S..S.",
+    "SS.S.SS.",
+    "SSSSSSS.",
+    "SRSWSRS.",
+    "SSSSSSS.",
+    "........"
+  ],
+  marathon: [
+    "RR....RR",
+    ".RR..RR.",
+    "..RRRR..",
+    "..SSSS..",
+    ".SSWSSS.",
+    ".SWSSSS.",
+    ".SSSSSS.",
+    "..SSSS.."
+  ],
+  redemption: [
+    "........",
+    ".HH..HH.",
+    "HWH.HHHH",
+    "HWHH.HHH",
+    ".HH.HHH.",
+    "..HH.H..",
+    "...HH...",
+    "........"
+  ]
+};
+
 // which palette letters of a tiered icon take the tier's main / shade / light color
 const TIER_ROLES = {
   trophy: { G: "main", D: "shade", W: "light" },
   flame: { Y: "main", R: "shade", W: "light" },
   book: { B: "main", D: "shade" },
-  bolt: { Y: "main", W: "light" }
+  bolt: { Y: "main", W: "light" },
+  calendar: { R: "main" }
 };
 
 // the badge's rank within its group, in the order BADGES lists them (easiest first); null if the group isn't tiered
@@ -286,7 +329,8 @@ export function BadgeIcon({ id, locked = false, flash = false, secret = false })
   const flat = (color) => Object.fromEntries(Object.keys(icon.palette).map((k) => [k, color]));
   const palette = flash ? flat("#ffffff") : locked ? flat(LOCKED_COLOR) : paletteFor(id, icon);
   // a locked ring is drawn filled in, so its silhouette doesn't give away what it is
-  const grid = locked && !flash && id === "one-ring" ? icon.grid.map(fillIn) : icon.grid;
+  const own = OWN_GRIDS[id] ?? icon.grid;
+  const grid = locked && !flash && id === "one-ring" ? own.map(fillIn) : own;
   return html`<${PixelGrid} grid=${grid.map((row) => [...row])} palette=${palette} />`;
 }
 
