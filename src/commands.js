@@ -8,7 +8,7 @@ export const COMMANDS = [
   { name: "/badges", hint: "All badges and what unlocks them" },
   { name: "/companion", hint: "Your dragon, its element and the forms ahead" },
   { name: "/missed", hint: "Cards you got wrong today" },
-  { name: "/pause", hint: "Pause: 30m or 2h, days off that keep your streak: 3d or 24.12 2.01, off" },
+  { name: "/pause", hint: "A break (30m, 2h) or days off (3d, 24.12 2.01)" },
   { name: "/help", aliases: ["/?"], hint: "Keys, how cards come back, the streak" },
   { name: "/quit", hint: "Exit Dracosh" }
 ];
