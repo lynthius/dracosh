@@ -16,7 +16,8 @@ import { App } from "./ui/App.js";
 import { Preview } from "./ui/Preview.js";
 import { ALREADY_RUNNING, acquireLock, runningPid } from "./lock.js";
 import * as manage from "./manage.js";
-import { loadWords } from "./words.js";
+import { findDeck } from "./library.js";
+import { loadWords, missingDeck } from "./words.js";
 
 const HELP = `Dracosh: a vocabulary and quiz trainer for your terminal
 
@@ -164,7 +165,9 @@ async function main() {
 
   // a fresh install starts with the "Getting started" deck
   const library = await loadLibrary();
-  if (seedLibrary(library)) await saveLibrary(library);
+  const seeded = seedLibrary(library);
+  if (values.deck && !findDeck(library, values.deck)) throw missingDeck(library, values.deck); // before anything is written
+  if (seeded) await saveLibrary(library);
 
   // --deck must exist (fail fast, before taking over the screen); a deck saved in /decks that has
   // since gone just falls back to the first one
