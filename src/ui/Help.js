@@ -16,7 +16,7 @@ const HOW = [
   `A right answer moves a card to a later box: it comes back in ${BOX_INTERVALS_DAYS.slice(0, -1).join(", ")}, then ${BOX_INTERVALS_DAYS.at(-1)} days. A miss sends it back to the first box.`,
   "One wrong letter in a longer word still counts, and you see the right spelling.",
   "Reach your daily goal to keep your streak going. Your dragon grows with your best streak.",
-  `A freeze covers a day you missed. You get one a week, ${MAX_FREEZES} at most.`
+  `A freeze covers a day you missed. You start with ${MAX_FREEZES} and get one back each week, ${MAX_FREEZES} at most.`
 ];
 
 const OUTSIDE = [

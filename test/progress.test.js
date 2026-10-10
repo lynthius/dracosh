@@ -34,11 +34,12 @@ test("a freeze bridges one missed day, then the streak breaks without one", () =
   const state = freshState(at("2026-10-05"));
   answer(state, at("2026-10-05"));
   answer(state, at("2026-10-06"));
-  assert.equal(state.progress.streak.freezes, 1);
+  assert.equal(state.progress.streak.freezes, 2, "two to start with");
   assert.equal(currentStreak(state.progress, "2026-10-08"), 2); // missed the 7th, freeze covers it
   answer(state, at("2026-10-08"));
   assert.equal(state.progress.streak.count, 3);
-  assert.equal(state.progress.streak.freezes, 0);
+  assert.equal(state.progress.streak.freezes, 1);
+  state.progress.streak.freezes = 0; // say the other one went too
 
   assert.equal(currentStreak(state.progress, "2026-10-10"), 0); // missed the 9th, no freeze left
   answer(state, at("2026-10-10"));

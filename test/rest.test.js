@@ -46,10 +46,10 @@ test("doing the goal on a weekend still counts", () => {
 test("a skipped working day still breaks it (a freeze covers one)", () => {
   const state = fresh(at("2026-10-05"));
   done(state, "2026-10-05", weekdays); // Mon
-  // Tue and Wed skipped, back on Thu: 2 missed working days, 1 freeze
-  assert.equal(currentStreak(state.progress, "2026-10-08", weekdays), 0);
-  // Tue skipped only, back on Wed: covered by the freeze
-  assert.equal(currentStreak(state.progress, "2026-10-07", weekdays), 1);
+  // Tue, Wed and Thu skipped, back on Fri: 3 missed working days, 2 freezes
+  assert.equal(currentStreak(state.progress, "2026-10-09", weekdays), 0);
+  // Tue and Wed skipped, back on Thu: covered by the two freezes
+  assert.equal(currentStreak(state.progress, "2026-10-08", weekdays), 1);
 });
 
 test("a vacation covers every day in it, however long", () => {
@@ -66,10 +66,10 @@ test("a day after the vacation ends is a working day again", () => {
   const state = fresh(at("2026-10-05"));
   done(state, "2026-10-05", weekdays); // Mon
   addVacation(state, "2026-10-06", "2026-10-06");
-  // Tue is vacation, Wed skipped (1 freeze), back on Thu
-  assert.equal(currentStreak(state.progress, "2026-10-08", weekdays), 1);
-  // Tue vacation, Wed + Thu skipped, back on Fri: 2 working days missed
-  assert.equal(currentStreak(state.progress, "2026-10-09", weekdays), 0);
+  // Tue is vacation, Wed + Thu skipped (2 freezes), back on Fri
+  assert.equal(currentStreak(state.progress, "2026-10-09", weekdays), 1);
+  // Tue vacation, Wed to Fri skipped (the weekend rests), back on Mon: 3 working days missed
+  assert.equal(currentStreak(state.progress, "2026-10-12", weekdays), 0);
 });
 
 test("overlapping and touching vacations merge, and cancelling keeps the past", () => {

@@ -4,7 +4,7 @@ import { BOX_INTERVALS_DAYS } from "./scheduler.js";
 export const MAX_FREEZES = 2;
 const MAX_BOX = BOX_INTERVALS_DAYS.length;
 const AT_RISK_HOUR = 19;
-const COMEBACK_AFTER_DAYS = 7;
+const COMEBACK_AFTER_DAYS = 5;
 const MISSED_KEEP_DAYS = 14;
 const FALL_MIN = 30; // a lost streak this long counts as a fall for "Dragon's die"
 
@@ -36,7 +36,7 @@ export function stageFor(bestStreak) {
 export function ensureProgress(state, now = Date.now()) {
   state.progress ??= {
     days: {},
-    streak: { count: 0, best: 0, lastGoalDay: null, freezes: 1, freezeWeek: weekStart(dayKey(now)), freezesUsed: 0 },
+    streak: { count: 0, best: 0, lastGoalDay: null, freezes: MAX_FREEZES, freezeWeek: weekStart(dayKey(now)), freezesUsed: 0 },
     badges: {},
     bestCombo: 0,
     lastActiveDay: null,
@@ -179,7 +179,7 @@ export const BADGES = [
   { id: "early-bird", name: "Early bird", desc: "a correct answer before 8:00", test: (s) => s.event.correct && s.event.hour < 8 },
   { id: "night-owl", name: "Night owl", desc: "a correct answer after 23:00", test: (s) => s.event.correct && s.event.hour >= 23 },
 
-  { id: "comeback", name: "Welcome back", desc: "back after 7+ days away", test: (s) => s.event.correct && s.event.daysAway >= COMEBACK_AFTER_DAYS },
+  { id: "comeback", name: "Welcome back", desc: "back after 5+ days away", test: (s) => s.event.correct && s.event.daysAway >= COMEBACK_AFTER_DAYS },
   { id: "redemption", name: "Redemption", desc: "5 words missed today, got right later the same day", test: (s) => s.recoveredToday >= 5 },
   { id: "frozen", name: "Frozen in time", desc: "a freeze saved your streak", test: (s) => s.freezesUsed >= 1 },
   { id: "weekend", name: "Weekend warrior", desc: "goal on both Saturday and Sunday", test: (s) => s.weekendDone },
