@@ -239,6 +239,7 @@ test("a deck that's done doesn't settle the day while another deck still has car
   const empty = await session.next().catch((err) => err);
   assert.deepEqual(empty.cheers, []);
   assert.equal(session.stats().restToday, false);
+  assert.equal(empty.dayDone, false, "the screen says this deck is done, not the day");
 });
 
 test("days off can't reach into the past, so a broken streak stays broken", async () => {

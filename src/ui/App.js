@@ -114,12 +114,14 @@ function whenDue(at, now) {
 }
 
 // what the quiz shows when the deck has nothing to ask: no countdown, just the way on
-function EmptyDeck({ deck, tour, count, nextDue, now, width }) {
+function EmptyDeck({ deck, tour, count, nextDue, dayDone, now, width }) {
   const [title, next] = tour
     ? ["You've finished the tour.", "Now make it yours: type /add to start your own deck."]
     : !count
       ? [`"${deck}" has no cards yet.`, "Type /add to add the first one."]
-      : nextDue >= startOfTomorrow(now)
+      : nextDue >= startOfTomorrow(now) && !dayDone
+        ? [`Nothing more in "${deck}" today.`, `Its cards come back ${whenDue(nextDue, now)}. Other decks still have cards: /decks`]
+        : nextDue >= startOfTomorrow(now)
         ? ["All done for today.", `Your cards come back ${whenDue(nextDue, now)}. Want more today? /add some new ones.`]
         : ["Nothing to practise right now.", `The next card is due ${whenDue(nextDue, now)}. It will come by itself.`];
   return html`
@@ -214,7 +216,7 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
         return waitForNext();
       }
       setQuestion(null);
-      setEmpty({ tour: err.tour, count: err.count, nextDue: err.nextDue });
+      setEmpty({ tour: err.tour, count: err.count, nextDue: err.nextDue, dayDone: err.dayDone });
       setOutcome(err.cheers.length ? { result: "done", cheers: err.cheers } : null);
       if (err.cheers.length) celebrate({ result: "exact", cheers: err.cheers, combo: session.totals.combo });
       setPhase("empty");

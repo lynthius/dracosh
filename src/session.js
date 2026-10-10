@@ -29,19 +29,19 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
   let lastWrong = null; // the latest wrong answer, until the next question: /correct can still overrule it
   let current = { words: [], deck: null }; // the deck the last question came from
 
-  // When nothing is waiting in any of your decks before tomorrow, the day is done → cheers
+  // When nothing is waiting in any of your decks before tomorrow, the day is done → { done, cheers }
   async function settleDay() {
     const decks = loadAllWords ? await loadAllWords() : [current].filter((d) => !d.deck?.tour);
     const t = now();
     for (const { words, deck } of decks) {
       const directions = directionsOf(deck);
-      if (pickNext({ words, state, now: t, directions })) return [];
+      if (pickNext({ words, state, now: t, directions })) return { done: false, cheers: [] };
       const due = nextDueAt({ words, state, now: t, directions });
-      if (due !== null && due < startOfTomorrow(t)) return [];
+      if (due !== null && due < startOfTomorrow(t)) return { done: false, cheers: [] };
     }
     const { cheers } = applyCaughtUp(state, { goal: getSettings().dailyGoal, rules: rules(), now: t });
     await save(state);
-    return cheers;
+    return { done: true, cheers };
   }
 
   // when the deck's next card is due, if nothing is waiting in it right now (null: something is)
@@ -59,10 +59,12 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
     // nothing to ask is a normal state, not an error: the UI shows a way on (a finished tour, a new
     // deck) or when the next card is due. Done with everything for today counts as the daily goal.
     if (!item) {
-      const empty = { empty: true, tour: Boolean(deck?.tour), count: words.length, nextDue: null, cheers: [] };
+      const empty = { empty: true, tour: Boolean(deck?.tour), count: words.length, nextDue: null, cheers: [], dayDone: false };
       if (!deck?.tour && words.length) {
         empty.nextDue = nextDueAt({ words, state, now: now(), directions: directionsOf(deck) });
-        empty.cheers = await settleDay();
+        const day = await settleDay();
+        empty.cheers = day.cheers;
+        empty.dayDone = day.done; // false: this deck is done, but another one still has cards today
       }
       const message = deck?.tour ? "You've finished the tour." : words.length ? "Nothing to practise right now." : `The deck "${deck?.name}" has no cards yet.`;
       throw Object.assign(new Error(message), empty);
@@ -112,7 +114,7 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
 
     await save(state);
     // the last card of the day settles it right away, so quitting now doesn't lose the goal
-    if (!question.tour) cheers.push(...(await settleDay()));
+    if (!question.tour) cheers.push(...(await settleDay()).cheers);
     // given/closest feed the per-letter diff the UI shows after a miss or a forgiven typo
     const closest = result === "exact" ? null : closestCandidate(text, [...question.expected, ...(state.accepted?.[key] ?? [])]);
     return { result, hinted: hinted && correct, dueIn: describeDue(entry, t), combo: totals.combo, cheers, given: text, closest, nextDue: upNext() };
@@ -135,7 +137,7 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
     const { cheers } = applyOverrule(state, { goal: getSettings().dailyGoal, rules: rules(), combo: totals.combo, now: at });
 
     await save(state);
-    if (!question.tour) cheers.push(...(await settleDay()));
+    if (!question.tour) cheers.push(...(await settleDay()).cheers);
     return { result: "exact", overruled: true, accepted: text, dueIn: describeDue(entry, now()), combo: totals.combo, cheers, nextDue: upNext() };
   }
 
