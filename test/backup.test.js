@@ -62,3 +62,19 @@ test("a file that didn't exist back then is removed on restore", async () => {
   await restoreBackup(file, start + 31 * DAY);
   assert.equal(existsSync(DATA_FILES.settings), false);
 });
+
+test("a restore works even when the current library is too damaged to read", async () => {
+  const { readdirSync, writeFileSync } = await import("node:fs");
+  const good = (await listBackups()).find((b) => b.cards > 0);
+  writeFileSync(DATA_FILES.library, '{"version":1,"decks":[');
+  await restoreBackup(good.file, start + 40 * DAY);
+  assert.equal((await loadLibrary()).cards.length, good.cards);
+  assert.ok(readdirSync(process.env.DRACOSH_HOME).some((name) => name.startsWith("library.json.damaged-")), "the damaged file is kept aside");
+});
+
+test("a backup file without its data is skipped, not a crash", async () => {
+  const { writeFileSync } = await import("node:fs");
+  const { BACKUP_DIR } = await import("../src/backup.js");
+  writeFileSync(join(BACKUP_DIR, "2030-01-01_00-00-00-daily.json"), JSON.stringify({ format: 1, created: 0, reason: "daily" }));
+  assert.ok((await listBackups()).every((b) => b.file && !b.file.includes("2030-01-01")));
+});

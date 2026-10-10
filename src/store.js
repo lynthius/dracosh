@@ -12,13 +12,20 @@ const SETTINGS_FILE = join(HOME, "settings.json");
 // everything a backup holds, by name
 export const DATA_FILES = { library: LIBRARY_FILE, state: STATE_FILE, settings: SETTINGS_FILE };
 
-const emptyState = () => ({ version: 1, items: {}, newToday: { date: "", count: 0 } });
+export const STATE_VERSION = 1;
+const emptyState = () => ({ version: STATE_VERSION, items: {}, newToday: { date: "", count: 0 } });
+
+const isObject = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
+
+// what to say when a data file can't be used as it is
+export const damaged = (file, why) => new Error(`${file} looks damaged (${why}). Run "dracosh restore" to bring back a backup.`);
 
 export async function readJson(file, fallback) {
   try {
     return JSON.parse(await readFile(file, "utf8"));
   } catch (err) {
     if (err.code === "ENOENT") return fallback;
+    if (err instanceof SyntaxError) throw damaged(file, err.message);
     throw new Error(`Can't read ${file}: ${err.message}`);
   }
 }
@@ -39,10 +46,24 @@ export function writeJson(file, data) {
   return job;
 }
 
-export const loadLibrary = async () => upgradeLibrary(await readJson(LIBRARY_FILE, null));
+export async function loadLibrary() {
+  try {
+    return upgradeLibrary(await readJson(LIBRARY_FILE, undefined));
+  } catch (err) {
+    throw err.damaged ? damaged(LIBRARY_FILE, err.message) : err;
+  }
+}
 export const saveLibrary = (library) => writeJson(LIBRARY_FILE, library);
 
-export const loadState = () => readJson(STATE_FILE, emptyState());
+// Progress, checked for the shape the quiz relies on; a file from a newer Dracosh is never overwritten
+export async function loadState() {
+  const state = await readJson(STATE_FILE, undefined);
+  if (state === undefined) return emptyState();
+  if (!isObject(state) || !isObject(state.items)) throw damaged(STATE_FILE, "no progress in it");
+  if (state.version > STATE_VERSION) throw new Error(`${STATE_FILE} was saved by a newer version of Dracosh. Please update Dracosh.`);
+  if (!isObject(state.newToday)) state.newToday = { date: "", count: 0 };
+  return state;
+}
 export const saveState = (state) => writeJson(STATE_FILE, state);
 
 // `countNew: false` keeps a card out of the daily cap on new cards (the tour's don't use it up)
@@ -55,10 +76,13 @@ export function recordAnswer(state, noteId, direction, entry, now = Date.now(), 
   return state;
 }
 
-export const loadSettingsRaw = () => readJson(SETTINGS_FILE, {});
+export const loadSettingsRaw = async () => {
+  const raw = await readJson(SETTINGS_FILE, {});
+  return isObject(raw) ? raw : {}; // hand-edited into something odd: the defaults take over
+};
 
 // merges into what's on disk, so a one-off CLI flag never gets persisted by accident
 export async function patchSettings(patch) {
-  const current = await readJson(SETTINGS_FILE, {});
+  const current = await loadSettingsRaw();
   await writeJson(SETTINGS_FILE, { ...current, ...patch });
 }

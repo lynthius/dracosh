@@ -84,8 +84,14 @@ test("cards map to the quiz's word shape", () => {
 });
 
 test("a library from a newer Dracosh is refused instead of being overwritten", () => {
-  assert.deepEqual(upgradeLibrary(null), emptyLibrary());
+  assert.deepEqual(upgradeLibrary(undefined), emptyLibrary(), "no file yet");
   assert.throws(() => upgradeLibrary({ version: 99, decks: [], cards: [] }), /newer version/);
+});
+
+test("a library that isn't one is reported as damaged, never treated as empty", () => {
+  for (const raw of [null, [], "x", { decks: "x" }, { decks: [{ id: "d1" }] }, { decks: [], cards: [{ id: "c1", deckId: "d1", front: 5, back: ["x"] }] }, { decks: [], cards: [{ id: "c1", deckId: "d1", front: "kot" }] }]) {
+    assert.throws(() => upgradeLibrary(raw), (err) => err.damaged, JSON.stringify(raw));
+  }
 });
 
 test("the library round-trips through disk", async () => {

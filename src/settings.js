@@ -23,6 +23,7 @@ const isNumber = (v) => typeof v === "number" && Number.isFinite(v);
 
 // settings.json is hand-editable, so anything invalid falls back to the default instead of crashing
 export function normalizeSettings(raw = {}) {
+  raw = raw && typeof raw === "object" ? raw : {};
   return {
     everyMs: isNumber(raw.everyMs) && raw.everyMs >= 1000 ? raw.everyMs : DEFAULTS.everyMs,
     sound: typeof raw.sound === "boolean" ? raw.sound : DEFAULTS.sound,

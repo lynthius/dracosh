@@ -26,13 +26,24 @@ function cleanList(values) {
   return [...new Set(list)];
 }
 
-// → the library in its current shape. Throws on a file written by a newer Dracosh, so it's never overwritten.
+const isText = (value) => typeof value === "string";
+const validDeck = (deck) => deck && isText(deck.id) && isText(deck.name) && deck.name.trim();
+const validCard = (card) => card && isText(card.id) && isText(card.deckId) && isText(card.front) && Array.isArray(card.back) && card.back.every(isText);
+const broken = (why) => Object.assign(new Error(why), { damaged: true });
+
+// → the library in its current shape (undefined: there's none yet). Throws on a file written by a newer
+// Dracosh, so it's never overwritten, and on one that isn't a library, so nothing is lost by saving over it.
 export function upgradeLibrary(raw) {
-  if (!raw) return emptyLibrary();
+  if (raw === undefined) return emptyLibrary();
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) throw broken("not a library");
   if (raw.version > LIBRARY_VERSION) {
     throw new Error(`This library was saved by a newer version of Dracosh (format ${raw.version}). Please update Dracosh.`);
   }
-  return { version: LIBRARY_VERSION, decks: raw.decks ?? [], cards: raw.cards ?? [] };
+  const decks = raw.decks ?? [];
+  const cards = raw.cards ?? [];
+  if (!Array.isArray(decks) || !decks.every(validDeck)) throw broken("a deck without a name or an id");
+  if (!Array.isArray(cards) || !cards.every(validCard)) throw broken("a card without a front or an answer");
+  return { version: LIBRARY_VERSION, decks, cards };
 }
 
 export const findDeck = (library, nameOrId) =>
