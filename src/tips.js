@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 
-// Short tips about Dracosh itself, shown while you wait for the next card (and with /tip).
+// Short tips about Dracosh itself, shown now and then while you wait for the next card.
 export const TIPS = JSON.parse(readFileSync(new URL("../data/tips.json", import.meta.url), "utf8"));
 const SOMETIMES_CHANCE = 1 / 3;
 

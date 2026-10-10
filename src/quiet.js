@@ -18,7 +18,7 @@ export function quietEnd(ms, quiet) {
 
 export const formatQuiet = (quiet) => (quiet ? `${String(quiet.from).padStart(2, "0")}:00–${String(quiet.to).padStart(2, "0")}:00` : "off");
 
-// "/snooze" → 1 h, "30", "30m", "2h", "90s" → milliseconds, "off" → "off", anything else → null
+// /pause durations: "" → 1 h, "30", "30m", "2h", "90s" → milliseconds, "off" → "off", anything else → null
 export function parseSnooze(arg) {
   const text = arg.trim().toLowerCase();
   if (!text) return HOUR;

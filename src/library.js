@@ -54,7 +54,7 @@ export const findDeck = (library, nameOrId) =>
 export function createDeck(library, { name, type = "translation", languages = { front: "en", back: "pl" }, answerMode, directions = "both", tour = false, now = Date.now() }) {
   const trimmed = String(name ?? "").trim();
   if (!trimmed) throw new Error("A deck needs a name.");
-  if (trimmed.length > MAX_DECK_NAME) throw new Error(`Keep the deck name to ${MAX_DECK_NAME} characters or fewer.`);
+  if (Array.from(trimmed).length > MAX_DECK_NAME) throw new Error(`Keep the deck name to ${MAX_DECK_NAME} characters or fewer.`);
   const existing = findDeck(library, trimmed);
   if (existing) throw new Error(`There is already a deck called "${existing.name}".`);
   if (!CARD_TYPES.includes(type)) throw new Error(`Unknown card type "${type}".`);

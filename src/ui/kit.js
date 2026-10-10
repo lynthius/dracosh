@@ -53,6 +53,20 @@ export function KeyHints({ text }) {
 export const PANEL_WIDTH = 72;
 const MIN_PANEL_WIDTH = 30;
 
+// How many terminal cells text takes: CJK characters and emoji take two. Close enough for labels
+// and deck names; whole characters (not UTF-16 halves) are counted, so an emoji is never cut in two.
+const WIDE = /[\u1100-\u115f\u2e80-\ua4cf\uac00-\ud7a3\uf900-\ufaff\ufe30-\ufe4f\uff00-\uff60\uffe0-\uffe6\p{Extended_Pictographic}]/u;
+export const cellWidth = (text) => Array.from(text).reduce((sum, ch) => sum + (WIDE.test(ch) ? 2 : 1), 0);
+export function cutToWidth(text, cells) {
+  if (cellWidth(text) <= cells) return text;
+  let out = "";
+  for (const ch of text) {
+    if (cellWidth(out + ch) > cells - 1) break;
+    out += ch;
+  }
+  return `${out}…`;
+}
+
 // the panel width for this terminal: PANEL_WIDTH, or less in a narrow window (some terminals report 0)
 export function usePanelWidth() {
   const { stdout } = useStdout();

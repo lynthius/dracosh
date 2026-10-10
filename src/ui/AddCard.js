@@ -82,7 +82,7 @@ export function AddCard({ current, actions, onDone, startNew = false }) {
     setMessage("");
     if (step === "deck") {
       if (!value) return setError("Your deck needs a name.");
-      if (value.length > MAX_DECK_NAME) return setError(`Keep the name to ${MAX_DECK_NAME} characters or fewer.`);
+      if (Array.from(value).length > MAX_DECK_NAME) return setError(`Keep the name to ${MAX_DECK_NAME} characters or fewer.`);
       return actions.existingDeck(value).then((existing) => {
         if (existing) return setError(`There is already a deck called "${existing.name}".`);
         setDeck(value);

@@ -4,7 +4,7 @@ import { commandsFor } from "../commands.js";
 import { diffChars } from "../diff.js";
 import { AnswerInput } from "./AnswerInput.js";
 import { Header } from "./Header.js";
-import { Bar, html, KeyHints, Marked, theme, Typewriter, usePanelWidth } from "./kit.js";
+import { Bar, cellWidth, cutToWidth, html, KeyHints, Marked, theme, Typewriter, usePanelWidth } from "./kit.js";
 import { hintTarget, makeHint } from "../hint.js";
 import { formatClock, inQuietHours, quietEnd } from "../quiet.js";
 import { startOfTomorrow } from "../scheduler.js";
@@ -95,8 +95,8 @@ function Cheers({ cheers, play }) {
 function CardTop({ label, width, color }) {
   const tail = 2;
   const room = Math.max(4, width - 2 - tail - 4); // a label too long for a narrow window is cut short
-  const tag = ` ${label.length > room ? `${label.slice(0, room - 1)}…` : label} `;
-  const dashes = Math.max(0, width - 2 - tag.length - tail);
+  const tag = ` ${cutToWidth(label, room)} `;
+  const dashes = Math.max(0, width - 2 - cellWidth(tag) - tail);
   return html`
     <${Text}>
       <${Text} color=${color}>╭${"─".repeat(dashes)}<//>
@@ -407,10 +407,11 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
   function addDone({ deck: started, removed, added, dropped }) {
     setScreen("quiz");
     if (removed.length) session.forget(removed).catch(() => {});
-    if (started && (removed.length || phase === "empty" || addNew)) return switchDeck(started);
-    if (phase === "empty" && added) ask();
-    const notes = [dropped && "The card you were writing wasn't saved.", started && `"${started}" is ready; you're still practising "${deck}". Switch with /decks.`];
-    setNotice(notes.filter(Boolean).join(" "));
+    const switching = started && (removed.length || phase === "empty" || addNew);
+    if (switching) switchDeck(started);
+    else if (phase === "empty" && added) ask();
+    const notes = [dropped && "The card you were writing wasn't saved.", started && !switching && `"${started}" is ready; you're still practising "${deck}". Switch with /decks.`];
+    setNotice(notes.filter(Boolean).join(" ")); // after ask(), which clears the notice
   }
 
   const width = usePanelWidth();
