@@ -53,7 +53,7 @@ test("a restore brings everything back, and can itself be undone", async () => {
   assert.equal(undo.cards, 0, "what was there right before the restore");
 });
 
-test("a file that didn't exist back then is removed on restore, but settings set since stay", async () => {
+test("a file the backup doesn't have is left alone on restore", async () => {
   const file = await backupNow("test", start + 30 * DAY);
   const { readJson, writeJson } = await import("../src/store.js");
   const backup = await readJson(file);
@@ -61,7 +61,7 @@ test("a file that didn't exist back then is removed on restore, but settings set
   delete backup.files.state;
   await writeJson(file, backup);
   await restoreBackup(file, start + 31 * DAY);
-  assert.equal(existsSync(DATA_FILES.state), false);
+  assert.equal(existsSync(DATA_FILES.state), true, "a restore never deletes progress");
   assert.equal(existsSync(DATA_FILES.settings), true);
 });
 
@@ -79,4 +79,14 @@ test("a backup file without its data is skipped, not a crash", async () => {
   const { BACKUP_DIR } = await import("../src/backup.js");
   writeFileSync(join(BACKUP_DIR, "2030-01-01_00-00-00-daily.json"), JSON.stringify({ format: 1, created: 0, reason: "daily" }));
   assert.ok((await listBackups()).every((b) => b.file && !b.file.includes("2030-01-01")));
+});
+
+test("no daily backup while a data file is damaged, so the good ones are kept", async () => {
+  const { writeFileSync, readFileSync } = await import("node:fs");
+  const before = (await listBackups()).filter((b) => b.reason === "daily").map((b) => b.file);
+  const good = readFileSync(DATA_FILES.library, "utf8");
+  writeFileSync(DATA_FILES.library, '{"decks":[');
+  for (let day = 50; day < 60; day++) assert.equal(await dailyBackup(start + day * DAY), null);
+  assert.deepEqual((await listBackups()).filter((b) => b.reason === "daily").map((b) => b.file), before);
+  writeFileSync(DATA_FILES.library, good);
 });

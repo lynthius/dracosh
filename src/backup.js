@@ -13,16 +13,19 @@ export const KEEP = 7; // per kind: the last 7 daily ones, and the last 7 taken 
 // "2026-10-09T21:15:03.120Z" → "2026-10-09_21-15-03", so file names sort by time
 const stamp = (now) => new Date(now).toISOString().slice(0, 19).replace("T", "_").replaceAll(":", "-");
 
-// → the file it wrote, or null when there is nothing to back up yet. A data file too damaged to read is
-// set aside as it is (library.json.damaged-<time>) instead of stopping the backup, so a restore still works.
-export async function backupNow(reason, now = Date.now()) {
+// → the file it wrote, or null when there is nothing to back up (or, with `skipDamaged`, when a data file
+// is too damaged to read: a backup missing the library would push the good ones out). Otherwise a damaged
+// file is set aside as it is (library.json.damaged-<day>, one a day) and the backup goes on, so a
+// restore still works.
+export async function backupNow(reason, now = Date.now(), { skipDamaged = false } = {}) {
   const files = {};
   for (const [name, file] of Object.entries(DATA_FILES)) {
     try {
       const data = await readJson(file, null);
       if (data) files[name] = data;
     } catch {
-      await copyFile(file, `${file}.damaged-${stamp(now)}`);
+      if (skipDamaged) return null;
+      await copyFile(file, `${file}.damaged-${dayKey(now)}`);
     }
   }
   if (!Object.keys(files).length) return null;
@@ -54,7 +57,7 @@ export async function dailyBackup(now = Date.now()) {
   const today = dayKey(now);
   const backups = await listBackups();
   if (backups.some((b) => b.reason === "daily" && dayKey(b.created) === today)) return null;
-  return backupNow("daily", now);
+  return backupNow("daily", now, { skipDamaged: true });
 }
 
 // → newest first: { file, created, reason, decks, cards, practiced }
@@ -78,12 +81,12 @@ export async function listBackups() {
 }
 
 // Puts a backup's files back. What's there now is backed up first, so a restore can be undone too.
+// A file the backup doesn't have is left as it is: a restore never deletes your cards or progress.
 export async function restoreBackup(file, now = Date.now()) {
   const backup = await readJson(file, null);
   if (backup?.format !== BACKUP_FORMAT || !backup.files) throw new Error(`${file} isn't a Dracosh backup.`);
   await backupNow("before-restore", now);
   for (const [name, target] of Object.entries(DATA_FILES)) {
     if (backup.files[name]) await writeJson(target, backup.files[name]);
-    else if (name !== "settings") await rm(target, { force: true }); // it didn't exist back then; settings set since stay
   }
 }
