@@ -88,3 +88,13 @@ test("a language deck labels the card with its pair, both ways", async () => {
   for (let i = 0; i < 30; i++) labels.add((await session.next()).label);
   assert.deepEqual([...labels].sort(), ["EN → ES", "ES → EN"]);
 });
+
+test("the tour doesn't use up the daily cap on new cards", async () => {
+  const { newToday } = await import("../src/scheduler.js");
+  const state = { items: {}, newToday: { date: "", count: 0 } };
+  const session = createSession({ loadWords: () => loadWords(STARTER_DECK), state, getSettings: () => DEFAULTS, save: async () => {} });
+  const q = await session.next();
+  await session.answer(q, q.expected[0]);
+  assert.equal(Object.keys(state.items).length, 1);
+  assert.equal(newToday(state, Date.now()), 0);
+});

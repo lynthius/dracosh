@@ -45,9 +45,10 @@ export const saveLibrary = (library) => writeJson(LIBRARY_FILE, library);
 export const loadState = () => readJson(STATE_FILE, emptyState());
 export const saveState = (state) => writeJson(STATE_FILE, state);
 
-export function recordAnswer(state, noteId, direction, entry, now = Date.now()) {
+// `countNew: false` keeps a card out of the daily cap on new cards (the tour's don't use it up)
+export function recordAnswer(state, noteId, direction, entry, now = Date.now(), { countNew = true } = {}) {
   const key = itemKey(noteId, direction);
-  const isNew = !state.items[key];
+  const isNew = countNew && !state.items[key];
   const date = dayKey(now);
   state.items[key] = entry;
   if (isNew) state.newToday = { date, count: newToday(state, now) + 1 };

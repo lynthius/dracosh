@@ -75,7 +75,7 @@ export function createSession({ loadWords, state, getSettings, save = saveState,
     const before = state.items[key];
     const comboBefore = totals.combo;
     const entry = grade(before, correct, t, { hinted });
-    recordAnswer(state, question.word.noteId, question.direction, entry, t);
+    recordAnswer(state, question.word.noteId, question.direction, entry, t, { countNew: !question.tour });
 
     totals.asked += 1;
     totals.correct += correct ? 1 : 0;
@@ -151,7 +151,9 @@ export function createSession({ loadWords, state, getSettings, save = saveState,
   // progress of cards that are gone (a removed deck) is dropped with them
   async function forget(cardIds) {
     const ids = new Set(cardIds);
-    for (const key of Object.keys(state.items)) if (ids.has(key.slice(0, key.lastIndexOf(":")))) delete state.items[key];
+    const gone = (key) => ids.has(key.slice(0, key.lastIndexOf(":")));
+    for (const key of Object.keys(state.items)) if (gone(key)) delete state.items[key];
+    for (const key of Object.keys(state.accepted ?? {})) if (gone(key)) delete state.accepted[key];
     await save(state);
   }
 

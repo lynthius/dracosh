@@ -33,8 +33,10 @@ test("your first deck replaces the tour, after a backup, and drops the tour's pr
   assert.ok((await listBackups()).some((b) => b.reason === "before-delete" && b.cards === tourIds.length));
 
   const session = createSession({ loadWords: () => loadWords(), state, getSettings: () => DEFAULTS, save: async () => {} });
+  state.accepted = { [`${tourIds[0]}:en-pl`]: ["dog"] };
   await session.forget(removed);
   assert.deepEqual(state.items, {});
+  assert.deepEqual(state.accepted, {}, "answers accepted on tour cards go too");
   await assert.rejects(session.next(), (err) => err.empty && !err.tour, "an empty deck of your own is a state, not a crash");
   assert.equal(seedLibrary(await loadLibrary()), false, "the tour doesn't come back");
 });
