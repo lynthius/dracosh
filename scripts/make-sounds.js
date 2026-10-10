@@ -53,15 +53,6 @@ const sounds = {
   wrong: seq(tone(311.13, 90, { decay: 3, amp: 0.2 }), tone(233.08, 220, { decay: 7, amp: 0.2 })),
   ask: tone(740, 60, { decay: 10, amp: 0.3, wave: "sine" }), // soft pop: a new word arrived
   goal: seq(tone(523.25, 70, { decay: 4 }), tone(659.25, 70, { decay: 4 }), tone(783.99, 70, { decay: 4 }), tone(1046.5, 260, { decay: 6 })),
-  // badge unlocked: a quick run up (C E G C), a hop back, and a bell that rings out
-  badge: seq(
-    tone(1046.5, 65, { decay: 3, amp: 0.2 }),
-    tone(1318.5, 65, { decay: 3, amp: 0.2 }),
-    tone(1567.98, 65, { decay: 3, amp: 0.2 }),
-    tone(2093, 120, { decay: 2, amp: 0.2 }),
-    tone(1567.98, 70, { decay: 3, amp: 0.18 }),
-    tone(2093, 420, { decay: 5, amp: 0.3, wave: "sine" })
-  ),
   combo: seq(tone(783.99, 55, { decay: 4 }), tone(880, 55, { decay: 4 }), tone(1046.5, 170, { decay: 7 })),
   // evolution: a long power-up sweep, then a fanfare
   evolve: seq(
@@ -72,9 +63,15 @@ const sounds = {
     tone(1318.5, 320, { decay: 5 })
   )
 };
-// more badges won with the same answer: a short bell each, climbing (G6, A6, C7)
-[1567.98, 1760, 2093].forEach((f, i) => {
-  sounds[`badge-${i + 2}`] = seq(tone(f, 40, { decay: 3, amp: 0.15 }), tone(f * 2, 220, { decay: 6, amp: 0.28, wave: "sine" }));
+// Badge unlocked: three quick notes up a major chord and a bell an octave above. Several badges
+// won with one answer each play it a step higher (badge-1 … badge-4 start on C5, D5, E5, G5).
+[523.25, 587.33, 659.25, 783.99].forEach((root, i) => {
+  sounds[`badge-${i + 1}`] = seq(
+    tone(root, 70, { decay: 3, amp: 0.22 }),
+    tone(root * 1.26, 70, { decay: 3, amp: 0.22 }),
+    tone(root * 1.5, 70, { decay: 3, amp: 0.22 }),
+    tone(root * 2, 340, { decay: 5, amp: 0.3, wave: "sine" })
+  );
 });
 LADDER.forEach((f, i) => {
   sounds[`correct-${i}`] = seq(tone(f, 55, { decay: 3 }), tone((f * 4) / 3, 140, { decay: 7 }));
