@@ -38,7 +38,7 @@ export function writeJson(file, data) {
   const json = JSON.stringify(data, null, 2); // snapshot now: the state object keeps changing
   const job = writes.then(async () => {
     await mkdir(dirname(file), { recursive: true });
-    const tmp = `${file}.tmp`;
+    const tmp = `${file}.${process.pid}.tmp`; // another Dracosh process never shares it
     await writeFile(tmp, json);
     await rename(tmp, file);
   });

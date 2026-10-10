@@ -14,6 +14,7 @@ import { seedLibrary } from "./starter.js";
 import { DATA_FILES, HOME, loadLibrary, loadSettingsRaw, loadState, patchSettings, saveLibrary } from "./store.js";
 import { App } from "./ui/App.js";
 import { Preview } from "./ui/Preview.js";
+import { ALREADY_RUNNING, acquireLock, runningPid } from "./lock.js";
 import * as manage from "./manage.js";
 import { loadWords } from "./words.js";
 
@@ -107,8 +108,10 @@ async function restore(choice, { yes }) {
 
   const backup = backups[Number(choice) - 1];
   if (!backup) throw new Error(`There's no backup number ${choice}. Run "dracosh restore" to see the list.`);
+  const running = runningPid();
+  if (running) throw new Error(ALREADY_RUNNING(running));
   console.log(`This replaces your cards, progress and settings with the backup from ${formatTime(backup.created)}.`);
-  console.log("What you have now is backed up first, so you can undo this. Close any running Dracosh before you go on.");
+  console.log("What you have now is backed up first, so you can undo this.");
   if (!yes) {
     if (!process.stdin.isTTY) throw new Error("Add --yes to restore without a prompt.");
     if (!(await confirm("Restore it?"))) return console.log("Nothing changed.");
@@ -155,6 +158,7 @@ async function main() {
   const state = await loadState();
   if (values.stats) return printStats(state, settings);
   if (!process.stdin.isTTY) throw new Error("dracosh needs an interactive terminal.");
+  acquireLock();
 
   await dailyBackup();
 
