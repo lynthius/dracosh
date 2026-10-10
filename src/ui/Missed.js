@@ -23,7 +23,7 @@ export function Missed({ getMissed, onClose }) {
       <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.accent} paddingX=${2} width=${PANEL_WIDTH}>
         <${Box}>
           <${Text} bold color=${theme.accent}>Missed<//>
-          <${Text} dimColor>  ${dayLabel(offset, date)} · ${items.length} word${items.length === 1 ? "" : "s"}<//>
+          <${Text} dimColor>  ${dayLabel(offset, date)} · ${items.length} card${items.length === 1 ? "" : "s"}<//>
         <//>
         ${items.length === 0
           ? html`<${Box} marginTop=${1}><${Text} dimColor>${offset === 0 ? "Nothing missed so far today." : "Nothing missed that day."}<//><//>`

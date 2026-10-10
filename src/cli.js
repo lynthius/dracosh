@@ -21,7 +21,7 @@ const HELP = `Dracosh: a vocabulary and quiz trainer for your terminal
 Usage: dracosh [options]
        dracosh restore [number]   list your backups, or bring one back
 
-  --deck <name>    quiz this deck of your library, this run only (default: the first one)
+  --deck <name>    quiz this deck, this run only (otherwise the one picked in /decks)
   --every <time>   pause between questions: 30s, 10m, 1h (default: ${formatInterval(DEFAULTS.everyMs)})
   --no-sound       turn sound effects off
   --volume <0-1>   sound volume (default: ${DEFAULTS.volume})
@@ -32,9 +32,9 @@ Usage: dracosh [options]
 
 Flags override your saved settings for this run only. Change the saved ones with /settings.
 
-While running: Enter submits, "/" opens the command menu (/settings, /stats, /badges, /skip, /quit),
+While running: Enter submits, "/" opens the command menu (/add, /decks, /settings, /stats, /help…),
 Esc quits (clears the line first if you typed something). Ctrl+C also works.
-Between questions: Enter asks the next word right away, q quits.`;
+Between cards: Enter asks the next one right away, q quits. /help explains the rest.`;
 
 function parseEvery(value) {
   const match = /^(\d+(?:\.\d+)?)(s|m|h)$/.exec(value);

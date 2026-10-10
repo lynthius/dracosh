@@ -13,9 +13,10 @@ It's made for people who live in a terminal or spend most of the day at a comput
 ## Features
 
 - Your cards live in Dracosh's own library, organised in decks; no other app needs to be running
+- Add cards, start decks and switch between them right in the app (`/add`, `/decks`)
 - Each deck is asked both ways (kot → cat and cat → kot) or one way only, as you choose when you make it
 - Forgiving answer checks: case and Polish diacritics don't matter, one typo is fine on longer words, and after a miss you see letter by letter where you went wrong
-- Leitner boxes, so the words you know come back less and less often
+- Leitner boxes, so the cards you know come back less and less often
 - Daily goal, streaks (weekends and vacations don't break them) and 36 badges (one of them a secret)
 - A pixel dragon that hatches from an egg, evolves over a year of streaks, blinks, and falls asleep if you ignore it
 - 8-bit sound effects, generated from code
@@ -31,13 +32,13 @@ npm install -g dracosh
 
 A fresh install starts with a short "Getting started" deck: a tour where every card tells you what to type and shows you one more thing Dracosh can do. When you're through, `/add` starts your own deck and the tour makes room for it. Importing decks (from Anki, CSV and more) is on the way, see [What's next](#whats-next).
 
-Want a tour first? `dracosh --preview` shows every screen and animation on made-up data.
+Want a look first? `dracosh --preview` shows every screen and animation on made-up data.
 
 ## Usage
 
 ```bash
-dracosh --deck "Polish"    # quiz this deck, this run only (default: the first one)
-dracosh --every 5m         # a word every 5 minutes instead of 10, this run only
+dracosh --deck "Polish"    # quiz this deck, this run only (otherwise the one picked in /decks)
+dracosh --every 5m         # a card every 5 minutes instead of 10, this run only
 dracosh --no-sound
 dracosh --stats            # print your progress and exit
 dracosh --preview

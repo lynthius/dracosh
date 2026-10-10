@@ -10,7 +10,7 @@ function VolumeValue({ value }) {
 
 const ALL_ROWS = [
   { key: "everyMs", label: "Interval", options: INTERVALS, format: formatInterval, hint: "time between questions" },
-  { key: "sound", label: "Sound", options: [true, false], format: (v) => (v ? "on" : "off"), hint: "answer and new-word sounds", toggle: true },
+  { key: "sound", label: "Sound", options: [true, false], format: (v) => (v ? "on" : "off"), hint: "answer and new-card sounds", toggle: true },
   { key: "volume", label: "Volume", options: VOLUMES, format: (v) => html`<${VolumeValue} value=${v} />`, hint: "plays a preview when changed" },
   { key: "dailyGoal", label: "Daily goal", options: GOALS, format: (n) => `${n} correct`, hint: "keeps your streak alive" },
   { key: "tips", label: "Tips", options: TIP_MODES, format: (v) => TIP_LABELS[v], hint: "a short tip about Dracosh while you wait" },
