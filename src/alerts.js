@@ -23,11 +23,12 @@ export function createAlerts(initial = {}) {
       play("ask");
       if (enabled) execFile("osascript", ["-e", 'display notification "A new word is waiting" with title "Dracosh"'], () => {});
     },
-    // The biggest thing that just happened wins: evolution > badge > goal > combo cheer > the answer itself.
-    // On a plain correct answer the pitch rises with the combo and resets on a miss.
+    // The biggest thing that just happened wins: evolution > goal > combo cheer > the answer itself.
+    // On a plain correct answer the pitch rises with the combo and resets on a miss. Badges ring
+    // on their own, each as its line lights up (see BadgeUnlock).
     result(result, { cheers = [], combo = 0 } = {}) {
       if (result === "wrong") return play("wrong");
-      for (const kind of ["evolve", "badge", "goal", "combo"]) {
+      for (const kind of ["evolve", "goal", "combo"]) {
         if (cheers.includes(kind)) return play(kind);
       }
       if (result === "typo") return play("close");

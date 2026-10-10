@@ -11,7 +11,7 @@ import { shouldShowTip } from "../tips.js";
 import { Badges } from "./Badges.js";
 import { Companion } from "./Companion.js";
 import { Confetti } from "./Confetti.js";
-import { BadgeUnlock } from "./BadgeUnlock.js";
+import { BadgeUnlock, badgeSound } from "./BadgeUnlock.js";
 import { DieRoll } from "./DieRoll.js";
 import { Evolution } from "./Evolution.js";
 import { Hatch } from "./Hatch.js";
@@ -72,9 +72,10 @@ function Verdict({ outcome, question }) {
   `;
 }
 
+const BADGE_FIRST_MS = 400; // after the answer's own sound
 const BADGE_STAGGER_MS = 700; // several badges at once light up one after another
 
-function Cheers({ cheers }) {
+function Cheers({ cheers, play }) {
   const lines = cheers.filter((cheer) => cheer.kind !== "badge");
   const badges = cheers.filter((cheer) => cheer.kind === "badge");
   return html`
@@ -83,7 +84,7 @@ function Cheers({ cheers }) {
         const style = CHEER_STYLE[cheer.kind] ?? CHEER_STYLE.combo;
         return html`<${Text} key=${i} color=${style.color} bold>${style.icon} ${cheer.text}<//>`;
       })}
-      ${badges.map((badge, i) => html`<${BadgeUnlock} key=${badge.id} ...${badge} delay=${i * BADGE_STAGGER_MS} />`)}
+      ${badges.map((badge, i) => html`<${BadgeUnlock} key=${badge.id} ...${badge} delay=${BADGE_FIRST_MS + i * BADGE_STAGGER_MS} sound=${badgeSound(i)} play=${play} />`)}
     <//>
   `;
 }
@@ -447,7 +448,7 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
               `}
               ${phase === "empty" && html`<${EmptyDeck} deck=${deck} tour=${empty?.tour} width=${width} />`}
               ${confetti && html`<${Confetti} width=${width} onDone=${() => setConfetti(false)} />`}
-              ${outcome?.cheers?.length > 0 && html`<${Cheers} cheers=${outcome.cheers} />`}
+              ${outcome?.cheers?.length > 0 && html`<${Cheers} cheers=${outcome.cheers} play=${alerts.play} />`}
               ${phase === "waiting" && tip && html`<${TipBox} tip=${tip} width=${width} />`}
               <${Box} paddingX=${1} marginTop=${1} flexDirection="column">
                 ${problem && html`<${Text} color=${theme.bad}>${problem}<//>`}

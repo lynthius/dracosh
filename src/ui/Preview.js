@@ -7,7 +7,7 @@ import { createSession } from "../session.js";
 import { DEFAULTS } from "../settings.js";
 import { DieRoll } from "./DieRoll.js";
 import { App } from "./App.js";
-import { BadgeUnlock } from "./BadgeUnlock.js";
+import { BadgeUnlock, badgeSound } from "./BadgeUnlock.js";
 import { Badges } from "./Badges.js";
 import { Confetti } from "./Confetti.js";
 import { Evolution } from "./Evolution.js";
@@ -92,7 +92,7 @@ function MascotLab({ onBack }) {
 // three badges won with one answer, lighting up one after another, as under the quiz card
 const UNLOCK_SAMPLE = ["thousand", "hot-streak", "dragons-hoard"];
 
-function BadgeUnlockLab({ onBack }) {
+function BadgeUnlockLab({ onBack, play }) {
   const [run, setRun] = useState(1);
   useInput((input, key) => {
     if (key.escape || input === "q") return onBack();
@@ -103,7 +103,7 @@ function BadgeUnlockLab({ onBack }) {
     <${Fragment}>
       <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.good} paddingX=${2} width=${PANEL_WIDTH}>
         <${Text} color=${theme.good} bold>✓ dragon<//>
-        ${badges.map((badge, i) => html`<${BadgeUnlock} key=${`${run}-${badge.id}`} id=${badge.id} name=${badge.name} desc=${badge.desc} delay=${i * 700} />`)}
+        ${badges.map((badge, i) => html`<${BadgeUnlock} key=${`${run}-${badge.id}`} id=${badge.id} name=${badge.name} desc=${badge.desc} delay=${i * 700} sound=${badgeSound(i)} play=${play} />`)}
       <//>
       <${Box} paddingX=${1}><${KeyHints} text="enter replay · esc back" /><//>
     <//>
@@ -233,7 +233,7 @@ export function Preview({ alerts }) {
   if (scene === "mascot") return wrap(html`<${MascotLab} onBack=${back} />`);
   if (scene === "quiz-look") return wrap(html`<${QuizLookLab} onBack=${back} />`);
   if (scene === "confetti") return wrap(html`<${ConfettiLab} onBack=${back} />`);
-  if (scene === "unlock") return wrap(html`<${BadgeUnlockLab} onBack=${back} />`);
+  if (scene === "unlock") return wrap(html`<${BadgeUnlockLab} onBack=${back} play=${alerts.play} />`);
   if (scene === "die") return wrap(html`<${DieRoll} key=${run} element=${dieElement} stage=${2} play=${alerts.play} onClose=${back} />`);
   if (scene === "the-one") return wrap(html`<${TheOne} key=${run} play=${alerts.play} onClose=${back} />`);
   if (scene === "stats") return wrap(html`<${Stats} stats=${history.stats()} getMonth=${history.month} onClose=${back} />`);

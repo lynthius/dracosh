@@ -10,12 +10,19 @@ const SPARKS_UNTIL = 22;
 const SPARKS = ["✦", "·", "✧", "·"];
 const GREY = "#4a5058";
 const WHITE = "#ffffff";
+const LAST_BELL = 4; // badge-2 … badge-4 (scripts/make-sounds.js)
+
+// the first badge of an answer gets the full jingle, the ones after it a bell each, a step higher every time
+export const badgeSound = (i) => (i === 0 ? "badge" : `badge-${Math.min(i + 1, LAST_BELL)}`);
 
 // A badge just won, as one line under the card: the name comes out of grey, flashes white and
 // lights up in its rank color while a few sparks fly. The badge art lives in /badges.
-// `delay` staggers several badges won at once.
-export function BadgeUnlock({ id, name, desc, delay = 0 }) {
+// `delay` staggers several badges won at once; `sound` rings as the line appears.
+export function BadgeUnlock({ id, name, desc, delay = 0, sound = "badge", play }) {
   const [frame, setFrame] = useState(-Math.round(delay / FRAME_MS));
+  useEffect(() => {
+    if (frame === 0) play?.(sound);
+  }, [frame === 0]);
   useEffect(() => {
     const timer = setInterval(() => {
       setFrame((f) => {
