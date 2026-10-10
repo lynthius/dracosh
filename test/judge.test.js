@@ -35,6 +35,12 @@ test("sentence punctuation doesn't matter, but symbols and numbers do", () => {
   assert.equal(judge("🐉", ["🐉"]), "exact");
   assert.equal(judge("🐱", ["🐶"]), "wrong");
   assert.equal(judge("?", ["?"]), "exact");
+  assert.equal(judge("3,14", ["3.14"]), "exact", "a decimal comma");
+  assert.equal(judge("hello,world", ["hello world"]), "exact");
+  assert.equal(judge("cafe\u0301", ["café"]), "exact", "an accent typed as a separate mark");
+  assert.equal(judge("email", ["e-mail"]), "typo", "with or without the hyphen: right, shown with the spelling");
+  assert.equal(judge("10:30", ["1030"]), "wrong");
+  assert.equal(judge("oprogramowanie2", ["oprogramowanie"]), "wrong", "no typo tolerance once a number is in it");
   assert.notEqual(normalize("🐱"), normalize("🐶"), "emoji cards aren't duplicates of each other");
 });
 

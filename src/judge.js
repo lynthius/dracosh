@@ -3,12 +3,17 @@ const TYPO_MIN_LENGTH = 6;
 
 // Sentence punctuation that never changes what an answer means ("Hello, world!" = "hello world").
 // Everything else stays: "3.14" isn't "31.4", "-5" isn't "5", "C#" isn't "C", and 🐉 is an answer too.
-const LOOSE = /[,;:!?¡¿"“”„«»()[\]'’`]/g;
+const LOOSE = /[;!?¡¿"“”„«»()[\]'’`]/g;
 
-// lowercase, loose punctuation dropped, a trailing full stop dropped, hyphens between letters as spaces
+// lowercase, loose punctuation dropped, a trailing full stop dropped, hyphens between letters as spaces.
+// Commas and colons count between digits only: "3,14" is "3.14" (a decimal comma), "10:30" stays.
 function plain(s) {
   const text = s
+    .normalize("NFC") // "café" typed or pasted with a separate accent mark is the same word
     .toLowerCase()
+    .replace(/(?<=\d),(?=\d)/g, ".")
+    .replace(/,/g, " ")
+    .replace(/(?<!\d):|:(?!\d)/g, "")
     .replace(LOOSE, "")
     .replace(/(?<=\p{L})[-‐–—](?=\p{L})/gu, " ")
     .replace(/\.+$/, "")
@@ -64,6 +69,10 @@ export function judge(answer, candidates) {
   if (candidates.some((c) => plain(c) === plain(answer))) return "exact";
   const targets = candidates.map(normalize);
   if (targets.includes(given)) return "typo";
-  const close = targets.some((t) => t.length >= TYPO_MIN_LENGTH && !/\d/.test(t) && editDistance(given, t) <= 1);
+  // "email" for "e-mail", "icecream" for "ice cream": right, but shown with the spelling
+  const compact = (s) => s.replace(/\s/g, ""); // hyphens between letters are spaces by now
+  if (targets.some((t) => compact(t) === compact(given))) return "typo";
+  const numbers = /\d/.test(given);
+  const close = targets.some((t) => t.length >= TYPO_MIN_LENGTH && !numbers && !/\d/.test(t) && editDistance(given, t) <= 1);
   return close ? "typo" : "wrong";
 }
