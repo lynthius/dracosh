@@ -65,7 +65,7 @@ function Verdict({ outcome, question }) {
       html`
         <${Box} marginTop=${1} flexDirection="column">
           ${outcome.hinted && html`<${Text} dimColor>hint used · the card stays in its box<//>`}
-          ${outcome.overruled && html`<${Text} color=${theme.good}>counted as correct · "${outcome.accepted}" is accepted from now on<//>`}
+          ${outcome.overruled && html`<${Text} color=${theme.good}>counted as correct${question.tour ? "" : ` · "${outcome.accepted}" is accepted from now on`}<//>`}
         <//>
       `}
     <//>

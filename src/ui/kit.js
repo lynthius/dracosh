@@ -23,7 +23,7 @@ export function Marked({ text, plain = false, ...props }) {
   return React.createElement(
     Text,
     props,
-    ...parts.map((part, i) => (i % 2 ? React.createElement(Text, { key: i, color: theme.accent, backgroundColor: "#2a2440", bold: true }, ` ${part} `) : part))
+    ...parts.map((part, i) => (i % 2 ? React.createElement(Text, { key: i, color: theme.accent, backgroundColor: "#2a2440", bold: true }, part) : part))
   );
 }
 
