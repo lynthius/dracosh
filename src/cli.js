@@ -111,7 +111,8 @@ async function restore(choice, { yes }) {
   if (!backup) throw new Error(`There's no backup number ${choice}. Run "dracosh restore" to see the list.`);
   const running = runningPid();
   if (running) throw new Error(ALREADY_RUNNING(running));
-  console.log(`This replaces your cards, progress and settings with the backup from ${formatTime(backup.created)}.`);
+  const has = ["cards", "progress", "settings"].filter((_, i) => [backup.cards || backup.decks, backup.hasState, backup.hasSettings][i]);
+  console.log(`This brings back your ${has.join(", ").replace(/, (?=[^,]*$)/, " and ")} from the backup of ${formatTime(backup.created)}.`);
   console.log("What you have now is backed up first, so you can undo this.");
   if (!yes) {
     if (!process.stdin.isTTY) throw new Error("Add --yes to restore without a prompt.");
@@ -187,8 +188,8 @@ async function main() {
 }
 
 main().catch((err) => {
-  if (err.code === "EACCES" || err.code === "EPERM") {
-    console.error(`Dracosh can't write to ${HOME} (${err.code}). Point DRACOSH_HOME at a folder you can write to.`);
+  if (["EACCES", "EPERM", "ENOTDIR", "EEXIST"].includes(err.code)) {
+    console.error(`Dracosh can't use ${HOME} for its data (${err.code}). Point DRACOSH_HOME at a folder you can write to.`);
     process.exit(1);
   }
   console.error(err.message);

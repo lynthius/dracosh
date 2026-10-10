@@ -75,7 +75,9 @@ export async function listBackups() {
       reason: backup.reason,
       decks: library?.decks?.length ?? 0,
       cards: library?.cards?.length ?? 0,
-      practiced: Object.keys(state?.items ?? {}).length
+      practiced: Object.keys(state?.items ?? {}).length,
+      hasState: Boolean(state),
+      hasSettings: Boolean(backup.files.settings)
     });
   }
   return list.sort((a, b) => b.created - a.created); // file names only go down to the second
