@@ -43,7 +43,8 @@ export function AnswerInput({ onSubmit, onCommand, onExit, onEdit, onCancel, com
   useInput((input, key) => {
     if (key.escape) return commandOnly ? onCancel() : value ? edit("") : onExit();
     if (key.return) {
-      if (!isCommand) return onSubmit(value);
+      // no command starts like this: on a card it's simply the answer (some answers begin with "/")
+      if (!isCommand || (!matches.length && !commandOnly)) return onSubmit(value);
       const [token, ...rest] = value.trim().split(/\s+/);
       edit("");
       return onCommand(matches[pick]?.name ?? token, rest.join(" "));
@@ -78,7 +79,7 @@ export function AnswerInput({ onSubmit, onCommand, onExit, onEdit, onCancel, com
         <${Text}>${before}<${Text} inverse>${at}<//>${after}<//>
       <//>
       ${matches.length > 0 && html`<${Palette} matches=${matches} selected=${pick} />`}
-      ${isCommand && matches.length === 0 && html`<${Box} marginTop=${1}><${Text} color=${theme.bad}>unknown command<//><//>`}
+      ${isCommand && matches.length === 0 && html`<${Box} marginTop=${1}>${commandOnly ? html`<${Text} color=${theme.bad}>unknown command<//>` : html`<${Text} dimColor>no command like that · enter sends it as your answer<//>`}<//>`}
     <//>
   `;
 }
