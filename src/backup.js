@@ -84,6 +84,6 @@ export async function restoreBackup(file, now = Date.now()) {
   await backupNow("before-restore", now);
   for (const [name, target] of Object.entries(DATA_FILES)) {
     if (backup.files[name]) await writeJson(target, backup.files[name]);
-    else await rm(target, { force: true }); // it didn't exist back then
+    else if (name !== "settings") await rm(target, { force: true }); // it didn't exist back then; settings set since stay
   }
 }

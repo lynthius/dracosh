@@ -53,14 +53,16 @@ test("a restore brings everything back, and can itself be undone", async () => {
   assert.equal(undo.cards, 0, "what was there right before the restore");
 });
 
-test("a file that didn't exist back then is removed on restore", async () => {
+test("a file that didn't exist back then is removed on restore, but settings set since stay", async () => {
   const file = await backupNow("test", start + 30 * DAY);
   const { readJson, writeJson } = await import("../src/store.js");
   const backup = await readJson(file);
   delete backup.files.settings;
+  delete backup.files.state;
   await writeJson(file, backup);
   await restoreBackup(file, start + 31 * DAY);
-  assert.equal(existsSync(DATA_FILES.settings), false);
+  assert.equal(existsSync(DATA_FILES.state), false);
+  assert.equal(existsSync(DATA_FILES.settings), true);
 });
 
 test("a restore works even when the current library is too damaged to read", async () => {
