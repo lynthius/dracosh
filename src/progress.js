@@ -45,13 +45,6 @@ export function ensureProgress(state, now = Date.now()) {
   state.progress.vacations ??= [];
   // badges already shown in /badges; ones unlocked before this was tracked count as seen, so they don't all flash at once
   state.progress.seenBadges ??= Object.keys(state.progress.badges);
-  // one free freeze per calendar week, never more than MAX_FREEZES in stock
-  const week = weekStart(dayKey(now));
-  const { streak } = state.progress;
-  if (streak.freezeWeek !== week) {
-    streak.freezeWeek = week;
-    streak.freezes = Math.min(MAX_FREEZES, streak.freezes + 1);
-  }
   return state.progress;
 }
 
@@ -67,38 +60,56 @@ export function isRestDay(progress, key, rules = NO_RULES) {
   return (progress.vacations ?? []).some((v) => key >= v.from && key <= v.to);
 }
 
-// working days strictly between two days on which you did nothing: these are the ones that cost a freeze
-function missedDaysBetween(progress, from, to, rules) {
-  let missed = 0;
-  for (let day = addDays(from, 1); day < to; day = addDays(day, 1)) if (!isRestDay(progress, day, rules)) missed += 1;
-  return missed;
+// Freezes as they stand today, walking day by day from the last goal day: every new week gives one
+// back (never more than MAX_FREEZES in stock), every missed working day takes one. A gap with more
+// missed days than freezes breaks the streak and takes none. The stored streak.freezes / freezeWeek
+// are as of the last time this was settled (a goal day); nothing is spent until then, but the
+// screens show this walk, so they never promise freezes that are already used.
+function walkFreezes(progress, today, rules) {
+  const { lastGoalDay, freezes: stored, freezeWeek } = progress.streak;
+  const walk = (spend) => {
+    let freezes = stored;
+    let week = freezeWeek ?? weekStart(today);
+    let used = 0;
+    for (let day = lastGoalDay ? addDays(lastGoalDay, 1) : today; day <= today; day = addDays(day, 1)) {
+      const dayWeek = weekStart(day);
+      if (dayWeek > week) {
+        freezes = Math.min(MAX_FREEZES, freezes + Math.round(daysBetween(week, dayWeek) / 7));
+        week = dayWeek;
+      }
+      if (!spend || day === today || isRestDay(progress, day, rules)) continue;
+      if (freezes === 0) return null; // the streak breaks here
+      freezes -= 1;
+      used += 1;
+    }
+    return { freezes, week, used };
+  };
+  const spent = lastGoalDay ? walk(true) : null;
+  return spent ? { ...spent, broken: false } : { ...walk(false), used: 0, broken: Boolean(lastGoalDay) };
 }
 
 // the streak as shown right now: alive while no working day was skipped, or while freezes can cover the gap
 export function currentStreak(progress, today, rules = NO_RULES) {
-  const { count, lastGoalDay, freezes } = progress.streak;
+  const { count, lastGoalDay } = progress.streak;
   if (!lastGoalDay || !count) return 0;
-  return missedDaysBetween(progress, lastGoalDay, today, rules) <= freezes ? count : 0;
+  return walkFreezes(progress, today, rules).broken ? 0 : count;
 }
+
+export const freezesNow = (progress, today, rules = NO_RULES) => walkFreezes(progress, today, rules).freezes;
 
 function completeDay(progress, today, rules) {
   const streak = progress.streak;
+  const { freezes, week, used, broken } = walkFreezes(progress, today, rules);
   if (!streak.lastGoalDay) {
     streak.count = 1;
+  } else if (broken) {
+    if (streak.count >= FALL_MIN) streak.fallen = streak.count; // the most recent long streak that was lost
+    streak.count = 1;
   } else {
-    const missed = missedDaysBetween(progress, streak.lastGoalDay, today, rules);
-    if (missed === 0) {
-      streak.count += 1;
-    } else if (missed <= streak.freezes) {
-      streak.freezes -= missed;
-      streak.freezesUsed = (streak.freezesUsed ?? 0) + missed;
-      streak.count += 1;
-    } else {
-      if (streak.count >= FALL_MIN) streak.fallen = streak.count; // the most recent long streak that was lost
-      streak.count = 1;
-    }
+    streak.count += 1;
+    streak.freezesUsed = (streak.freezesUsed ?? 0) + used;
   }
-  streak.lastGoalDay = today;
+  Object.assign(streak, { freezes, freezeWeek: week, lastGoalDay: today });
   streak.best = Math.max(streak.best, streak.count);
   return streak.count;
 }
@@ -287,12 +298,13 @@ export function applyAnswer(state, { result, goal, rules = NO_RULES, combo = 0, 
   const today = dayKey(now);
   const day = dayOf(progress, today);
   const correct = result !== "wrong";
-  const daysAway = progress.lastActiveDay ? daysBetween(progress.lastActiveDay, today) : 0;
+  // full days away since the last correct answer (a wrong first answer back doesn't end the absence)
+  const daysAway = progress.lastActiveDay ? daysBetween(progress.lastActiveDay, today) - 1 : 0;
 
   day.asked += 1;
   day.correct += correct ? 1 : 0;
   progress.bestCombo = Math.max(progress.bestCombo ?? 0, combo);
-  progress.lastActiveDay = today;
+  if (correct) progress.lastActiveDay = today;
   return { cheers: award(state, progress, day, today, { correct, goal, rules, now, daysAway, random }) };
 }
 
@@ -302,9 +314,11 @@ export function applyOverrule(state, { goal, rules = NO_RULES, combo = 0, now = 
   const today = dayKey(now);
   const day = dayOf(progress, today);
 
+  const daysAway = progress.lastActiveDay ? daysBetween(progress.lastActiveDay, today) - 1 : 0;
   day.correct += 1;
   progress.bestCombo = Math.max(progress.bestCombo ?? 0, combo);
-  return { cheers: award(state, progress, day, today, { correct: true, goal, rules, now, random }) };
+  progress.lastActiveDay = today;
+  return { cheers: award(state, progress, day, today, { correct: true, goal, rules, now, daysAway, random }) };
 }
 
 // Nothing left to practise today (see award) → cheers; nothing happens if the goal is already met
@@ -330,7 +344,7 @@ export function snapshot(state, { goal, rules = NO_RULES, now = Date.now() }) {
     streak: {
       days,
       best: progress.streak.best,
-      freezes: progress.streak.freezes,
+      freezes: freezesNow(progress, today, rules),
       atRisk: days > 0 && !goalMet && !restToday && new Date(now).getHours() >= AT_RISK_HOUR
     },
     restToday,

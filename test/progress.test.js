@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { addDays, daysBetween, dayKey, weekStart } from "../src/dates.js";
-import { addVacation, applyAnswer, BADGES, calendarMonth, currentStreak, ELEMENTS, ensureProgress, missedOn, recordMiss, snapshot, stageFor, undoMiss } from "../src/progress.js";
+import { addVacation, applyAnswer, BADGES, freezesNow, calendarMonth, currentStreak, ELEMENTS, ensureProgress, missedOn, recordMiss, snapshot, stageFor, undoMiss } from "../src/progress.js";
 
 const at = (day, hour = 10) => new Date(`${day}T${String(hour).padStart(2, "0")}:00:00`).getTime();
 const freshState = (now) => {
@@ -47,16 +47,24 @@ test("a freeze bridges one missed day, then the streak breaks without one", () =
   assert.equal(state.progress.streak.best, 3);
 });
 
-test("one freeze is granted per new week, capped at two", () => {
+test("one freeze comes back for every new week, capped at two", () => {
   const state = freshState(at("2026-10-05"));
   state.progress.streak.freezes = 0;
-  ensureProgress(state, at("2026-10-06"));
-  assert.equal(state.progress.streak.freezes, 0); // same week
-  ensureProgress(state, at("2026-10-12"));
-  assert.equal(state.progress.streak.freezes, 1);
-  ensureProgress(state, at("2026-10-19"));
-  ensureProgress(state, at("2026-10-26"));
-  assert.equal(state.progress.streak.freezes, 2);
+  assert.equal(freezesNow(state.progress, "2026-10-06"), 0); // same week
+  assert.equal(freezesNow(state.progress, "2026-10-12"), 1);
+  assert.equal(freezesNow(state.progress, "2026-10-19"), 2, "two weeks later: two back, not one");
+  assert.equal(freezesNow(state.progress, "2026-11-30"), 2, "never more than two");
+});
+
+test("freezes spent in one week don't swallow the next week's refill", () => {
+  const rules = { skipWeekends: true };
+  const state = freshState(at("2026-10-05"));
+  for (const day of ["2026-10-05", "2026-10-06", "2026-10-07"]) applyAnswer(state, { result: "exact", goal: 1, rules, now: at(day) });
+  // Thu and Fri missed: both freezes go; the weekend rests
+  assert.equal(freezesNow(state.progress, "2026-10-10", rules), 0, "the screens show them as spent right away");
+  applyAnswer(state, { result: "exact", goal: 1, rules, now: at("2026-10-12") });
+  assert.equal(state.progress.streak.count, 4);
+  assert.equal(state.progress.streak.freezes, 1, "Monday's refill comes on top");
 });
 
 test("badges unlock once and are announced", () => {
@@ -327,4 +335,16 @@ test("4 days away is not yet a comeback", () => {
   const state = freshState(at("2026-10-05"));
   answer(state, at("2026-10-05"), { goal: 99 });
   assert.ok(!badgeIds(answer(state, at("2026-10-09"), { goal: 99 }).cheers).some((t) => /Welcome back/.test(t)));
+});
+
+test("Welcome back needs 5 full days away, and a wrong first answer back doesn't lose it", () => {
+  const welcomed = (cheers) => badgeIds(cheers).some((t) => /Welcome back/.test(t));
+  const state = freshState(at("2026-10-05"));
+  answer(state, at("2026-10-05"), { goal: 99 });
+  assert.ok(!welcomed(answer(state, at("2026-10-10"), { goal: 99 }).cheers), "4 days away (6th to 9th)");
+
+  const back = freshState(at("2026-10-05"));
+  answer(back, at("2026-10-05"), { goal: 99 });
+  answer(back, at("2026-10-11"), { goal: 99, result: "wrong" });
+  assert.ok(welcomed(answer(back, at("2026-10-11", 10), { goal: 99 }).cheers), "5 days away, the first answer back was wrong");
 });
