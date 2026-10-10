@@ -62,7 +62,15 @@ export async function loadState() {
   if (!isObject(state) || !isObject(state.items)) throw damaged(STATE_FILE, "no progress in it");
   if (!Object.values(state.items).every((entry) => isObject(entry) && Number.isFinite(entry.box) && Number.isFinite(entry.due))) throw damaged(STATE_FILE, "a card without its box or date");
   const { progress } = state;
-  if (progress !== undefined && !(isObject(progress) && isObject(progress.days) && isObject(progress.streak) && isObject(progress.badges))) throw damaged(STATE_FILE, "the streak and badges are unreadable");
+  const validProgress =
+    isObject(progress) &&
+    isObject(progress.days) &&
+    Object.values(progress.days).every(isObject) &&
+    isObject(progress.streak) &&
+    ["count", "best", "freezes"].every((key) => Number.isFinite(progress.streak[key])) &&
+    isObject(progress.badges) &&
+    (progress.vacations === undefined || Array.isArray(progress.vacations));
+  if (progress !== undefined && !validProgress) throw damaged(STATE_FILE, "the streak and badges are unreadable");
   if (state.version > STATE_VERSION) throw new Error(`${STATE_FILE} was saved by a newer version of Dracosh. Please update Dracosh.`);
   if (!isObject(state.newToday)) state.newToday = { date: "", count: 0 };
   return state;

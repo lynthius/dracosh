@@ -27,8 +27,10 @@ function cleanList(values) {
 }
 
 const isText = (value) => typeof value === "string";
-const validDeck = (deck) => deck && isText(deck.id) && isText(deck.name) && deck.name.trim();
-const validCard = (card) => card && isText(card.id) && isText(card.deckId) && isText(card.front) && Array.isArray(card.back) && card.back.length > 0 && card.back.every(isText);
+const filled = (value) => isText(value) && value.trim() !== "";
+const validLanguages = (languages) => languages == null || (typeof languages === "object" && filled(languages.front) && filled(languages.back));
+const validDeck = (deck) => deck && isText(deck.id) && filled(deck.name) && validLanguages(deck.languages);
+const validCard = (card) => card && isText(card.id) && isText(card.deckId) && filled(card.front) && Array.isArray(card.back) && card.back.length > 0 && card.back.every(filled);
 const broken = (why) => Object.assign(new Error(why), { damaged: true });
 
 // → the library in its current shape (undefined: there's none yet). Throws on a file written by a newer
@@ -45,6 +47,7 @@ export function upgradeLibrary(raw) {
   if (!Array.isArray(cards) || !cards.every(validCard)) throw broken("a card without a front or an answer");
   const deckIds = new Set(decks.map((deck) => deck.id));
   if (!cards.every((card) => deckIds.has(card.deckId))) throw broken("a card in a deck that doesn't exist");
+  if (new Set(cards.map((card) => card.id)).size !== cards.length) throw broken("two cards with the same id");
   return { version: LIBRARY_VERSION, decks, cards };
 }
 

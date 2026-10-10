@@ -46,3 +46,18 @@ test("state with broken entries or progress, and cards with no answer or no deck
   writeFileSync(DATA_FILES.settings, "{ not json");
   assert.deepEqual(await loadSettingsRaw(), {}, "broken settings just mean the defaults");
 });
+
+test("more broken shapes are reported, not crashed on", async () => {
+  const progress = (extra) => JSON.stringify({ items: {}, progress: { days: {}, streak: { count: 0, best: 0, freezes: 2 }, badges: {}, ...extra } });
+  for (const text of [progress({ days: { "2026-10-01": null } }), progress({ vacations: "x" }), JSON.stringify({ items: {}, progress: { days: {}, streak: {}, badges: {} } })]) {
+    writeFileSync(DATA_FILES.state, text);
+    await assert.rejects(loadState(), /looks damaged/, text);
+  }
+  writeFileSync(DATA_FILES.state, progress({}));
+  assert.ok(await loadState(), "a good one still loads");
+  const deck = { id: "d1", name: "A" };
+  for (const library of [{ decks: [{ ...deck, languages: "x" }], cards: [] }, { decks: [deck], cards: [{ id: "c1", deckId: "d1", front: " ", back: ["y"] }] }, { decks: [deck], cards: [{ id: "c1", deckId: "d1", front: "x", back: ["  "] }] }, { decks: [deck], cards: [{ id: "c1", deckId: "d1", front: "x", back: ["y"] }, { id: "c1", deckId: "d1", front: "z", back: ["y"] }] }]) {
+    writeFileSync(DATA_FILES.library, JSON.stringify({ version: 1, ...library }));
+    await assert.rejects(loadLibrary(), /looks damaged/, JSON.stringify(library));
+  }
+});
