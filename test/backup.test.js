@@ -22,7 +22,7 @@ test("one daily backup per day, holding the library, progress and settings", asy
   const deck = createDeck(library, { name: "Spanish" });
   addCard(library, deck.id, { front: "gato", back: ["cat"] });
   await saveLibrary(library);
-  await saveState({ version: 1, items: { [`${library.cards[0].id}:en-pl`]: { box: 2 } }, newToday: { date: "", count: 0 } });
+  await saveState({ version: 1, items: { [`${library.cards[0].id}:en-pl`]: { box: 2, due: start } }, newToday: { date: "", count: 0 } });
   await patchSettings({ volume: 0.3 });
 
   assert.ok(await dailyBackup(start));

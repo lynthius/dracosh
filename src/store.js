@@ -60,6 +60,9 @@ export async function loadState() {
   const state = await readJson(STATE_FILE, undefined);
   if (state === undefined) return emptyState();
   if (!isObject(state) || !isObject(state.items)) throw damaged(STATE_FILE, "no progress in it");
+  if (!Object.values(state.items).every((entry) => isObject(entry) && Number.isFinite(entry.box) && Number.isFinite(entry.due))) throw damaged(STATE_FILE, "a card without its box or date");
+  const { progress } = state;
+  if (progress !== undefined && !(isObject(progress) && isObject(progress.days) && isObject(progress.streak) && isObject(progress.badges))) throw damaged(STATE_FILE, "the streak and badges are unreadable");
   if (state.version > STATE_VERSION) throw new Error(`${STATE_FILE} was saved by a newer version of Dracosh. Please update Dracosh.`);
   if (!isObject(state.newToday)) state.newToday = { date: "", count: 0 };
   return state;
@@ -76,9 +79,10 @@ export function recordAnswer(state, noteId, direction, entry, now = Date.now(), 
   return state;
 }
 
+// hand-edited into something odd, even broken JSON: the defaults take over (nothing worth a restore)
 export const loadSettingsRaw = async () => {
-  const raw = await readJson(SETTINGS_FILE, {});
-  return isObject(raw) ? raw : {}; // hand-edited into something odd: the defaults take over
+  const raw = await readJson(SETTINGS_FILE, {}).catch((err) => (err.message.includes("looks damaged") ? {} : Promise.reject(err)));
+  return isObject(raw) ? raw : {};
 };
 
 // merges into what's on disk, so a one-off CLI flag never gets persisted by accident

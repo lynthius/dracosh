@@ -33,3 +33,16 @@ test("odd settings fall back to the defaults", async () => {
   assert.deepEqual(await loadSettingsRaw(), {});
   assert.equal(normalizeSettings(null).everyMs, 600_000);
 });
+
+test("state with broken entries or progress, and cards with no answer or no deck, are reported too", async () => {
+  for (const text of ['{"items":{"a:en-pl":null}}', '{"items":{},"progress":5}', '{"items":{},"progress":{}}']) {
+    writeFileSync(DATA_FILES.state, text);
+    await assert.rejects(loadState(), /looks damaged/, text);
+  }
+  writeFileSync(DATA_FILES.library, JSON.stringify({ version: 1, decks: [{ id: "d1", name: "A" }], cards: [{ id: "c1", deckId: "d1", front: "x", back: [] }] }));
+  await assert.rejects(loadLibrary(), /looks damaged/);
+  writeFileSync(DATA_FILES.library, JSON.stringify({ version: 1, decks: [{ id: "d1", name: "A" }], cards: [{ id: "c1", deckId: "d9", front: "x", back: ["y"] }] }));
+  await assert.rejects(loadLibrary(), /looks damaged/);
+  writeFileSync(DATA_FILES.settings, "{ not json");
+  assert.deepEqual(await loadSettingsRaw(), {}, "broken settings just mean the defaults");
+});
