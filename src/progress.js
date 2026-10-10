@@ -153,7 +153,7 @@ export const BADGES = [
   { id: "thousand", name: "Thousand", desc: "1,000 correct answers", test: (s) => s.totalCorrect >= 1000 },
   { id: "five-thousand", name: "Five thousand", desc: "5,000 correct answers", test: (s) => s.totalCorrect >= 5000 },
   { id: "ten-thousand", name: "Ten thousand", desc: "10,000 correct answers", test: (s) => s.totalCorrect >= 10000 },
-  { id: "dragons-hoard", name: "Dragon's hoard", desc: "25,000 correct answers", test: (s) => s.totalCorrect >= 25000 },
+  { id: "dragons-hoard", name: "Dragon's hoard", desc: "20,000 correct answers", test: (s) => s.totalCorrect >= 20000 },
 
   { id: "on-a-roll", name: "On a roll", desc: "3-day streak", test: (s) => s.bestStreak >= 3 },
   { id: "week", name: "Full week", desc: "7-day streak", test: (s) => s.bestStreak >= 7 },
