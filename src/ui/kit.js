@@ -15,6 +15,18 @@ export const theme = {
   track: "#3a3f47"
 };
 
+// Text where `backticks` mark something to type: shown in the accent color on a faint violet
+// background, like code in docs. Used for the tour's cards; `plain` shows the text as it is.
+export function Marked({ text, plain = false, ...props }) {
+  if (plain) return React.createElement(Text, props, text);
+  const parts = text.split(/`([^`]+)`/);
+  return React.createElement(
+    Text,
+    props,
+    ...parts.map((part, i) => (i % 2 ? React.createElement(Text, { key: i, color: theme.accent, backgroundColor: "#2a2440", bold: true }, ` ${part} `) : part))
+  );
+}
+
 // the key at the start of a hint segment: "enter", "esc", "/add", "↑/↓", "any key", "q"…
 const KEY = /^(any key|↑\/↓|←\/→|enter|esc|tab|\/\S*|[a-z0-9])(?=\s|$)/;
 

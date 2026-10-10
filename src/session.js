@@ -42,7 +42,8 @@ export function createSession({ loadWords, state, getSettings, save = saveState,
       label: labelOf(deck, item.direction),
       prompt: forward ? item.word.word : item.word.translations.join(", "),
       expected: forward ? item.word.translations : [item.word.word],
-      wordCount: words.length
+      wordCount: words.length,
+      tour: Boolean(deck?.tour) // the tour marks what to type with `backticks`
     };
   }
 

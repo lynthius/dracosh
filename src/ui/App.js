@@ -4,7 +4,7 @@ import { commandsFor } from "../commands.js";
 import { diffChars } from "../diff.js";
 import { AnswerInput } from "./AnswerInput.js";
 import { Header } from "./Header.js";
-import { Bar, html, KeyHints, PANEL_WIDTH, theme, Typewriter } from "./kit.js";
+import { Bar, html, KeyHints, Marked, PANEL_WIDTH, theme, Typewriter } from "./kit.js";
 import { hintTarget, makeHint } from "../hint.js";
 import { formatClock, inQuietHours, parseSnooze, quietEnd } from "../quiet.js";
 import { shouldShowTip } from "../tips.js";
@@ -60,7 +60,7 @@ function Verdict({ outcome, question }) {
     <${Box} flexDirection="column">
       <${Text} color=${wrong ? theme.bad : theme.good} bold>${wrong ? "✗" : "✓"} ${question.expected.join(", ")}${outcome.result === "typo" ? "  (close enough)" : ""}<//>
       ${showDiff && html`<${AnswerDiff} given=${outcome.given} closest=${outcome.closest} />`}
-      ${question.word.example && html`<${Box} marginTop=${1}><${Text} dimColor italic>“${question.word.example}”<//><//>`}
+      ${question.word.example && html`<${Box} marginTop=${1}>${question.tour ? html`<${Marked} dimColor text=${question.word.example} />` : html`<${Text} dimColor italic>“${question.word.example}”<//>`}<//>`}
       ${(outcome.hinted || outcome.overruled) &&
       html`
         <${Box} marginTop=${1} flexDirection="column">
@@ -437,7 +437,7 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
                 <${Box} flexDirection="column" width=${width}>
                   <${CardTop} label=${question.label} width=${width} color=${border} />
                   <${Box} flexDirection="column" borderStyle="round" borderTop=${false} borderColor=${border} paddingX=${2} paddingTop=${1}>
-                    <${Text} bold>${question.prompt}<//>
+                    <${Marked} bold text=${question.prompt} plain=${!question.tour} />
                     ${phase === "asking" && hintLevel > 0 && html`<${Text} dimColor>hint   ${makeHint(hintTarget(question.expected), hintLevel)}<//>`}
                     <${Box} marginTop=${1} flexDirection="column">
                       ${phase === "asking" && html`<${AnswerInput} key=${question.word.noteId + question.direction} onSubmit=${submit} onCommand=${runCommand} onExit=${requestExit} onEdit=${clearProblem} commands=${commandsFor({ phase: "asking" })} />`}
