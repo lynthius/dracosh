@@ -18,7 +18,7 @@ function Palette({ matches, selected }) {
   `;
 }
 
-// everything after the command name: "/snooze 30m" → "30m"
+// everything after the command name: "/pause 30m" → "30m"
 const args = (value) => value.trim().split(/\s+/).slice(1).join(" ");
 
 // Answer line with a movable cursor (←/→, Ctrl+A/E). Typing "/" opens a command palette:

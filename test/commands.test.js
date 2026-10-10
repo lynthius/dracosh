@@ -5,17 +5,17 @@ import { formatInterval, normalizeSettings } from "../src/settings.js";
 
 test("'/' lists every command and a prefix narrows the list", () => {
   assert.equal(matchCommands("/").length, COMMANDS.length);
-  assert.deepEqual(matchCommands("/s").map((c) => c.name), ["/settings", "/stats", "/snooze", "/skip"]);
+  assert.deepEqual(matchCommands("/s").map((c) => c.name), ["/settings", "/stats"]);
   assert.deepEqual(matchCommands("/?").map((c) => c.name), ["/help"]); // alias
-  assert.deepEqual(matchCommands("/snooze 30m").map((c) => c.name), ["/snooze"]); // arguments don't break matching
-  assert.deepEqual(matchCommands("/SK").map((c) => c.name), ["/skip"]);
+  assert.deepEqual(matchCommands("/pause 30m").map((c) => c.name), ["/pause"]); // arguments don't break matching
+  assert.deepEqual(matchCommands("/PA").map((c) => c.name), ["/pause"]);
   assert.deepEqual(matchCommands("/nope"), []);
 });
 
 test("the menu only offers commands that make sense right now", () => {
   const names = (opts) => commandsFor(opts).map((c) => c.name);
-  const common = ["/add", "/decks", "/settings", "/stats", "/badges", "/companion", "/missed", "/snooze", "/vacation"];
-  assert.deepEqual(names({ phase: "asking" }), ["/hint", ...common, "/skip", "/help", "/quit"]);
+  const common = ["/add", "/decks", "/settings", "/stats", "/badges", "/companion", "/missed", "/pause"];
+  assert.deepEqual(names({ phase: "asking" }), ["/hint", ...common, "/help", "/quit"]);
   assert.deepEqual(names({ phase: "waiting" }), [...common, "/help", "/quit"]);
   assert.deepEqual(names({ phase: "waiting", canOverrule: true }), ["/correct", ...common, "/help", "/quit"]);
 });

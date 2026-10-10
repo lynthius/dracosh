@@ -4,7 +4,8 @@ import { describeDue, grade, itemKey, pickNext } from "./scheduler.js";
 import { recordAnswer, saveState } from "./store.js";
 import { createTipDeck } from "./tips.js";
 import { dayKey } from "./dates.js";
-import { formatRange, parseVacation } from "./vacation.js";
+import { PAUSE_HELP, parsePause } from "./pause.js";
+import { formatRange } from "./vacation.js";
 
 const LABELS = { "en-pl": "EN → PL", "pl-en": "PL → EN" };
 
@@ -100,31 +101,32 @@ export function createSession({ loadWords, state, getSettings, save = saveState,
     return { result: "exact", overruled: true, accepted: text, dueIn: describeDue(entry, now()), combo: totals.combo, cheers };
   }
 
-  const canOverrule = () => lastWrong !== null;
+  const canOverrule = () => lastWrong !== null && lastWrong.text.trim() !== ""; // nothing typed, nothing to accept
 
   const stats = () => snapshot(state, { goal: getSettings().dailyGoal, rules: rules(), now: now() });
 
   const month = (offset) => calendarMonth(state, { offset, rules: rules(), now: now() });
   const missed = (offset) => missedOn(state, { offset, now: now() });
 
-  // /vacation: plan, list or cancel rest days that keep the streak alive → a message for the user
-  async function vacation(args) {
+  // /pause: a break today (the UI holds it, this returns its length) or days off that keep the
+  // streak (saved here). → { snooze?: ms | "off", list?: true, message? }
+  async function pause(args) {
     const today = dayKey(now());
-    const parsed = parseVacation(args, today);
-    if (!parsed) throw new Error("Try /vacation 7, /vacation 24.12 2.01 or /vacation off");
-
-    if (parsed.action === "add") {
+    const parsed = parsePause(args, today);
+    if (!parsed) throw new Error(PAUSE_HELP);
+    if (parsed.action === "snooze") return { snooze: parsed.ms };
+    if (parsed.action === "days") {
       addVacation(state, parsed.from, parsed.to, now());
       await save(state);
-      return `Vacation ${formatRange(parsed.from, parsed.to)}: your streak is safe until then`;
+      return { message: `Days off ${formatRange(parsed.from, parsed.to)}: your streak is safe until then` };
     }
     if (parsed.action === "off") {
       cancelVacations(state, now());
       await save(state);
-      return "Vacation cancelled";
+      return { snooze: "off", message: "Pause off: questions are back, and no days off are planned" };
     }
     const { upcoming } = vacationInfo(ensureProgress(state, now()), today);
-    return upcoming.length ? `Vacations: ${upcoming.map((v) => formatRange(v.from, v.to)).join(", ")}` : "No vacation planned. Try /vacation 7 or /vacation 24.12 2.01";
+    return { list: true, message: upcoming.length ? `Days off: ${upcoming.map((v) => formatRange(v.from, v.to)).join(", ")}` : `No days off planned. ${PAUSE_HELP}` };
   }
 
   // a tip for the wait between questions; remembering which ones were shown is best-effort
@@ -175,5 +177,5 @@ export function createSession({ loadWords, state, getSettings, save = saveState,
     return fresh;
   }
 
-  return { totals, next, answer, overrule, canOverrule, stats, month, missed, nextTip, vacation, isFirstRun, markHatched, openBadges, forget, reset, inTour: () => inTour };
+  return { totals, next, answer, overrule, canOverrule, stats, month, missed, nextTip, pause, isFirstRun, markHatched, openBadges, forget, reset, inTour: () => inTour };
 }

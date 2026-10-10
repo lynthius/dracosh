@@ -8,9 +8,7 @@ export const COMMANDS = [
   { name: "/badges", hint: "All badges and what unlocks them" },
   { name: "/companion", hint: "Your dragon, its element and the forms ahead" },
   { name: "/missed", hint: "Cards you got wrong today" },
-  { name: "/snooze", hint: "Pause questions: /snooze 30m, 2h, off" },
-  { name: "/vacation", hint: "Days off that keep your streak: 7, 24.12 2.01, off" },
-  { name: "/skip", only: "asking", hint: "Skip this card" },
+  { name: "/pause", hint: "Pause: 30m or 2h, days off that keep your streak: 3d or 24.12 2.01, off" },
   { name: "/help", aliases: ["/?"], hint: "Keys, how cards come back, the streak" },
   { name: "/quit", hint: "Exit Dracosh" }
 ];
@@ -23,7 +21,7 @@ export function commandsFor({ phase, canOverrule = false }) {
   return canOverrule ? [CORRECT, ...base] : base;
 }
 
-// "/s" narrows to commands starting with it (aliases count: "/?" finds /help). Arguments are ignored: "/snooze 30m" matches /snooze.
+// "/s" narrows to commands starting with it (aliases count: "/?" finds /help). Arguments are ignored: "/pause 30m" matches /pause.
 export function matchCommands(value, commands = COMMANDS) {
   const query = value.trim().split(/\s+/)[0].toLowerCase();
   return commands.filter((command) => command.name.startsWith(query) || command.aliases?.some((alias) => alias.startsWith(query)));

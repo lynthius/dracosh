@@ -28,7 +28,7 @@ import { TheOne } from "./TheOne.js";
 const SPINNER = ["⠚", "⠓", "⠋", "⠙"]; // the old braille dots on a 2×2 square: the gap goes round
 const TICK_MS = 250; // the steady redraw: slow enough to stay idle for hours, fast enough for the spinner
 const SLEEP_AFTER_MS = 3 * 60_000; // no key pressed for this long while waiting → the dragon dozes off
-const PAUSED_SLEEP_AFTER_MS = 15_000; // during snooze or quiet hours it nods off again much sooner
+const PAUSED_SLEEP_AFTER_MS = 15_000; // during a pause or quiet hours it nods off again much sooner
 const CHEER_STYLE = {
   goal: { icon: "▪", color: theme.good },
   evolve: { icon: "▴", color: theme.accent },
@@ -53,7 +53,6 @@ function AnswerDiff({ given, closest }) {
 }
 
 function Verdict({ outcome, question }) {
-  if (outcome.result === "skipped") return html`<${Text} dimColor>– skipped<//>`;
   const wrong = outcome.result === "wrong";
   const showDiff = outcome.closest && outcome.given && !outcome.overruled && (wrong || outcome.result === "typo");
   return html`
@@ -289,25 +288,19 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
     if (name === "/add") return library ? (setAddNew(false), setScreen("add")) : setNotice("The preview can't add cards; run dracosh for that.");
     if (name === "/decks") return library ? setScreen("decks") : setNotice("The preview has one demo deck; run dracosh for yours.");
     if (name === "/hint" && phase === "asking") return setHintLevel((level) => level + 1);
-    if (name === "/vacation") {
+    if (name === "/pause") {
       return session
-        .vacation(args)
-        .then(setNotice)
+        .pause(args)
+        .then(({ snooze, list, message }) => {
+          if (snooze === "off") setSnoozeUntil(0);
+          if (typeof snooze === "number") {
+            setSnoozeUntil(Date.now() + snooze);
+            return phase === "asking" ? setNotice(`Paused until ${formatClock(Date.now() + snooze)}`) : undefined; // while waiting, the status line says it
+          }
+          const paused = list && snoozeRef.current > Date.now() ? `Paused until ${formatClock(snoozeRef.current)}. ` : "";
+          setNotice(paused + message);
+        })
         .catch((err) => setProblem(err.message));
-    }
-    if (name === "/snooze") {
-      const length = parseSnooze(args);
-      if (length === null) return setProblem("Try /snooze 30m, /snooze 2h or /snooze off");
-      if (length === "off") {
-        setSnoozeUntil(0);
-        return setNotice("Snooze off: questions are back");
-      }
-      setSnoozeUntil(Date.now() + length);
-      return phase === "asking" ? setNotice(`Questions paused until ${formatClock(Date.now() + length)}`) : undefined; // while waiting, the status line says it
-    }
-    if (name === "/skip") {
-      setOutcome({ result: "skipped", cheers: [] });
-      return waitForNext();
     }
     if (name === "/correct" && session.canOverrule()) {
       return session
@@ -332,9 +325,10 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
     if (patch.volume !== undefined || patch.sound === true) alerts.play("correct-0"); // audible preview
   }
 
+  // an empty answer means "I don't know": the answer is shown and the card counts as missed
   async function submit(raw) {
     const text = raw.trim();
-    if (!text || busy.current) return;
+    if (busy.current) return;
     busy.current = true;
     try {
       const result = await session.answer(question, text, { hinted: hintLevel > 0 });
@@ -385,18 +379,18 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
   }
 
   const width = Math.min((stdout?.columns || PANEL_WIDTH + 2) - 2, PANEL_WIDTH);
-  const border = !outcome ? theme.accent : outcome.result === "wrong" ? theme.bad : outcome.result === "skipped" ? "gray" : theme.good;
+  const border = !outcome ? theme.accent : outcome.result === "wrong" ? theme.bad : theme.good;
   const pausedUntil = pauseEnd(now);
   const tick = Math.floor(now / TICK_MS);
   const frame = SPINNER[tick % SPINNER.length];
   const stats = session.stats();
   // mood: how the last answer went, otherwise whether today's goal is done (Header adds the blinking)
   const resting = stats.today.goalMet ? "smile" : "idle";
-  const face = outcome?.result === "wrong" ? "sad" : outcome && outcome.result !== "skipped" ? "happy" : resting;
+  const face = outcome?.result === "wrong" ? "sad" : outcome ? "happy" : resting;
   // strictly boolean: a bare 0 leaking into the markup crashes Ink ("Text string must be rendered inside <Text>")
   const paused = pausedUntil > nextAt || (now >= nextAt && pausedUntil > 0);
   // asleep: no key pressed for a while, whether a question is open or not; a key always wakes it,
-  // even during snooze or quiet hours (where it nods off again sooner)
+  // even during a pause or quiet hours (where it nods off again sooner)
   const idleLimit = phase === "waiting" && pausedUntil > 0 ? PAUSED_SLEEP_AFTER_MS : SLEEP_AFTER_MS;
   const asleep = phase !== "loading" && now - lastActive > idleLimit;
   asleepRef.current = asleep;
@@ -465,7 +459,7 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
                   <//>
                 `}
                 ${(phase === "waiting" || phase === "empty") && commandMode && html`<${AnswerInput} commandOnly initial="/" commands=${commandsFor({ phase: "waiting", canOverrule: session.canOverrule() })} onCommand=${runCommand} onCancel=${() => setCommandMode(false)} onEdit=${clearProblem} />`}
-                ${phase !== "loading" && !commandMode && html`<${KeyHints} text=${phase === "asking" ? "enter submit · / commands · esc quit" : phase === "empty" ? "/add · / commands · q quit" : `${session.canOverrule() ? "/correct if you were right · " : ""}enter ask now · / commands · q quit`} />`}
+                ${phase !== "loading" && !commandMode && html`<${KeyHints} text=${phase === "asking" ? "enter submit (empty: show the answer) · / commands · esc quit" : phase === "empty" ? "/add · / commands · q quit" : `${session.canOverrule() ? "/correct if you were right · " : ""}enter ask now · / commands · q quit`} />`}
               <//>
               <//>
             `}

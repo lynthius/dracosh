@@ -25,7 +25,7 @@ function parseDate(text, today) {
   return key && key < today ? valid(`${thisYear + 1}-${pad(month)}-${pad(day)}`) : key;
 }
 
-// "/vacation" arguments → { action: "list" } | { action: "off" } | { action: "add", from, to } | null (not understood)
+// days-off arguments (see /pause in pause.js) → { action: "list" } | { action: "off" } | { action: "add", from, to } | null (not understood)
 //   ""            list what is planned
 //   "off"         cancel current and future vacations
 //   "7" / "7d"    7 days starting today

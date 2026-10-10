@@ -38,7 +38,7 @@ export function Missed({ getMissed, onClose }) {
                         <${Text} dimColor>  ${item.label}${item.times > 1 ? ` · missed ${item.times}×` : ""}<//>
                       <//>
                       <${Text}>   ${item.expected.join(", ")}<//>
-                      <${Text} dimColor>   you wrote: ${item.answer}${item.recovered ? " · got it right since" : ""}<//>
+                      <${Text} dimColor>   ${item.answer ? `you wrote: ${item.answer}` : "no answer"}${item.recovered ? " · got it right since" : ""}<//>
                     <//>
                   `
                 )}

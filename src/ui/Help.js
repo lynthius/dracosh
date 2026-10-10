@@ -5,7 +5,7 @@ import { BOX_INTERVALS_DAYS } from "../scheduler.js";
 import { html, KeyHints, PANEL_WIDTH, theme } from "./kit.js";
 
 const KEYS = [
-  ["Enter", "submit your answer; between cards, ask the next one now"],
+  ["Enter", "submit your answer (empty shows the answer); between cards, ask the next one"],
   ["/", "open the commands"],
   ["Esc", "clear what you typed, or quit"],
   ["q", "quit, between cards"],

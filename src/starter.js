@@ -6,7 +6,7 @@ import { addCard, createDeck } from "./library.js";
 // what to type (or a command); the quiz shows them highlighted, in the tour only. Answers never start with "/", because "/" opens the commands.
 export const STARTER_DECK = "Getting started";
 // bump it when the cards below change: an older copy of the tour in someone's library gets replaced
-const STARTER_VERSION = 5;
+const STARTER_VERSION = 6;
 
 const STARTER_CARDS = [
   { front: "Welcome! Every few minutes a card asks you something. Type the answer and press Enter. Try it and type `hello`", back: ["hello"], example: "Press `Enter` now for the next card, or wait and it will come by itself." },
@@ -16,7 +16,7 @@ const STARTER_CARDS = [
   { front: "What is your dragon's secret name? Nobody knows, so get this one wrong on purpose and type `dog`", back: ["Asogaras"], example: "In your own decks a missed card comes back sooner. If you were marked wrong by mistake, type `/correct` now." },
   { front: "Type `/` at any time to see all commands. Try `/badges` after this card. For now, type `ok`", back: ["ok", "okay"], example: "`/stats` shows your calendar, `/companion` your dragon, `/settings` how often cards come." },
   { front: "Answer cards every day to keep your streak. Your dragon grows with it. Type `every day`", back: ["every day", "everyday", "daily"], example: "Miss a day and a freeze saves your streak, if you have one left." },
-  { front: "Need a break? `/snooze 1h` pauses the cards for an hour. For now, type `later`", back: ["later"], example: "Leave Dracosh alone for a few minutes and the dragon dozes off. Any key wakes it." },
+  { front: "Need a break? `/pause 1h` holds the cards for an hour, `/pause 3d` gives you days off. For now, type `later`", back: ["later"], example: "Leave Dracosh alone for a few minutes and the dragon dozes off. Any key wakes it." },
   { front: "That's the tour! Type `done`", back: ["done"], example: "Now make it yours and type `/add` to start your own deck. The tour makes room for it." }
 ];
 

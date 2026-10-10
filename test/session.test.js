@@ -144,17 +144,19 @@ test("a hinted correct answer does not move the card up", async () => {
   assert.equal(state.items[key].box, 2);
 });
 
-test("/vacation plans, lists and cancels rest days", async () => {
+test("/pause takes a short break or days off, lists them and turns them off", async () => {
   const { session, state } = setup();
-  assert.match(await session.vacation(""), /No vacation planned/);
-  assert.match(await session.vacation("7"), /^Vacation .* your streak is safe/);
+  assert.deepEqual(await session.pause("30m"), { snooze: 1_800_000 });
+  assert.match((await session.pause("")).message, /No days off planned/);
+  assert.match((await session.pause("7d")).message, /^Days off .* your streak is safe/);
   assert.equal(state.progress.vacations.length, 1);
-  assert.match(await session.vacation(""), /^Vacations: /);
-  assert.equal(session.stats().vacation.activeUntil !== null, true);
+  assert.match((await session.pause("")).message, /^Days off: /);
   assert.equal(session.stats().restToday, true);
-  assert.equal(await session.vacation("off"), "Vacation cancelled");
+  const off = await session.pause("off");
+  assert.equal(off.snooze, "off");
   assert.equal(session.stats().vacation.activeUntil, null);
-  await assert.rejects(() => session.vacation("whenever"), /Try \/vacation/);
+  await assert.rejects(() => session.pause("30"), /Try \/pause 30m/, "a bare number could be minutes or days");
+  await assert.rejects(() => session.pause("whenever"), /Try \/pause/);
 });
 
 test("the hatching intro plays only on a brand-new state, and only once", async () => {

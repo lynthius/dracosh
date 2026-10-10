@@ -101,7 +101,7 @@ export function Header({ deck, everyMs, wordCount, stats, combo, face, event, ti
             ? html`<${Box}><${Flame} /><${Text} color=${theme.warn} bold> ${streak.days}-day streak<//><//>`
             : html`<${Text} dimColor>no streak yet<//>`}
           ${streak.atRisk && html`<${Text} color=${theme.warn}> · at risk today<//>`}
-          ${stats.vacation.activeUntil && html`<${Text} color=${theme.accent}> · on vacation until ${formatDay(stats.vacation.activeUntil)}<//>`}
+          ${stats.vacation.activeUntil && html`<${Text} color=${theme.accent}> · days off until ${formatDay(stats.vacation.activeUntil)}<//>`}
           ${streak.freezes > 0 && html`<${Text} dimColor> · ${streak.freezes} freeze${streak.freezes > 1 ? "s" : ""}<//>`}
         <//>
         <${Box}>

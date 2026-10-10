@@ -130,3 +130,16 @@ test("parseVacation understands days, ranges, single dates, off and list", () =>
   assert.equal(parseVacation("soon", today), null);
   assert.equal(parseVacation("1.01.2026 1.01.2028", today), null); // far too long
 });
+
+test("parsePause tells a short break from days off", async () => {
+  const { parsePause } = await import("../src/pause.js");
+  const today = "2026-10-05";
+  assert.deepEqual(parsePause("2h", today), { action: "snooze", ms: 7_200_000 });
+  assert.deepEqual(parsePause("90s", today), { action: "snooze", ms: 90_000 });
+  assert.deepEqual(parsePause("3d", today), { action: "days", from: "2026-10-05", to: "2026-10-07" });
+  assert.deepEqual(parsePause("24.12 2.01", today), { action: "days", from: "2026-12-24", to: "2027-01-02" });
+  assert.deepEqual(parsePause("", today), { action: "list" });
+  assert.deepEqual(parsePause("OFF", today), { action: "off" });
+  assert.equal(parsePause("30", today), null);
+  assert.equal(parsePause("soon", today), null);
+});

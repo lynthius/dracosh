@@ -17,7 +17,7 @@ It's made for people who live in a terminal or spend most of the day at a comput
 - Each deck is asked both ways (kot → cat and cat → kot) or one way only, as you choose when you make it
 - Forgiving answer checks: case and Polish diacritics don't matter, one typo is fine on longer words, and after a miss you see letter by letter where you went wrong
 - Leitner boxes, so the cards you know come back less and less often
-- Daily goal, streaks (weekends and vacations don't break them) and 36 badges (one of them a secret)
+- Daily goal, streaks (weekends and days off don't break them) and 36 badges (one of them a secret)
 - A pixel dragon that hatches from an egg, evolves over a year of streaks, blinks, and falls asleep if you ignore it
 - 8-bit sound effects, generated from code
 - A short tip about Dracosh while you wait for the next card
@@ -46,7 +46,7 @@ dracosh --preview
 dracosh restore            # list your backups; dracosh restore 2 brings one back
 ```
 
-Type the answer and press Enter. Press `/` for commands:
+Type the answer and press Enter; don't know it? Press Enter with nothing typed to see the answer. Press `/` for commands:
 
 | Command | What it does |
 | --- | --- |
@@ -54,18 +54,16 @@ Type the answer and press Enter. Press `/` for commands:
 | `/decks` | switch to another deck (Dracosh remembers it), or start a new one |
 | `/hint` | reveal one more letter |
 | `/correct` | your answer was right after all; it's accepted from now on |
-| `/skip` | skip this card |
 | `/settings` | interval, daily goal, sound, quiet hours, weekends, tips, and a reset |
 | `/stats` | streak and a calendar of your month |
 | `/badges` | all badges and how to get them |
 | `/companion` | your dragon, its element and the forms ahead |
 | `/missed` | cards you got wrong today |
-| `/snooze 30m` | pause questions for a while |
-| `/vacation 7` | days off that keep your streak safe |
+| `/pause 30m` | a break: `30m`, `2h`; or days off that keep your streak: `3d`, `24.12 2.01`; `off` ends it |
 | `/help` | the keys, how cards come back, the streak |
 | `/quit` | quit (you'll get a short session summary) |
 
-They're slash commands because "skip" and "quit" are perfectly good English answers.
+They're slash commands because "pause" and "quit" are perfectly good English answers.
 
 ## Your data
 

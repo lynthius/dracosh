@@ -15,7 +15,7 @@ test("the tips are well-formed and short enough for the wait screen", () => {
 });
 
 test("the tips only name commands that exist and numbers the app really uses", () => {
-  const names = [...COMMANDS.map((c) => c.name), "/correct"]; // "/sn" may stand for /snooze
+  const names = [...COMMANDS.map((c) => c.name), "/correct"]; // "/pa" may stand for /pause
   for (const tip of TIPS) {
     for (const command of tip.text.match(/(?<![\w~])\/[a-z]+/g) ?? []) assert.ok(names.some((name) => name.startsWith(command)), `${tip.id}: ${command}`);
   }
