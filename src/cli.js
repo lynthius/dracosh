@@ -17,7 +17,7 @@ import { Preview } from "./ui/Preview.js";
 import { ALREADY_RUNNING, acquireLock, runningPid } from "./lock.js";
 import * as manage from "./manage.js";
 import { findDeck } from "./library.js";
-import { loadWords, missingDeck } from "./words.js";
+import { loadAllWords, loadWords, missingDeck } from "./words.js";
 
 const HELP = `Dracosh: a vocabulary and quiz trainer for your terminal
 
@@ -175,7 +175,7 @@ async function main() {
 
   let current = settings; // the session reads settings live, so /settings changes apply immediately
   let active = deck.name; // /add can switch to your first own deck
-  const session = createSession({ loadWords: () => loadWords(active), state, getSettings: () => current });
+  const session = createSession({ loadWords: () => loadWords(active), loadAllWords, state, getSettings: () => current });
   const alerts = createAlerts({ sound: settings.sound, volume: settings.volume });
   const persistSettings = async (patch) => {
     current = { ...current, ...patch };

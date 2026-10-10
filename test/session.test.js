@@ -206,16 +206,37 @@ test("when everything for today is done, the day counts as the goal; a missed ca
   const state = { items: {}, newToday: { date: "", count: 0 } };
   const session = createSession({ loadWords: async () => ({ words: one, deck: { name: "Polish", languages: null, directions: "forward" } }), state, getSettings: () => DEFAULTS, save: async () => {}, now: () => clock });
 
-  await session.answer(await session.next(), "dog"); // a miss: back in 10 minutes
-  let empty = await session.next().catch((err) => err);
-  assert.ok(empty.empty && empty.nextDue > clock && empty.nextDue < clock + 3_600_000, "the missed card is due later today");
-  assert.deepEqual(empty.cheers, [], "not done yet");
+  const miss = await session.answer(await session.next(), "dog"); // back in 10 minutes
+  assert.ok(miss.nextDue > clock && miss.nextDue < clock + 3_600_000, "the missed card is due later today");
+  assert.ok(!miss.cheers.some((c) => c.kind === "goal"), "not done yet");
 
   clock += 600_000;
-  await session.answer(await session.next(), "cat");
-  empty = await session.next().catch((err) => err);
-  assert.ok(empty.empty && empty.nextDue > clock + 3_600_000, "nothing more today");
-  assert.match(empty.cheers.find((c) => c.kind === "goal").text, /All done for today · 1-day streak/);
-  assert.equal(session.stats().today.goalMet, true);
-  assert.deepEqual((await session.next().catch((err) => err)).cheers, [], "celebrated once");
+  const last = await session.answer(await session.next(), "cat");
+  assert.match(last.cheers.find((c) => c.kind === "goal").text, /All done for today · 1-day streak/, "settled with the last answer");
+  assert.ok(last.nextDue >= clock + 3_600_000);
+  const empty = await session.next().catch((err) => err);
+  assert.ok(empty.empty);
+  assert.deepEqual(empty.cheers, [], "celebrated once");
+});
+
+test("just opening Dracosh with nothing due makes a rest day, never a goal", async () => {
+  const clock = NOON;
+  const one = [{ noteId: "c1", word: "kot", translations: ["cat"], example: "" }];
+  const state = { items: { "c1:en-pl": { box: 3, due: clock + 3 * 86_400_000, seen: 3, correct: 3, wrong: 0, streak: 3 } }, newToday: { date: "", count: 0 } };
+  const session = createSession({ loadWords: async () => ({ words: one, deck: { name: "Polish", directions: "forward" } }), state, getSettings: () => DEFAULTS, save: async () => {}, now: () => clock });
+  const empty = await session.next().catch((err) => err);
+  assert.deepEqual(empty.cheers, []);
+  assert.equal(session.stats().today.goalMet, false);
+  assert.equal(session.stats().restToday, true, "the streak isn't broken either");
+});
+
+test("a deck that's done doesn't settle the day while another deck still has cards due", async () => {
+  const clock = NOON;
+  const done = { words: [{ noteId: "a", word: "kot", translations: ["cat"], example: "" }], deck: { name: "Done", directions: "forward" } };
+  const busy = { words: [{ noteId: "b", word: "pies", translations: ["dog"], example: "" }], deck: { name: "Busy", directions: "forward" } };
+  const state = { items: { "a:en-pl": { box: 3, due: clock + 86_400_000 * 3, seen: 1, correct: 1, wrong: 0, streak: 1 }, "b:en-pl": { box: 1, due: clock - 1000, seen: 1, correct: 1, wrong: 0, streak: 1 } }, newToday: { date: "", count: 0 } };
+  const session = createSession({ loadWords: async () => done, loadAllWords: async () => [done, busy], state, getSettings: () => DEFAULTS, save: async () => {}, now: () => clock });
+  const empty = await session.next().catch((err) => err);
+  assert.deepEqual(empty.cheers, []);
+  assert.equal(session.stats().restToday, false);
 });

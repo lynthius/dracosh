@@ -8,6 +8,8 @@ import { Bar, html, KeyHints, Marked, theme, Typewriter, usePanelWidth } from ".
 import { hintTarget, makeHint } from "../hint.js";
 import { formatClock, inQuietHours, quietEnd } from "../quiet.js";
 import { startOfTomorrow } from "../scheduler.js";
+import { formatDay } from "../vacation.js";
+import { dayKey } from "../dates.js";
 import { shouldShowTip } from "../tips.js";
 import { Badges } from "./Badges.js";
 import { Companion } from "./Companion.js";
@@ -104,6 +106,13 @@ function CardTop({ label, width, color }) {
   `;
 }
 
+// "at 14:30", "tomorrow", "on 14 Oct"
+function whenDue(at, now) {
+  const tomorrow = startOfTomorrow(now);
+  if (at < tomorrow) return `at ${formatClock(at)}`;
+  return at < startOfTomorrow(tomorrow) ? "tomorrow" : `on ${formatDay(dayKey(at))}`;
+}
+
 // what the quiz shows when the deck has nothing to ask: no countdown, just the way on
 function EmptyDeck({ deck, tour, count, nextDue, now, width }) {
   const [title, next] = tour
@@ -111,8 +120,8 @@ function EmptyDeck({ deck, tour, count, nextDue, now, width }) {
     : !count
       ? [`"${deck}" has no cards yet.`, "Type /add to add the first one."]
       : nextDue >= startOfTomorrow(now)
-        ? ["All done for today.", "Your cards come back tomorrow. Want more today? /add some new ones."]
-        : ["Nothing to practise right now.", `The next card is due at ${formatClock(nextDue)}. It will come by itself.`];
+        ? ["All done for today.", `Your cards come back ${whenDue(nextDue, now)}. Want more today? /add some new ones.`]
+        : ["Nothing to practise right now.", `The next card is due ${whenDue(nextDue, now)}. It will come by itself.`];
   return html`
     <${Box} flexDirection="column" width=${width}>
       <${CardTop} label=${deck} width=${width} color=${theme.accent} />
@@ -142,6 +151,7 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
   const [settings, setSettings] = useState(initialSettings);
   const [deck, setDeck] = useState(initialDeck);
   const [addNew, setAddNew] = useState(false); // /add opened from "+ New deck" in /decks
+  const [restUntil, setRestUntil] = useState(null); // nothing is waiting until then (after the last card due now)
   const [empty, setEmpty] = useState(null); // { tour, count, nextDue } when there is nothing to ask right now
   // quiz | settings | reset | add | decks | stats | badges | companion | help | missed | evolve | the-one | die | summary | hatch
   const [screen, setScreen] = useState(() => (session.isFirstRun() ? "hatch" : "quiz"));
@@ -176,8 +186,11 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
     return Math.max(snoozeRef.current > t ? snoozeRef.current : 0, inQuietHours(t, quiet) ? quietEnd(t, quiet) : 0);
   };
 
-  const waitForNext = useCallback(() => {
-    setNextAt(Date.now() + settingsRef.current.everyMs);
+  // `nextDue`: nothing is waiting until then, so the next question waits for it (never sooner than usual)
+  const waitForNext = useCallback((nextDue = null) => {
+    const usual = Date.now() + settingsRef.current.everyMs;
+    setNextAt(nextDue ? Math.max(nextDue, usual) : usual);
+    setRestUntil(nextDue);
     setPhase("waiting");
     setTip(!session.inTour() && shouldShowTip(settingsRef.current.tips) ? session.nextTip() : null);
   }, [session]);
@@ -324,6 +337,8 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
         .then((result) => {
           setOutcome(result);
           celebrate(result);
+          if (phase === "empty") return ask(); // the card's next date changed: look again
+          waitForNext(result.nextDue);
         })
         .catch((err) => setProblem(`Couldn't save progress: ${err.message}`));
     }
@@ -346,15 +361,17 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
     const text = raw.trim();
     if (busy.current) return;
     busy.current = true;
+    let nextDue = null;
     try {
       const result = await session.answer(question, text, { hinted: hintLevel > 0 });
+      nextDue = result.nextDue;
       setOutcome(result);
       celebrate(result);
     } catch (err) {
       setProblem(`Couldn't save progress: ${err.message}`);
     } finally {
       busy.current = false;
-      waitForNext();
+      waitForNext(nextDue);
     }
   }
 
@@ -467,8 +484,10 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
                 ${phase === "loading" && html`<${Text}><${Text} color=${theme.accent}>${frame}<//><${Text} dimColor> loading…<//><//>`}
                 ${notice && html`<${Text} color=${theme.accent}>${notice}<//>`}
                 ${phase === "waiting" && paused && html`<${Text} dimColor>paused until ${formatClock(pausedUntil)}${inQuietHours(now, settings.quiet) ? " (quiet hours)" : ""}<//>`}
+                ${phase === "waiting" && !paused && restUntil && nextAt - now > settings.everyMs && html`<${Text} dimColor>nothing waiting · next card ${whenDue(restUntil, now)}<//>`}
                 ${phase === "waiting" &&
                 !paused &&
+                !(restUntil && nextAt - now > settings.everyMs) &&
                 html`
                   <${Text}>
                     <${Text} color=${theme.accent}>${frame} <//>

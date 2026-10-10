@@ -53,6 +53,7 @@ export function ensureProgress(state, now = Date.now()) {
 const NO_RULES = { skipWeekends: false };
 
 export function isRestDay(progress, key, rules = NO_RULES) {
+  if (progress.days?.[key]?.nothingDue) return true; // opened, but no card anywhere was waiting
   if (rules.skipWeekends) {
     const weekday = new Date(`${key}T12:00:00`).getDay();
     if (weekday === 0 || weekday === 6) return true;
@@ -321,12 +322,18 @@ export function applyOverrule(state, { goal, rules = NO_RULES, combo = 0, now = 
   return { cheers: award(state, progress, day, today, { correct: true, goal, rules, now, daysAway, random }) };
 }
 
-// Nothing left to practise today (see award) → cheers; nothing happens if the goal is already met
+// Nothing left to practise today in the whole library → cheers. After at least one answer today that
+// counts as the goal (see award); with nothing answered at all the day only becomes a rest day, so just
+// opening Dracosh never builds a streak. Nothing happens once the goal is met.
 export function applyCaughtUp(state, { goal, rules = NO_RULES, now = Date.now(), random = Math.random }) {
   const progress = ensureProgress(state, now);
   const today = dayKey(now);
   const day = dayOf(progress, today);
   if (day.goalMet) return { cheers: [] };
+  if (!day.asked) {
+    day.nothingDue = true;
+    return { cheers: [] };
+  }
   return { cheers: award(state, progress, day, today, { correct: false, goal, rules, now, caughtUp: true, random }) };
 }
 

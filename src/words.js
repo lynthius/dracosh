@@ -15,3 +15,9 @@ export async function loadWords(deckRef) {
   if (!deck) throw missingDeck(library, deckRef);
   return { words: toWords(cardsOf(library, deck.id)), deck: { name: deck.name, languages: deck.languages, directions: deck.directions, tour: Boolean(deck.tour) } };
 }
+
+// every deck of yours (not the tour), for "is anything still waiting today?"
+export async function loadAllWords() {
+  const library = await loadLibrary();
+  return library.decks.filter((deck) => !deck.tour).map((deck) => ({ words: toWords(cardsOf(library, deck.id)), deck: { name: deck.name, directions: deck.directions } }));
+}

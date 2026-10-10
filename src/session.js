@@ -20,15 +20,40 @@ function labelOf(deck, direction) {
 const COMBO_CHEER_EVERY = 5;
 
 // Quiz logic without any I/O of its own: words, settings and persistence are injected, the UI only renders what this returns.
-export function createSession({ loadWords, state, getSettings, save = saveState, now = Date.now, tipDeck = createTipDeck({ state }) }) {
+// `loadAllWords` → [{ words, deck }] for every deck of yours: "all done for today" means the whole library.
+export function createSession({ loadWords, loadAllWords, state, getSettings, save = saveState, now = Date.now, tipDeck = createTipDeck({ state }) }) {
   const rules = () => ({ skipWeekends: getSettings().skipWeekends });
   const totals = { asked: 0, correct: 0, combo: 0 };
   let lastNoteId = null;
   let inTour = false; // the tour teaches one thing per card; tips on top of that are too much
   let lastWrong = null; // the latest wrong answer, until the next question: /correct can still overrule it
+  let current = { words: [], deck: null }; // the deck the last question came from
+
+  // When nothing is waiting in any of your decks before tomorrow, the day is done → cheers
+  async function settleDay() {
+    const decks = loadAllWords ? await loadAllWords() : [current].filter((d) => !d.deck?.tour);
+    const t = now();
+    for (const { words, deck } of decks) {
+      const directions = directionsOf(deck);
+      if (pickNext({ words, state, now: t, directions })) return [];
+      const due = nextDueAt({ words, state, now: t, directions });
+      if (due !== null && due < startOfTomorrow(t)) return [];
+    }
+    const { cheers } = applyCaughtUp(state, { goal: getSettings().dailyGoal, rules: rules(), now: t });
+    await save(state);
+    return cheers;
+  }
+
+  // when the deck's next card is due, if nothing is waiting in it right now (null: something is)
+  function upNext() {
+    const { words, deck } = current;
+    if (deck?.tour || pickNext({ words, state, now: now(), directions: directionsOf(deck) })) return null;
+    return nextDueAt({ words, state, now: now(), directions: directionsOf(deck) });
+  }
 
   async function next() {
     const { words, deck } = await loadWords();
+    current = { words, deck };
     inTour = Boolean(deck?.tour);
     const item = pickNext({ words, state, now: now(), lastNoteId, directions: directionsOf(deck), tour: deck?.tour });
     // nothing to ask is a normal state, not an error: the UI shows a way on (a finished tour, a new
@@ -37,10 +62,7 @@ export function createSession({ loadWords, state, getSettings, save = saveState,
       const empty = { empty: true, tour: Boolean(deck?.tour), count: words.length, nextDue: null, cheers: [] };
       if (!deck?.tour && words.length) {
         empty.nextDue = nextDueAt({ words, state, now: now(), directions: directionsOf(deck) });
-        if (empty.nextDue >= startOfTomorrow(now())) {
-          empty.cheers = applyCaughtUp(state, { goal: getSettings().dailyGoal, rules: rules(), now: now() }).cheers;
-          if (empty.cheers.length) await save(state);
-        }
+        empty.cheers = await settleDay();
       }
       const message = deck?.tour ? "You've finished the tour." : words.length ? "Nothing to practise right now." : `The deck "${deck?.name}" has no cards yet.`;
       throw Object.assign(new Error(message), empty);
@@ -81,22 +103,25 @@ export function createSession({ loadWords, state, getSettings, save = saveState,
     totals.correct += correct ? 1 : 0;
     totals.combo = correct ? totals.combo + 1 : 0;
     lastWrong = correct ? null : { question, text, key, before, comboBefore, hinted, at: t };
-    if (!correct) recordMiss(state, { key, label: question.label, prompt: question.prompt, expected: question.expected, answer: text, at: t }, t);
+    // a blank answer on a tour card just shows it: the tour isn't something to have "missed"
+    if (!correct && !(question.tour && !text.trim())) recordMiss(state, { key, label: question.label, prompt: question.prompt, expected: question.expected, answer: text, at: t }, t);
 
     const reward = applyAnswer(state, { result, goal: getSettings().dailyGoal, rules: rules(), combo: totals.combo, now: t });
     const cheers = [...reward.cheers];
     if (correct && totals.combo % COMBO_CHEER_EVERY === 0) cheers.push({ kind: "combo", text: `Combo ×${totals.combo}` });
 
     await save(state);
+    // the last card of the day settles it right away, so quitting now doesn't lose the goal
+    if (!question.tour) cheers.push(...(await settleDay()));
     // given/closest feed the per-letter diff the UI shows after a miss or a forgiven typo
     const closest = result === "exact" ? null : closestCandidate(text, [...question.expected, ...(state.accepted?.[key] ?? [])]);
-    return { result, hinted: hinted && correct, dueIn: describeDue(entry, t), combo: totals.combo, cheers, given: text, closest };
+    return { result, hinted: hinted && correct, dueIn: describeDue(entry, t), combo: totals.combo, cheers, given: text, closest, nextDue: upNext() };
   }
 
   // Re-grade the last wrong answer as correct and remember the answer for this card.
   async function overrule() {
     if (!lastWrong) throw new Error("There is no wrong answer to correct.");
-    const { text, key, before, comboBefore, hinted, at } = lastWrong;
+    const { question, text, key, before, comboBefore, hinted, at } = lastWrong;
     lastWrong = null;
 
     const entry = grade(before, true, at, { hinted });
@@ -110,7 +135,8 @@ export function createSession({ loadWords, state, getSettings, save = saveState,
     const { cheers } = applyOverrule(state, { goal: getSettings().dailyGoal, rules: rules(), combo: totals.combo, now: at });
 
     await save(state);
-    return { result: "exact", overruled: true, accepted: text, dueIn: describeDue(entry, now()), combo: totals.combo, cheers };
+    if (!question.tour) cheers.push(...(await settleDay()));
+    return { result: "exact", overruled: true, accepted: text, dueIn: describeDue(entry, now()), combo: totals.combo, cheers, nextDue: upNext() };
   }
 
   const canOverrule = () => lastWrong !== null && lastWrong.text.trim() !== ""; // nothing typed, nothing to accept
