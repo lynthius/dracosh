@@ -14,7 +14,7 @@ const LIT_FROM = 5;
 const GREY = "#4a5058";
 
 // a hidden badge reveals nothing until it's won
-const SECRET = { name: "???", desc: "A secret. Keep playing." };
+const SECRET = { name: "???", desc: "a secret, keep playing" };
 const display = (badge) => (badge.hidden && !badge.unlockedOn ? { ...badge, ...SECRET } : badge);
 const WHITE = "#ffffff";
 

@@ -276,6 +276,8 @@ function paletteFor(id, icon) {
 // the color that stands for an unlocked badge in lists: its rank color, or gold for untiered ones
 export const badgeColor = (id) => tierOf(id)?.main ?? TIERS[2].main;
 
+const fillIn = (row) => row.replace(/(?<=[^.].*)\.(?=.*[^.])/g, "G");
+
 // `locked` greys the icon out; `flash` whites it out (a frame of a badge lighting up in /badges);
 // `secret` replaces a hidden badge that isn't won yet with a question mark
 export function BadgeIcon({ id, locked = false, flash = false, secret = false }) {
@@ -283,7 +285,9 @@ export function BadgeIcon({ id, locked = false, flash = false, secret = false })
   const icon = ICONS[ICON_FOR[id]] ?? ICONS.star;
   const flat = (color) => Object.fromEntries(Object.keys(icon.palette).map((k) => [k, color]));
   const palette = flash ? flat("#ffffff") : locked ? flat(LOCKED_COLOR) : paletteFor(id, icon);
-  return html`<${PixelGrid} grid=${icon.grid.map((row) => [...row])} palette=${palette} />`;
+  // a locked ring is drawn filled in, so its silhouette doesn't give away what it is
+  const grid = locked && !flash && id === "one-ring" ? icon.grid.map(fillIn) : icon.grid;
+  return html`<${PixelGrid} grid=${grid.map((row) => [...row])} palette=${palette} />`;
 }
 
 // The streak flame: a small triangle in fire orange, the height of the letters next to it.
