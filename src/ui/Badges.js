@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useState } from "react";
 import { Box, Text, useInput } from "ink";
-import { html, PANEL_WIDTH, theme } from "./kit.js";
+import { html, KeyHints, PANEL_WIDTH, theme } from "./kit.js";
 import { badgeColor, BadgeIcon, ICON_WIDTH } from "./icons.js";
 
 const COLUMNS = 3;
@@ -115,7 +115,7 @@ export function Badges({ badges, fresh = [], onClose }) {
           )}
         <//>
       <//>
-      <${Box} paddingX=${1}><${Text} dimColor>↑/↓ browse · ←/→ column · esc back<//><//>
+      <${Box} paddingX=${1}><${KeyHints} text="↑/↓ browse · ←/→ column · esc back" /><//>
     <//>
   `;
 }

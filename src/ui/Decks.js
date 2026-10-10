@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useState } from "react";
 import { Box, Text, useInput } from "ink";
 import { Choice, CHOICE_KEYS } from "./Choice.js";
-import { html, PANEL_WIDTH, theme } from "./kit.js";
+import { html, KeyHints, PANEL_WIDTH, theme } from "./kit.js";
 
 // /decks: your decks with their card counts; Enter quizzes the chosen one from now on, and
 // "+ New deck" starts one (`onNew`). Renaming and deleting decks come later.
@@ -42,7 +42,7 @@ export function Decks({ current, actions, onPick, onNew, onClose }) {
         `}
         ${error && html`<${Box} marginTop=${1}><${Text} color=${theme.bad}>${error}<//><//>`}
       <//>
-      <${Box} paddingX=${1}><${Text} dimColor>${`${CHOICE_KEYS} · esc back`}<//><//>
+      <${Box} paddingX=${1}><${KeyHints} text=${`${CHOICE_KEYS} · esc back`} /><//>
     <//>
   `;
 }

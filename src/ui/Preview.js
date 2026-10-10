@@ -13,7 +13,7 @@ import { Confetti } from "./Confetti.js";
 import { Evolution } from "./Evolution.js";
 import { Hatch } from "./Hatch.js";
 import { Header, Snore, useBlink, useMove } from "./Header.js";
-import { html, PANEL_WIDTH, theme } from "./kit.js";
+import { html, KeyHints, PANEL_WIDTH, theme } from "./kit.js";
 import { Mascot } from "./Mascot.js";
 import { Stats } from "./Stats.js";
 import { Summary } from "./Summary.js";
@@ -84,7 +84,7 @@ function MascotLab({ onBack }) {
         ${FACES[face] === "sleep" && html`<${Box}><${Mascot} stage=${stage} face="sleep" /><${Snore} tick=${clock} /><//>`}
         <${Text}>${STAGES[stage].name}<${Text} dimColor> · face ${FACES[face]} · ${ELEMENTS[element] ?? "no element"}${hot ? " · combo glow" : ""}<//><//>
       <//>
-      <${Box} paddingX=${1}><${Text} dimColor>←/→ form · ↑/↓ face · e element · j jump · s shake · h glow · esc back<//><//>
+      <${Box} paddingX=${1}><${KeyHints} text="←/→ form · ↑/↓ face · e element · j jump · s shake · h glow · esc back" /><//>
     <//>
   `;
 }
@@ -105,7 +105,7 @@ function BadgeUnlockLab({ onBack }) {
         <${Text} color=${theme.good} bold>✓ dragon<//>
         ${badges.map((badge, i) => html`<${BadgeUnlock} key=${`${run}-${badge.id}`} id=${badge.id} name=${badge.name} desc=${badge.desc} delay=${i * 700} />`)}
       <//>
-      <${Box} paddingX=${1}><${Text} dimColor>enter replay · esc back<//><//>
+      <${Box} paddingX=${1}><${KeyHints} text="enter replay · esc back" /><//>
     <//>
   `;
 }
@@ -153,7 +153,7 @@ function ConfettiLab({ onBack }) {
         <${Text} color=${theme.good} bold>▪ Daily goal reached · 12-day streak<//>
       <//>
       <${Box} height=${5}><${Confetti} key=${run} width=${PANEL_WIDTH} onDone=${() => {}} /><//>
-      <${Box} paddingX=${1}><${Text} dimColor>enter replay · esc back<//><//>
+      <${Box} paddingX=${1}><${KeyHints} text="enter replay · esc back" /><//>
     <//>
   `;
 }
@@ -197,7 +197,7 @@ function Menu({ selected, onMove, onPick, onQuit }) {
           )}
         <//>
       <//>
-      <${Box} paddingX=${1}><${Text} dimColor>↑/↓ choose · enter play · esc quit<//><//>
+      <${Box} paddingX=${1}><${KeyHints} text="↑/↓ choose · enter play · esc quit" /><//>
     <//>
   `;
 }

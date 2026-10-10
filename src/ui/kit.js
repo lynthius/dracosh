@@ -11,8 +11,31 @@ export const theme = {
   bad: "#f87171",
   warn: "#fbbf24",
   text: "#c9ccd3",
+  hint: "#8b919c", // the words in key hints: quieter than text, easier to read than dim
   track: "#3a3f47"
 };
+
+// the key at the start of a hint segment: "enter", "esc", "/add", "↑/↓", "any key", "q"…
+const KEY = /^(any key|↑\/↓|←\/→|enter|esc|tab|\/\S*|[a-z0-9])(?=\s|$)/;
+
+// A footer like "enter submit · / commands · esc quit": each key stands out, the words after it
+// stay quiet, and the dots between them fade back.
+export function KeyHints({ text }) {
+  const parts = text.split(" · ");
+  return React.createElement(
+    Text,
+    null,
+    ...parts.flatMap((part, i) => {
+      const key = KEY.exec(part)?.[0];
+      const rest = key ? part.slice(key.length) : part;
+      return [
+        i > 0 && React.createElement(Text, { key: `s${i}`, color: "#5a606b" }, " · "),
+        key && React.createElement(Text, { key: `k${i}`, color: theme.text }, key),
+        React.createElement(Text, { key: `r${i}`, color: theme.hint }, rest)
+      ].filter(Boolean);
+    })
+  );
+}
 
 // every full-width panel (card, stats, settings…) shares this width
 export const PANEL_WIDTH = 72;

@@ -2,7 +2,7 @@ import { Fragment, useState } from "react";
 import { Box, Text, useInput } from "ink";
 import { GOALS, INTERVALS, QUIET_PRESETS, TIP_LABELS, TIP_MODES, VOLUMES, formatInterval } from "../settings.js";
 import { formatQuiet } from "../quiet.js";
-import { Bar, html, PANEL_WIDTH, theme } from "./kit.js";
+import { Bar, html, KeyHints, PANEL_WIDTH, theme } from "./kit.js";
 
 function VolumeValue({ value }) {
   return html`<${Text}><${Bar} value=${value} max=${1} width=${10} />  ${Math.round(value * 100)}%<//>`;
@@ -62,7 +62,7 @@ export function Settings({ settings, onChange, onClose, onAction }) {
       <//>
       <${Box} marginTop=${1}><${Text} dimColor>${ROWS[row].hint}<//><//>
     <//>
-    <${Box} paddingX=${1}><${Text} dimColor>↑/↓ select · ←/→ change · esc back<//><//>
+    <${Box} paddingX=${1}><${KeyHints} text="↑/↓ select · ←/→ change · esc back" /><//>
     <//>
   `;
 }

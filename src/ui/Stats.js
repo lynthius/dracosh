@@ -2,7 +2,7 @@ import { Fragment, useState } from "react";
 import { Box, Text, useInput } from "ink";
 import { dragonName } from "../progress.js";
 import { formatRange } from "../vacation.js";
-import { html, PANEL_WIDTH, theme } from "./kit.js";
+import { html, KeyHints, PANEL_WIDTH, theme } from "./kit.js";
 
 const DAY_LETTERS = ["M", "T", "W", "T", "F", "S", "S"];
 // One shape for every day; only the color tells them apart, GitHub-contribution style.
@@ -104,7 +104,7 @@ export function Stats({ stats, getMonth, onClose }) {
 
         <${Box} marginTop=${1}><${Text} dimColor>${unlocked}/${stats.badges.length} badges · /badges lists them all<//><//>
       <//>
-      <${Box} paddingX=${1}><${Text} dimColor>←/→ month · esc back<//><//>
+      <${Box} paddingX=${1}><${KeyHints} text="←/→ month · esc back" /><//>
     <//>
   `;
 }

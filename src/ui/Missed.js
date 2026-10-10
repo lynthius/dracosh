@@ -1,6 +1,6 @@
 import { Fragment, useState } from "react";
 import { Box, Text, useInput } from "ink";
-import { html, PANEL_WIDTH, theme } from "./kit.js";
+import { html, KeyHints, PANEL_WIDTH, theme } from "./kit.js";
 
 const MAX_ROWS = 10;
 
@@ -46,7 +46,7 @@ export function Missed({ getMissed, onClose }) {
               <//>
             `}
       <//>
-      <${Box} paddingX=${1}><${Text} dimColor>←/→ day · esc back<//><//>
+      <${Box} paddingX=${1}><${KeyHints} text="←/→ day · esc back" /><//>
     <//>
   `;
 }

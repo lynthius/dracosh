@@ -4,7 +4,7 @@ import { commandsFor } from "../commands.js";
 import { diffChars } from "../diff.js";
 import { AnswerInput } from "./AnswerInput.js";
 import { Header } from "./Header.js";
-import { html, Bar, PANEL_WIDTH, theme, Typewriter } from "./kit.js";
+import { Bar, html, KeyHints, PANEL_WIDTH, theme, Typewriter } from "./kit.js";
 import { hintTarget, makeHint } from "../hint.js";
 import { formatClock, inQuietHours, parseSnooze, quietEnd } from "../quiet.js";
 import { shouldShowTip } from "../tips.js";
@@ -25,7 +25,7 @@ import { Stats } from "./Stats.js";
 import { Summary } from "./Summary.js";
 import { TheOne } from "./TheOne.js";
 
-const SPINNER = ["⣾", "⣽", "⣻", "⢿", "⡿", "⣟", "⣯", "⣷"];
+const SPINNER = ["▘", "▝", "▗", "▖"]; // a pixel going round a square
 const TICK_MS = 250; // the steady redraw: slow enough to stay idle for hours, fast enough for the spinner
 const SLEEP_AFTER_MS = 3 * 60_000; // no key pressed for this long while waiting → the dragon dozes off
 const PAUSED_SLEEP_AFTER_MS = 15_000; // during snooze or quiet hours it nods off again much sooner
@@ -464,7 +464,7 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
                   <//>
                 `}
                 ${(phase === "waiting" || phase === "empty") && commandMode && html`<${AnswerInput} commandOnly initial="/" commands=${commandsFor({ phase: "waiting", canOverrule: session.canOverrule() })} onCommand=${runCommand} onCancel=${() => setCommandMode(false)} onEdit=${clearProblem} />`}
-                ${phase !== "loading" && !commandMode && html`<${Text} dimColor>${phase === "asking" ? "enter submit · / commands · esc quit" : phase === "empty" ? "/add · / commands · q quit" : `${session.canOverrule() ? "/correct if you were right · " : ""}enter ask now · / commands · q quit`}<//>`}
+                ${phase !== "loading" && !commandMode && html`<${KeyHints} text=${phase === "asking" ? "enter submit · / commands · esc quit" : phase === "empty" ? "/add · / commands · q quit" : `${session.canOverrule() ? "/correct if you were right · " : ""}enter ask now · / commands · q quit`} />`}
               <//>
               <//>
             `}

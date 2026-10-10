@@ -1,6 +1,6 @@
 import React, { Fragment, useEffect, useState } from "react";
 import { Box, Text, useInput } from "ink";
-import { html, PANEL_WIDTH, theme } from "./kit.js";
+import { html, KeyHints, PANEL_WIDTH, theme } from "./kit.js";
 import { Mascot } from "./Mascot.js";
 
 const FRAME_MS = 110;
@@ -93,7 +93,7 @@ export function Hatch({ onDone, play = () => {} }) {
             : html`<${Text} dimColor>${caption}<//>`}
         <//>
       <//>
-      <${Box} paddingX=${1}><${Text} dimColor>${revealed ? "any key to start" : "any key to skip"}<//><//>
+      <${Box} paddingX=${1}><${KeyHints} text=${revealed ? "any key to start" : "any key to skip"} /><//>
     <//>
   `;
 }

@@ -1,7 +1,7 @@
 import React, { Fragment, useEffect, useState } from "react";
 import { Box, Text, useInput } from "ink";
 import { ELEMENTS } from "../progress.js";
-import { html, PANEL_WIDTH, theme } from "./kit.js";
+import { html, KeyHints, PANEL_WIDTH, theme } from "./kit.js";
 import { ELEMENT_COLOR, Mascot } from "./Mascot.js";
 
 const FRAME_MS = 80;
@@ -97,7 +97,7 @@ export function DieRoll({ element, stage = 0, onClose, play = () => {} }) {
             : html`<${Text} dimColor>${landed ? `${result} · ${ELEMENT_NAME[element]}` : "the die is rolling…"}<//>`}
         <//>
       <//>
-      <${Box} paddingX=${1}><${Text} dimColor>${revealed ? "any key to continue" : "any key to skip"}<//><//>
+      <${Box} paddingX=${1}><${KeyHints} text=${revealed ? "any key to continue" : "any key to skip"} /><//>
     <//>
   `;
 }

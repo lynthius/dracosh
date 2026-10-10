@@ -2,7 +2,7 @@ import { Fragment } from "react";
 import { Box, Text, useInput } from "ink";
 import { MAX_FREEZES } from "../progress.js";
 import { BOX_INTERVALS_DAYS } from "../scheduler.js";
-import { html, PANEL_WIDTH, theme } from "./kit.js";
+import { html, KeyHints, PANEL_WIDTH, theme } from "./kit.js";
 
 const KEYS = [
   ["Enter", "submit your answer; between cards, ask the next one now"],
@@ -60,7 +60,7 @@ export function Help({ onClose }) {
         <//>
         <${Section} title="Outside the quiz"><${Rows} rows=${OUTSIDE} width=${26} /><//>
       <//>
-      <${Box} paddingX=${1}><${Text} dimColor>esc back<//><//>
+      <${Box} paddingX=${1}><${KeyHints} text="esc back" /><//>
     <//>
   `;
 }

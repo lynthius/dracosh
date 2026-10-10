@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useState } from "react";
 import { Box, Text } from "ink";
 import { Choice, CHOICE_KEYS } from "./Choice.js";
-import { html, PANEL_WIDTH, theme } from "./kit.js";
+import { html, KeyHints, PANEL_WIDTH, theme } from "./kit.js";
 
 const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
@@ -65,7 +65,7 @@ export function Reset({ stats, actions, onConfirm, onClose }) {
         `}
         ${error && html`<${Box} marginTop=${1}><${Text} color=${theme.bad}>${error}<//><//>`}
       <//>
-      <${Box} paddingX=${1}><${Text} dimColor>${step === "working" ? "resetting…" : `${CHOICE_KEYS} · esc back`}<//><//>
+      <${Box} paddingX=${1}><${KeyHints} text=${step === "working" ? "resetting…" : `${CHOICE_KEYS} · esc back`} /><//>
     <//>
   `;
 }

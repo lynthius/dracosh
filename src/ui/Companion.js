@@ -1,7 +1,7 @@
 import { Fragment } from "react";
 import { Box, Text, useInput } from "ink";
 import { ELEMENT_ADJECTIVE, STAGES } from "../progress.js";
-import { html, PANEL_WIDTH, theme } from "./kit.js";
+import { html, KeyHints, PANEL_WIDTH, theme } from "./kit.js";
 import { ELEMENT_COLOR, Mascot } from "./Mascot.js";
 
 const requirement = (stage, locked) => (stage.from === 0 ? "from the start" : `${locked ? "needs " : ""}${stage.from} days`);
@@ -38,7 +38,7 @@ export function Companion({ current, best, element = null, roll = null, onClose 
           })}
         <//>
       <//>
-      <${Box} paddingX=${1}><${Text} dimColor>esc back<//><//>
+      <${Box} paddingX=${1}><${KeyHints} text="esc back" /><//>
     <//>
   `;
 }

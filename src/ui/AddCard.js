@@ -2,7 +2,7 @@ import { Fragment, useEffect, useState } from "react";
 import { Box, Text } from "ink";
 import { AnswerInput } from "./AnswerInput.js";
 import { Choice, CHOICE_KEYS } from "./Choice.js";
-import { html, PANEL_WIDTH, theme } from "./kit.js";
+import { html, KeyHints, PANEL_WIDTH, theme } from "./kit.js";
 
 const FIELDS = {
   deck: { label: "Name your deck", hint: "Spanish, Biology, Capitals… whatever you want to learn" },
@@ -153,7 +153,7 @@ export function AddCard({ current, actions, onDone, startNew = false }) {
         `}
         ${error && html`<${Box} marginTop=${1}><${Text} color=${theme.bad}>${error}<//><//>`}
       <//>
-      <${Box} paddingX=${1}><${Text} dimColor>${step === "pick" || step === "ways" ? `${CHOICE_KEYS} · esc cancel` : "enter next · esc " + (added || newDeck ? "done" : "cancel")}<//><//>
+      <${Box} paddingX=${1}><${KeyHints} text=${step === "pick" || step === "ways" ? `${CHOICE_KEYS} · esc cancel` : "enter next · esc " + (added || newDeck ? "done" : "cancel")} /><//>
     <//>
   `;
 }

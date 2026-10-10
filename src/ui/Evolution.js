@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useState } from "react";
 import { Box, Text, useInput } from "ink";
-import { html, PANEL_WIDTH, theme } from "./kit.js";
+import { html, KeyHints, PANEL_WIDTH, theme } from "./kit.js";
 import { Mascot } from "./Mascot.js";
 
 const FRAME_MS = 120;
@@ -52,7 +52,7 @@ export function Evolution({ from, to, name, element = null, onClose }) {
             : html`<${Text} dimColor>Something is happening…<//>`}
         <//>
       <//>
-      <${Box} paddingX=${1}><${Text} dimColor>${revealed ? "enter continue" : "any key to hurry it up"}<//><//>
+      <${Box} paddingX=${1}><${KeyHints} text=${revealed ? "enter continue" : "any key to hurry it up"} /><//>
     <//>
   `;
 }
