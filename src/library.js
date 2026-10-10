@@ -13,6 +13,8 @@ export const CARD_TYPES = ["translation", "definition", "qa"];
 export const ANSWER_MODES = ["typed", "self"];
 const DEFAULT_ANSWER_MODE = { translation: "typed", definition: "typed", qa: "self" };
 
+export const MAX_DECK_NAME = 40; // it has to fit the card's border and the header
+
 export const emptyLibrary = () => ({ version: LIBRARY_VERSION, decks: [], cards: [] });
 
 export const newId = (prefix) => `${prefix}${Date.now().toString(36)}${randomBytes(3).toString("hex")}`;
@@ -39,7 +41,9 @@ export const findDeck = (library, nameOrId) =>
 export function createDeck(library, { name, type = "translation", languages = { front: "en", back: "pl" }, answerMode, directions = "both", tour = false, now = Date.now() }) {
   const trimmed = String(name ?? "").trim();
   if (!trimmed) throw new Error("A deck needs a name.");
-  if (findDeck(library, trimmed)) throw new Error(`There is already a deck called "${trimmed}".`);
+  if (trimmed.length > MAX_DECK_NAME) throw new Error(`Keep the deck name to ${MAX_DECK_NAME} characters or fewer.`);
+  const existing = findDeck(library, trimmed);
+  if (existing) throw new Error(`There is already a deck called "${existing.name}".`);
   if (!CARD_TYPES.includes(type)) throw new Error(`Unknown card type "${type}".`);
   const mode = answerMode ?? DEFAULT_ANSWER_MODE[type];
   if (!ANSWER_MODES.includes(mode)) throw new Error(`Unknown answer mode "${mode}".`);

@@ -67,3 +67,15 @@ test("a reset is backed up first; everything brings the tour back", async () => 
   assert.deepEqual(library.decks.map((d) => d.name), [STARTER_DECK]);
   assert.ok(library.decks[0].tour);
 });
+
+test("a deck name already taken is caught up front, the tour's name is free, and names stay short", async () => {
+  const { existingDeck } = await import("../src/manage.js");
+  const { MAX_DECK_NAME } = await import("../src/library.js");
+  assert.equal(await existingDeck(STARTER_DECK), null, "the tour is about to make room");
+  await startDeck({ name: STARTER_DECK.toUpperCase() }); // replaces the tour, same name in other case
+  await startDeck({ name: "Biology" });
+  assert.equal((await existingDeck("  biology ")).name, "Biology");
+  assert.equal(await existingDeck("Chemistry"), null);
+  await assert.rejects(startDeck({ name: "x".repeat(MAX_DECK_NAME + 1) }), /characters or fewer/);
+  await assert.rejects(startDeck({ name: "BIOLOGY" }), /already a deck called "Biology"/);
+});

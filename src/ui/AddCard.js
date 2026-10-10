@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useState } from "react";
 import { Box, Text } from "ink";
+import { MAX_DECK_NAME } from "../library.js";
 import { AnswerInput } from "./AnswerInput.js";
 import { Choice, CHOICE_KEYS } from "./Choice.js";
 import { html, KeyHints, PANEL_WIDTH, theme } from "./kit.js";
@@ -79,8 +80,12 @@ export function AddCard({ current, actions, onDone, startNew = false }) {
     setMessage("");
     if (step === "deck") {
       if (!value) return setError("Your deck needs a name.");
-      setDeck(value);
-      return setStep("ways");
+      if (value.length > MAX_DECK_NAME) return setError(`Keep the name to ${MAX_DECK_NAME} characters or fewer.`);
+      return actions.existingDeck(value).then((existing) => {
+        if (existing) return setError(`There is already a deck called "${existing.name}".`);
+        setDeck(value);
+        setStep("ways");
+      }, (err) => setError(err.message));
     }
     if (step === "front") {
       if (!value) return setError("A card needs a front.");

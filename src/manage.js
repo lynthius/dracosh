@@ -22,16 +22,22 @@ export async function ownDecks() {
 // returned, so their progress can go too.
 export async function startDeck({ name, bothWays }) {
   const library = await loadLibrary();
-  const deck = createDeck(library, { name, type: "translation", languages: null, directions: bothWays ? "both" : "forward" });
   const tour = library.decks.find((d) => d.tour);
   let removed = [];
   if (tour) {
     await backupNow("before-delete");
     removed = removeDeck(library, tour.id);
   }
+  const deck = createDeck(library, { name, type: "translation", languages: null, directions: bothWays ? "both" : "forward" });
   await saveLibrary(library);
   return { deck, removed };
 }
+
+// the deck with this name (ignoring case), if any: /add says so before asking anything else
+export const existingDeck = async (name) => {
+  const deck = findDeck(await loadLibrary(), name.trim());
+  return deck && !deck.tour ? deck : null; // the tour is about to make room, so its name is free
+};
 
 // the card with this front already in the deck, if any: /add says so before asking for the answer
 export async function existingCard(deckName, front) {
