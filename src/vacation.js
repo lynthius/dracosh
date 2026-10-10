@@ -45,7 +45,11 @@ export function parseVacation(args, today) {
   if (parts.length < 1 || parts.length > 2) return null;
   const dates = parts.map((part) => parseDate(part, today));
   if (dates.some((date) => !date)) return null;
-  const [a, b = a] = dates;
+  let [a, b = a] = dates;
+  // "28.12 3.01" on 30 December: the start was moved to next year only because it already passed,
+  // but it's the one just behind us
+  const rolled = /^\d{1,2}\.\d{1,2}$/.test(parts[0]) && a.slice(0, 4) > today.slice(0, 4);
+  if (a > b && rolled) a = valid(`${Number(a.slice(0, 4)) - 1}${a.slice(4)}`) ?? a;
   const [from, to] = a <= b ? [a, b] : [b, a];
   return daysBetween(from, to) < MAX_DAYS ? { action: "add", from, to } : null;
 }

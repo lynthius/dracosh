@@ -124,6 +124,7 @@ test("parseVacation understands days, ranges, single dates, off and list", () =>
   assert.deepEqual(parseVacation("24.12", today), { action: "add", from: "2026-12-24", to: "2026-12-24" });
   assert.deepEqual(parseVacation("5.10", today), { action: "add", from: "2027-10-05", to: "2027-10-05" }); // already past this year
   assert.deepEqual(parseVacation("5.10.2026", today), { action: "add", from: "2026-10-05", to: "2026-10-05" }); // explicit year: the past is allowed
+  assert.deepEqual(parseVacation("28.12 3.01", "2026-12-30"), { action: "add", from: "2026-12-28", to: "2027-01-03" }); // across New Year
   assert.equal(parseVacation("31.02", today), null);
   assert.equal(parseVacation("0", today), null);
   assert.equal(parseVacation("500", today), null);
