@@ -41,6 +41,7 @@ dracosh --deck "Polish"    # quiz this deck, this run only (otherwise the one pi
 dracosh --every 5m         # a card every 5 minutes instead of 10, this run only
 dracosh --no-sound
 dracosh --stats            # print your progress and exit
+dracosh --data             # show where your cards, progress and backups are kept
 dracosh --preview
 dracosh restore            # list your backups; dracosh restore 2 brings one back
 ```
@@ -68,7 +69,7 @@ They're slash commands because "skip" and "quit" are perfectly good English answ
 
 ## Your data
 
-Everything stays on your machine, in `~/.dracosh`. Progress is saved after every answer, so you can quit any time. The first start of each day also saves a backup of your cards, progress and settings to `~/.dracosh/backups` (the last 7 are kept); `dracosh restore` brings one back, and backs up what you have first, so a restore can be undone too. To start over, `/settings` → Reset clears your progress only (badges, streak, the dragon) or everything; a backup is made first. To use Dracosh on two computers, put that folder somewhere synced and point `DRACOSH_HOME` at it.
+Everything stays on your machine, in `~/.dracosh`; `dracosh --data` shows what's there. Progress is saved after every answer, so you can quit any time. The first start of each day also saves a backup of your cards, progress and settings to `~/.dracosh/backups` (the last 7 are kept); `dracosh restore` brings one back, and backs up what you have first, so a restore can be undone too. To start over, `/settings` → Reset clears your progress only (badges, streak, the dragon) or everything; a backup is made first. To use Dracosh on two computers, put that folder somewhere synced and point `DRACOSH_HOME` at it.
 
 Sounds currently play on macOS only.
 

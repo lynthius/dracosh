@@ -4,13 +4,14 @@ import React from "react";
 import { parseArgs } from "node:util";
 import { createInterface } from "node:readline/promises";
 import { createAlerts } from "./alerts.js";
+import { existsSync } from "node:fs";
 import { BACKUP_DIR, dailyBackup, listBackups, restoreBackup } from "./backup.js";
 import { ensureProgress, snapshot } from "./progress.js";
 import { BOX_INTERVALS_DAYS } from "./scheduler.js";
 import { createSession } from "./session.js";
 import { DEFAULTS, formatInterval, normalizeSettings } from "./settings.js";
 import { seedLibrary } from "./starter.js";
-import { loadLibrary, loadSettingsRaw, loadState, patchSettings, saveLibrary } from "./store.js";
+import { DATA_FILES, HOME, loadLibrary, loadSettingsRaw, loadState, patchSettings, saveLibrary } from "./store.js";
 import { App } from "./ui/App.js";
 import { Preview } from "./ui/Preview.js";
 import * as manage from "./manage.js";
@@ -26,6 +27,7 @@ Usage: dracosh [options]
   --no-sound       turn sound effects off
   --volume <0-1>   sound volume (default: ${DEFAULTS.volume})
   --stats          print progress and exit
+  --data           show where your cards, progress and backups are kept
   --preview        browse every animation and screen on made-up data (nothing is saved)
   -y, --yes        restore without asking first
   -h, --help       show this help
@@ -77,6 +79,20 @@ async function confirm(question) {
   }
 }
 
+// --data: where everything lives, and what's in it
+async function printData() {
+  const library = await loadLibrary();
+  const state = await loadState();
+  const backups = await listBackups();
+  const at = (file) => (existsSync(file) ? "" : " (not created yet)");
+  console.log(`Dracosh keeps everything in ${HOME}\n`);
+  console.log(`  library.json   your decks and cards: ${plural(library.decks.length, "deck")} · ${plural(library.cards.length, "card")}${at(DATA_FILES.library)}`);
+  console.log(`  state.json     progress, streak and badges: ${Object.keys(state.items).length} practised${at(DATA_FILES.state)}`);
+  console.log(`  settings.json  your settings${at(DATA_FILES.settings)}`);
+  console.log(`  backups/       ${backups.length ? `${plural(backups.length, "backup")}, the newest from ${formatTime(backups[0].created)}` : "none yet"}`);
+  console.log(`\nTo keep it somewhere else (a synced folder, say), set DRACOSH_HOME. dracosh restore brings a backup back.`);
+}
+
 async function restore(choice, { yes }) {
   const backups = await listBackups();
   if (!backups.length) return console.log(`No backups yet. Dracosh makes one every day you use it, in ${BACKUP_DIR}`);
@@ -110,6 +126,7 @@ async function main() {
       volume: { type: "string" },
       "no-sound": { type: "boolean", default: false },
       stats: { type: "boolean", default: false },
+      data: { type: "boolean", default: false },
       preview: { type: "boolean", default: false },
       yes: { type: "boolean", short: "y", default: false },
       help: { type: "boolean", short: "h", default: false }
@@ -119,6 +136,7 @@ async function main() {
   const [command, ...args] = positionals;
   if (command === "restore") return restore(args[0], values);
   if (command) throw new Error(`Unknown command "${command}". See dracosh --help.`);
+  if (values.data) return printData();
 
   const saved = normalizeSettings(await loadSettingsRaw());
   const settings = {

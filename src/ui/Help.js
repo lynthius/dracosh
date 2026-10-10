@@ -21,6 +21,7 @@ const HOW = [
 
 const OUTSIDE = [
   ['dracosh --deck "Polish"', "quiz another deck"],
+  ["dracosh --data", "where your cards and backups are"],
   ["dracosh restore", "bring back a backup"],
   ["dracosh --help", "every option"]
 ];
