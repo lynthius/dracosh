@@ -387,11 +387,13 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
 
   // after /add: a first deck of your own replaces the tour; a deck started from /decks (or in place
   // of an empty one) becomes the one you practise; new cards end an empty state
-  function addDone({ deck: started, removed, added }) {
+  function addDone({ deck: started, removed, added, dropped }) {
     setScreen("quiz");
     if (removed.length) session.forget(removed).catch(() => {});
     if (started && (removed.length || phase === "empty" || addNew)) return switchDeck(started);
     if (phase === "empty" && added) ask();
+    const notes = [dropped && "The card you were writing wasn't saved.", started && `"${started}" is ready; you're still practising "${deck}". Switch with /decks.`];
+    setNotice(notes.filter(Boolean).join(" "));
   }
 
   const width = usePanelWidth();

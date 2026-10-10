@@ -43,7 +43,8 @@ export function AddCard({ current, actions, onDone, startNew = false }) {
     );
   }, []);
 
-  const finish = () => onDone({ deck: newDeck?.name ?? null, removed: newDeck?.removed ?? [], added });
+  // `dropped`: a card was half written (its front typed) when Esc ended /add
+  const finish = () => onDone({ deck: newDeck?.name ?? null, removed: newDeck?.removed ?? [], added, dropped: Boolean(draft.front) && (step === "back" || step === "example") });
 
   async function startDeck(bothWays) {
     setStep("saving");
