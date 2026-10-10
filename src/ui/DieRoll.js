@@ -1,7 +1,7 @@
 import React, { Fragment, useEffect, useState } from "react";
 import { Box, Text, useInput } from "ink";
 import { ELEMENTS } from "../progress.js";
-import { html, KeyHints, PANEL_WIDTH, theme } from "./kit.js";
+import { html, KeyHints, theme, usePanelWidth } from "./kit.js";
 import { ELEMENT_COLOR, Mascot } from "./Mascot.js";
 
 const FRAME_MS = 80;
@@ -55,6 +55,7 @@ function BigGrid({ grid }) {
 // The roll for "Dragon's die". The element was already rolled and saved; this only shows it.
 // Any key skips to the end; after the reveal, any key closes it.
 export function DieRoll({ element, stage = 0, onClose, play = () => {} }) {
+  const panel = usePanelWidth();
   const result = ELEMENTS.indexOf(element) + 1;
   const [frame, setFrame] = useState(0);
   useEffect(() => {
@@ -76,7 +77,7 @@ export function DieRoll({ element, stage = 0, onClose, play = () => {} }) {
 
   return html`
     <${Fragment}>
-      <${Box} flexDirection="column" borderStyle="round" borderColor=${landed ? color : theme.warn} paddingX=${2} paddingY=${1} width=${PANEL_WIDTH} alignItems="center">
+      <${Box} flexDirection="column" borderStyle="round" borderColor=${landed ? color : theme.warn} paddingX=${2} paddingY=${1} width=${panel} alignItems="center">
         <${Text} bold color=${theme.warn}>Dragon's die<//>
         <${Box} marginTop=${1} alignItems="flex-end">
           <${Box} flexDirection="column" marginBottom=${bounce} marginRight=${4}>

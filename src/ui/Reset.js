@@ -1,13 +1,14 @@
 import { Fragment, useEffect, useState } from "react";
 import { Box, Text } from "ink";
 import { Choice, CHOICE_KEYS } from "./Choice.js";
-import { html, KeyHints, PANEL_WIDTH, theme } from "./kit.js";
+import { html, KeyHints, theme, usePanelWidth } from "./kit.js";
 
 const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
 // Reset from /settings: pick what to clear, see exactly what goes, then confirm (No is the default).
 // A backup is made first, so `dracosh restore` can undo it.
 export function Reset({ stats, actions, onConfirm, onClose }) {
+  const panel = usePanelWidth();
   const [decks, setDecks] = useState(null);
   const [scope, setScope] = useState(0);
   const [answer, setAnswer] = useState(0);
@@ -41,7 +42,7 @@ export function Reset({ stats, actions, onConfirm, onClose }) {
 
   return html`
     <${Fragment}>
-      <${Box} flexDirection="column" borderStyle="round" borderColor=${step === "choose" ? theme.accent : theme.bad} paddingX=${2} width=${PANEL_WIDTH}>
+      <${Box} flexDirection="column" borderStyle="round" borderColor=${step === "choose" ? theme.accent : theme.bad} paddingX=${2} width=${panel}>
         <${Text} bold color=${step === "choose" ? theme.accent : theme.bad}>${step === "choose" ? "Reset: what should start over?" : chosen.question}<//>
         ${step === "choose" &&
         html`<${Box} marginTop=${1}><${Choice} options=${SCOPES} selected=${scope} onMove=${setScope} onPick=${(i) => decks && (setScope(i), setAnswer(0), setStep("confirm"))} onCancel=${onClose} /><//>`}

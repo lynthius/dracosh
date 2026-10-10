@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useState } from "react";
 import { Box, Text, useInput } from "ink";
-import { html, KeyHints, PANEL_WIDTH, theme } from "./kit.js";
+import { html, KeyHints, theme, usePanelWidth } from "./kit.js";
 import { badgeColor, BadgeIcon, ICON_WIDTH } from "./icons.js";
 
 const COLUMNS = 3;
@@ -30,6 +30,7 @@ function phaseOf(freshIndex, frame) {
 // (won since /badges was last opened) light up in order, and the preview follows them until
 // a key is pressed. ↑/↓ walk a column, ←/→ jump between columns, esc closes.
 export function Badges({ badges, fresh = [], onClose }) {
+  const panel = usePanelWidth();
   const firstFresh = badges.findIndex((b) => b.id === fresh[0]);
   const [selected, setSelected] = useState(firstFresh >= 0 ? firstFresh : 0);
   const [following, setFollowing] = useState(fresh.length > 0);
@@ -71,7 +72,7 @@ export function Badges({ badges, fresh = [], onClose }) {
 
   return html`
     <${Fragment}>
-      <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.accent} paddingX=${2} width=${PANEL_WIDTH}>
+      <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.accent} paddingX=${2} width=${panel}>
         <${Box}>
           <${Text} bold color=${theme.accent}>Badges<//>
           <${Text} dimColor>  ${unlocked}/${badges.length}<//>

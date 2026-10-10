@@ -13,7 +13,7 @@ import { Confetti } from "./Confetti.js";
 import { Evolution } from "./Evolution.js";
 import { Hatch } from "./Hatch.js";
 import { Header, Snore, useBlink, useMove } from "./Header.js";
-import { html, KeyHints, PANEL_WIDTH, theme } from "./kit.js";
+import { html, KeyHints, theme, usePanelWidth } from "./kit.js";
 import { Mascot } from "./Mascot.js";
 import { Stats } from "./Stats.js";
 import { Summary } from "./Summary.js";
@@ -53,6 +53,7 @@ function useClock() {
 
 // The mascot on its own, to poke at: every form, face, move and the combo glow.
 function MascotLab({ onBack }) {
+  const panel = usePanelWidth();
   const [stage, setStage] = useState(0);
   const [face, setFace] = useState(0);
   const [hot, setHot] = useState(false);
@@ -76,7 +77,7 @@ function MascotLab({ onBack }) {
   const shownFace = blinking && FACES[face] === "idle" ? "blink" : FACES[face];
   return html`
     <${Fragment}>
-      <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.accent} paddingX=${2} paddingY=${1} width=${PANEL_WIDTH} alignItems="center">
+      <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.accent} paddingX=${2} paddingY=${1} width=${panel} alignItems="center">
         <${Text} bold color=${theme.accent}>Mascot lab<//>
         <${Box} marginY=${1} flexDirection="column" alignItems="center">
           <${Mascot} stage=${stage} face=${shownFace} hot=${hot} flicker=${hot && tick % 2 === 0} scale=${2} dx=${move.dx ?? 0} dy=${move.dy ?? 0} element=${ELEMENTS[element] ?? null} />
@@ -93,6 +94,7 @@ function MascotLab({ onBack }) {
 const UNLOCK_SAMPLE = ["thousand", "hot-streak", "dragons-hoard"];
 
 function BadgeUnlockLab({ onBack, play }) {
+  const panel = usePanelWidth();
   const [run, setRun] = useState(1);
   useInput((input, key) => {
     if (key.escape || input === "q") return onBack();
@@ -101,7 +103,7 @@ function BadgeUnlockLab({ onBack, play }) {
   const badges = UNLOCK_SAMPLE.map((id) => BADGES.find((badge) => badge.id === id));
   return html`
     <${Fragment}>
-      <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.good} paddingX=${2} width=${PANEL_WIDTH}>
+      <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.good} paddingX=${2} width=${panel}>
         <${Text} color=${theme.good} bold>✓ dragon<//>
         ${badges.map((badge, i) => html`<${BadgeUnlock} key=${`${run}-${badge.id}`} id=${badge.id} name=${badge.name} desc=${badge.desc} delay=${i * 700} sound=${badgeSound(i)} play=${play} />`)}
       <//>
@@ -112,6 +114,7 @@ function BadgeUnlockLab({ onBack, play }) {
 
 // The quiz screen's header with any form and element, to check how the dragon looks and fits there
 function QuizLookLab({ onBack }) {
+  const panel = usePanelWidth();
   const [stage, setStage] = useState(STAGES.length - 1);
   const [element, setElement] = useState(-1);
   const [combo, setCombo] = useState(0);
@@ -132,7 +135,7 @@ function QuizLookLab({ onBack }) {
   return html`
     <${Fragment}>
       <${Header} deck="Polish" everyMs=${600000} wordCount=${340} stats=${stats} combo=${combo} face="idle" event=${null} tick=${0} />
-      <${Box} marginTop=${1} flexDirection="column" borderStyle="round" borderColor=${theme.accent} paddingX=${2} paddingY=${1} width=${PANEL_WIDTH}>
+      <${Box} marginTop=${1} flexDirection="column" borderStyle="round" borderColor=${theme.accent} paddingX=${2} paddingY=${1} width=${panel}>
         <${Text} bold>la mariposa<//>
         <${Box} marginTop=${1}><${Text} color=${theme.accent}>❯ <//><${Text} inverse> <//><//>
       <//>
@@ -142,6 +145,7 @@ function QuizLookLab({ onBack }) {
 }
 
 function ConfettiLab({ onBack }) {
+  const panel = usePanelWidth();
   const [run, setRun] = useState(1);
   useInput((input, key) => {
     if (key.escape || input === "q") return onBack();
@@ -149,10 +153,10 @@ function ConfettiLab({ onBack }) {
   });
   return html`
     <${Fragment}>
-      <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.good} paddingX=${2} width=${PANEL_WIDTH}>
+      <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.good} paddingX=${2} width=${panel}>
         <${Text} color=${theme.good} bold>▪ Daily goal reached · 12-day streak<//>
       <//>
-      <${Box} height=${5}><${Confetti} key=${run} width=${PANEL_WIDTH} onDone=${() => {}} /><//>
+      <${Box} height=${5}><${Confetti} key=${run} width=${panel} onDone=${() => {}} /><//>
       <${Box} paddingX=${1}><${KeyHints} text="enter replay · esc back" /><//>
     <//>
   `;
@@ -174,6 +178,7 @@ const SCENES = [
 ];
 
 function Menu({ selected, onMove, onPick, onQuit }) {
+  const panel = usePanelWidth();
   useInput((input, key) => {
     if (key.escape || input === "q") return onQuit();
     if (key.upArrow) return onMove(-1);
@@ -182,7 +187,7 @@ function Menu({ selected, onMove, onPick, onQuit }) {
   });
   return html`
     <${Fragment}>
-      <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.accent} paddingX=${2} width=${PANEL_WIDTH}>
+      <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.accent} paddingX=${2} width=${panel}>
         <${Box}><${Text} bold color=${theme.accent}>Preview<//><${Text} dimColor>  made-up data · nothing is saved<//><//>
         <${Box} flexDirection="column" marginTop=${1}>
           ${SCENES.map(

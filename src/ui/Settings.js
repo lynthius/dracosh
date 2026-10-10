@@ -2,7 +2,7 @@ import { Fragment, useState } from "react";
 import { Box, Text, useInput } from "ink";
 import { GOALS, INTERVALS, QUIET_PRESETS, TIP_LABELS, TIP_MODES, VOLUMES, formatInterval } from "../settings.js";
 import { formatQuiet } from "../quiet.js";
-import { Bar, html, KeyHints, PANEL_WIDTH, theme } from "./kit.js";
+import { Bar, html, KeyHints, theme, usePanelWidth } from "./kit.js";
 
 function VolumeValue({ value }) {
   return html`<${Text}><${Bar} value=${value} max=${1} width=${10} />  ${Math.round(value * 100)}%<//>`;
@@ -28,6 +28,7 @@ const nearestIndex = (options, value) => {
 // Changes apply and persist immediately; there is no save step. Action rows (Reset) open their own
 // screen through `onAction`; without it (the preview) they are left out.
 export function Settings({ settings, onChange, onClose, onAction }) {
+  const panel = usePanelWidth();
   const [row, setRow] = useState(0);
   const ROWS = onAction ? ALL_ROWS : ALL_ROWS.filter((item) => !item.action);
 
@@ -48,7 +49,7 @@ export function Settings({ settings, onChange, onClose, onAction }) {
 
   return html`
     <${Fragment}>
-    <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.accent} paddingX=${2} width=${PANEL_WIDTH}>
+    <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.accent} paddingX=${2} width=${panel}>
       <${Text} bold color=${theme.accent}>Settings<//>
       <${Box} flexDirection="column" marginTop=${1}>
         ${ROWS.map(

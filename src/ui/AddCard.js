@@ -3,7 +3,7 @@ import { Box, Text } from "ink";
 import { MAX_DECK_NAME } from "../library.js";
 import { AnswerInput } from "./AnswerInput.js";
 import { Choice, CHOICE_KEYS } from "./Choice.js";
-import { html, KeyHints, PANEL_WIDTH, theme } from "./kit.js";
+import { html, KeyHints, theme, usePanelWidth } from "./kit.js";
 
 const FIELDS = {
   deck: { label: "Name your deck", hint: "Polish, Biology, Capitals… whatever you want to learn" },
@@ -20,6 +20,7 @@ const NEW_DECK = "+ New deck";
 // replaces the tour), then add cards one after another until Esc. `actions` reads and writes the library.
 // `startNew` skips the deck list and goes straight to a new deck ("+ New deck" in /decks).
 export function AddCard({ current, actions, onDone, startNew = false }) {
+  const panel = usePanelWidth();
   const [step, setStep] = useState("loading"); // loading | pick | deck | ways | front | back | example | saving
   const [decks, setDecks] = useState([]);
   const [picked, setPicked] = useState(0);
@@ -114,7 +115,7 @@ export function AddCard({ current, actions, onDone, startNew = false }) {
   const field = FIELDS[step];
   return html`
     <${Fragment}>
-      <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.accent} paddingX=${2} width=${PANEL_WIDTH}>
+      <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.accent} paddingX=${2} width=${panel}>
         <${Text} bold color=${theme.accent}>${title}<//>
         ${message && html`<${Box} marginTop=${1}><${Text} color=${theme.good}>${message}<//><//>`}
         ${draft.front && step !== "front" && html`<${Box} marginTop=${1}><${Text} dimColor>${draft.front}${draft.back.length ? `  →  ${draft.back.join(", ")}` : ""}<//><//>`}

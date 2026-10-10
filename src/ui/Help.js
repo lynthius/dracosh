@@ -2,7 +2,7 @@ import { Fragment } from "react";
 import { Box, Text, useInput } from "ink";
 import { MAX_FREEZES } from "../progress.js";
 import { BOX_INTERVALS_DAYS } from "../scheduler.js";
-import { html, KeyHints, PANEL_WIDTH, theme } from "./kit.js";
+import { html, KeyHints, theme, usePanelWidth } from "./kit.js";
 
 const KEYS = [
   ["Enter", "submit your answer (empty shows the answer); between cards, ask the next one"],
@@ -47,13 +47,14 @@ const Section = ({ title, children }) => html`
 // How Dracosh works, on one screen: the keys, the rules behind the boxes and the streak,
 // and what you can do from the shell.
 export function Help({ onClose }) {
+  const panel = usePanelWidth();
   useInput((input, key) => {
     if (key.escape || key.return || input === "q") onClose();
   });
 
   return html`
     <${Fragment}>
-      <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.accent} paddingX=${2} width=${PANEL_WIDTH}>
+      <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.accent} paddingX=${2} width=${panel}>
         <${Text} bold color=${theme.accent}>Help<//>
         <${Section} title="Keys"><${Rows} rows=${KEYS} width=${10} /><//>
         <${Section} title="How it works">

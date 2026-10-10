@@ -85,7 +85,7 @@ export function Header({ deck, everyMs, wordCount, stats, combo, face, event, ti
   const shown = asleep ? "sleep" : blinking && BLINKABLE.has(face) ? "blink" : face;
   return html`
     <${Box} paddingX=${1}>
-      <${Box} width=${MASCOT_WIDTH + 3}>
+      <${Box} width=${MASCOT_WIDTH + 3} flexShrink=${0}>
         <${Box} flexDirection="column" width=${MASCOT_WIDTH}>
           <${Mascot} face=${shown} hot=${hot} flicker=${hot && tick % 2 === 0} stage=${companion.index} element=${companion.element} dx=${move.dx ?? 0} dy=${move.dy ?? 0} />
         <//>
@@ -93,8 +93,8 @@ export function Header({ deck, everyMs, wordCount, stats, combo, face, event, ti
       <//>
       <${Box} flexDirection="column" justifyContent="center">
         <${Box}>
-          <${Text} bold color=${theme.accent}>Dracosh<//>
-          <${Text} dimColor>  ${deck}${wordCount ? ` · ${wordCount} card${wordCount === 1 ? "" : "s"}` : ""} · every ${formatInterval(everyMs)}<//>
+          <${Box} flexShrink=${0}><${Text} bold color=${theme.accent}>Dracosh<//><//>
+          <${Text} dimColor wrap="truncate-end">  ${deck}${wordCount ? ` · ${wordCount} card${wordCount === 1 ? "" : "s"}` : ""} · every ${formatInterval(everyMs)}<//>
         <//>
         <${Box}>
           ${streak.days > 0

@@ -1,6 +1,6 @@
 import React, { Fragment, useEffect, useState } from "react";
 import { Box, Text, useInput } from "ink";
-import { html, KeyHints, PANEL_WIDTH, theme } from "./kit.js";
+import { html, KeyHints, theme, usePanelWidth } from "./kit.js";
 import { Mascot } from "./Mascot.js";
 
 const FRAME_MS = 110;
@@ -57,6 +57,7 @@ function BigPixels({ grid, colors }) {
 
 // First launch ever: the dragon hatches. Any key skips ahead; after the reveal, any key starts the quiz.
 export function Hatch({ onDone, play = () => {} }) {
+  const panel = usePanelWidth();
   const [frame, setFrame] = useState(0);
   useEffect(() => {
     const id = setInterval(() => setFrame((f) => f + 1), FRAME_MS);
@@ -75,7 +76,7 @@ export function Hatch({ onDone, play = () => {} }) {
 
   return html`
     <${Fragment}>
-      <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.accent} paddingX=${2} paddingY=${1} width=${PANEL_WIDTH} alignItems="center">
+      <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.accent} paddingX=${2} paddingY=${1} width=${panel} alignItems="center">
         <${Text} bold color=${theme.accent}>Dracosh<//>
         <${Box} flexDirection="column" marginTop=${1} alignItems="center">
           ${revealed

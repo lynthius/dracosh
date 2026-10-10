@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Text } from "ink";
+import { Text, useStdout } from "ink";
 import htm from "htm";
 
 export const html = htm.bind(React.createElement);
@@ -51,6 +51,13 @@ export function KeyHints({ text }) {
 
 // every full-width panel (card, stats, settings…) shares this width
 export const PANEL_WIDTH = 72;
+const MIN_PANEL_WIDTH = 30;
+
+// the panel width for this terminal: PANEL_WIDTH, or less in a narrow window (some terminals report 0)
+export function usePanelWidth() {
+  const { stdout } = useStdout();
+  return Math.max(MIN_PANEL_WIDTH, Math.min((stdout?.columns || PANEL_WIDTH + 2) - 2, PANEL_WIDTH));
+}
 
 // A thin line: the filled part in `color`, the rest as a dim track. Plain box-drawing characters render
 // at exactly one cell in every terminal font, unlike the geometric-shape glyphs a font may substitute.

@@ -1,12 +1,13 @@
 import { Fragment } from "react";
 import { Box, Text, useInput } from "ink";
-import { Bar, html, KeyHints, PANEL_WIDTH, theme } from "./kit.js";
+import { Bar, html, KeyHints, theme, usePanelWidth } from "./kit.js";
 import { dragonName } from "../progress.js";
 import { Flame } from "./icons.js";
 import { Mascot, MASCOT_WIDTH } from "./Mascot.js";
 
 // The end-of-session screen: how this run went, shown on quit. Any key leaves for real.
 export function Summary({ stats, totals, bestCombo, onDone }) {
+  const panel = usePanelWidth();
   useInput(() => onDone());
   const { streak, today, goal, companion } = stats;
   const accuracy = totals.asked ? Math.round((totals.correct / totals.asked) * 100) : 0;
@@ -14,7 +15,7 @@ export function Summary({ stats, totals, bestCombo, onDone }) {
 
   return html`
     <${Fragment}>
-      <${Box} borderStyle="round" borderColor=${theme.accent} paddingX=${2} paddingY=${1} width=${PANEL_WIDTH}>
+      <${Box} borderStyle="round" borderColor=${theme.accent} paddingX=${2} paddingY=${1} width=${panel}>
         <${Box} flexDirection="column" width=${MASCOT_WIDTH + 3}>
           <${Mascot} face=${face} stage=${companion.index} element=${companion.element} />
         <//>

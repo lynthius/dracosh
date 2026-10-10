@@ -2,7 +2,7 @@ import { Fragment, useState } from "react";
 import { Box, Text, useInput } from "ink";
 import { dragonName } from "../progress.js";
 import { formatRange } from "../vacation.js";
-import { html, KeyHints, PANEL_WIDTH, theme } from "./kit.js";
+import { html, KeyHints, theme, usePanelWidth } from "./kit.js";
 
 const DAY_LETTERS = ["M", "T", "W", "T", "F", "S", "S"];
 // One shape for every day; only the color tells them apart, GitHub-contribution style.
@@ -63,6 +63,7 @@ function Legend({ goal }) {
 }
 
 export function Stats({ stats, getMonth, onClose }) {
+  const panel = usePanelWidth();
   const [offset, setOffset] = useState(0);
   useInput((input, key) => {
     if (key.escape || key.return || input === "q") return onClose();
@@ -79,7 +80,7 @@ export function Stats({ stats, getMonth, onClose }) {
 
   return html`
     <${Fragment}>
-      <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.accent} paddingX=${2} width=${PANEL_WIDTH}>
+      <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.accent} paddingX=${2} width=${panel}>
         <${Text} bold color=${theme.accent}>Stats<//>
 
         <${Box} marginTop=${1} flexDirection="column">

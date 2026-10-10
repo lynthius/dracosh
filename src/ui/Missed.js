@@ -1,6 +1,6 @@
 import { Fragment, useState } from "react";
 import { Box, Text, useInput } from "ink";
-import { html, KeyHints, PANEL_WIDTH, theme } from "./kit.js";
+import { html, KeyHints, theme, usePanelWidth } from "./kit.js";
 
 const MAX_ROWS = 10;
 
@@ -8,6 +8,7 @@ const dayLabel = (offset, date) => (offset === 0 ? "today" : offset === -1 ? `ye
 
 // Words you got wrong on a day, with what you typed and whether you got them right afterwards.
 export function Missed({ getMissed, onClose }) {
+  const panel = usePanelWidth();
   const [offset, setOffset] = useState(0);
   useInput((input, key) => {
     if (key.escape || key.return || input === "q") return onClose();
@@ -20,7 +21,7 @@ export function Missed({ getMissed, onClose }) {
 
   return html`
     <${Fragment}>
-      <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.accent} paddingX=${2} width=${PANEL_WIDTH}>
+      <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.accent} paddingX=${2} width=${panel}>
         <${Box}>
           <${Text} bold color=${theme.accent}>Missed<//>
           <${Text} dimColor>  ${dayLabel(offset, date)} · ${items.length} card${items.length === 1 ? "" : "s"}<//>

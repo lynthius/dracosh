@@ -1,7 +1,7 @@
 import React, { Fragment, useEffect, useState } from "react";
 import { Box, Text, useInput } from "ink";
 import { RING } from "./icons.js";
-import { html, KeyHints, PANEL_WIDTH, theme } from "./kit.js";
+import { html, KeyHints, theme, usePanelWidth } from "./kit.js";
 
 const FRAME_MS = 110;
 const WIDTH = 16; // pixels; each is drawn two characters wide
@@ -82,6 +82,7 @@ const sparkleRow = (frame, seed) =>
 // The ceremony for "The One", the badge for collecting every other badge: a ring rises from the lava.
 // Any key skips to the end; after the reveal, any key closes it.
 export function TheOne({ onClose, play = () => {} }) {
+  const panel = usePanelWidth();
   const [frame, setFrame] = useState(0);
   useEffect(() => {
     const id = setInterval(() => setFrame((f) => f + 1), FRAME_MS);
@@ -98,7 +99,7 @@ export function TheOne({ onClose, play = () => {} }) {
 
   return html`
     <${Fragment}>
-      <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.warn} paddingX=${2} paddingY=${1} width=${PANEL_WIDTH} alignItems="center">
+      <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.warn} paddingX=${2} paddingY=${1} width=${panel} alignItems="center">
         <${Text} color=${theme.warn}>${revealed ? sparkleRow(frame, 1) : " "}<//>
         <${Box} flexDirection="column" alignItems="center">
           <${BigScene} rows=${scene(frame)} />

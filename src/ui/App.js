@@ -4,7 +4,7 @@ import { commandsFor } from "../commands.js";
 import { diffChars } from "../diff.js";
 import { AnswerInput } from "./AnswerInput.js";
 import { Header } from "./Header.js";
-import { Bar, html, KeyHints, Marked, PANEL_WIDTH, theme, Typewriter } from "./kit.js";
+import { Bar, html, KeyHints, Marked, theme, Typewriter, usePanelWidth } from "./kit.js";
 import { hintTarget, makeHint } from "../hint.js";
 import { formatClock, inQuietHours, quietEnd } from "../quiet.js";
 import { startOfTomorrow } from "../scheduler.js";
@@ -91,8 +91,9 @@ function Cheers({ cheers, play }) {
 
 // The card's top edge with the direction ("EN → PL") set into its right corner, like a title on the border
 function CardTop({ label, width, color }) {
-  const tag = ` ${label} `;
   const tail = 2;
+  const room = Math.max(4, width - 2 - tail - 4); // a label too long for a narrow window is cut short
+  const tag = ` ${label.length > room ? `${label.slice(0, room - 1)}…` : label} `;
   const dashes = Math.max(0, width - 2 - tag.length - tail);
   return html`
     <${Text}>
@@ -393,7 +394,7 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
     if (phase === "empty" && added) ask();
   }
 
-  const width = Math.min((stdout?.columns || PANEL_WIDTH + 2) - 2, PANEL_WIDTH);
+  const width = usePanelWidth();
   const border = !outcome ? theme.accent : outcome.result === "wrong" ? theme.bad : theme.good;
   const pausedUntil = pauseEnd(now);
   const tick = Math.floor(now / TICK_MS);
@@ -474,7 +475,7 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
                   <//>
                 `}
                 ${(phase === "waiting" || phase === "empty") && commandMode && html`<${AnswerInput} commandOnly initial="/" commands=${commandsFor({ phase: "waiting", canOverrule: session.canOverrule() })} onCommand=${runCommand} onCancel=${() => setCommandMode(false)} onEdit=${clearProblem} />`}
-                ${phase !== "loading" && !commandMode && html`<${KeyHints} text=${phase === "asking" ? "enter submit (empty: show the answer) · / commands · esc quit" : phase === "empty" ? "/add · / commands · q quit" : `${session.canOverrule() ? "/correct if you were right · " : ""}enter ask now · / commands · q quit`} />`}
+                ${phase !== "loading" && !commandMode && html`<${KeyHints} text=${phase === "asking" ? "enter submit (empty: reveal) · / commands · esc quit" : phase === "empty" ? "/add · / commands · q quit" : `${session.canOverrule() ? "/correct if you were right · " : ""}enter ask now · / commands · q quit`} />`}
               <//>
               <//>
             `}
