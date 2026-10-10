@@ -306,3 +306,11 @@ test("the die's roll is recorded with its face and day", () => {
   assert.deepEqual(state.progress.elementRoll, { face: 6, on: "2026-10-02" });
   assert.equal(state.progress.element, "cosmos");
 });
+
+test("badges count cards, not directions: a card is mastered once both ways reach the last box", () => {
+  const state = freshState(at("2026-10-05"));
+  const top = { box: 5, due: 0, seen: 5, correct: 5, wrong: 0, streak: 5 };
+  state.items = { "c1:en-pl": top, "c1:pl-en": { ...top, box: 3 }, "c2:en-pl": top, "c3:en-pl": top, "c3:pl-en": top };
+  const stats = snapshot(state, { goal: 20, now: at("2026-10-05") });
+  assert.equal(stats.mastered, 2, "c2 (asked one way) and c3 (both ways); c1 is halfway");
+});

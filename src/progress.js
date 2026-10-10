@@ -163,9 +163,9 @@ export const BADGES = [
   { id: "dragonheart", name: "Dragonheart", desc: "180-day streak", test: (s) => s.bestStreak >= 180 },
 
   { id: "keeper", name: "Word keeper", desc: "10 cards mastered", test: (s) => s.mastered >= 10 },
-  { id: "collector", name: "Collector", desc: "50 cards mastered", test: (s) => s.mastered >= 50 },
-  { id: "dictionary", name: "Walking dictionary", desc: "100 cards mastered", test: (s) => s.mastered >= 100 },
-  { id: "lexicon", name: "Living lexicon", desc: "500 cards mastered", test: (s) => s.mastered >= 500 },
+  { id: "collector", name: "Collector", desc: "25 cards mastered", test: (s) => s.mastered >= 25 },
+  { id: "dictionary", name: "Walking dictionary", desc: "50 cards mastered", test: (s) => s.mastered >= 50 },
+  { id: "lexicon", name: "Living lexicon", desc: "150 cards mastered", test: (s) => s.mastered >= 150 },
   { id: "explorer", name: "Explorer", desc: "250 cards practiced", test: (s) => s.practiced >= 250 },
 
   { id: "flawless", name: "Flawless", desc: "10+ answers in a day, no miss", test: (s) => s.today.asked >= 10 && s.today.correct === s.today.asked },
@@ -202,6 +202,16 @@ export const BADGES = [
   }
 ];
 
+// progress is kept per card and direction ("id:en-pl"); badges count cards
+const cardOf = (key) => key.slice(0, key.lastIndexOf(":"));
+
+// a card is mastered once every direction it's been asked in has reached the last box
+function masteredCards(items) {
+  const byCard = new Map();
+  for (const [key, entry] of items) byCard.set(cardOf(key), (byCard.get(cardOf(key)) ?? true) && entry.box === MAX_BOX);
+  return [...byCard.values()].filter(Boolean).length;
+}
+
 function collectStats(state, now, goal) {
   const progress = state.progress;
   const todayKey = dayKey(now);
@@ -227,8 +237,8 @@ function collectStats(state, now, goal) {
     bestStreak: progress.streak.best,
     bestCombo: progress.bestCombo ?? 0,
     freezesUsed: progress.streak.freezesUsed ?? 0,
-    mastered: items.filter(([, e]) => e.box === MAX_BOX).length,
-    practiced: items.length,
+    mastered: masteredCards(items),
+    practiced: new Set(items.map(([key]) => cardOf(key))).size,
     goalDaysThisMonth: goalDaysInMonth(progress, todayKey),
     totalGoalDays: Object.values(progress.days).filter((d) => d.goalMet).length,
     recoveredToday,
