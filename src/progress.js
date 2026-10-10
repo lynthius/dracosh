@@ -322,8 +322,8 @@ export function applyOverrule(state, { goal, rules = NO_RULES, combo = 0, now = 
   return { cheers: award(state, progress, day, today, { correct: true, goal, rules, now, daysAway, random }) };
 }
 
-// Nothing left to practise today in the whole library → cheers. After at least one answer today that
-// counts as the goal (see award); with nothing answered at all the day only becomes a rest day, so just
+// Nothing left to practise today in the whole library → cheers. After at least one right answer today
+// that counts as the goal (see award); with nothing answered at all the day only becomes a rest day, so just
 // opening Dracosh never builds a streak. Nothing happens once the goal is met.
 export function applyCaughtUp(state, { goal, rules = NO_RULES, now = Date.now(), random = Math.random }) {
   const progress = ensureProgress(state, now);
@@ -334,6 +334,8 @@ export function applyCaughtUp(state, { goal, rules = NO_RULES, now = Date.now(),
     day.nothingDue = true;
     return { cheers: [] };
   }
+  if (!day.correct) return { cheers: [] }; // a day of misses only isn't a day done
+
   return { cheers: award(state, progress, day, today, { correct: false, goal, rules, now, caughtUp: true, random }) };
 }
 

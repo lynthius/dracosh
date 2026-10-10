@@ -240,3 +240,22 @@ test("a deck that's done doesn't settle the day while another deck still has car
   assert.deepEqual(empty.cheers, []);
   assert.equal(session.stats().restToday, false);
 });
+
+test("days off can't reach into the past, so a broken streak stays broken", async () => {
+  const { session, state } = setup();
+  const today = new Date(NOON).toLocaleDateString("sv");
+  assert.match((await session.pause("1.1 31.12")).message, /Days off .*: your streak is safe\./);
+  assert.ok(state.progress.vacations.every((v) => v.from >= today), "it starts today at the earliest");
+  await assert.rejects(session.pause("2026-01-01 2026-01-05"), /already over/);
+  assert.match((await session.pause("24.12")).message, /^Day off on /);
+});
+
+test("a day of misses only isn't a day done, even when the miss comes back after midnight", async () => {
+  const clock = new Date("2026-03-04T23:55:00").getTime();
+  const one = [{ noteId: "c1", word: "kot", translations: ["cat"], example: "" }];
+  const state = { items: {}, newToday: { date: "", count: 0 } };
+  const session = createSession({ loadWords: async () => ({ words: one, deck: { name: "Polish", directions: "forward" } }), state, getSettings: () => DEFAULTS, save: async () => {}, now: () => clock });
+  const miss = await session.answer(await session.next(), "zzz");
+  assert.ok(!miss.cheers.some((c) => c.kind === "goal"));
+  assert.equal(session.stats().today.goalMet, false);
+});

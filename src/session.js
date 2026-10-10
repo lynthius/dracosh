@@ -154,9 +154,13 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
     if (!parsed) throw new Error(PAUSE_HELP);
     if (parsed.action === "snooze") return { snooze: parsed.ms };
     if (parsed.action === "days") {
-      addVacation(state, parsed.from, parsed.to, now());
+      // days off start today at the earliest: missed days can't be turned into days off afterwards
+      const from = parsed.from < today ? today : parsed.from;
+      if (parsed.to < today) throw new Error("Those days are already over. Days off can only start today or later.");
+      addVacation(state, from, parsed.to, now());
       await save(state);
-      return { message: `Days off ${formatRange(parsed.from, parsed.to)}: your streak is safe until then` };
+      const what = from === parsed.to ? `Day off on ${formatRange(from, from)}` : `Days off ${formatRange(from, parsed.to)}`;
+      return { message: `${what}: your streak is safe.` };
     }
     if (parsed.action === "off") {
       cancelVacations(state, now());
