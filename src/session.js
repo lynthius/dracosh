@@ -23,10 +23,12 @@ export function createSession({ loadWords, state, getSettings, save = saveState,
   const rules = () => ({ skipWeekends: getSettings().skipWeekends });
   const totals = { asked: 0, correct: 0, combo: 0 };
   let lastNoteId = null;
+  let inTour = false; // the tour teaches one thing per card; tips on top of that are too much
   let lastWrong = null; // the latest wrong answer, until the next question: /correct can still overrule it
 
   async function next() {
     const { words, deck } = await loadWords();
+    inTour = Boolean(deck?.tour);
     const item = pickNext({ words, state, now: now(), lastNoteId, directions: directionsOf(deck), tour: deck?.tour });
     // nothing to ask is a normal state (a finished tour, a new deck), not an error: the UI shows a way on
     if (!item) throw Object.assign(new Error(deck?.tour ? "You've finished the tour." : `The deck "${deck?.name}" has no cards yet.`), { empty: true, tour: Boolean(deck?.tour) });
@@ -172,5 +174,5 @@ export function createSession({ loadWords, state, getSettings, save = saveState,
     return fresh;
   }
 
-  return { totals, next, answer, overrule, canOverrule, stats, month, missed, nextTip, vacation, isFirstRun, markHatched, openBadges, forget, reset };
+  return { totals, next, answer, overrule, canOverrule, stats, month, missed, nextTip, vacation, isFirstRun, markHatched, openBadges, forget, reset, inTour: () => inTour };
 }

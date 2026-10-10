@@ -171,7 +171,7 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
   const waitForNext = useCallback(() => {
     setNextAt(Date.now() + settingsRef.current.everyMs);
     setPhase("waiting");
-    setTip(shouldShowTip(settingsRef.current.tips) ? session.nextTip() : null);
+    setTip(!session.inTour() && shouldShowTip(settingsRef.current.tips) ? session.nextTip() : null);
   }, [session]);
 
   const ask = useCallback(async () => {
