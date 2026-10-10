@@ -25,7 +25,7 @@ function parseDate(text, today) {
   return key && key < today ? valid(`${thisYear + 1}-${pad(month)}-${pad(day)}`) : key;
 }
 
-// "/vacation" arguments → { action: "list" } | { action: "off" } | { action: "add", from, to } | null (not understood)
+// days-off arguments (see /pause in pause.js) → { action: "list" } | { action: "off" } | { action: "add", from, to } | null (not understood)
 //   ""            list what is planned
 //   "off"         cancel current and future vacations
 //   "7" / "7d"    7 days starting today
@@ -46,6 +46,11 @@ export function parseVacation(args, today) {
   const dates = parts.map((part) => parseDate(part, today));
   if (dates.some((date) => !date)) return null;
   const [a, b = a] = dates;
-  const [from, to] = a <= b ? [a, b] : [b, a];
+  // A day and month without a year means the next one to come, so a range that already started
+  // ("28.12 3.01" on 30 December, "24.12 2.01" on New Year's Day) gets its start back a year.
+  // Of the readings that make sense, the shortest wins; a reversed range is read the other way round.
+  const back = (key, part) => (/^\d{1,2}\.\d{1,2}$/.test(part) ? valid(`${Number(key.slice(0, 4)) - 1}${key.slice(4)}`) : null);
+  const readings = [[a, b], [back(a, parts[0]), b], [b, a]].filter(([x, y]) => x && y && x <= y);
+  const [from, to] = readings.sort(([x1, y1], [x2, y2]) => daysBetween(x1, y1) - daysBetween(x2, y2))[0];
   return daysBetween(from, to) < MAX_DAYS ? { action: "add", from, to } : null;
 }

@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useState } from "react";
 import { Box, Text, useInput } from "ink";
-import { html, PANEL_WIDTH, theme } from "./kit.js";
+import { html, KeyHints, theme, usePanelWidth } from "./kit.js";
 import { Mascot } from "./Mascot.js";
 
 const FRAME_MS = 120;
@@ -21,7 +21,8 @@ function sparkleRow(frame, seed, width) {
 
 // The full-screen moment when the companion evolves: old form → white flashes → new form.
 // Any key fast-forwards to the reveal; Enter/Esc then closes it.
-export function Evolution({ from, to, name, onClose }) {
+export function Evolution({ from, to, name, element = null, onClose }) {
+  const panel = usePanelWidth();
   const [frame, setFrame] = useState(0);
   useEffect(() => {
     const id = setInterval(() => setFrame((f) => f + 1), FRAME_MS);
@@ -39,11 +40,11 @@ export function Evolution({ from, to, name, onClose }) {
 
   return html`
     <${Fragment}>
-      <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.warn} paddingX=${2} paddingY=${1} width=${PANEL_WIDTH} alignItems="center">
+      <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.warn} paddingX=${2} paddingY=${1} width=${panel} alignItems="center">
         <${Text} bold color=${theme.warn}>✦ Evolution ✦<//>
         <${Box} flexDirection="column" marginTop=${1} alignItems="center">
           <${Text} color=${theme.warn}>${sparks ? sparkleRow(frame, 1, 30) : " "}<//>
-          <${Mascot} stage=${stage} face=${revealed ? "happy" : "idle"} flash=${flashing && frame % 2 === 0} scale=${2} />
+          <${Mascot} stage=${stage} face=${revealed ? "happy" : "idle"} flash=${flashing && frame % 2 === 0} scale=${2} element=${element} />
           <${Text} color=${theme.warn}>${sparks ? sparkleRow(frame, 2, 30) : " "}<//>
         <//>
         <${Box} marginTop=${1} flexDirection="column" alignItems="center">
@@ -52,7 +53,7 @@ export function Evolution({ from, to, name, onClose }) {
             : html`<${Text} dimColor>Something is happening…<//>`}
         <//>
       <//>
-      <${Box} paddingX=${1}><${Text} dimColor>${revealed ? "enter continue" : "any key to hurry it up"}<//><//>
+      <${Box} paddingX=${1}><${KeyHints} text=${revealed ? "enter continue" : "any key to hurry it up"} /><//>
     <//>
   `;
 }

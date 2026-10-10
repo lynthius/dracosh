@@ -2,16 +2,25 @@
 
 A gamified language or definitions trainer for your terminal. It sits in a spare pane, challenges you every few minutes, and a small pixel dragon grows up as you keep your streak going.
 
+## Why Dracosh
+
+Learning a language usually means another hour in the evening, after a full day at the computer. I spent plenty of those evenings myself, and I wanted something that fits into the working day instead.
+
+The day is full of short waits: a build that takes a minute, tests running, an AI agent finishing a task for you. Dracosh turns those moments into practice. Instead of reaching for your phone, you answer a word or two, the dragon cheers, and you're back to work. A few minutes here and there add up, and your evenings stay yours.
+
+It's made for people who live in a terminal or spend most of the day at a computer, and it's meant to be fun, not one more chore.
+
 ## Features
 
-- Words come from your Anki deck (read-only, through AnkiConnect), so your Anki cards and schedule stay untouched
-- Asks both ways: EN → PL and PL → EN
-- Forgiving answer checks: case and Polish diacritics don't matter, one typo is fine on longer words, and after a miss you see letter by letter where you went wrong
-- Leitner boxes, so the words you know come back less and less often
-- Daily goal, streaks (weekends and vacations don't break them) and 32 badges
+- Your cards live in Dracosh's own library, organised in decks; no other app needs to be running
+- Add cards, start decks and switch between them right in the app (`/add`, `/decks`)
+- Each deck is asked both ways (kot → cat and cat → kot) or one way only, as you choose when you make it
+- Forgiving answer checks: case and punctuation don't matter, a missing Polish letter (ż, ó, ł…) still counts and shows the right spelling, one typo is fine on longer words, and after a miss you see letter by letter where you went wrong
+- Leitner boxes, so the cards you know come back less and less often; a card is only asked when it's due
+- Daily goal, streaks (weekends and days off don't break them) and 36 badges (one of them a secret)
 - A pixel dragon that hatches from an egg, evolves over a year of streaks, blinks, and falls asleep if you ignore it
 - 8-bit sound effects, generated from code
-- A short grammar tip while you wait for the next word
+- A short tip about Dracosh while you wait for the next card
 
 ## Install
 
@@ -21,42 +30,44 @@ You need Node 22 or newer.
 npm install -g dracosh
 ```
 
-Words are read from [Anki](https://apps.ankiweb.net/) with the [AnkiConnect](https://git.sr.ht/~foosoft/anki-connect) add-on, so Anki has to be running. If it's closed, Dracosh uses the last word list it saw.
+A fresh install starts with a short "Getting started" deck: a tour where every card tells you what to type and shows you one more thing Dracosh can do. When you're through, `/add` starts your own deck and the tour makes room for it. Importing decks (from Anki, CSV and more) is on the way, see [What's next](#whats-next).
 
-Just want to look around? `dracosh --preview` shows every screen and animation on made-up data, no Anki needed.
+Want a look first? `dracosh --preview` shows every screen and animation on made-up data.
 
 ## Usage
 
 ```bash
-dracosh --deck "My Deck"   # quiz from this Anki deck (default: "English")
-dracosh --every 5m         # a word every 5 minutes instead of 10, this run only
+dracosh --deck "Polish"    # quiz this deck, this run only (otherwise the one picked in /decks)
+dracosh --every 5m         # a card every 5 minutes instead of 10, this run only
 dracosh --no-sound
 dracosh --stats            # print your progress and exit
+dracosh --data             # show where your cards, progress and backups are kept
 dracosh --preview
+dracosh restore            # list your backups; dracosh restore 2 brings one back
 ```
 
-Type the answer and press Enter. Press `/` for commands:
+Type the answer and press Enter; don't know it? Press Enter with nothing typed to see the answer. Press `/` for commands:
 
 | Command | What it does |
 | --- | --- |
+| `/add` | add cards to one of your decks, or start a new deck |
+| `/decks` | switch to another deck (Dracosh remembers it), or start a new one |
 | `/hint` | reveal one more letter |
 | `/correct` | your answer was right after all; it's accepted from now on |
-| `/skip` | skip this word |
-| `/settings` | interval, daily goal, sound, quiet hours, weekends, tips, direction |
+| `/settings` | interval, daily goal, sound, quiet hours, weekends, tips, and a reset |
 | `/stats` | streak and a calendar of your month |
 | `/badges` | all badges and how to get them |
-| `/companion` | every form your dragon can take |
-| `/missed` | words you got wrong today |
-| `/tip` | a random grammar tip |
-| `/snooze 30m` | pause questions for a while |
-| `/vacation 7` | days off that keep your streak safe |
+| `/companion` | your dragon, its element and the forms ahead |
+| `/missed` | cards you got wrong today |
+| `/pause 30m` | a break: `30m`, `2h`; or days off that keep your streak: `3d`, `24.12 2.01`; `off` ends it |
+| `/help` | the keys, how cards come back, the streak |
 | `/quit` | quit (you'll get a short session summary) |
 
-They're slash commands because "skip" and "quit" are perfectly good English answers.
+They're slash commands because "pause" and "quit" are perfectly good English answers.
 
 ## Your data
 
-Everything stays on your machine, in `~/.dracosh`. Progress is saved after every answer, so you can quit any time. To use Dracosh on two computers, put that folder somewhere synced and point `DRACOSH_HOME` at it.
+Everything stays on your machine, in `~/.dracosh`; `dracosh --data` shows what's there. Progress is saved after every answer, so you can quit any time. One quiz runs at a time: a second window on the same data is refused, so the two can't overwrite each other's progress. The first start of each day also saves a backup of your cards, progress and settings to `~/.dracosh/backups` (the last 7 are kept); `dracosh restore` brings one back, and backs up what you have first, so a restore can be undone too. To start over, `/settings` → Reset clears your progress only (badges, streak, the dragon) or everything; a backup is made first. To use Dracosh on two computers, put that folder somewhere synced and point `DRACOSH_HOME` at it.
 
 Sounds currently play on macOS only.
 
@@ -74,7 +85,14 @@ The quiz logic in `src/session.js` and `src/progress.js` does no I/O, which keep
 
 ## What's next
 
-Dracosh is moving away from needing a running Anki. Next up is its own card library, with import from Anki (plain-text exports and `.apkg` decks from AnkiWeb), CSV and JSON, and export back to Anki, so your cards can move between the two freely. After that: adding cards with AI translations, any language pair, and Linux support. See [PLAN.md](PLAN.md) for the details.
+Dracosh now keeps its own card library, with a short tour and `/add` to start your own deck. Coming next, roughly in this order:
+
+- Card types: definitions and question and answer decks, not just words. For each deck you choose whether you type the answer or just check yourself.
+- More languages: decks in any language, with answer checking that forgives a missing accent in European languages and Cyrillic (other scripts are checked exactly), and the app itself in English, Polish, German, French and Ukrainian.
+- Import and export: Anki (plain-text exports and `.apkg` decks from AnkiWeb), CSV, JSON and pasted lists, and export back to Anki.
+- Decks and cards in the app: browse, edit and delete with undo, plus a welcome flow for new users.
+- Optional AI help for writing cards, with your own API key or a local model.
+- Linux and Windows.
 
 ## License
 

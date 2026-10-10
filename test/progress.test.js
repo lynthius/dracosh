@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { addDays, daysBetween, dayKey, weekStart } from "../src/dates.js";
-import { applyAnswer, BADGES, calendarMonth, currentStreak, ensureProgress, missedOn, recordMiss, snapshot, stageFor, undoMiss } from "../src/progress.js";
+import { addVacation, applyAnswer, BADGES, freezesNow, calendarMonth, currentStreak, ELEMENTS, ensureProgress, missedOn, recordMiss, snapshot, stageFor, undoMiss } from "../src/progress.js";
 
 const at = (day, hour = 10) => new Date(`${day}T${String(hour).padStart(2, "0")}:00:00`).getTime();
 const freshState = (now) => {
@@ -34,11 +34,12 @@ test("a freeze bridges one missed day, then the streak breaks without one", () =
   const state = freshState(at("2026-10-05"));
   answer(state, at("2026-10-05"));
   answer(state, at("2026-10-06"));
-  assert.equal(state.progress.streak.freezes, 1);
+  assert.equal(state.progress.streak.freezes, 2, "two to start with");
   assert.equal(currentStreak(state.progress, "2026-10-08"), 2); // missed the 7th, freeze covers it
   answer(state, at("2026-10-08"));
   assert.equal(state.progress.streak.count, 3);
-  assert.equal(state.progress.streak.freezes, 0);
+  assert.equal(state.progress.streak.freezes, 1);
+  state.progress.streak.freezes = 0; // say the other one went too
 
   assert.equal(currentStreak(state.progress, "2026-10-10"), 0); // missed the 9th, no freeze left
   answer(state, at("2026-10-10"));
@@ -46,16 +47,24 @@ test("a freeze bridges one missed day, then the streak breaks without one", () =
   assert.equal(state.progress.streak.best, 3);
 });
 
-test("one freeze is granted per new week, capped at two", () => {
+test("one freeze comes back for every new week, capped at two", () => {
   const state = freshState(at("2026-10-05"));
   state.progress.streak.freezes = 0;
-  ensureProgress(state, at("2026-10-06"));
-  assert.equal(state.progress.streak.freezes, 0); // same week
-  ensureProgress(state, at("2026-10-12"));
-  assert.equal(state.progress.streak.freezes, 1);
-  ensureProgress(state, at("2026-10-19"));
-  ensureProgress(state, at("2026-10-26"));
-  assert.equal(state.progress.streak.freezes, 2);
+  assert.equal(freezesNow(state.progress, "2026-10-06"), 0); // same week
+  assert.equal(freezesNow(state.progress, "2026-10-12"), 1);
+  assert.equal(freezesNow(state.progress, "2026-10-19"), 2, "two weeks later: two back, not one");
+  assert.equal(freezesNow(state.progress, "2026-11-30"), 2, "never more than two");
+});
+
+test("freezes spent in one week don't swallow the next week's refill", () => {
+  const rules = { skipWeekends: true };
+  const state = freshState(at("2026-10-05"));
+  for (const day of ["2026-10-05", "2026-10-06", "2026-10-07"]) applyAnswer(state, { result: "exact", goal: 1, rules, now: at(day) });
+  // Thu and Fri missed: both freezes go; the weekend rests
+  assert.equal(freezesNow(state.progress, "2026-10-10", rules), 0, "the screens show them as spent right away");
+  applyAnswer(state, { result: "exact", goal: 1, rules, now: at("2026-10-12") });
+  assert.equal(state.progress.streak.count, 4);
+  assert.equal(state.progress.streak.freezes, 1, "Monday's refill comes on top");
 });
 
 test("badges unlock once and are announced", () => {
@@ -227,4 +236,115 @@ test("old misses are pruned", () => {
   recordMiss(state, { key: "2:en-pl", label: "x", prompt: "x", expected: ["y"], answer: "z", at: at("2026-10-30") }, at("2026-10-30"));
   assert.equal(state.progress.days["2026-10-01"].missed, undefined);
   assert.equal(state.progress.days["2026-10-30"].missed.length, 1);
+});
+
+test("the ring unlocks with the last other badge, in the same answer", () => {
+  const state = freshState(at("2026-10-05"));
+  for (const badge of BADGES) if (badge.id !== "one-ring" && badge.id !== "hello") state.progress.badges[badge.id] = "2026-10-01";
+  assert.equal(state.progress.badges["one-ring"], undefined);
+
+  const { cheers } = answer(state, at("2026-10-05")); // the first correct answer unlocks "Hello!"
+  assert.ok(state.progress.badges.hello);
+  assert.equal(state.progress.badges["one-ring"], "2026-10-05");
+  assert.ok(cheers.some((c) => c.text.includes("The One")));
+});
+
+test("the ring stays locked while any other badge is missing", () => {
+  const state = freshState(at("2026-10-05"));
+  for (const badge of BADGES) if (!["one-ring", "dragons-hoard"].includes(badge.id)) state.progress.badges[badge.id] = "2026-10-01";
+  answer(state, at("2026-10-05"));
+  assert.equal(state.progress.badges["one-ring"], undefined);
+});
+
+test("badges unlocked before seen-tracking existed count as seen, so they don't all flash at once", () => {
+  const state = { items: {}, newToday: { date: "", count: 0 }, progress: { days: {}, streak: { count: 0, best: 0, lastGoalDay: null, freezes: 1, freezeWeek: "2026-10-05", freezesUsed: 0 }, badges: { hello: "2026-10-01", week: "2026-10-03" } } };
+  ensureProgress(state, at("2026-10-06"));
+  assert.deepEqual(state.progress.seenBadges.sort(), ["hello", "week"]);
+});
+
+test("Dragon's die: a lost 30+ day streak, then a longer one, rolls the dragon's element once", () => {
+  const state = freshState(at("2026-10-01"));
+  const streak = state.progress.streak;
+  Object.assign(streak, { count: 35, best: 35, lastGoalDay: "2026-10-01", freezes: 0 });
+
+  answer(state, at("2026-10-06")); // working days missed and no freeze: the 35-day streak is lost
+  assert.equal(streak.fallen, 35);
+  assert.equal(streak.count, 1);
+  assert.equal(state.progress.badges["dragons-die"], undefined);
+
+  Object.assign(streak, { count: 35, lastGoalDay: "2026-11-09" }); // built back up to the old length
+  answer(state, at("2026-11-10"));
+  assert.equal(streak.count, 36);
+  assert.equal(state.progress.badges["dragons-die"], "2026-11-10");
+  assert.ok(ELEMENTS.includes(state.progress.element));
+
+  const rolled = state.progress.element;
+  delete state.progress.badges["dragons-die"]; // even if it were won again, the element never rerolls
+  applyAnswer(state, { result: "exact", goal: 1, now: at("2026-11-11"), random: () => 0.99 });
+  assert.equal(state.progress.element, rolled);
+});
+
+test("the die's faces map to the six elements in order", () => {
+  const state = freshState(at("2026-10-01"));
+  Object.assign(state.progress.streak, { count: 40, best: 40, lastGoalDay: "2026-10-01", freezes: 0, fallen: 40 });
+  applyAnswer(state, { result: "exact", goal: 1, now: at("2026-10-02"), random: () => 3.5 / 6 }); // 41 > 40
+  assert.equal(state.progress.element, "ice"); // face 4
+  assert.deepEqual(ELEMENTS, ["earth", "wind", "water", "ice", "fire", "cosmos"]);
+});
+
+test("hidden badges stay out of The One and are flagged for the UI", () => {
+  const state = freshState(at("2026-10-05"));
+  for (const badge of BADGES) if (!badge.hidden && !["one-ring", "hello"].includes(badge.id)) state.progress.badges[badge.id] = "2026-10-01";
+  answer(state, at("2026-10-05"));
+  assert.ok(state.progress.badges["one-ring"], "The One... without the hidden die");
+  const die = snapshot(state, { goal: 1, now: at("2026-10-05") }).badges.find((b) => b.id === "dragons-die");
+  assert.equal(die.hidden, true);
+});
+
+test("the dragon is named by its form, with its element in front once it has one", async () => {
+  const { dragonName } = await import("../src/progress.js");
+  assert.equal(dragonName(0), "Hatchling");
+  assert.equal(dragonName(3, "ice"), "Ice Drake");
+  assert.equal(dragonName(5, "cosmos"), "Cosmic Legend");
+});
+
+test("the die's roll is recorded with its face and day", () => {
+  const state = freshState(at("2026-10-01"));
+  Object.assign(state.progress.streak, { count: 40, best: 40, lastGoalDay: "2026-10-01", freezes: 0, fallen: 40 });
+  applyAnswer(state, { result: "exact", goal: 1, now: at("2026-10-02"), random: () => 0.9 });
+  assert.deepEqual(state.progress.elementRoll, { face: 6, on: "2026-10-02" });
+  assert.equal(state.progress.element, "cosmos");
+});
+
+test("badges count cards, not directions: a card is mastered once both ways reach the last box", () => {
+  const state = freshState(at("2026-10-05"));
+  const top = { box: 5, due: 0, seen: 5, correct: 5, wrong: 0, streak: 5 };
+  state.items = { "c1:en-pl": top, "c1:pl-en": { ...top, box: 3 }, "c2:en-pl": top, "c3:en-pl": top, "c3:pl-en": top };
+  const stats = snapshot(state, { goal: 20, now: at("2026-10-05") });
+  assert.equal(stats.mastered, 2, "c2 (asked one way) and c3 (both ways); c1 is halfway");
+});
+
+test("Welcome back counts after 5+ days away, a vacation too", () => {
+  const state = freshState(at("2026-10-05"));
+  answer(state, at("2026-10-05"), { goal: 99 });
+  addVacation(state, "2026-10-06", "2026-10-11", at("2026-10-05"));
+  assert.ok(badgeIds(answer(state, at("2026-10-12"), { goal: 99 }).cheers).some((t) => /Welcome back/.test(t)));
+});
+
+test("4 days away is not yet a comeback", () => {
+  const state = freshState(at("2026-10-05"));
+  answer(state, at("2026-10-05"), { goal: 99 });
+  assert.ok(!badgeIds(answer(state, at("2026-10-09"), { goal: 99 }).cheers).some((t) => /Welcome back/.test(t)));
+});
+
+test("Welcome back needs 5 full days away, and a wrong first answer back doesn't lose it", () => {
+  const welcomed = (cheers) => badgeIds(cheers).some((t) => /Welcome back/.test(t));
+  const state = freshState(at("2026-10-05"));
+  answer(state, at("2026-10-05"), { goal: 99 });
+  assert.ok(!welcomed(answer(state, at("2026-10-10"), { goal: 99 }).cheers), "4 days away (6th to 9th)");
+
+  const back = freshState(at("2026-10-05"));
+  answer(back, at("2026-10-05"), { goal: 99 });
+  answer(back, at("2026-10-11"), { goal: 99, result: "wrong" });
+  assert.ok(welcomed(answer(back, at("2026-10-11", 10), { goal: 99 }).cheers), "5 days away, the first answer back was wrong");
 });

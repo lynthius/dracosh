@@ -3,6 +3,7 @@ import { Box, Text } from "ink";
 import { formatInterval } from "../settings.js";
 import { formatDay } from "../vacation.js";
 import { AnimatedBar, html, theme } from "./kit.js";
+import { Flame } from "./icons.js";
 import { Mascot, MASCOT_WIDTH } from "./Mascot.js";
 
 const FRAME_MS = 90;
@@ -84,23 +85,23 @@ export function Header({ deck, everyMs, wordCount, stats, combo, face, event, ti
   const shown = asleep ? "sleep" : blinking && BLINKABLE.has(face) ? "blink" : face;
   return html`
     <${Box} paddingX=${1}>
-      <${Box} width=${MASCOT_WIDTH + 3}>
+      <${Box} width=${MASCOT_WIDTH + 3} flexShrink=${0}>
         <${Box} flexDirection="column" width=${MASCOT_WIDTH}>
-          <${Mascot} face=${shown} hot=${hot} flicker=${hot && tick % 2 === 0} stage=${companion.index} dx=${move.dx ?? 0} dy=${move.dy ?? 0} />
+          <${Mascot} face=${shown} hot=${hot} flicker=${hot && tick % 2 === 0} stage=${companion.index} element=${companion.element} dx=${move.dx ?? 0} dy=${move.dy ?? 0} />
         <//>
         ${asleep && html`<${Snore} tick=${tick} />`}
       <//>
       <${Box} flexDirection="column" justifyContent="center">
         <${Box}>
-          <${Text} bold color=${theme.accent}>Dracosh<//>
-          <${Text} dimColor>  ${deck}${wordCount ? ` · ${wordCount} words` : ""} · every ${formatInterval(everyMs)}<//>
+          <${Box} flexShrink=${0}><${Text} bold color=${theme.accent}>Dracosh<//><//>
+          <${Text} dimColor wrap="truncate-end">  ${deck}${wordCount ? ` · ${wordCount} card${wordCount === 1 ? "" : "s"}` : ""} · every ${formatInterval(everyMs)}<//>
         <//>
         <${Box}>
           ${streak.days > 0
-            ? html`<${Text} color=${theme.warn} bold>🔥 ${streak.days}-day streak<//>`
+            ? html`<${Box}><${Flame} /><${Text} color=${theme.warn} bold> ${streak.days}-day streak<//><//>`
             : html`<${Text} dimColor>no streak yet<//>`}
           ${streak.atRisk && html`<${Text} color=${theme.warn}> · at risk today<//>`}
-          ${stats.vacation.activeUntil && html`<${Text} color=${theme.accent}> · on vacation until ${formatDay(stats.vacation.activeUntil)}<//>`}
+          ${stats.vacation.activeUntil && html`<${Text} color=${theme.accent}> · days off until ${formatDay(stats.vacation.activeUntil)}<//>`}
           ${streak.freezes > 0 && html`<${Text} dimColor> · ${streak.freezes} freeze${streak.freezes > 1 ? "s" : ""}<//>`}
         <//>
         <${Box}>

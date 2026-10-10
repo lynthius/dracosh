@@ -8,14 +8,18 @@ const words = [
   { noteId: 2, word: "software", translations: ["oprogramowanie"], example: "" }
 ];
 
-function setup(settings = {}) {
+// a fixed midday clock, so time-of-day badges (night owl, early bird) never sneak into the results
+const NOON = new Date("2026-03-04T12:00:00").getTime();
+
+function setup(settings = {}, now = () => NOON) {
   const saves = [];
   const state = { items: {}, newToday: { date: "", count: 0 } };
   const session = createSession({
-    loadWords: async () => ({ words, cached: false }),
+    loadWords: async () => ({ words }),
     state,
     getSettings: () => ({ ...DEFAULTS, ...settings }),
-    save: async (s) => saves.push(structuredClone(s))
+    save: async (s) => saves.push(structuredClone(s)),
+    now
   });
   return { session, state, saves };
 }
@@ -30,11 +34,6 @@ test("asks in both directions with matching expected answers", async () => {
     else assert.deepEqual(q.expected, [q.word.word]);
   }
   assert.deepEqual([...seen].sort(), ["en-pl", "pl-en"]);
-});
-
-test("respects the direction setting", async () => {
-  const { session } = setup({ directions: "pl-en" });
-  for (let i = 0; i < 10; i++) assert.equal((await session.next()).direction, "pl-en");
 });
 
 test("never asks the same note twice in a row", async () => {
@@ -98,7 +97,7 @@ test("/correct overrules a wrong answer and remembers it for that card", async (
 
   // the same answer on the same card is now accepted straight away
   const again = { ...q };
-  const second = await session.answer(again, "ZUPEŁNIE inna odpowiedz");
+  const second = await session.answer(again, "ZUPELNIE inna odpowiedz!");
   assert.equal(second.result, "exact");
 });
 
@@ -145,17 +144,19 @@ test("a hinted correct answer does not move the card up", async () => {
   assert.equal(state.items[key].box, 2);
 });
 
-test("/vacation plans, lists and cancels rest days", async () => {
+test("/pause takes a short break or days off, lists them and turns them off", async () => {
   const { session, state } = setup();
-  assert.match(await session.vacation(""), /No vacation planned/);
-  assert.match(await session.vacation("7"), /^Vacation .* your streak is safe/);
+  assert.deepEqual(await session.pause("30m"), { snooze: 1_800_000 });
+  assert.match((await session.pause("")).message, /No days off planned/);
+  assert.match((await session.pause("7d")).message, /^Days off .* your streak is safe/);
   assert.equal(state.progress.vacations.length, 1);
-  assert.match(await session.vacation(""), /^Vacations: /);
-  assert.equal(session.stats().vacation.activeUntil !== null, true);
+  assert.match((await session.pause("")).message, /^Days off: /);
   assert.equal(session.stats().restToday, true);
-  assert.equal(await session.vacation("off"), "Vacation cancelled");
+  const off = await session.pause("off");
+  assert.equal(off.snooze, "off");
   assert.equal(session.stats().vacation.activeUntil, null);
-  await assert.rejects(() => session.vacation("whenever"), /Try \/vacation/);
+  await assert.rejects(() => session.pause("30"), /Try \/pause 30m/, "a bare number could be minutes or days");
+  await assert.rejects(() => session.pause("whenever"), /Try \/pause/);
 });
 
 test("the hatching intro plays only on a brand-new state, and only once", async () => {
@@ -170,4 +171,92 @@ test("the hatching intro plays only on a brand-new state, and only once", async 
   await veteran.session.answer(q, q.expected[0]);
   assert.equal(veteran.session.isFirstRun(), false, "someone who already answered never sees the egg");
   assert.equal(state.hatched, true);
+});
+
+test("/badges lights up badges won since the last visit, in the order they were won, once", async () => {
+  const { session, state } = setup();
+  assert.deepEqual(await session.openBadges(), [], "nothing won yet");
+  const q = await session.next();
+  await session.answer(q, q.expected[0]); // first correct answer: "Hello!"
+  assert.deepEqual(await session.openBadges(), ["hello"]);
+  assert.deepEqual(await session.openBadges(), [], "seen now, so it doesn't light up again");
+  assert.ok(state.progress.seenBadges.includes("hello"));
+});
+
+test("a progress reset starts the game over and keeps what you know; everything clears it all", async () => {
+  const { session, state } = setup();
+  const q = await session.next();
+  await session.answer(q, q.expected[0]);
+  assert.ok(state.progress && Object.keys(state.items).length === 1);
+
+  await session.reset("progress");
+  assert.equal(state.progress, undefined);
+  assert.equal(Object.keys(state.items).length, 1, "the card keeps its box");
+  assert.equal(session.stats().badges.filter((b) => b.unlockedOn).length, 0);
+
+  state.hatched = true;
+  await session.reset("everything");
+  assert.deepEqual(state.items, {});
+  assert.equal(session.isFirstRun(), true, "the egg hatches again");
+});
+
+test("when everything for today is done, the day counts as the goal; a missed card still comes back today", async () => {
+  let clock = NOON;
+  const one = [{ noteId: "c1", word: "kot", translations: ["cat"], example: "" }];
+  const state = { items: {}, newToday: { date: "", count: 0 } };
+  const session = createSession({ loadWords: async () => ({ words: one, deck: { name: "Polish", languages: null, directions: "forward" } }), state, getSettings: () => DEFAULTS, save: async () => {}, now: () => clock });
+
+  const miss = await session.answer(await session.next(), "dog"); // back in 10 minutes
+  assert.ok(miss.nextDue > clock && miss.nextDue < clock + 3_600_000, "the missed card is due later today");
+  assert.ok(!miss.cheers.some((c) => c.kind === "goal"), "not done yet");
+
+  clock += 600_000;
+  const last = await session.answer(await session.next(), "cat");
+  assert.match(last.cheers.find((c) => c.kind === "goal").text, /All done for today · 1-day streak/, "settled with the last answer");
+  assert.ok(last.nextDue >= clock + 3_600_000);
+  const empty = await session.next().catch((err) => err);
+  assert.ok(empty.empty);
+  assert.deepEqual(empty.cheers, [], "celebrated once");
+});
+
+test("just opening Dracosh with nothing due makes a rest day, never a goal", async () => {
+  const clock = NOON;
+  const one = [{ noteId: "c1", word: "kot", translations: ["cat"], example: "" }];
+  const state = { items: { "c1:en-pl": { box: 3, due: clock + 3 * 86_400_000, seen: 3, correct: 3, wrong: 0, streak: 3 } }, newToday: { date: "", count: 0 } };
+  const session = createSession({ loadWords: async () => ({ words: one, deck: { name: "Polish", directions: "forward" } }), state, getSettings: () => DEFAULTS, save: async () => {}, now: () => clock });
+  const empty = await session.next().catch((err) => err);
+  assert.deepEqual(empty.cheers, []);
+  assert.equal(session.stats().today.goalMet, false);
+  assert.equal(session.stats().restToday, true, "the streak isn't broken either");
+});
+
+test("a deck that's done doesn't settle the day while another deck still has cards due", async () => {
+  const clock = NOON;
+  const done = { words: [{ noteId: "a", word: "kot", translations: ["cat"], example: "" }], deck: { name: "Done", directions: "forward" } };
+  const busy = { words: [{ noteId: "b", word: "pies", translations: ["dog"], example: "" }], deck: { name: "Busy", directions: "forward" } };
+  const state = { items: { "a:en-pl": { box: 3, due: clock + 86_400_000 * 3, seen: 1, correct: 1, wrong: 0, streak: 1 }, "b:en-pl": { box: 1, due: clock - 1000, seen: 1, correct: 1, wrong: 0, streak: 1 } }, newToday: { date: "", count: 0 } };
+  const session = createSession({ loadWords: async () => done, loadAllWords: async () => [done, busy], state, getSettings: () => DEFAULTS, save: async () => {}, now: () => clock });
+  const empty = await session.next().catch((err) => err);
+  assert.deepEqual(empty.cheers, []);
+  assert.equal(session.stats().restToday, false);
+  assert.equal(empty.dayDone, false, "the screen says this deck is done, not the day");
+});
+
+test("days off can't reach into the past, so a broken streak stays broken", async () => {
+  const { session, state } = setup();
+  const today = new Date(NOON).toLocaleDateString("sv");
+  assert.match((await session.pause("1.1 31.12")).message, /Days off .*: your streak is safe\./);
+  assert.ok(state.progress.vacations.every((v) => v.from >= today), "it starts today at the earliest");
+  await assert.rejects(session.pause("2026-01-01 2026-01-05"), /already over/);
+  assert.match((await session.pause("24.12")).message, /^Day off on /);
+});
+
+test("a day of misses only isn't a day done, even when the miss comes back after midnight", async () => {
+  const clock = new Date("2026-03-04T23:55:00").getTime();
+  const one = [{ noteId: "c1", word: "kot", translations: ["cat"], example: "" }];
+  const state = { items: {}, newToday: { date: "", count: 0 } };
+  const session = createSession({ loadWords: async () => ({ words: one, deck: { name: "Polish", directions: "forward" } }), state, getSettings: () => DEFAULTS, save: async () => {}, now: () => clock });
+  const miss = await session.answer(await session.next(), "zzz");
+  assert.ok(!miss.cheers.some((c) => c.kind === "goal"));
+  assert.equal(session.stats().today.goalMet, false);
 });

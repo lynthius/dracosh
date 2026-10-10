@@ -46,10 +46,10 @@ test("doing the goal on a weekend still counts", () => {
 test("a skipped working day still breaks it (a freeze covers one)", () => {
   const state = fresh(at("2026-10-05"));
   done(state, "2026-10-05", weekdays); // Mon
-  // Tue and Wed skipped, back on Thu: 2 missed working days, 1 freeze
-  assert.equal(currentStreak(state.progress, "2026-10-08", weekdays), 0);
-  // Tue skipped only, back on Wed: covered by the freeze
-  assert.equal(currentStreak(state.progress, "2026-10-07", weekdays), 1);
+  // Tue, Wed and Thu skipped, back on Fri: 3 missed working days, 2 freezes
+  assert.equal(currentStreak(state.progress, "2026-10-09", weekdays), 0);
+  // Tue and Wed skipped, back on Thu: covered by the two freezes
+  assert.equal(currentStreak(state.progress, "2026-10-08", weekdays), 1);
 });
 
 test("a vacation covers every day in it, however long", () => {
@@ -66,10 +66,10 @@ test("a day after the vacation ends is a working day again", () => {
   const state = fresh(at("2026-10-05"));
   done(state, "2026-10-05", weekdays); // Mon
   addVacation(state, "2026-10-06", "2026-10-06");
-  // Tue is vacation, Wed skipped (1 freeze), back on Thu
-  assert.equal(currentStreak(state.progress, "2026-10-08", weekdays), 1);
-  // Tue vacation, Wed + Thu skipped, back on Fri: 2 working days missed
-  assert.equal(currentStreak(state.progress, "2026-10-09", weekdays), 0);
+  // Tue is vacation, Wed + Thu skipped (2 freezes), back on Fri
+  assert.equal(currentStreak(state.progress, "2026-10-09", weekdays), 1);
+  // Tue vacation, Wed to Fri skipped (the weekend rests), back on Mon: 3 working days missed
+  assert.equal(currentStreak(state.progress, "2026-10-12", weekdays), 0);
 });
 
 test("overlapping and touching vacations merge, and cancelling keeps the past", () => {
@@ -124,9 +124,25 @@ test("parseVacation understands days, ranges, single dates, off and list", () =>
   assert.deepEqual(parseVacation("24.12", today), { action: "add", from: "2026-12-24", to: "2026-12-24" });
   assert.deepEqual(parseVacation("5.10", today), { action: "add", from: "2027-10-05", to: "2027-10-05" }); // already past this year
   assert.deepEqual(parseVacation("5.10.2026", today), { action: "add", from: "2026-10-05", to: "2026-10-05" }); // explicit year: the past is allowed
+  assert.deepEqual(parseVacation("28.12 3.01", "2026-12-30"), { action: "add", from: "2026-12-28", to: "2027-01-03" }); // across New Year
+  assert.deepEqual(parseVacation("24.12 2.01", "2027-01-01"), { action: "add", from: "2026-12-24", to: "2027-01-02" }); // already started
   assert.equal(parseVacation("31.02", today), null);
   assert.equal(parseVacation("0", today), null);
   assert.equal(parseVacation("500", today), null);
   assert.equal(parseVacation("soon", today), null);
   assert.equal(parseVacation("1.01.2026 1.01.2028", today), null); // far too long
+});
+
+test("parsePause tells a short break from days off", async () => {
+  const { parsePause } = await import("../src/pause.js");
+  const today = "2026-10-05";
+  assert.deepEqual(parsePause("2h", today), { action: "snooze", ms: 7_200_000 });
+  assert.deepEqual(parsePause("90s", today), { action: "snooze", ms: 90_000 });
+  assert.deepEqual(parsePause("3d", today), { action: "days", from: "2026-10-05", to: "2026-10-07" });
+  assert.deepEqual(parsePause("24.12 2.01", today), { action: "days", from: "2026-12-24", to: "2027-01-02" });
+  assert.deepEqual(parsePause("", today), { action: "list" });
+  assert.deepEqual(parsePause("OFF", today), { action: "off" });
+  assert.equal(parsePause("30", today), null);
+  assert.deepEqual(parsePause("24.12", today), { action: "days", from: "2026-12-24", to: "2026-12-24" }, "a single date is a date");
+  assert.equal(parsePause("soon", today), null);
 });

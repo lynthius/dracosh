@@ -2,19 +2,22 @@ import { Fragment, useEffect, useMemo, useState } from "react";
 import { Box, Text, useApp, useInput } from "ink";
 import { DEMO_WORDS } from "../demo.js";
 import { addDays, dayKey } from "../dates.js";
-import { BADGES, ensureProgress, STAGES } from "../progress.js";
+import { BADGES, ELEMENTS, ensureProgress, rollElement, STAGES } from "../progress.js";
 import { createSession } from "../session.js";
 import { DEFAULTS } from "../settings.js";
+import { DieRoll } from "./DieRoll.js";
 import { App } from "./App.js";
+import { BadgeUnlock, badgeSound } from "./BadgeUnlock.js";
 import { Badges } from "./Badges.js";
 import { Confetti } from "./Confetti.js";
 import { Evolution } from "./Evolution.js";
 import { Hatch } from "./Hatch.js";
-import { Snore, useBlink, useMove } from "./Header.js";
-import { html, PANEL_WIDTH, theme } from "./kit.js";
+import { Header, Snore, useBlink, useMove } from "./Header.js";
+import { html, KeyHints, theme, usePanelWidth } from "./kit.js";
 import { Mascot } from "./Mascot.js";
 import { Stats } from "./Stats.js";
 import { Summary } from "./Summary.js";
+import { TheOne } from "./TheOne.js";
 
 // Everything here runs on made-up data in memory: nothing is read from or written to ~/.dracosh.
 
@@ -35,7 +38,7 @@ function fakeSession({ settings = {}, progress = false } = {}) {
     p.streak = { ...p.streak, count: 12, best: 34, lastGoalDay: addDays(today, -2) };
     BADGES.slice(0, 13).forEach((b, i) => (p.badges[b.id] = addDays(today, -i * 3)));
   }
-  return createSession({ loadWords: async () => ({ words: DEMO_WORDS, cached: false }), state, getSettings: () => all, save: async () => {} });
+  return createSession({ loadWords: async () => ({ words: DEMO_WORDS }), state, getSettings: () => all, save: async () => {} });
 }
 
 // a 250 ms tick for the lab's own little animations (the snoring z's)
@@ -50,9 +53,11 @@ function useClock() {
 
 // The mascot on its own, to poke at: every form, face, move and the combo glow.
 function MascotLab({ onBack }) {
+  const panel = usePanelWidth();
   const [stage, setStage] = useState(0);
   const [face, setFace] = useState(0);
   const [hot, setHot] = useState(false);
+  const [element, setElement] = useState(-1); // -1: the default green dragon
   const [event, setEvent] = useState(null);
   const [tick, setTick] = useState(0);
   const move = useMove(event);
@@ -66,25 +71,81 @@ function MascotLab({ onBack }) {
     if (input === "j") return setEvent({ kind: "jump", at: Date.now() });
     if (input === "s") return setEvent({ kind: "shake", at: Date.now() });
     if (input === "h") return setHot((h) => !h);
+    if (input === "e") return setElement((e) => (e + 2) % (ELEMENTS.length + 1) - 1);
     if (input === " ") return setTick((t) => t + 1); // hand-cranked flicker frame
   });
   const shownFace = blinking && FACES[face] === "idle" ? "blink" : FACES[face];
   return html`
     <${Fragment}>
-      <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.accent} paddingX=${2} paddingY=${1} width=${PANEL_WIDTH} alignItems="center">
+      <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.accent} paddingX=${2} paddingY=${1} width=${panel} alignItems="center">
         <${Text} bold color=${theme.accent}>Mascot lab<//>
         <${Box} marginY=${1} flexDirection="column" alignItems="center">
-          <${Mascot} stage=${stage} face=${shownFace} hot=${hot} flicker=${hot && tick % 2 === 0} scale=${2} dx=${move.dx ?? 0} dy=${move.dy ?? 0} />
+          <${Mascot} stage=${stage} face=${shownFace} hot=${hot} flicker=${hot && tick % 2 === 0} scale=${2} dx=${move.dx ?? 0} dy=${move.dy ?? 0} element=${ELEMENTS[element] ?? null} />
         <//>
         ${FACES[face] === "sleep" && html`<${Box}><${Mascot} stage=${stage} face="sleep" /><${Snore} tick=${clock} /><//>`}
-        <${Text}>${STAGES[stage].name}<${Text} dimColor> · face ${FACES[face]}${hot ? " · combo glow" : ""}<//><//>
+        <${Text}>${STAGES[stage].name}<${Text} dimColor> · face ${FACES[face]} · ${ELEMENTS[element] ?? "no element"}${hot ? " · combo glow" : ""}<//><//>
       <//>
-      <${Box} paddingX=${1}><${Text} dimColor>←/→ form · ↑/↓ face · j jump · s shake · h glow · space flicker · esc back<//><//>
+      <${Box} paddingX=${1}><${KeyHints} text="←/→ form · ↑/↓ face · e element · j jump · s shake · h glow · esc back" /><//>
+    <//>
+  `;
+}
+
+// three badges won with one answer, lighting up one after another, as under the quiz card
+const UNLOCK_SAMPLE = ["thousand", "hot-streak", "dragons-hoard"];
+
+function BadgeUnlockLab({ onBack, play }) {
+  const panel = usePanelWidth();
+  const [run, setRun] = useState(1);
+  useInput((input, key) => {
+    if (key.escape || input === "q") return onBack();
+    if (key.return || input === " ") setRun((r) => r + 1);
+  });
+  const badges = UNLOCK_SAMPLE.map((id) => BADGES.find((badge) => badge.id === id));
+  return html`
+    <${Fragment}>
+      <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.good} paddingX=${2} width=${panel}>
+        <${Text} color=${theme.good} bold>✓ dragon<//>
+        ${badges.map((badge, i) => html`<${BadgeUnlock} key=${`${run}-${badge.id}`} id=${badge.id} name=${badge.name} desc=${badge.desc} delay=${i * 700} sound=${badgeSound(i)} play=${play} />`)}
+      <//>
+      <${Box} paddingX=${1}><${KeyHints} text="enter replay · esc back" /><//>
+    <//>
+  `;
+}
+
+// The quiz screen's header with any form and element, to check how the dragon looks and fits there
+function QuizLookLab({ onBack }) {
+  const panel = usePanelWidth();
+  const [stage, setStage] = useState(STAGES.length - 1);
+  const [element, setElement] = useState(-1);
+  const [combo, setCombo] = useState(0);
+  useInput((input, key) => {
+    if (key.escape || input === "q") return onBack();
+    if (key.leftArrow) return setStage((s) => Math.max(0, s - 1));
+    if (key.rightArrow) return setStage((s) => Math.min(STAGES.length - 1, s + 1));
+    if (input === "e") return setElement((e) => (e + 2) % (ELEMENTS.length + 1) - 1);
+    if (input === "c") return setCombo((c) => (c ? 0 : 7));
+  });
+  const stats = {
+    streak: { days: 42, best: 120, freezes: 1, atRisk: false },
+    today: { correct: 13, asked: 15, goalMet: false },
+    goal: 20,
+    vacation: { activeUntil: null },
+    companion: { index: stage, name: STAGES[stage].name, element: ELEMENTS[element] ?? null }
+  };
+  return html`
+    <${Fragment}>
+      <${Header} deck="Polish" everyMs=${600000} wordCount=${340} stats=${stats} combo=${combo} face="idle" event=${null} tick=${0} />
+      <${Box} marginTop=${1} flexDirection="column" borderStyle="round" borderColor=${theme.accent} paddingX=${2} paddingY=${1} width=${panel}>
+        <${Text} bold>la mariposa<//>
+        <${Box} marginTop=${1}><${Text} color=${theme.accent}>❯ <//><${Text} inverse> <//><//>
+      <//>
+      <${Box} paddingX=${1}><${Text} dimColor>${STAGES[stage].name} · ${ELEMENTS[element] ?? "no element"} · ←/→ form · e element · c combo · esc back<//><//>
     <//>
   `;
 }
 
 function ConfettiLab({ onBack }) {
+  const panel = usePanelWidth();
   const [run, setRun] = useState(1);
   useInput((input, key) => {
     if (key.escape || input === "q") return onBack();
@@ -92,11 +153,11 @@ function ConfettiLab({ onBack }) {
   });
   return html`
     <${Fragment}>
-      <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.good} paddingX=${2} width=${PANEL_WIDTH}>
-        <${Text} color=${theme.good} bold>★ Daily goal reached · 12-day streak<//>
+      <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.good} paddingX=${2} width=${panel}>
+        <${Text} color=${theme.good} bold>▪ Daily goal reached · 12-day streak<//>
       <//>
-      <${Box} height=${5}><${Confetti} key=${run} width=${PANEL_WIDTH} onDone=${() => {}} /><//>
-      <${Box} paddingX=${1}><${Text} dimColor>enter replay · esc back<//><//>
+      <${Box} height=${5}><${Confetti} key=${run} width=${panel} onDone=${() => {}} /><//>
+      <${Box} paddingX=${1}><${KeyHints} text="enter replay · esc back" /><//>
     <//>
   `;
 }
@@ -104,15 +165,20 @@ function ConfettiLab({ onBack }) {
 const SCENES = [
   { id: "hatch", label: "Hatching", hint: "the first-launch intro" },
   ...STAGES.slice(1).map((stage, i) => ({ id: `evolve-${i + 1}`, label: `Evolution → ${stage.name}`, hint: `reached at a ${stage.from}-day best streak` })),
-  { id: "mascot", label: "Mascot lab", hint: "forms, faces, sleep, hop, shake, glow" },
+  { id: "mascot", label: "Mascot lab", hint: "forms, faces, elements, moves, glow" },
   { id: "quiz", label: "Quiz", hint: "a live round on demo words, goal at 5" },
+  { id: "quiz-look", label: "Quiz screen", hint: "the header with any form and element" },
+  { id: "unlock", label: "Badge unlocked", hint: "three badges won at once" },
+  { id: "the-one", label: "The One...", hint: "the ring rises from the lava" },
+  { id: "die", label: "Dragon's die", hint: "the secret badge: a roll for an element" },
   { id: "confetti", label: "Confetti", hint: "the daily-goal burst" },
   { id: "stats", label: "Stats", hint: "calendar tiles, weeks of fake history" },
-  { id: "badges", label: "Badges", hint: "the badge browser with pixel icons" },
+  { id: "badges", label: "Badges", hint: "all unlocked, three of them new" },
   { id: "summary", label: "Session summary", hint: "what you see when quitting" }
 ];
 
 function Menu({ selected, onMove, onPick, onQuit }) {
+  const panel = usePanelWidth();
   useInput((input, key) => {
     if (key.escape || input === "q") return onQuit();
     if (key.upArrow) return onMove(-1);
@@ -121,7 +187,7 @@ function Menu({ selected, onMove, onPick, onQuit }) {
   });
   return html`
     <${Fragment}>
-      <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.accent} paddingX=${2} width=${PANEL_WIDTH}>
+      <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.accent} paddingX=${2} width=${panel}>
         <${Box}><${Text} bold color=${theme.accent}>Preview<//><${Text} dimColor>  made-up data · nothing is saved<//><//>
         <${Box} flexDirection="column" marginTop=${1}>
           ${SCENES.map(
@@ -136,7 +202,7 @@ function Menu({ selected, onMove, onPick, onQuit }) {
           )}
         <//>
       <//>
-      <${Box} paddingX=${1}><${Text} dimColor>↑/↓ choose · enter play · esc quit<//><//>
+      <${Box} paddingX=${1}><${KeyHints} text="↑/↓ choose · enter play · esc quit" /><//>
     <//>
   `;
 }
@@ -150,6 +216,7 @@ export function Preview({ alerts }) {
   const back = () => setScene(null);
   const history = useMemo(() => fakeSession({ progress: true }), []);
   const quizSession = useMemo(() => fakeSession(), [run]); // every quiz run starts from zero
+  const dieElement = useMemo(() => rollElement(), [run]); // a fresh roll every time the scene plays
 
   const wrap = (content) => html`<${Box} flexDirection="column" marginY=${1}>${content}<//>`;
 
@@ -169,9 +236,17 @@ export function Preview({ alerts }) {
     return wrap(html`<${Evolution} key=${run} from=${to - 1} to=${to} name=${STAGES[to].name} onClose=${back} />`);
   }
   if (scene === "mascot") return wrap(html`<${MascotLab} onBack=${back} />`);
+  if (scene === "quiz-look") return wrap(html`<${QuizLookLab} onBack=${back} />`);
   if (scene === "confetti") return wrap(html`<${ConfettiLab} onBack=${back} />`);
+  if (scene === "unlock") return wrap(html`<${BadgeUnlockLab} onBack=${back} play=${alerts.play} />`);
+  if (scene === "die") return wrap(html`<${DieRoll} key=${run} element=${dieElement} stage=${2} play=${alerts.play} onClose=${back} />`);
+  if (scene === "the-one") return wrap(html`<${TheOne} key=${run} play=${alerts.play} onClose=${back} />`);
   if (scene === "stats") return wrap(html`<${Stats} stats=${history.stats()} getMonth=${history.month} onClose=${back} />`);
-  if (scene === "badges") return wrap(html`<${Badges} badges=${history.stats().badges} onClose=${back} />`);
+  if (scene === "badges") {
+    // every badge unlocked, so each icon and rank color can be seen
+    const all = history.stats().badges.map((badge) => ({ ...badge, unlockedOn: badge.unlockedOn ?? dayKey(Date.now()) }));
+    return wrap(html`<${Badges} key=${run} badges=${all} fresh=${["thousand", "hot-streak", "dragonheart"]} onClose=${back} />`);
+  }
   if (scene === "summary")
     return wrap(html`<${Summary} stats=${history.stats()} totals=${{ asked: 23, correct: 20 }} bestCombo=${9} onDone=${back} />`);
   if (scene === "quiz") {

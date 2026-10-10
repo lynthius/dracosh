@@ -1,7 +1,8 @@
 import { Fragment, useState } from "react";
 import { Box, Text, useInput } from "ink";
+import { dragonName } from "../progress.js";
 import { formatRange } from "../vacation.js";
-import { html, PANEL_WIDTH, theme } from "./kit.js";
+import { html, KeyHints, theme, usePanelWidth } from "./kit.js";
 
 const DAY_LETTERS = ["M", "T", "W", "T", "F", "S", "S"];
 // One shape for every day; only the color tells them apart, GitHub-contribution style.
@@ -62,6 +63,7 @@ function Legend({ goal }) {
 }
 
 export function Stats({ stats, getMonth, onClose }) {
+  const panel = usePanelWidth();
   const [offset, setOffset] = useState(0);
   useInput((input, key) => {
     if (key.escape || key.return || input === "q") return onClose();
@@ -73,11 +75,12 @@ export function Stats({ stats, getMonth, onClose }) {
   const accuracy = today.asked ? Math.round((today.correct / today.asked) * 100) : null;
   const unlocked = stats.badges.filter((b) => b.unlockedOn).length;
   const month = getMonth(offset);
-  const next = companion.nextAt ? ` · ${companion.nextName} at a ${companion.nextAt}-day streak` : " · fully evolved";
+  const next = companion.nextAt ? ` · next form at a ${companion.nextAt}-day streak` : " · fully evolved";
+  const title = dragonName(companion.index, companion.element);
 
   return html`
     <${Fragment}>
-      <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.accent} paddingX=${2} width=${PANEL_WIDTH}>
+      <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.accent} paddingX=${2} width=${panel}>
         <${Text} bold color=${theme.accent}>Stats<//>
 
         <${Box} marginTop=${1} flexDirection="column">
@@ -86,9 +89,9 @@ export function Stats({ stats, getMonth, onClose }) {
             <${Text} dimColor> · best ${streak.best} · ${streak.freezes} freeze${streak.freezes === 1 ? "" : "s"} in stock<//>
           <//>
           <${Text} dimColor>today      ${today.correct}/${goal} correct${accuracy === null ? "" : ` · ${accuracy}% accuracy`}<//>
-          <${Text} dimColor>cards      ${stats.mastered} mastered · ${stats.practiced} practiced · ${stats.totalCorrect} correct in total<//>
-          <${Text} dimColor>companion  ${companion.name} (${companion.index + 1}/6)${next}<//>
-          <${Text} dimColor>rest days  ${stats.skipWeekends ? "weekends" : "no weekends"}${stats.vacation.upcoming.length ? ` · vacation ${stats.vacation.upcoming.map((v) => formatRange(v.from, v.to)).join(", ")}` : ""}<//>
+          <${Text} dimColor>cards      ${stats.mastered} mastered · ${stats.practiced} practised · ${stats.totalCorrect} correct in total<//>
+          <${Text} dimColor>companion  ${title} (${companion.index + 1}/6)${next}<//>
+          <${Text} dimColor>rest days  ${stats.skipWeekends ? "weekends" : "no weekends"}${stats.vacation.upcoming.length ? ` · days off ${stats.vacation.upcoming.map((v) => formatRange(v.from, v.to)).join(", ")}` : ""}<//>
         <//>
 
         <${Box} marginTop=${1} flexDirection="column">
@@ -102,7 +105,7 @@ export function Stats({ stats, getMonth, onClose }) {
 
         <${Box} marginTop=${1}><${Text} dimColor>${unlocked}/${stats.badges.length} badges · /badges lists them all<//><//>
       <//>
-      <${Box} paddingX=${1}><${Text} dimColor>←/→ month · esc back<//><//>
+      <${Box} paddingX=${1}><${KeyHints} text="←/→ month · esc back" /><//>
     <//>
   `;
 }

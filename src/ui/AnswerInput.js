@@ -18,17 +18,19 @@ function Palette({ matches, selected }) {
   `;
 }
 
-// everything after the command name: "/snooze 30m" → "30m"
+// everything after the command name: "/pause 30m" → "30m"
 const args = (value) => value.trim().split(/\s+/).slice(1).join(" ");
 
 // Answer line with a movable cursor (←/→, Ctrl+A/E). Typing "/" opens a command palette:
 // ↑/↓ choose, Tab completes, Enter runs.
 // `commandOnly` is the between-questions variant: it starts at "/" and Esc or erasing the "/" closes it.
-export function AnswerInput({ onSubmit, onCommand, onExit, onEdit, onCancel, commands = COMMANDS, initial = "", commandOnly = false }) {
+// `plain` is a text field with no commands at all ("and/or" is just text there).
+export function AnswerInput({ onSubmit, onCommand, onExit, onEdit, onCancel, commands = COMMANDS, initial = "", commandOnly = false, plain = false }) {
   const [value, setValue] = useState(initial);
   const [cursor, setCursor] = useState(initial.length);
   const [selected, setSelected] = useState(0);
-  const matches = value.startsWith("/") ? matchCommands(value, commands) : [];
+  const isCommand = !plain && value.startsWith("/");
+  const matches = isCommand ? matchCommands(value, commands) : [];
   const pick = Math.min(selected, Math.max(matches.length - 1, 0));
 
   const edit = (next, at = next.length) => {
@@ -41,7 +43,8 @@ export function AnswerInput({ onSubmit, onCommand, onExit, onEdit, onCancel, com
   useInput((input, key) => {
     if (key.escape) return commandOnly ? onCancel() : value ? edit("") : onExit();
     if (key.return) {
-      if (!value.startsWith("/")) return onSubmit(value);
+      // no command starts like this: on a card it's simply the answer (some answers begin with "/")
+      if (!isCommand || (!matches.length && !commandOnly)) return onSubmit(value);
       const [token, ...rest] = value.trim().split(/\s+/);
       edit("");
       return onCommand(matches[pick]?.name ?? token, rest.join(" "));
@@ -76,7 +79,7 @@ export function AnswerInput({ onSubmit, onCommand, onExit, onEdit, onCancel, com
         <${Text}>${before}<${Text} inverse>${at}<//>${after}<//>
       <//>
       ${matches.length > 0 && html`<${Palette} matches=${matches} selected=${pick} />`}
-      ${value.startsWith("/") && matches.length === 0 && html`<${Box} marginTop=${1}><${Text} color=${theme.bad}>unknown command<//><//>`}
+      ${isCommand && matches.length === 0 && html`<${Box} marginTop=${1}>${commandOnly ? html`<${Text} color=${theme.bad}>unknown command<//>` : html`<${Text} dimColor>no command like that · enter sends it as your answer<//>`}<//>`}
     <//>
   `;
 }

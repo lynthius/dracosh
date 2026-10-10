@@ -4,28 +4,37 @@ import { commandsFor } from "../commands.js";
 import { diffChars } from "../diff.js";
 import { AnswerInput } from "./AnswerInput.js";
 import { Header } from "./Header.js";
-import { html, Bar, PANEL_WIDTH, theme, Typewriter } from "./kit.js";
+import { Bar, cellWidth, cutToWidth, html, KeyHints, Marked, theme, Typewriter, usePanelWidth } from "./kit.js";
 import { hintTarget, makeHint } from "../hint.js";
-import { formatClock, inQuietHours, parseSnooze, quietEnd } from "../quiet.js";
+import { formatClock, inQuietHours, quietEnd } from "../quiet.js";
+import { startOfTomorrow } from "../scheduler.js";
+import { formatDay } from "../vacation.js";
+import { dayKey } from "../dates.js";
 import { shouldShowTip } from "../tips.js";
 import { Badges } from "./Badges.js";
 import { Companion } from "./Companion.js";
 import { Confetti } from "./Confetti.js";
+import { BadgeUnlock, badgeSound } from "./BadgeUnlock.js";
+import { DieRoll } from "./DieRoll.js";
 import { Evolution } from "./Evolution.js";
 import { Hatch } from "./Hatch.js";
+import { AddCard } from "./AddCard.js";
+import { Decks } from "./Decks.js";
+import { Reset } from "./Reset.js";
+import { Help } from "./Help.js";
 import { Missed } from "./Missed.js";
 import { Settings } from "./Settings.js";
 import { Stats } from "./Stats.js";
 import { Summary } from "./Summary.js";
-import { Tip } from "./Tip.js";
+import { TheOne } from "./TheOne.js";
 
-const SPINNER = ["▘", "▝", "▗", "▖"]; // a rotating pixel, in keeping with the sprite work
+const SPINNER = ["⠚", "⠓", "⠋", "⠙"]; // the old braille dots on a 2×2 square: the gap goes round
 const TICK_MS = 250; // the steady redraw: slow enough to stay idle for hours, fast enough for the spinner
 const SLEEP_AFTER_MS = 3 * 60_000; // no key pressed for this long while waiting → the dragon dozes off
-const PAUSED_SLEEP_AFTER_MS = 15_000; // during snooze or quiet hours it nods off again much sooner
+const PAUSED_SLEEP_AFTER_MS = 15_000; // during a pause or quiet hours it nods off again much sooner
 const CHEER_STYLE = {
-  goal: { icon: "★", color: theme.good },
-  evolve: { icon: "▲", color: theme.accent },
+  goal: { icon: "▪", color: theme.good },
+  evolve: { icon: "▴", color: theme.accent },
   badge: { icon: "✦", color: theme.warn },
   combo: { icon: "»", color: theme.warn }
 };
@@ -35,58 +44,93 @@ function clock(ms) {
   return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
 }
 
-// your answer with every letter judged: green lined up with the expected word, red didn't
+// your answer with every letter judged: green lined up with the expected word, underlined didn't
 function AnswerDiff({ given, closest }) {
   const parts = diffChars(given, closest);
   return html`
     <${Text}>
-      <${Text} dimColor>you wrote  <//>
-      ${parts.map((p, i) => html`<${Text} key=${i} color=${p.ok ? theme.good : theme.bad} bold=${!p.ok}>${p.ch}<//>`)}
+      <${Text} dimColor>you wrote <//>
+      ${parts.map((p, i) => html`<${Text} key=${i} color=${p.ok ? theme.good : theme.text} underline=${!p.ok}>${p.ch}<//>`)}
     <//>
   `;
 }
 
 function Verdict({ outcome, question }) {
-  if (outcome.result === "skipped") return html`<${Text} dimColor>– skipped<//>`;
   const wrong = outcome.result === "wrong";
   const showDiff = outcome.closest && outcome.given && !outcome.overruled && (wrong || outcome.result === "typo");
   return html`
     <${Box} flexDirection="column">
       <${Text} color=${wrong ? theme.bad : theme.good} bold>${wrong ? "✗" : "✓"} ${question.expected.join(", ")}${outcome.result === "typo" ? "  (close enough)" : ""}<//>
       ${showDiff && html`<${AnswerDiff} given=${outcome.given} closest=${outcome.closest} />`}
-      ${question.word.example && html`<${Text} dimColor>${question.word.example}<//>`}
+      ${question.word.example && html`<${Box} marginTop=${1}>${question.tour ? html`<${Marked} dimColor text=${question.word.example} />` : html`<${Text} dimColor italic>“${question.word.example}”<//>`}<//>`}
       ${(outcome.hinted || outcome.overruled) &&
       html`
         <${Box} marginTop=${1} flexDirection="column">
           ${outcome.hinted && html`<${Text} dimColor>hint used · the card stays in its box<//>`}
-          ${outcome.overruled && html`<${Text} color=${theme.good}>counted as correct · "${outcome.accepted}" is accepted from now on<//>`}
+          ${outcome.overruled && html`<${Text} color=${theme.good}>counted as correct${question.tour ? "" : ` · "${outcome.accepted}" is accepted from now on`}<//>`}
         <//>
       `}
     <//>
   `;
 }
 
-function Cheers({ cheers }) {
+const BADGE_FIRST_MS = 400; // after the answer's own sound
+const BADGE_STAGGER_MS = 700; // several badges at once light up one after another
+
+function Cheers({ cheers, play }) {
+  const lines = cheers.filter((cheer) => cheer.kind !== "badge");
+  const badges = cheers.filter((cheer) => cheer.kind === "badge");
   return html`
     <${Box} flexDirection="column" paddingX=${1} marginTop=${1}>
-      ${cheers.map((cheer, i) => {
+      ${lines.map((cheer, i) => {
         const style = CHEER_STYLE[cheer.kind] ?? CHEER_STYLE.combo;
         return html`<${Text} key=${i} color=${style.color} bold>${style.icon} ${cheer.text}<//>`;
       })}
+      ${badges.map((badge, i) => html`<${BadgeUnlock} key=${badge.id} ...${badge} delay=${BADGE_FIRST_MS + i * BADGE_STAGGER_MS} sound=${badgeSound(i)} play=${play} />`)}
     <//>
   `;
 }
 
 // The card's top edge with the direction ("EN → PL") set into its right corner, like a title on the border
 function CardTop({ label, width, color }) {
-  const tag = ` ${label} `;
   const tail = 2;
-  const dashes = Math.max(0, width - 2 - tag.length - tail);
+  const room = Math.max(4, width - 2 - tail - 4); // a label too long for a narrow window is cut short
+  const tag = ` ${cutToWidth(label, room)} `;
+  const dashes = Math.max(0, width - 2 - cellWidth(tag) - tail);
   return html`
     <${Text}>
       <${Text} color=${color}>╭${"─".repeat(dashes)}<//>
       <${Text} dimColor>${tag}<//>
       <${Text} color=${color}>${"─".repeat(tail)}╮<//>
+    <//>
+  `;
+}
+
+// "at 14:30", "tomorrow", "on 14 Oct"
+function whenDue(at, now) {
+  const tomorrow = startOfTomorrow(now);
+  if (at < tomorrow) return `at ${formatClock(at)}`;
+  return at < startOfTomorrow(tomorrow) ? "tomorrow" : `on ${formatDay(dayKey(at))}`;
+}
+
+// what the quiz shows when the deck has nothing to ask: no countdown, just the way on
+function EmptyDeck({ deck, tour, count, nextDue, dayDone, now, width }) {
+  const [title, next] = tour
+    ? ["You've finished the tour.", "Now make it yours: type /add to start your own deck."]
+    : !count
+      ? [`"${deck}" has no cards yet.`, "Type /add to add the first one."]
+      : nextDue >= startOfTomorrow(now) && !dayDone
+        ? [`Nothing more in "${deck}" today.`, `Its cards come back ${whenDue(nextDue, now)}. Other decks still have cards: /decks`]
+        : nextDue >= startOfTomorrow(now)
+        ? ["All done for today.", `Your cards come back ${whenDue(nextDue, now)}. Want more today? /add some new ones.`]
+        : ["Nothing to practise right now.", `The next card is due ${whenDue(nextDue, now)}. It will come by itself.`];
+  return html`
+    <${Box} flexDirection="column" width=${width}>
+      <${CardTop} label=${deck} width=${width} color=${theme.accent} />
+      <${Box} flexDirection="column" borderStyle="round" borderTop=${false} borderColor=${theme.accent} paddingX=${2} paddingY=${1}>
+        <${Text} bold>${title}<//>
+        <${Text}>${next}<//>
+      <//>
     <//>
   `;
 }
@@ -100,15 +144,21 @@ function TipBox({ tip, width }) {
   `;
 }
 
-export function App({ session, deck, initialSettings, alerts, persistSettings, onExit }) {
+// `library` holds the /add actions (src/manage.js) and `onSwitchDeck` points the session at another
+// deck; the preview gallery passes neither.
+export function App({ session, deck: initialDeck, initialSettings, alerts, persistSettings, onExit, library, onSwitchDeck }) {
   const { exit: exitApp } = useApp();
   const exit = onExit ?? exitApp; // the preview gallery runs the quiz as a scene and takes quitting back to its menu
   const { stdout } = useStdout();
   const [settings, setSettings] = useState(initialSettings);
-  // quiz | settings | stats | badges | companion | tip | missed | evolve | summary | hatch
+  const [deck, setDeck] = useState(initialDeck);
+  const [addNew, setAddNew] = useState(false); // /add opened from "+ New deck" in /decks
+  const [restUntil, setRestUntil] = useState(null); // nothing is waiting until then (after the last card due now)
+  const [empty, setEmpty] = useState(null); // { tour, count, nextDue } when there is nothing to ask right now
+  // quiz | settings | reset | add | decks | stats | badges | companion | help | missed | evolve | the-one | die | summary | hatch
   const [screen, setScreen] = useState(() => (session.isFirstRun() ? "hatch" : "quiz"));
   const [tip, setTip] = useState(null);
-  const [phase, setPhase] = useState("loading"); // loading | asking | waiting
+  const [phase, setPhase] = useState("loading"); // loading | asking | waiting | empty
   const [question, setQuestion] = useState(null);
   const [outcome, setOutcome] = useState(null);
   const [problem, setProblem] = useState("");
@@ -121,6 +171,8 @@ export function App({ session, deck, initialSettings, alerts, persistSettings, o
   const [petEvent, setPetEvent] = useState(null); // { kind: "jump" | "shake", at } → a little hop or head-shake
   const [confetti, setConfetti] = useState(false);
   const [evolution, setEvolution] = useState(null); // { from, to, name } while the ceremony plays
+  const [freshBadges, setFreshBadges] = useState([]); // won since /badges was last opened; they light up there
+  const [ceremonies, setCeremonies] = useState([]); // full-screen moments still to show: "evolve", "the-one"
   const [lastActive, setLastActive] = useState(Date.now()); // last key press or new question: the dragon sleeps after a long gap
   const busy = useRef(false);
   const asleepRef = useRef(false);
@@ -136,10 +188,13 @@ export function App({ session, deck, initialSettings, alerts, persistSettings, o
     return Math.max(snoozeRef.current > t ? snoozeRef.current : 0, inQuietHours(t, quiet) ? quietEnd(t, quiet) : 0);
   };
 
-  const waitForNext = useCallback(() => {
-    setNextAt(Date.now() + settingsRef.current.everyMs);
+  // `nextDue`: nothing is waiting until then, so the next question waits for it (never sooner than usual)
+  const waitForNext = useCallback((nextDue = null) => {
+    const usual = Date.now() + settingsRef.current.everyMs;
+    setNextAt(nextDue ? Math.max(nextDue, usual) : usual);
+    setRestUntil(nextDue);
     setPhase("waiting");
-    setTip(shouldShowTip(settingsRef.current.tips) ? session.nextTip() : null);
+    setTip(!session.inTour() && shouldShowTip(settingsRef.current.tips) ? session.nextTip() : null);
   }, [session]);
 
   const ask = useCallback(async () => {
@@ -153,10 +208,18 @@ export function App({ session, deck, initialSettings, alerts, persistSettings, o
       const next = await session.next();
       setQuestion(next);
       setOutcome(null);
+      setEmpty(null);
       setPhase("asking");
     } catch (err) {
-      setProblem(err.message);
-      waitForNext();
+      if (!err.empty) {
+        setProblem(err.message);
+        return waitForNext();
+      }
+      setQuestion(null);
+      setEmpty({ tour: err.tour, count: err.count, nextDue: err.nextDue, dayDone: err.dayDone });
+      setOutcome(err.cheers.length ? { result: "done", cheers: err.cheers } : null);
+      if (err.cheers.length) celebrate({ result: "exact", cheers: err.cheers, combo: session.totals.combo });
+      setPhase("empty");
     }
   }, [session, waitForNext]);
 
@@ -170,8 +233,15 @@ export function App({ session, deck, initialSettings, alerts, persistSettings, o
     return () => clearInterval(id);
   }, []);
 
+  // with nothing to practise, the quiz picks up again by itself once the next card is due
   useEffect(() => {
-    if (phase !== "waiting" || screen === "summary" || screen === "evolve") return;
+    if (phase !== "empty" || !empty?.nextDue || screen !== "quiz" || now < empty.nextDue || pauseEnd(now)) return;
+    alerts.ask();
+    ask();
+  }, [now, phase, empty, screen, ask, alerts]);
+
+  useEffect(() => {
+    if (phase !== "waiting" || screen === "summary" || screen === "evolve" || screen === "the-one" || screen === "die") return;
     if (now >= nextAt && !pauseEnd(now)) {
       alerts.ask();
       ask();
@@ -191,10 +261,10 @@ export function App({ session, deck, initialSettings, alerts, persistSettings, o
   });
 
   useInput((input, key) => {
-    if (screen !== "quiz" || phase !== "waiting" || commandMode) return;
+    if (screen !== "quiz" || (phase !== "waiting" && phase !== "empty") || commandMode) return;
     if (input === "/") return setCommandMode(true);
     if (key.escape || input === "q") return requestExit();
-    if (key.return) ask();
+    if (key.return && phase === "waiting") ask();
   });
 
   const clearProblem = useCallback(() => {
@@ -208,11 +278,25 @@ export function App({ session, deck, initialSettings, alerts, persistSettings, o
     bestCombo.current = Math.max(bestCombo.current, result.combo);
     setPetEvent({ kind: result.result === "wrong" ? "shake" : "jump", at: Date.now() });
     if (result.cheers.some((c) => c.kind === "goal")) setConfetti(true);
+    const queue = [];
     if (result.cheers.some((c) => c.kind === "evolve")) {
       const companion = session.stats().companion;
-      setEvolution({ from: Math.max(0, companion.index - 1), to: companion.index, name: companion.name });
-      setScreen("evolve");
+      setEvolution({ from: Math.max(0, companion.index - 1), to: companion.index, name: companion.name, element: companion.element });
+      queue.push("evolve");
     }
+    if (result.cheers.some((c) => c.id === "dragons-die")) queue.push("die");
+    if (result.cheers.some((c) => c.id === "one-ring")) queue.push("the-one");
+    if (queue.length) {
+      setCeremonies(queue.slice(1));
+      setScreen(queue[0]);
+    }
+  }
+
+  // after a full-screen ceremony: the next one if both happened at once, otherwise back to the quiz
+  function nextCeremony() {
+    const [next, ...rest] = ceremonies;
+    setCeremonies(rest);
+    setScreen(next ?? "quiz");
   }
 
   function runCommand(name, args = "") {
@@ -220,30 +304,34 @@ export function App({ session, deck, initialSettings, alerts, persistSettings, o
     if (name === "/quit") return requestExit();
     if (name === "/settings") return setScreen("settings");
     if (name === "/stats") return setScreen("stats");
-    if (name === "/badges") return setScreen("badges");
-    if (name === "/companion") return setScreen("companion");
-    if (name === "/tip") return setScreen("tip");
-    if (name === "/missed") return setScreen("missed");
-    if (name === "/hint" && phase === "asking") return setHintLevel((level) => level + 1);
-    if (name === "/vacation") {
+    if (name === "/badges") {
       return session
-        .vacation(args)
-        .then(setNotice)
+        .openBadges()
+        .then((fresh) => {
+          setFreshBadges(fresh);
+          setScreen("badges");
+        })
         .catch((err) => setProblem(err.message));
     }
-    if (name === "/snooze") {
-      const length = parseSnooze(args);
-      if (length === null) return setProblem("Try /snooze 30m, /snooze 2h or /snooze off");
-      if (length === "off") {
-        setSnoozeUntil(0);
-        return setNotice("Snooze off: questions are back");
-      }
-      setSnoozeUntil(Date.now() + length);
-      return phase === "asking" ? setNotice(`Questions paused until ${formatClock(Date.now() + length)}`) : undefined; // while waiting, the status line says it
-    }
-    if (name === "/skip") {
-      setOutcome({ result: "skipped", cheers: [] });
-      return waitForNext();
+    if (name === "/companion") return setScreen("companion");
+    if (name === "/missed") return setScreen("missed");
+    if (name === "/help") return setScreen("help");
+    if (name === "/add") return library ? (setAddNew(false), setScreen("add")) : setNotice("The preview can't add cards; run dracosh for that.");
+    if (name === "/decks") return library ? setScreen("decks") : setNotice("The preview has one demo deck; run dracosh for yours.");
+    if (name === "/hint" && phase === "asking") return setHintLevel((level) => level + 1);
+    if (name === "/pause") {
+      return session
+        .pause(args)
+        .then(({ snooze, list, message }) => {
+          if (snooze === "off") setSnoozeUntil(0);
+          if (typeof snooze === "number") {
+            setSnoozeUntil(Date.now() + snooze);
+            return phase === "asking" ? setNotice(`Paused until ${formatClock(Date.now() + snooze)}`) : undefined; // while waiting, the status line says it
+          }
+          const paused = list && snoozeRef.current > Date.now() ? `Paused until ${formatClock(snoozeRef.current)}. ` : "";
+          setNotice(paused + message);
+        })
+        .catch((err) => setProblem(err.message));
     }
     if (name === "/correct" && session.canOverrule()) {
       return session
@@ -251,6 +339,8 @@ export function App({ session, deck, initialSettings, alerts, persistSettings, o
         .then((result) => {
           setOutcome(result);
           celebrate(result);
+          if (phase === "empty") return ask(); // the card's next date changed: look again
+          waitForNext(result.nextDue);
         })
         .catch((err) => setProblem(`Couldn't save progress: ${err.message}`));
     }
@@ -268,35 +358,77 @@ export function App({ session, deck, initialSettings, alerts, persistSettings, o
     if (patch.volume !== undefined || patch.sound === true) alerts.play("correct-0"); // audible preview
   }
 
+  // an empty answer means "I don't know": the answer is shown and the card counts as missed
   async function submit(raw) {
     const text = raw.trim();
-    if (!text || busy.current) return;
+    if (busy.current) return;
     busy.current = true;
+    let nextDue = null;
     try {
       const result = await session.answer(question, text, { hinted: hintLevel > 0 });
+      nextDue = result.nextDue;
       setOutcome(result);
       celebrate(result);
     } catch (err) {
       setProblem(`Couldn't save progress: ${err.message}`);
     } finally {
       busy.current = false;
-      waitForNext();
+      waitForNext(nextDue);
     }
   }
 
-  const width = Math.min((stdout?.columns ?? PANEL_WIDTH + 2) - 2, PANEL_WIDTH);
-  const border = !outcome ? theme.accent : outcome.result === "wrong" ? theme.bad : outcome.result === "skipped" ? "gray" : theme.good;
+  // /decks and a first deck from /add: quiz another deck from now on, and remember it
+  function switchDeck(name) {
+    setScreen("quiz");
+    if (name === deck) return;
+    onSwitchDeck?.(name);
+    setDeck(name);
+    changeSettings({ deck: name });
+    ask();
+  }
+
+  // Reset (from /settings), after a backup. Everything brings back the tour and the hatching egg.
+  async function reset(scope) {
+    await library.backupBeforeReset();
+    await session.reset(scope);
+    setFreshBadges([]);
+    if (scope === "progress") {
+      setScreen("quiz");
+      return setNotice("Your progress starts over. Your cards are all still here.");
+    }
+    const tour = await library.resetLibrary();
+    onSwitchDeck?.(tour);
+    setDeck(tour);
+    changeSettings({ deck: null });
+    setScreen("hatch");
+    ask();
+  }
+
+  // after /add: a first deck of your own replaces the tour; a deck started from /decks (or in place
+  // of an empty one) becomes the one you practise; new cards end an empty state
+  function addDone({ deck: started, removed, added, dropped }) {
+    setScreen("quiz");
+    if (removed.length) session.forget(removed).catch(() => {});
+    const switching = started && (removed.length || phase === "empty" || addNew);
+    if (switching) switchDeck(started);
+    else if (phase === "empty" && added) ask();
+    const notes = [dropped && "The card you were writing wasn't saved.", started && !switching && `"${started}" is ready; you're still practising "${deck}". Switch with /decks.`];
+    setNotice(notes.filter(Boolean).join(" ")); // after ask(), which clears the notice
+  }
+
+  const width = usePanelWidth();
+  const border = !outcome ? theme.accent : outcome.result === "wrong" ? theme.bad : theme.good;
   const pausedUntil = pauseEnd(now);
   const tick = Math.floor(now / TICK_MS);
   const frame = SPINNER[tick % SPINNER.length];
   const stats = session.stats();
   // mood: how the last answer went, otherwise whether today's goal is done (Header adds the blinking)
   const resting = stats.today.goalMet ? "smile" : "idle";
-  const face = outcome?.result === "wrong" ? "sad" : outcome && outcome.result !== "skipped" ? "happy" : resting;
+  const face = outcome?.result === "wrong" ? "sad" : outcome ? "happy" : resting;
   // strictly boolean: a bare 0 leaking into the markup crashes Ink ("Text string must be rendered inside <Text>")
   const paused = pausedUntil > nextAt || (now >= nextAt && pausedUntil > 0);
   // asleep: no key pressed for a while, whether a question is open or not; a key always wakes it,
-  // even during snooze or quiet hours (where it nods off again sooner)
+  // even during a pause or quiet hours (where it nods off again sooner)
   const idleLimit = phase === "waiting" && pausedUntil > 0 ? PAUSED_SLEEP_AFTER_MS : SLEEP_AFTER_MS;
   const asleep = phase !== "loading" && now - lastActive > idleLimit;
   asleepRef.current = asleep;
@@ -310,28 +442,34 @@ export function App({ session, deck, initialSettings, alerts, persistSettings, o
   if (screen === "evolve" && evolution)
     return html`<${Box} flexDirection="column" marginY=${1}><${Evolution} ...${evolution} onClose=${() => {
       setEvolution(null);
-      setScreen("quiz");
+      nextCeremony();
     }} /><//>`;
+  if (screen === "die")
+    return html`<${Box} flexDirection="column" marginY=${1}><${DieRoll} element=${stats.companion.element} stage=${stats.companion.index} play=${alerts.play} onClose=${nextCeremony} /><//>`;
+  if (screen === "the-one") return html`<${Box} flexDirection="column" marginY=${1}><${TheOne} play=${alerts.play} onClose=${nextCeremony} /><//>`;
   if (screen === "stats") return html`<${Box} flexDirection="column" marginY=${1}><${Stats} stats=${stats} getMonth=${session.month} onClose=${() => setScreen("quiz")} /><//>`;
-  if (screen === "companion") return html`<${Box} flexDirection="column" marginY=${1}><${Companion} current=${stats.companion.index} best=${stats.streak.best} onClose=${() => setScreen("quiz")} /><//>`;
-  if (screen === "tip") return html`<${Box} flexDirection="column" marginY=${1}><${Tip} nextTip=${session.nextTip} onClose=${() => setScreen("quiz")} /><//>`;
+  if (screen === "companion") return html`<${Box} flexDirection="column" marginY=${1}><${Companion} current=${stats.companion.index} best=${stats.streak.best} element=${stats.companion.element} roll=${stats.companion.roll} onClose=${() => setScreen("quiz")} /><//>`;
+  if (screen === "help") return html`<${Box} flexDirection="column" marginY=${1}><${Help} onClose=${() => setScreen("quiz")} /><//>`;
   if (screen === "missed") return html`<${Box} flexDirection="column" marginY=${1}><${Missed} getMissed=${session.missed} onClose=${() => setScreen("quiz")} /><//>`;
-  if (screen === "badges") return html`<${Box} flexDirection="column" marginY=${1}><${Badges} badges=${stats.badges} onClose=${() => setScreen("quiz")} /><//>`;
+  if (screen === "badges") return html`<${Box} flexDirection="column" marginY=${1}><${Badges} badges=${stats.badges} fresh=${freshBadges} onClose=${() => setScreen("quiz")} /><//>`;
 
   return html`
     <${Box} flexDirection="column" marginY=${1}>
-      <${Header} deck=${deck} everyMs=${settings.everyMs} wordCount=${question?.wordCount} stats=${stats} combo=${session.totals.combo} face=${face} event=${petEvent} tick=${tick} asleep=${asleep} />
+      <${Header} deck=${deck} everyMs=${settings.everyMs} wordCount=${question?.wordCount ?? empty?.count} stats=${stats} combo=${session.totals.combo} face=${face} event=${petEvent} tick=${tick} asleep=${asleep} />
       <${Box} marginTop=${1} flexDirection="column">
-        ${screen === "settings"
-          ? html`<${Settings} settings=${settings} onChange=${changeSettings} onClose=${() => setScreen("quiz")} />`
-          : html`
+        ${screen === "settings" && html`<${Settings} settings=${settings} onChange=${changeSettings} onClose=${() => setScreen("quiz")} onAction=${library ? () => setScreen("reset") : null} />`}
+        ${screen === "reset" && html`<${Reset} stats=${stats} actions=${library} onConfirm=${reset} onClose=${() => setScreen("settings")} />`}
+        ${screen === "add" && html`<${AddCard} current=${deck} actions=${library} onDone=${addDone} startNew=${addNew} />`}
+        ${screen === "decks" && html`<${Decks} current=${deck} actions=${library} onPick=${switchDeck} onNew=${() => (setAddNew(true), setScreen("add"))} onClose=${() => setScreen("quiz")} />`}
+        ${!["settings", "reset", "add", "decks"].includes(screen) &&
+          html`
               <${Fragment}>
               ${question &&
               html`
                 <${Box} flexDirection="column" width=${width}>
                   <${CardTop} label=${question.label} width=${width} color=${border} />
                   <${Box} flexDirection="column" borderStyle="round" borderTop=${false} borderColor=${border} paddingX=${2} paddingTop=${1}>
-                    <${Text} bold>${question.prompt}<//>
+                    <${Marked} bold text=${question.prompt} plain=${!question.tour} />
                     ${phase === "asking" && hintLevel > 0 && html`<${Text} dimColor>hint   ${makeHint(hintTarget(question.expected), hintLevel)}<//>`}
                     <${Box} marginTop=${1} flexDirection="column">
                       ${phase === "asking" && html`<${AnswerInput} key=${question.word.noteId + question.direction} onSubmit=${submit} onCommand=${runCommand} onExit=${requestExit} onEdit=${clearProblem} commands=${commandsFor({ phase: "asking" })} />`}
@@ -340,26 +478,28 @@ export function App({ session, deck, initialSettings, alerts, persistSettings, o
                   <//>
                 <//>
               `}
+              ${phase === "empty" && html`<${EmptyDeck} deck=${deck} ...${empty} now=${now} width=${width} />`}
               ${confetti && html`<${Confetti} width=${width} onDone=${() => setConfetti(false)} />`}
-              ${outcome?.cheers?.length > 0 && html`<${Cheers} cheers=${outcome.cheers} />`}
+              ${outcome?.cheers?.length > 0 && html`<${Cheers} cheers=${outcome.cheers} play=${alerts.play} />`}
               ${phase === "waiting" && tip && html`<${TipBox} tip=${tip} width=${width} />`}
               <${Box} paddingX=${1} marginTop=${1} flexDirection="column">
-                ${question?.cached && html`<${Text} color=${theme.warn}>Anki is offline, using the saved word list<//>`}
                 ${problem && html`<${Text} color=${theme.bad}>${problem}<//>`}
-                ${phase === "loading" && html`<${Text} dimColor>${frame} loading…<//>`}
+                ${phase === "loading" && html`<${Text}><${Text} color=${theme.accent}>${frame}<//><${Text} dimColor> loading…<//><//>`}
                 ${notice && html`<${Text} color=${theme.accent}>${notice}<//>`}
                 ${phase === "waiting" && paused && html`<${Text} dimColor>paused until ${formatClock(pausedUntil)}${inQuietHours(now, settings.quiet) ? " (quiet hours)" : ""}<//>`}
+                ${phase === "waiting" && !paused && restUntil && nextAt - now > settings.everyMs && html`<${Text} dimColor>nothing waiting · next card ${whenDue(restUntil, now)}<//>`}
                 ${phase === "waiting" &&
                 !paused &&
+                !(restUntil && nextAt - now > settings.everyMs) &&
                 html`
                   <${Text}>
-                    <${Text} dimColor>${frame} <//>
+                    <${Text} color=${theme.accent}>${frame} <//>
                     <${Bar} value=${Math.max(0, nextAt - now)} max=${settings.everyMs} width=${14} color="#6b5e8a" />
-                    <${Text} dimColor>  next word in ${clock(nextAt - now)}<//>
+                    <${Text} dimColor>  next card in ${clock(nextAt - now)}<//>
                   <//>
                 `}
-                ${phase === "waiting" && commandMode && html`<${AnswerInput} commandOnly initial="/" commands=${commandsFor({ phase: "waiting", canOverrule: session.canOverrule() })} onCommand=${runCommand} onCancel=${() => setCommandMode(false)} onEdit=${clearProblem} />`}
-                ${phase !== "loading" && !commandMode && html`<${Text} dimColor>${phase === "asking" ? "enter submit · / commands · esc quit" : `${session.canOverrule() ? "/correct if you were right · " : ""}enter ask now · / commands · q quit`}<//>`}
+                ${(phase === "waiting" || phase === "empty") && commandMode && html`<${AnswerInput} commandOnly initial="/" commands=${commandsFor({ phase: "waiting", canOverrule: session.canOverrule() })} onCommand=${runCommand} onCancel=${() => setCommandMode(false)} onEdit=${clearProblem} />`}
+                ${phase !== "loading" && !commandMode && html`<${KeyHints} text=${phase === "asking" ? "enter submit (empty: reveal) · / commands · esc quit" : phase === "empty" ? "/add · / commands · q quit" : `${session.canOverrule() ? "/correct if you were right · " : ""}enter ask now · / commands · q quit`} />`}
               <//>
               <//>
             `}

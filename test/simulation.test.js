@@ -11,7 +11,7 @@ test("a long random run keeps the progress data consistent", async () => {
   let seed = 42;
   const random = () => ((seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296);
   const session = createSession({
-    loadWords: async () => ({ words, cached: false }),
+    loadWords: async () => ({ words }),
     state,
     getSettings: () => ({ ...DEFAULTS, dailyGoal: 15 }),
     save: async () => {},
@@ -23,7 +23,14 @@ test("a long random run keeps the progress data consistent", async () => {
     if (random() < 0.15) { clock += 86_400_000; continue; } // a day off
     const perDay = Math.floor(random() * 40);
     for (let i = 0; i < perDay; i++) {
-      const q = await session.next();
+      let q;
+      try {
+        q = await session.next();
+      } catch (err) {
+        if (!err.empty) throw err;
+        clock += 30 * 60_000; // nothing waiting right now: come back later
+        continue;
+      }
       const roll = random();
       const text = roll < 0.6 ? q.expected[0] : roll < 0.7 ? q.expected[0].slice(0, -1) : "wrong";
       const result = await session.answer(q, text, { hinted: random() < 0.1 });

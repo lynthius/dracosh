@@ -1,0 +1,67 @@
+import assert from "node:assert/strict";
+import { spawn } from "node:child_process";
+import { existsSync, mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { test } from "node:test";
+
+process.env.DRACOSH_HOME = mkdtempSync(join(tmpdir(), "dracosh-"));
+const { acquireLock, runningPid } = await import("../src/lock.js");
+const LOCK = join(process.env.DRACOSH_HOME, "dracosh.lock");
+
+test("a second window is refused while the first one runs; a lock left by a crash isn't", async () => {
+  const other = spawn(process.execPath, ["-e", "setTimeout(() => {}, 5000)"]);
+  writeFileSync(LOCK, JSON.stringify({ pid: other.pid }));
+  assert.equal(runningPid(), other.pid);
+  assert.throws(() => acquireLock(), /already running in another window/);
+  other.kill();
+  await new Promise((resolve) => other.on("exit", resolve));
+  assert.equal(runningPid(), null, "that process is gone");
+  const release = acquireLock();
+  assert.ok(existsSync(LOCK));
+  release();
+  assert.equal(existsSync(LOCK), false);
+});
+
+test("of two windows started at the same moment, only one gets the lock", async () => {
+  const { execFileSync, spawn: run } = await import("node:child_process");
+  const script = `import(${JSON.stringify(new URL("../src/lock.js", import.meta.url).href)}).then(({ acquireLock }) => { try { acquireLock(); console.log("got it"); setTimeout(() => {}, 800); } catch { console.log("refused"); } });`;
+  const outputs = await Promise.all(
+    Array.from({ length: 4 }, () => new Promise((resolve) => {
+      const child = run(process.execPath, ["--input-type=module", "-e", script], { env: process.env });
+      let out = "";
+      child.stdout.on("data", (d) => (out += d));
+      child.on("exit", () => resolve(out.trim()));
+    }))
+  );
+  assert.equal(outputs.filter((o) => o === "got it").length, 1, outputs.join(", "));
+});
+
+test("several windows racing over a stale lock: still only one runs", async () => {
+  const { writeFileSync: write } = await import("node:fs");
+  const { spawn: run } = await import("node:child_process");
+  const script = `import(${JSON.stringify(new URL("../src/lock.js", import.meta.url).href)}).then(({ acquireLock }) => { try { acquireLock(); console.log("got it"); setTimeout(() => {}, 800); } catch { console.log("refused"); } });`;
+  for (let round = 0; round < 5; round++) {
+    write(LOCK, JSON.stringify({ pid: 999999 }));
+    const outputs = await Promise.all(
+      Array.from({ length: 3 }, () => new Promise((resolve) => {
+        const child = run(process.execPath, ["--input-type=module", "-e", script], { env: process.env });
+        let out = "";
+        child.stdout.on("data", (d) => (out += d));
+        child.on("exit", () => resolve(out.trim()));
+      }))
+    );
+    assert.equal(outputs.filter((o) => o === "got it").length, 1, `round ${round}: ${outputs.join(", ")}`);
+  }
+});
+
+test("only Dracosh's own temp files are cleaned up", async () => {
+  const { writeFileSync: write, existsSync: exists } = await import("node:fs");
+  const home = process.env.DRACOSH_HOME;
+  write(join(home, "notes.tmp"), "mine");
+  write(join(home, "state.json.12345.tmp"), "{}");
+  const release = acquireLock();
+  release();
+  assert.ok(exists(join(home, "notes.tmp")));
+  assert.equal(exists(join(home, "state.json.12345.tmp")), false);
+});

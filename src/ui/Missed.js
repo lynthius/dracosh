@@ -1,6 +1,6 @@
 import { Fragment, useState } from "react";
 import { Box, Text, useInput } from "ink";
-import { html, PANEL_WIDTH, theme } from "./kit.js";
+import { html, KeyHints, theme, usePanelWidth } from "./kit.js";
 
 const MAX_ROWS = 10;
 
@@ -8,6 +8,7 @@ const dayLabel = (offset, date) => (offset === 0 ? "today" : offset === -1 ? `ye
 
 // Words you got wrong on a day, with what you typed and whether you got them right afterwards.
 export function Missed({ getMissed, onClose }) {
+  const panel = usePanelWidth();
   const [offset, setOffset] = useState(0);
   useInput((input, key) => {
     if (key.escape || key.return || input === "q") return onClose();
@@ -20,10 +21,10 @@ export function Missed({ getMissed, onClose }) {
 
   return html`
     <${Fragment}>
-      <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.accent} paddingX=${2} width=${PANEL_WIDTH}>
+      <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.accent} paddingX=${2} width=${panel}>
         <${Box}>
           <${Text} bold color=${theme.accent}>Missed<//>
-          <${Text} dimColor>  ${dayLabel(offset, date)} · ${items.length} word${items.length === 1 ? "" : "s"}<//>
+          <${Text} dimColor>  ${dayLabel(offset, date)} · ${items.length} card${items.length === 1 ? "" : "s"}<//>
         <//>
         ${items.length === 0
           ? html`<${Box} marginTop=${1}><${Text} dimColor>${offset === 0 ? "Nothing missed so far today." : "Nothing missed that day."}<//><//>`
@@ -38,7 +39,7 @@ export function Missed({ getMissed, onClose }) {
                         <${Text} dimColor>  ${item.label}${item.times > 1 ? ` · missed ${item.times}×` : ""}<//>
                       <//>
                       <${Text}>   ${item.expected.join(", ")}<//>
-                      <${Text} dimColor>   you wrote: ${item.answer}${item.recovered ? " · got it right since" : ""}<//>
+                      <${Text} dimColor>   ${item.answer ? `you wrote: ${item.answer}` : "no answer"}${item.recovered ? " · got it right since" : ""}<//>
                     <//>
                   `
                 )}
@@ -46,7 +47,7 @@ export function Missed({ getMissed, onClose }) {
               <//>
             `}
       <//>
-      <${Box} paddingX=${1}><${Text} dimColor>←/→ day · esc back<//><//>
+      <${Box} paddingX=${1}><${KeyHints} text="←/→ day · esc back" /><//>
     <//>
   `;
 }
