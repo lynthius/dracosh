@@ -79,3 +79,11 @@ test("a deck name already taken is caught up front, the tour's name is free, and
   await assert.rejects(startDeck({ name: "x".repeat(MAX_DECK_NAME + 1) }), /characters or fewer/);
   await assert.rejects(startDeck({ name: "BIOLOGY" }), /already a deck called "Biology"/);
 });
+
+test("nothing you'd have to type in the quiz may start with /", async () => {
+  await startDeck({ name: "Unix", bothWays: false });
+  await assert.rejects(addCardTo("Unix", { front: "the root", back: ["/"] }), /can't start with \//);
+  assert.ok((await addCardTo("Unix", { front: "/etc", back: ["config"] })).card, "a front is only shown in a one-way deck");
+  await startDeck({ name: "Both", bothWays: true });
+  await assert.rejects(addCardTo("Both", { front: "/etc", back: ["config"] }), /can't start with \//);
+});

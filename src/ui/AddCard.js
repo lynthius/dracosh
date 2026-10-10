@@ -100,6 +100,7 @@ export function AddCard({ current, actions, onDone, startNew = false }) {
     if (step === "back") {
       const answers = splitAnswers(value);
       if (!answers.length) return setError("A card needs an answer.");
+      if (answers.some((a) => a.startsWith("/"))) return setError("An answer can't start with /: in the quiz that opens the commands.");
       setDraft((d) => ({ ...d, back: answers }));
       return setStep("example");
     }

@@ -62,6 +62,9 @@ export async function addCardTo(deckName, fields) {
   const library = await loadLibrary();
   const deck = findDeck(library, deckName);
   if (!deck) throw new Error(`The deck "${deckName}" is gone.`);
+  // in the quiz "/" opens the commands, so nothing you'd have to type may start with it
+  const typed = deck.directions === "forward" ? [fields.back].flat() : [fields.front, fields.back].flat();
+  if (typed.some((text) => String(text ?? "").trim().startsWith("/"))) throw new Error("An answer can't start with /: in the quiz that opens the commands.");
   const result = addCard(library, deck.id, fields);
   if (result.card) await saveLibrary(library);
   return result;
