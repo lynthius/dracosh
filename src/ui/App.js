@@ -25,7 +25,7 @@ import { Stats } from "./Stats.js";
 import { Summary } from "./Summary.js";
 import { TheOne } from "./TheOne.js";
 
-const SPINNER = ["▘", "▝", "▗", "▖"]; // a pixel going round a square
+const SPINNER = ["⠚", "⠓", "⠋", "⠙"]; // the old braille dots on a 2×2 square: the gap goes round
 const TICK_MS = 250; // the steady redraw: slow enough to stay idle for hours, fast enough for the spinner
 const SLEEP_AFTER_MS = 3 * 60_000; // no key pressed for this long while waiting → the dragon dozes off
 const PAUSED_SLEEP_AFTER_MS = 15_000; // during snooze or quiet hours it nods off again much sooner
