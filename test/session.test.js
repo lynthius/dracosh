@@ -97,7 +97,7 @@ test("/correct overrules a wrong answer and remembers it for that card", async (
 
   // the same answer on the same card is now accepted straight away
   const again = { ...q };
-  const second = await session.answer(again, "ZUPEŁNIE inna odpowiedz");
+  const second = await session.answer(again, "ZUPELNIE inna odpowiedz!");
   assert.equal(second.result, "exact");
 });
 

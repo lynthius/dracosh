@@ -15,7 +15,7 @@ It's made for people who live in a terminal or spend most of the day at a comput
 - Your cards live in Dracosh's own library, organised in decks; no other app needs to be running
 - Add cards, start decks and switch between them right in the app (`/add`, `/decks`)
 - Each deck is asked both ways (kot → cat and cat → kot) or one way only, as you choose when you make it
-- Forgiving answer checks: case and Polish diacritics don't matter, one typo is fine on longer words, and after a miss you see letter by letter where you went wrong
+- Forgiving answer checks: case and punctuation don't matter, a missing Polish letter (ż, ó, ł…) still counts and shows the right spelling, one typo is fine on longer words, and after a miss you see letter by letter where you went wrong
 - Leitner boxes, so the cards you know come back less and less often; a card is only asked when it's due
 - Daily goal, streaks (weekends and days off don't break them) and 36 badges (one of them a secret)
 - A pixel dragon that hatches from an egg, evolves over a year of streaks, blinks, and falls asleep if you ignore it
