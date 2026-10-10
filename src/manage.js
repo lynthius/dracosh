@@ -15,7 +15,7 @@ export async function allDecks() {
 // your decks (the tour isn't one), with how many cards each holds: /add lets you pick one
 export async function ownDecks() {
   const library = await loadLibrary();
-  return library.decks.filter((deck) => !deck.tour).map((deck) => ({ name: deck.name, cards: cardsOf(library, deck.id).length }));
+  return library.decks.filter((deck) => !deck.tour).map((deck) => ({ name: deck.name, cards: cardsOf(library, deck.id).length, bothWays: deck.directions !== "forward" }));
 }
 
 // A new deck. Your first one replaces the tour: it's removed (after a backup) and the ids of its cards are
@@ -32,6 +32,9 @@ export async function startDeck({ name, bothWays }) {
   await saveLibrary(library);
   return { deck, removed };
 }
+
+export const SLASH_ANSWER = "An answer can't start with /: in the quiz that opens the commands.";
+export const SLASH_FRONT = "In a deck asked both ways the front is an answer too, so it can't start with /.";
 
 // the deck with this name (ignoring case), if any: /add says so before asking anything else
 export const existingDeck = async (name) => {
@@ -63,8 +66,9 @@ export async function addCardTo(deckName, fields) {
   const deck = findDeck(library, deckName);
   if (!deck) throw new Error(`The deck "${deckName}" is gone.`);
   // in the quiz "/" opens the commands, so nothing you'd have to type may start with it
-  const typed = deck.directions === "forward" ? [fields.back].flat() : [fields.front, fields.back].flat();
-  if (typed.some((text) => String(text ?? "").trim().startsWith("/"))) throw new Error("An answer can't start with /: in the quiz that opens the commands.");
+  const slash = (text) => String(text ?? "").trim().startsWith("/");
+  if ([fields.back].flat().some(slash)) throw new Error(SLASH_ANSWER);
+  if (deck.directions !== "forward" && slash(fields.front)) throw new Error(SLASH_FRONT);
   const result = addCard(library, deck.id, fields);
   if (result.card) await saveLibrary(library);
   return result;

@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useState } from "react";
 import { Box, Text } from "ink";
 import { MAX_DECK_NAME } from "../library.js";
+import { SLASH_ANSWER, SLASH_FRONT } from "../manage.js";
 import { AnswerInput } from "./AnswerInput.js";
 import { Choice, CHOICE_KEYS } from "./Choice.js";
 import { html, KeyHints, theme, usePanelWidth } from "./kit.js";
@@ -25,6 +26,7 @@ export function AddCard({ current, actions, onDone, startNew = false }) {
   const [decks, setDecks] = useState([]);
   const [picked, setPicked] = useState(0);
   const [ways, setWays] = useState(0);
+  const [bothWays, setBothWays] = useState(false); // the deck's front is an answer too
   const [deck, setDeck] = useState(null);
   const [newDeck, setNewDeck] = useState(null); // { name, removed } once a first deck was started here
   const [draft, setDraft] = useState({ front: "", back: [] });
@@ -51,6 +53,7 @@ export function AddCard({ current, actions, onDone, startNew = false }) {
     try {
       const { deck: created, removed } = await actions.startDeck({ name: deck, bothWays });
       setDeck(created.name);
+      setBothWays(bothWays);
       setNewDeck({ name: created.name, removed });
       setMessage(`Your deck "${created.name}" is ready. Now its first card:`);
       setStep("front");
@@ -91,6 +94,7 @@ export function AddCard({ current, actions, onDone, startNew = false }) {
     }
     if (step === "front") {
       if (!value) return setError("A card needs a front.");
+      if (bothWays && value.startsWith("/")) return setError(SLASH_FRONT);
       return actions.existingCard(deck, value).then((existing) => {
         if (existing) return setError(`"${existing.front}" is already in ${deck}.`);
         setDraft({ front: value, back: [] });
@@ -100,7 +104,7 @@ export function AddCard({ current, actions, onDone, startNew = false }) {
     if (step === "back") {
       const answers = splitAnswers(value);
       if (!answers.length) return setError("A card needs an answer.");
-      if (answers.some((a) => a.startsWith("/"))) return setError("An answer can't start with /: in the quiz that opens the commands.");
+      if (answers.some((a) => a.startsWith("/"))) return setError(SLASH_ANSWER);
       setDraft((d) => ({ ...d, back: answers }));
       return setStep("example");
     }
@@ -110,6 +114,7 @@ export function AddCard({ current, actions, onDone, startNew = false }) {
   function pickDeck(index) {
     if (index === decks.length) return setStep("deck");
     setDeck(decks[index].name);
+    setBothWays(decks[index].bothWays);
     setStep("front");
   }
 

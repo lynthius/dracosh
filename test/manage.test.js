@@ -54,7 +54,7 @@ test("more decks can follow, and each one lists its cards", async () => {
   const { removed } = await startDeck({ name: "Biology", bothWays: false });
   assert.deepEqual(removed, [], "no tour left to remove");
   await addCardTo("Biology", { front: "What do mitochondria make?", back: ["energy", "ATP"] });
-  assert.deepEqual(await ownDecks(), [{ name: "Spanish", cards: 1 }, { name: "Biology", cards: 1 }]);
+  assert.deepEqual(await ownDecks(), [{ name: "Spanish", cards: 1, bothWays: true }, { name: "Biology", cards: 1, bothWays: false }]);
   assert.deepEqual(await allDecks(), [{ name: "Spanish", cards: 1, tour: false }, { name: "Biology", cards: 1, tour: false }]);
 });
 
