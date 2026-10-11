@@ -1,8 +1,8 @@
 import { t } from "../i18n.js";
 import React, { Fragment, useEffect, useState } from "react";
-import { Box, Text, useInput } from "ink";
+import { Box, useInput } from "ink";
 import { elementName, ELEMENTS } from "../progress.js";
-import { html, KeyHints, theme, usePanelWidth } from "./kit.js";
+import { html, KeyHints, Text, theme, usePanelWidth } from "./kit.js";
 import { ELEMENT_COLOR, Mascot } from "./Mascot.js";
 
 const FRAME_MS = 80;

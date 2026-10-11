@@ -1,9 +1,9 @@
 import { t } from "../i18n.js";
 import { Fragment, useState } from "react";
-import { Box, Text, useInput } from "ink";
+import { Box, useInput } from "ink";
 import { dragonName } from "../progress.js";
 import { formatRange } from "../vacation.js";
-import { html, KeyHints, theme, usePanelWidth } from "./kit.js";
+import { html, KeyHints, Text, theme, usePanelWidth } from "./kit.js";
 
 // One shape for every day; only the color tells them apart, GitHub-contribution style.
 const TILE = {

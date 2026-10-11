@@ -1,9 +1,32 @@
-import React, { useEffect, useState } from "react";
-import { Text, useStdout } from "ink";
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { Text as InkText, Transform, useStdout } from "ink";
 import htm from "htm";
 import { t } from "../i18n.js";
 
 export const html = htm.bind(React.createElement);
+
+// Ink wraps with wrap-ansi and keeps the spaces, so when a word ends exactly at the edge, the space
+// after it starts the next line (" elle viendra…"). In a text without line breaks of its own, any
+// line after the first comes from wrapping, and a space at its start is that leftover: it goes.
+// A space painted inverse or on a background (the answer line's cursor) is something to see: it stays.
+const unspill = (line, index) => {
+  if (index === 0) return line;
+  const [, codes, space] = /^((?:\x1b\[[\d;]*m)*)(\s*)/.exec(line);
+  return !space || /\x1b\[(?:7|4\d|10\d)[;m]/.test(codes) ? line : codes + line.slice(codes.length + space.length);
+};
+const InsideText = createContext(false);
+const hasLineBreak = (node) =>
+  typeof node === "string" ? node.includes("\n") : Array.isArray(node) ? node.some(hasLineBreak) : Boolean(node?.props) && hasLineBreak(node.props.children);
+
+// Ink's Text, minus that space. Only the outermost Text wraps, so only it gets the fix; a Text that
+// truncates instead of wrapping, or has line breaks of its own (indentation may follow them), is
+// left as it is. Every UI file takes Text from here.
+export function Text(props) {
+  const nested = useContext(InsideText);
+  const text = React.createElement(InkText, props);
+  if (nested || (props.wrap && props.wrap !== "wrap") || hasLineBreak(props.children)) return text;
+  return React.createElement(InsideText.Provider, { value: true }, React.createElement(Transform, { transform: unspill }, text));
+}
 
 // Dracosh palette: soft violet accents and a green dragon on dark, gold for fire and glory
 export const theme = {

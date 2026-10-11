@@ -1,8 +1,8 @@
 import { Fragment, useEffect, useState } from "react";
-import { Box, Text } from "ink";
+import { Box } from "ink";
 import { t } from "../i18n.js";
 import { Choice, choiceHints } from "./Choice.js";
-import { html, KeyHints, theme, usePanelWidth } from "./kit.js";
+import { html, KeyHints, Text, theme, usePanelWidth } from "./kit.js";
 
 
 // Reset from /settings: pick what to clear, see exactly what goes, then confirm (No is the default).

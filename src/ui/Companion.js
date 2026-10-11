@@ -1,8 +1,8 @@
 import { t } from "../i18n.js";
 import { Fragment } from "react";
-import { Box, Text, useInput } from "ink";
+import { Box, useInput } from "ink";
 import { dragonName, elementName, STAGES } from "../progress.js";
-import { html, KeyHints, theme, usePanelWidth } from "./kit.js";
+import { html, KeyHints, Text, theme, usePanelWidth } from "./kit.js";
 import { ELEMENT_COLOR, Mascot } from "./Mascot.js";
 
 const requirement = (stage, locked) => (stage.from === 0 ? t("companion.fromStart") : t(locked ? "companion.needsDays" : "companion.days", { count: stage.from }));

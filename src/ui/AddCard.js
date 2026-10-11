@@ -1,11 +1,11 @@
 import { Fragment, useEffect, useState } from "react";
-import { Box, Text } from "ink";
+import { Box } from "ink";
 import { MAX_DECK_NAME } from "../library.js";
 import { slashAnswer, slashFront } from "../manage.js";
 import { AnswerInput } from "./AnswerInput.js";
 import { Choice, choiceHints } from "./Choice.js";
 import { t } from "../i18n.js";
-import { html, KeyHints, theme, usePanelWidth } from "./kit.js";
+import { html, KeyHints, Text, theme, usePanelWidth } from "./kit.js";
 
 const FIELDS = ["deck", "front", "back", "example"]; // label and hint: add.fields.<name> in the locale
 

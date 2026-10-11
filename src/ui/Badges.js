@@ -1,7 +1,7 @@
 import { t } from "../i18n.js";
 import { Fragment, useEffect, useState } from "react";
-import { Box, Text, useInput } from "ink";
-import { html, KeyHints, theme, usePanelWidth } from "./kit.js";
+import { Box, useInput } from "ink";
+import { html, KeyHints, Text, theme, usePanelWidth } from "./kit.js";
 import { badgeColor, BadgeIcon, ICON_WIDTH } from "./icons.js";
 
 const COLUMNS = 3;

@@ -1,9 +1,9 @@
 import { Fragment, useState } from "react";
-import { Box, Text, useInput } from "ink";
+import { Box, useInput } from "ink";
 import { language, LANGUAGES, t } from "../i18n.js";
 import { GOALS, INTERVALS, QUIET_PRESETS, TIP_MODES, VOLUMES, formatInterval } from "../settings.js";
 import { formatQuiet } from "../quiet.js";
-import { Bar, html, KeyHints, theme, usePanelWidth } from "./kit.js";
+import { Bar, html, KeyHints, Text, theme, usePanelWidth } from "./kit.js";
 
 function VolumeValue({ value }) {
   return html`<${Text}><${Bar} value=${value} max=${1} width=${10} />  ${Math.round(value * 100)}%<//>`;

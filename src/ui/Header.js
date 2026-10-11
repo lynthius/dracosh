@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { t } from "../i18n.js";
-import { Box, Text } from "ink";
+import { Box } from "ink";
 import { formatInterval } from "../settings.js";
 import { formatDay } from "../vacation.js";
-import { AnimatedBar, html, theme } from "./kit.js";
+import { AnimatedBar, html, Text, theme } from "./kit.js";
 import { Flame } from "./icons.js";
 import { Mascot, MASCOT_WIDTH } from "./Mascot.js";
 

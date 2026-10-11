@@ -1,8 +1,8 @@
 import { t } from "../i18n.js";
 import React, { Fragment, useEffect, useState } from "react";
-import { Box, Text, useInput } from "ink";
+import { Box, useInput } from "ink";
 import { RING } from "./icons.js";
-import { html, KeyHints, theme, usePanelWidth } from "./kit.js";
+import { html, KeyHints, Text, theme, usePanelWidth } from "./kit.js";
 
 const FRAME_MS = 110;
 const WIDTH = 16; // pixels; each is drawn two characters wide

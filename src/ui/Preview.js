@@ -1,6 +1,6 @@
 import { t } from "../i18n.js";
 import { Fragment, useEffect, useMemo, useState } from "react";
-import { Box, Text, useApp, useInput } from "ink";
+import { Box, useApp, useInput } from "ink";
 import { DEMO_WORDS } from "../demo.js";
 import { addDays, dayKey } from "../dates.js";
 import { BADGES, elementName, ELEMENTS, ensureProgress, rollElement, STAGES } from "../progress.js";
@@ -14,7 +14,7 @@ import { Confetti } from "./Confetti.js";
 import { Evolution } from "./Evolution.js";
 import { Hatch } from "./Hatch.js";
 import { Header, Snore, useBlink, useMove } from "./Header.js";
-import { html, KeyHints, theme, usePanelWidth } from "./kit.js";
+import { html, KeyHints, Text, theme, usePanelWidth } from "./kit.js";
 import { Mascot } from "./Mascot.js";
 import { Stats } from "./Stats.js";
 import { Summary } from "./Summary.js";

@@ -1,11 +1,11 @@
 import { Fragment, useCallback, useEffect, useRef, useState } from "react";
-import { Box, Text, useApp, useInput, useStdout } from "ink";
+import { Box, useApp, useInput, useStdout } from "ink";
 import { commandsFor } from "../commands.js";
 import { diffChars } from "../diff.js";
 import { AnswerInput } from "./AnswerInput.js";
 import { Header } from "./Header.js";
 import { setLanguage, t } from "../i18n.js";
-import { Bar, cellWidth, cutToWidth, html, KeyHints, Marked, theme, Typewriter, usePanelWidth } from "./kit.js";
+import { Bar, cellWidth, cutToWidth, html, KeyHints, Marked, Text, theme, Typewriter, usePanelWidth } from "./kit.js";
 import { hintTarget, makeHint } from "../hint.js";
 import { formatClock, inQuietHours, quietEnd } from "../quiet.js";
 import { startOfTomorrow } from "../scheduler.js";

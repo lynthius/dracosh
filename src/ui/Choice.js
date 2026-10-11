@@ -1,6 +1,6 @@
-import { Box, Text, useInput } from "ink";
+import { Box, useInput } from "ink";
 import { t } from "../i18n.js";
-import { html, theme } from "./kit.js";
+import { html, Text, theme } from "./kit.js";
 
 // A question's answers as a list: ↑/↓ and Enter, a number, or an option's own keys ("t|y" in Polish).
 // Each option: { label, note?, key?, danger? }; `danger` paints it red while it's chosen.

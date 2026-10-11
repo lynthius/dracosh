@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { Box, Text } from "ink";
-import { html, theme } from "./kit.js";
+import { Box } from "ink";
+import { html, Text, theme } from "./kit.js";
 
 const ROWS = 4;
 const FRAME_MS = 100;

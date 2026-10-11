@@ -1,7 +1,7 @@
 import { t } from "../i18n.js";
 import { Fragment, useState } from "react";
-import { Box, Text, useInput } from "ink";
-import { html, KeyHints, theme, usePanelWidth } from "./kit.js";
+import { Box, useInput } from "ink";
+import { html, KeyHints, Text, theme, usePanelWidth } from "./kit.js";
 
 const MAX_ROWS = 10;
 

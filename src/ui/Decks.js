@@ -1,8 +1,8 @@
 import { Fragment, useEffect, useState } from "react";
-import { Box, Text, useInput } from "ink";
+import { Box, useInput } from "ink";
 import { t } from "../i18n.js";
 import { Choice, choiceHints } from "./Choice.js";
-import { html, KeyHints, theme, usePanelWidth } from "./kit.js";
+import { html, KeyHints, Text, theme, usePanelWidth } from "./kit.js";
 
 // /decks: your decks with their card counts; Enter quizzes the chosen one from now on, and
 // "+ New deck" starts one (`onNew`). Renaming and deleting decks come later.

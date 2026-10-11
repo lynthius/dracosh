@@ -1,9 +1,9 @@
 import { Fragment } from "react";
-import { Box, Text, useInput } from "ink";
+import { Box, useInput } from "ink";
 import { t } from "../i18n.js";
 import { MAX_FREEZES } from "../progress.js";
 import { BOX_INTERVALS_DAYS } from "../scheduler.js";
-import { cellWidth, html, KeyHints, theme, usePanelWidth } from "./kit.js";
+import { cellWidth, html, KeyHints, Text, theme, usePanelWidth } from "./kit.js";
 
 // built at render time, so the texts follow the app language
 const keys = () => [

@@ -1,8 +1,8 @@
 import { t } from "../i18n.js";
 import { useState } from "react";
-import { Box, Text, useInput } from "ink";
+import { Box, useInput } from "ink";
 import { COMMANDS, matchCommands } from "../commands.js";
-import { html, theme } from "./kit.js";
+import { html, Text, theme } from "./kit.js";
 
 function Palette({ matches, selected }) {
   return html`

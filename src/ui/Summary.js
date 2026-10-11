@@ -1,7 +1,7 @@
 import { t } from "../i18n.js";
 import { Fragment } from "react";
-import { Box, Text, useInput } from "ink";
-import { Bar, html, KeyHints, theme, usePanelWidth } from "./kit.js";
+import { Box, useInput } from "ink";
+import { Bar, html, KeyHints, Text, theme, usePanelWidth } from "./kit.js";
 import { dragonName } from "../progress.js";
 import { Flame } from "./icons.js";
 import { Mascot, MASCOT_WIDTH } from "./Mascot.js";

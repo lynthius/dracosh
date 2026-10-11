@@ -1,7 +1,7 @@
 import { t } from "../i18n.js";
 import React, { Fragment, useEffect, useState } from "react";
-import { Box, Text, useInput } from "ink";
-import { html, KeyHints, theme, usePanelWidth } from "./kit.js";
+import { Box, useInput } from "ink";
+import { html, KeyHints, Text, theme, usePanelWidth } from "./kit.js";
 import { Mascot } from "./Mascot.js";
 
 const FRAME_MS = 110;

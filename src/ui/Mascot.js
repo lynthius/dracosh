@@ -1,6 +1,5 @@
 import React from "react";
-import { Text } from "ink";
-import { html } from "./kit.js";
+import { html, Text } from "./kit.js";
 
 // A little dragon, drawn as pixels: every text row stacks two pixel rows using half blocks (▀ ▄ █).
 // Proper pixel art: O = dark outline, L = top highlight, B = body, D = bottom shade.
