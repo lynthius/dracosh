@@ -1,13 +1,13 @@
 {
   "commands": {
     "hint": "Odsłoń kolejną literę (karta nie przejdzie wyżej)",
-    "add": "Dodaj karty do talii albo załóż nową",
-    "decks": "Przełącz się na inną talię albo załóż nową",
-    "settings": "Język, odstęp, godziny ciszy, dźwięk, cel, porady",
+    "add": "Dodaj karty do talii albo stwórz nową",
+    "decks": "Przełącz się na inną talię albo stwórz nową",
+    "settings": "Język, interwał, godziny ciszy, dźwięk, cel, porady",
     "stats": "Seria, kalendarz miesiąca i podsumowanie odznak",
     "badges": "Wszystkie odznaki i co je odblokowuje",
-    "companion": "Twój smok, jego żywioł i formy przed nim",
-    "missed": "Karty, w których dziś był błąd",
+    "companion": "Twój smok, jego żywioł i kolejne formy",
+    "missed": "Błędne karty z dnia",
     "pause": "Przerwa (30m, 2h) albo wolne dni (3d, 24.12 2.01)",
     "help": "Klawisze, kiedy karty wracają, seria",
     "quit": "Zamknij Dracosha",
@@ -25,7 +25,7 @@
     "outsideTitle": "Poza quizem",
     "keys": {
       "enter": "Enter",
-      "enterWhat": "wyślij odpowiedź (pusta pokazuje odpowiedź); między kartami: następna karta",
+      "enterWhat": "wyślij odpowiedź (pusta odkrywa odpowiedź); między kartami, pokaż kolejną",
       "slashWhat": "otwórz komendy",
       "esc": "Esc",
       "escWhat": "wyczyść wpisany tekst albo wyjdź",
@@ -34,9 +34,9 @@
       "anyKeyWhat": "budzi śpiącego smoka"
     },
     "how": {
-      "boxes": "Dobra odpowiedź przenosi kartę do dalszego pudełka: wraca po {first}, a potem po {last} dniach. Błąd odsyła ją do pierwszego pudełka.",
+      "boxes": "Dobra odpowiedź przenosi kartę do wyższego pudełka: wraca po {first}, a potem po {last} dniach. Błąd odsyła ją do pierwszego pudełka.",
       "typos": "Jedna zła litera w dłuższym słowie wciąż się liczy, a Dracosh pokazuje poprawną pisownię.",
-      "streak": "Osiągaj cel dnia, żeby utrzymać serię; dzień, w którym zrobisz wszystkie dostępne karty, też się liczy. Twój smok rośnie razem z najdłuższą serią.",
+      "streak": "Osiągaj cel dnia, żeby utrzymać serię; dzień, w którym zrobisz wszystkie dostępne karty, też się liczy. Twój smok rośnie wraz z najdłuższą serią.",
       "freezes": "Zamrożenie ratuje opuszczony dzień. Na start masz {max} i co tydzień jedno wraca, maksymalnie {max}."
     },
     "outside": {
@@ -71,7 +71,7 @@
         "hint": "język Dracosha; samouczek też się przełączy"
       },
       "everyMs": {
-        "label": "Odstęp",
+        "label": "Interwał",
         "hint": "czas między pytaniami"
       },
       "sound": {
@@ -80,7 +80,7 @@
       },
       "volume": {
         "label": "Głośność",
-        "hint": "po zmianie gra próbka"
+        "hint": "po zmianie zagra próbka"
       },
       "dailyGoal": {
         "label": "Cel dnia",
@@ -197,7 +197,7 @@
     "titleFirst": "Załóż swoją pierwszą talię",
     "titleCard": "Dodaj kartę · {deck}",
     "deckReady": "Talia „{deck}” jest gotowa. Teraz jej pierwsza karta:",
-    "added": "Dodano „{front}” do talii {deck}. Następna karta albo Esc, żeby skończyć.",
+    "added": "Dodano „{front}” do talii {deck}. Następna karta albo Esc, żeby zakończyć.",
     "duplicateCard": "„{front}” już jest w talii {deck}.",
     "duplicateDeck": "Talia „{deck}” już istnieje.",
     "nameTooLong": "Nazwa może mieć najwyżej {max} znaków.",
@@ -234,7 +234,7 @@
       "noCardsNext": "Wpisz /add, żeby dodać pierwszą.",
       "deckDoneTitle": "Na dziś w talii „{deck}” nic więcej.",
       "deckDoneNext": "Jej karty wrócą {when}. Inne talie mają jeszcze karty: /decks",
-      "dayDoneTitle": "Na dziś wszystko.",
+      "dayDoneTitle": "Na dziś to wszystko.",
       "dayDoneNext": "Karty wrócą {when}. Chcesz więcej dzisiaj? /add i dodaj nowe.",
       "laterTitle": "Na razie nie ma czego ćwiczyć.",
       "laterNext": "Następna karta: {when}. Przyjdzie sama."
@@ -441,10 +441,10 @@
       "other": "Cel dnia osiągnięty · seria: {count} dnia"
     },
     "allDone": {
-      "one": "Na dziś wszystko · seria: {count} dzień",
-      "few": "Na dziś wszystko · seria: {count} dni",
-      "many": "Na dziś wszystko · seria: {count} dni",
-      "other": "Na dziś wszystko · seria: {count} dnia"
+      "one": "Na dziś to wszystko · seria: {count} dzień",
+      "few": "Na dziś to wszystko · seria: {count} dni",
+      "many": "Na dziś to wszystko · seria: {count} dni",
+      "other": "Na dziś to wszystko · seria: {count} dnia"
     },
     "evolved": "Twój towarzysz ewoluował: {name}!",
     "badge": "Nowa odznaka: {name} · {desc}",
@@ -763,7 +763,7 @@
     },
     "cards-boxes": {
       "cat": "Karty",
-      "text": "Dobra odpowiedź przenosi kartę do dalszego pudełka: wraca po 1, 3, 7, 14, a potem po 30 dniach."
+      "text": "Dobra odpowiedź przenosi kartę do wyższego pudełka: wraca po 1, 3, 7, 14, a potem po 30 dniach."
     },
     "cards-miss": {
       "cat": "Karty",
@@ -835,7 +835,7 @@
     },
     "settings-every": {
       "cat": "Ustawienia",
-      "text": "Karty za często albo za rzadko? Zmień odstęp w /settings."
+      "text": "Karty za często albo za rzadko? Zmień interwał w /settings."
     },
     "settings-sound": {
       "cat": "Ustawienia",
@@ -953,7 +953,7 @@
           "4",
           "cztery"
         ],
-        "example": "Każda dobra odpowiedź przenosi kartę do dalszego pudełka, więc widzisz ją coraz rzadziej."
+        "example": "Każda dobra odpowiedź przenosi kartę do wyższego pudełka, więc widzisz ją coraz rzadziej."
       },
       {
         "front": "Nie pamiętasz? Wpisz `/hint` i naciśnij Enter, a odpowiedź pojawi się litera po literze. Spróbuj, a potem wpisz `jabłko`",
