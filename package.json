@@ -30,7 +30,7 @@
   "files": [
     "src",
     "assets",
-    "data",
+    "locales",
     "NOTICE"
   ],
   "engines": {

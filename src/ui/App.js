@@ -4,6 +4,7 @@ import { commandsFor } from "../commands.js";
 import { diffChars } from "../diff.js";
 import { AnswerInput } from "./AnswerInput.js";
 import { Header } from "./Header.js";
+import { setLanguage, t } from "../i18n.js";
 import { Bar, cellWidth, cutToWidth, html, KeyHints, Marked, theme, Typewriter, usePanelWidth } from "./kit.js";
 import { hintTarget, makeHint } from "../hint.js";
 import { formatClock, inQuietHours, quietEnd } from "../quiet.js";
@@ -49,7 +50,7 @@ function AnswerDiff({ given, closest }) {
   const parts = diffChars(given, closest);
   return html`
     <${Text}>
-      <${Text} dimColor>you wrote <//>
+      <${Text} dimColor>${t("quiz.youWrote")}<//>
       ${parts.map((p, i) => html`<${Text} key=${i} color=${p.ok ? theme.good : theme.text} underline=${!p.ok}>${p.ch}<//>`)}
     <//>
   `;
@@ -60,14 +61,14 @@ function Verdict({ outcome, question }) {
   const showDiff = outcome.closest && outcome.given && !outcome.overruled && (wrong || outcome.result === "typo");
   return html`
     <${Box} flexDirection="column">
-      <${Text} color=${wrong ? theme.bad : theme.good} bold>${wrong ? "✗" : "✓"} ${question.expected.join(", ")}${outcome.result === "typo" ? "  (close enough)" : ""}<//>
+      <${Text} color=${wrong ? theme.bad : theme.good} bold>${wrong ? "✗" : "✓"} ${question.expected.join(", ")}${outcome.result === "typo" ? t("quiz.closeEnough") : ""}<//>
       ${showDiff && html`<${AnswerDiff} given=${outcome.given} closest=${outcome.closest} />`}
       ${question.word.example && html`<${Box} marginTop=${1}>${question.tour ? html`<${Marked} dimColor text=${question.word.example} />` : html`<${Text} dimColor italic>“${question.word.example}”<//>`}<//>`}
       ${(outcome.hinted || outcome.overruled) &&
       html`
         <${Box} marginTop=${1} flexDirection="column">
-          ${outcome.hinted && html`<${Text} dimColor>hint used · the card stays in its box<//>`}
-          ${outcome.overruled && html`<${Text} color=${theme.good}>counted as correct${question.tour ? "" : ` · "${outcome.accepted}" is accepted from now on`}<//>`}
+          ${outcome.hinted && html`<${Text} dimColor>${t("quiz.hintUsed")}<//>`}
+          ${outcome.overruled && html`<${Text} color=${theme.good}>${t("quiz.countedCorrect")}${question.tour ? "" : t("quiz.acceptedFromNow", { answer: outcome.accepted })}<//>`}
         <//>
       `}
     <//>
@@ -109,21 +110,21 @@ function CardTop({ label, width, color }) {
 // "at 14:30", "tomorrow", "on 14 Oct"
 function whenDue(at, now) {
   const tomorrow = startOfTomorrow(now);
-  if (at < tomorrow) return `at ${formatClock(at)}`;
-  return at < startOfTomorrow(tomorrow) ? "tomorrow" : `on ${formatDay(dayKey(at))}`;
+  if (at < tomorrow) return t("quiz.when.at", { time: formatClock(at) });
+  return at < startOfTomorrow(tomorrow) ? t("quiz.when.tomorrow") : t("quiz.when.on", { day: formatDay(dayKey(at)) });
 }
 
 // what the quiz shows when the deck has nothing to ask: no countdown, just the way on
 function EmptyDeck({ deck, tour, count, nextDue, dayDone, now, width }) {
   const [title, next] = tour
-    ? ["You've finished the tour.", "Now make it yours: type /add to start your own deck."]
+    ? [t("quiz.empty.tourTitle"), t("quiz.empty.tourNext")]
     : !count
-      ? [`"${deck}" has no cards yet.`, "Type /add to add the first one."]
+      ? [t("quiz.empty.noCardsTitle", { deck }), t("quiz.empty.noCardsNext")]
       : nextDue >= startOfTomorrow(now) && !dayDone
-        ? [`Nothing more in "${deck}" today.`, `Its cards come back ${whenDue(nextDue, now)}. Other decks still have cards: /decks`]
+        ? [t("quiz.empty.deckDoneTitle", { deck }), t("quiz.empty.deckDoneNext", { when: whenDue(nextDue, now) })]
         : nextDue >= startOfTomorrow(now)
-        ? ["All done for today.", `Your cards come back ${whenDue(nextDue, now)}. Want more today? /add some new ones.`]
-        : ["Nothing to practise right now.", `The next card is due ${whenDue(nextDue, now)}. It will come by itself.`];
+        ? [t("quiz.empty.dayDoneTitle"), t("quiz.empty.dayDoneNext", { when: whenDue(nextDue, now) })]
+        : [t("quiz.empty.laterTitle"), t("quiz.empty.laterNext", { when: whenDue(nextDue, now) })];
   return html`
     <${Box} flexDirection="column" width=${width}>
       <${CardTop} label=${deck} width=${width} color=${theme.accent} />
@@ -138,7 +139,7 @@ function EmptyDeck({ deck, tour, count, nextDue, dayDone, now, width }) {
 function TipBox({ tip, width }) {
   return html`
     <${Box} flexDirection="column" paddingX=${1} marginTop=${2} width=${width}>
-      <${Box} marginBottom=${1}><${Text} color=${theme.accent}>tip · ${tip.cat}<//><//>
+      <${Box} marginBottom=${1}><${Text} color=${theme.accent}>${t("quiz.tip", { cat: tip.cat })}<//><//>
       <${Typewriter} text=${tip.text} dimColor />
     <//>
   `;
@@ -178,6 +179,9 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
   const asleepRef = useRef(false);
   const bestCombo = useRef(0);
   const settingsRef = useRef(settings);
+  const tourSync = useRef(Promise.resolve());
+  const deckRef = useRef(deck);
+  deckRef.current = deck;
   settingsRef.current = settings;
   const snoozeRef = useRef(0);
   snoozeRef.current = snoozeUntil;
@@ -316,8 +320,8 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
     if (name === "/companion") return setScreen("companion");
     if (name === "/missed") return setScreen("missed");
     if (name === "/help") return setScreen("help");
-    if (name === "/add") return library ? (setAddNew(false), setScreen("add")) : setNotice("The preview can't add cards; run dracosh for that.");
-    if (name === "/decks") return library ? setScreen("decks") : setNotice("The preview has one demo deck; run dracosh for yours.");
+    if (name === "/add") return library ? (setAddNew(false), setScreen("add")) : setNotice(t("quiz.previewNoAdd"));
+    if (name === "/decks") return library ? setScreen("decks") : setNotice(t("quiz.previewNoDecks"));
     if (name === "/hint" && phase === "asking") return setHintLevel((level) => level + 1);
     if (name === "/pause") {
       return session
@@ -326,9 +330,9 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
           if (snooze === "off") setSnoozeUntil(0);
           if (typeof snooze === "number") {
             setSnoozeUntil(Date.now() + snooze);
-            return phase === "asking" ? setNotice(`Paused until ${formatClock(Date.now() + snooze)}`) : undefined; // while waiting, the status line says it
+            return phase === "asking" ? setNotice(t("quiz.pausedUntilNotice", { time: formatClock(Date.now() + snooze) })) : undefined; // while waiting, the status line says it
           }
-          const paused = list && snoozeRef.current > Date.now() ? `Paused until ${formatClock(snoozeRef.current)}. ` : "";
+          const paused = list && snoozeRef.current > Date.now() ? t("quiz.pausedUntilList", { time: formatClock(snoozeRef.current) }) : "";
           setNotice(paused + message);
         })
         .catch((err) => setProblem(err.message));
@@ -342,9 +346,9 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
           if (phase === "empty") return ask(); // the card's next date changed: look again
           waitForNext(result.nextDue);
         })
-        .catch((err) => setProblem(`Couldn't save progress: ${err.message}`));
+        .catch((err) => setProblem(t("quiz.saveFailed", { error: err.message })));
     }
-    setProblem(`Unknown command ${name}`);
+    setProblem(t("quiz.unknownCommand", { name }));
   }
 
   function changeSettings(patch) {
@@ -356,6 +360,26 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
     persistSettings(patch).catch(() => {});
     if (patch.everyMs && phase === "waiting") setNextAt((at) => at - previous.everyMs + patch.everyMs);
     if (patch.volume !== undefined || patch.sound === true) alerts.play("correct-0"); // audible preview
+    if (patch.language) changeLanguage(patch.language);
+  }
+
+  // Every text follows at the next render; the tour is translated too, and asked again in the new
+  // language. One translation at a time, so flicking through languages ends on the last one.
+  function changeLanguage(lang) {
+    setLanguage(lang);
+    if (!library) return;
+    tourSync.current = tourSync.current
+      .then(() => library.matchTourLanguage())
+      .then((renamed) => {
+        if (!renamed) return;
+        if (deckRef.current === renamed.from) {
+          deckRef.current = renamed.to;
+          onSwitchDeck?.(renamed.to);
+          setDeck(renamed.to);
+        }
+        if (phase === "asking" && question?.tour) ask();
+      })
+      .catch(() => {});
   }
 
   // an empty answer means "I don't know": the answer is shown and the card counts as missed
@@ -370,7 +394,7 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
       setOutcome(result);
       celebrate(result);
     } catch (err) {
-      setProblem(`Couldn't save progress: ${err.message}`);
+      setProblem(t("quiz.saveFailed", { error: err.message }));
     } finally {
       busy.current = false;
       waitForNext(nextDue);
@@ -394,7 +418,7 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
     setFreshBadges([]);
     if (scope === "progress") {
       setScreen("quiz");
-      return setNotice("Your progress starts over. Your cards are all still here.");
+      return setNotice(t("quiz.progressReset"));
     }
     const tour = await library.resetLibrary();
     onSwitchDeck?.(tour);
@@ -412,7 +436,7 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
     const switching = started && (removed.length || phase === "empty" || addNew);
     if (switching) switchDeck(started);
     else if (phase === "empty" && added) ask();
-    const notes = [dropped && "The card you were writing wasn't saved.", started && !switching && `"${started}" is ready; you're still practising "${deck}". Switch with /decks.`];
+    const notes = [dropped && t("quiz.cardNotSaved"), started && !switching && t("quiz.deckReadyElsewhere", { deck: started, current: deck })];
     setNotice(notes.filter(Boolean).join(" ")); // after ask(), which clears the notice
   }
 
@@ -470,7 +494,7 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
                   <${CardTop} label=${question.label} width=${width} color=${border} />
                   <${Box} flexDirection="column" borderStyle="round" borderTop=${false} borderColor=${border} paddingX=${2} paddingTop=${1}>
                     <${Marked} bold text=${question.prompt} plain=${!question.tour} />
-                    ${phase === "asking" && hintLevel > 0 && html`<${Text} dimColor>hint   ${makeHint(hintTarget(question.expected), hintLevel)}<//>`}
+                    ${phase === "asking" && hintLevel > 0 && html`<${Text} dimColor>${t("quiz.hintLabel")}   ${makeHint(hintTarget(question.expected), hintLevel)}<//>`}
                     <${Box} marginTop=${1} flexDirection="column">
                       ${phase === "asking" && html`<${AnswerInput} key=${question.word.noteId + question.direction} onSubmit=${submit} onCommand=${runCommand} onExit=${requestExit} onEdit=${clearProblem} commands=${commandsFor({ phase: "asking" })} />`}
                       ${phase !== "asking" && outcome && html`<${Verdict} outcome=${outcome} question=${question} />`}
@@ -484,10 +508,10 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
               ${phase === "waiting" && tip && html`<${TipBox} tip=${tip} width=${width} />`}
               <${Box} paddingX=${1} marginTop=${1} flexDirection="column">
                 ${problem && html`<${Text} color=${theme.bad}>${problem}<//>`}
-                ${phase === "loading" && html`<${Text}><${Text} color=${theme.accent}>${frame}<//><${Text} dimColor> loading…<//><//>`}
+                ${phase === "loading" && html`<${Text}><${Text} color=${theme.accent}>${frame}<//><${Text} dimColor>${t("quiz.loading")}<//><//>`}
                 ${notice && html`<${Text} color=${theme.accent}>${notice}<//>`}
-                ${phase === "waiting" && paused && html`<${Text} dimColor>paused until ${formatClock(pausedUntil)}${inQuietHours(now, settings.quiet) ? " (quiet hours)" : ""}<//>`}
-                ${phase === "waiting" && !paused && restUntil && nextAt - now > settings.everyMs && html`<${Text} dimColor>nothing waiting · next card ${whenDue(restUntil, now)}<//>`}
+                ${phase === "waiting" && paused && html`<${Text} dimColor>${t("quiz.pausedUntil", { time: formatClock(pausedUntil) })}${inQuietHours(now, settings.quiet) ? t("quiz.quietHours") : ""}<//>`}
+                ${phase === "waiting" && !paused && restUntil && nextAt - now > settings.everyMs && html`<${Text} dimColor>${t("quiz.nothingWaiting", { when: whenDue(restUntil, now) })}<//>`}
                 ${phase === "waiting" &&
                 !paused &&
                 !(restUntil && nextAt - now > settings.everyMs) &&
@@ -495,11 +519,11 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
                   <${Text}>
                     <${Text} color=${theme.accent}>${frame} <//>
                     <${Bar} value=${Math.max(0, nextAt - now)} max=${settings.everyMs} width=${14} color="#6b5e8a" />
-                    <${Text} dimColor>  next card in ${clock(nextAt - now)}<//>
+                    <${Text} dimColor>${t("quiz.nextCardIn", { time: clock(nextAt - now) })}<//>
                   <//>
                 `}
                 ${(phase === "waiting" || phase === "empty") && commandMode && html`<${AnswerInput} commandOnly initial="/" commands=${commandsFor({ phase: "waiting", canOverrule: session.canOverrule() })} onCommand=${runCommand} onCancel=${() => setCommandMode(false)} onEdit=${clearProblem} />`}
-                ${phase !== "loading" && !commandMode && html`<${KeyHints} text=${phase === "asking" ? "enter submit (empty: reveal) · / commands · esc quit" : phase === "empty" ? "/add · / commands · q quit" : `${session.canOverrule() ? "/correct if you were right · " : ""}enter ask now · / commands · q quit`} />`}
+                ${phase !== "loading" && !commandMode && html`<${KeyHints} text=${phase === "asking" ? t("keyHints.asking") : phase === "empty" ? t("keyHints.empty") : session.canOverrule() ? t("keyHints.correctFirst", { rest: t("keyHints.waiting") }) : t("keyHints.waiting")} />`}
               <//>
               <//>
             `}

@@ -1,21 +1,16 @@
 import { Fragment, useEffect, useState } from "react";
 import { Box, Text } from "ink";
 import { MAX_DECK_NAME } from "../library.js";
-import { SLASH_ANSWER, SLASH_FRONT } from "../manage.js";
+import { slashAnswer, slashFront } from "../manage.js";
 import { AnswerInput } from "./AnswerInput.js";
-import { Choice, CHOICE_KEYS } from "./Choice.js";
+import { Choice, choiceHints } from "./Choice.js";
+import { t } from "../i18n.js";
 import { html, KeyHints, theme, usePanelWidth } from "./kit.js";
 
-const FIELDS = {
-  deck: { label: "Name your deck", hint: "Polish, Biology, Capitals… whatever you want to learn" },
-  front: { label: "Front", hint: "the word or question, e.g. kot" },
-  back: { label: "Back", hint: "the answer; separate several with commas, e.g. cat, kitty" },
-  example: { label: "Example", hint: "optional: a sentence that helps you remember. Enter skips it" }
-};
+const FIELDS = ["deck", "front", "back", "example"]; // label and hint: add.fields.<name> in the locale
 
 const splitAnswers = (text) => text.split(",").map((part) => part.trim()).filter(Boolean);
 
-const NEW_DECK = "+ New deck";
 
 // /add: a small form inside the app. You pick one of your decks or start a new one (your first one
 // replaces the tour), then add cards one after another until Esc. `actions` reads and writes the library.
@@ -55,7 +50,7 @@ export function AddCard({ current, actions, onDone, startNew = false }) {
       setDeck(created.name);
       setBothWays(bothWays);
       setNewDeck({ name: created.name, removed });
-      setMessage(`Your deck "${created.name}" is ready. Now its first card:`);
+      setMessage(t("add.deckReady", { deck: created.name }));
       setStep("front");
     } catch (err) {
       setError(err.message);
@@ -67,10 +62,10 @@ export function AddCard({ current, actions, onDone, startNew = false }) {
     setStep("saving");
     try {
       const { duplicate } = await actions.addCardTo(deck, { ...draft, example });
-      if (duplicate) setError(`"${duplicate.front}" is already in ${deck}.`);
+      if (duplicate) setError(t("add.duplicateCard", { front: duplicate.front, deck }));
       else {
         setAdded((n) => n + 1);
-        setMessage(`Added "${draft.front}" to ${deck}. Next card, or Esc to finish.`);
+        setMessage(t("add.added", { front: draft.front, deck }));
       }
     } catch (err) {
       setError(err.message);
@@ -84,27 +79,27 @@ export function AddCard({ current, actions, onDone, startNew = false }) {
     setError("");
     setMessage("");
     if (step === "deck") {
-      if (!value) return setError("Your deck needs a name.");
-      if (Array.from(value).length > MAX_DECK_NAME) return setError(`Keep the name to ${MAX_DECK_NAME} characters or fewer.`);
+      if (!value) return setError(t("add.needName"));
+      if (Array.from(value).length > MAX_DECK_NAME) return setError(t("add.nameTooLong", { max: MAX_DECK_NAME }));
       return actions.existingDeck(value).then((existing) => {
-        if (existing) return setError(`There is already a deck called "${existing.name}".`);
+        if (existing) return setError(t("add.duplicateDeck", { deck: existing.name }));
         setDeck(value);
         setStep("ways");
       }, (err) => setError(err.message));
     }
     if (step === "front") {
-      if (!value) return setError("A card needs a front.");
-      if (bothWays && value.startsWith("/")) return setError(SLASH_FRONT);
+      if (!value) return setError(t("add.needFront"));
+      if (bothWays && value.startsWith("/")) return setError(slashFront());
       return actions.existingCard(deck, value).then((existing) => {
-        if (existing) return setError(`"${existing.front}" is already in ${deck}.`);
+        if (existing) return setError(t("add.duplicateCard", { front: existing.front, deck }));
         setDraft({ front: value, back: [] });
         setStep("back");
       }, (err) => setError(err.message));
     }
     if (step === "back") {
       const answers = splitAnswers(value);
-      if (!answers.length) return setError("A card needs an answer.");
-      if (answers.some((a) => a.startsWith("/"))) return setError(SLASH_ANSWER);
+      if (!answers.length) return setError(t("add.needBack"));
+      if (answers.some((a) => a.startsWith("/"))) return setError(slashAnswer());
       setDraft((d) => ({ ...d, back: answers }));
       return setStep("example");
     }
@@ -118,8 +113,8 @@ export function AddCard({ current, actions, onDone, startNew = false }) {
     setStep("front");
   }
 
-  const title = step === "pick" ? "Add cards to…" : step === "deck" || step === "ways" ? (decks.length ? "New deck" : "Start your first deck") : `Add a card · ${deck}`;
-  const field = FIELDS[step];
+  const title = step === "pick" ? t("add.titlePick") : step === "deck" || step === "ways" ? t(decks.length ? "add.titleNew" : "add.titleFirst") : t("add.titleCard", { deck });
+  const field = FIELDS.includes(step) ? { label: t(`add.fields.${step}.label`), hint: t(`add.fields.${step}.hint`) } : null;
   return html`
     <${Fragment}>
       <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.accent} paddingX=${2} width=${panel}>
@@ -138,7 +133,7 @@ export function AddCard({ current, actions, onDone, startNew = false }) {
         html`
           <${Box} marginTop=${1}>
             <${Choice}
-              options=${[...decks.map((d) => ({ label: d.name, note: `${d.cards} card${d.cards === 1 ? "" : "s"}` })), { label: NEW_DECK }]}
+              options=${[...decks.map((d) => ({ label: d.name, note: t("count.cards", { count: d.cards }) })), { label: t("decks.newDeck") }]}
               selected=${picked}
               onMove=${setPicked}
               onPick=${pickDeck}
@@ -149,12 +144,12 @@ export function AddCard({ current, actions, onDone, startNew = false }) {
         ${step === "ways" &&
         html`
           <${Box} flexDirection="column" marginTop=${1}>
-            <${Text} bold>How should "${deck}" be asked?<//>
+            <${Text} bold>${t("add.waysQuestion", { deck })}<//>
             <${Box} marginTop=${1}>
               <${Choice}
                 options=${[
-                  { label: "Both ways", note: "for words: kot → cat, and cat → kot", key: "y" },
-                  { label: "One way only", note: "for questions: front → back", key: "n" }
+                  { label: t("add.bothWays"), note: t("add.bothWaysNote"), key: t("choice.yesKey") },
+                  { label: t("add.oneWay"), note: t("add.oneWayNote"), key: t("choice.noKey") }
                 ]}
                 selected=${ways}
                 onMove=${setWays}
@@ -166,7 +161,7 @@ export function AddCard({ current, actions, onDone, startNew = false }) {
         `}
         ${error && html`<${Box} marginTop=${1}><${Text} color=${theme.bad}>${error}<//><//>`}
       <//>
-      <${Box} paddingX=${1}><${KeyHints} text=${step === "pick" || step === "ways" ? `${CHOICE_KEYS} · esc cancel` : "enter next · esc " + (added || newDeck ? "done" : "cancel")} /><//>
+      <${Box} paddingX=${1}><${KeyHints} text=${step === "pick" || step === "ways" ? choiceHints("cancel") : t(added || newDeck ? "keyHints.addDone" : "keyHints.addNext")} /><//>
     <//>
   `;
 }

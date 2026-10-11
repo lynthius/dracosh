@@ -1,3 +1,4 @@
+import { dateLocale, t } from "./i18n.js";
 const MINUTE = 60_000;
 const HOUR = 60 * MINUTE;
 
@@ -16,7 +17,7 @@ export function quietEnd(ms, quiet) {
   return end.getTime();
 }
 
-export const formatQuiet = (quiet) => (quiet ? `${String(quiet.from).padStart(2, "0")}:00–${String(quiet.to).padStart(2, "0")}:00` : "off");
+export const formatQuiet = (quiet) => (quiet ? `${String(quiet.from).padStart(2, "0")}:00–${String(quiet.to).padStart(2, "0")}:00` : t("settings.off"));
 
 // /pause durations: "" → 1 h, "30", "30m", "2h", "90s" → milliseconds, "off" → "off", anything else → null
 export function parseSnooze(arg) {
@@ -29,4 +30,4 @@ export function parseSnooze(arg) {
   return amount > 0 ? amount : null;
 }
 
-export const formatClock = (ms) => new Date(ms).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+export const formatClock = (ms) => new Date(ms).toLocaleTimeString(dateLocale(), { hour: "2-digit", minute: "2-digit" });

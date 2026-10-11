@@ -1,3 +1,4 @@
+import { t } from "../i18n.js";
 import { useEffect, useState } from "react";
 import { Box, Text } from "ink";
 import { badgeColor } from "./icons.js";
@@ -41,7 +42,7 @@ export function BadgeUnlock({ id, name, desc, delay = 0, sound = badgeSound(0), 
   return html`
     <${Box}>
       <${Text} color=${color}>✦ <//>
-      <${Text} color=${theme.warn}>Badge unlocked: <//>
+      <${Text} color=${theme.warn}>${t("badgeUnlock.label")}<//>
       <${Text} bold color=${color}>${name}<//>
       <${Text} dimColor> · ${desc}<//>
       <${Text} color=${theme.warn}>${sparks}<//>

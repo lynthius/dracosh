@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { test } from "node:test";
 
 const CLI = new URL("../src/cli.js", import.meta.url).pathname;
-const run = (home, ...args) => execFileSync(process.execPath, [CLI, ...args], { env: { ...process.env, DRACOSH_HOME: home }, encoding: "utf8" });
+const run = (home, ...args) => execFileSync(process.execPath, [CLI, ...args], { env: { ...process.env, DRACOSH_HOME: home, LC_ALL: "", LC_MESSAGES: "", LANG: "en_US.UTF-8" }, encoding: "utf8" });
 
 test("--data shows where everything lives, and creates nothing", () => {
   const home = mkdtempSync(join(tmpdir(), "dracosh-"));

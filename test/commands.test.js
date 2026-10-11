@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { COMMANDS, commandsFor, matchCommands } from "../src/commands.js";
+import { systemLanguage } from "../src/i18n.js";
 import { formatInterval, normalizeSettings } from "../src/settings.js";
 
 test("'/' lists every command and a prefix narrows the list", () => {
@@ -22,8 +23,14 @@ test("the menu only offers commands that make sense right now", () => {
 
 test("normalizeSettings falls back to defaults for invalid values", () => {
   const settings = normalizeSettings({ everyMs: "soon", sound: "yes", volume: 7, dailyGoal: 0 });
-  assert.deepEqual(settings, { everyMs: 600_000, sound: true, volume: 0.5, dailyGoal: 20, tips: "always", quiet: null, skipWeekends: true, deck: null });
+  assert.deepEqual(settings, { everyMs: 600_000, sound: true, volume: 0.5, dailyGoal: 20, tips: "always", quiet: null, skipWeekends: true, deck: null, language: systemLanguage() });
   assert.equal(normalizeSettings({ everyMs: 300_000, sound: false, volume: 0.2, dailyGoal: 20 }).dailyGoal, 20);
+});
+
+test("the language is one Dracosh speaks, or the system's until one is picked", () => {
+  assert.equal(normalizeSettings({ language: "pl" }).language, "pl");
+  assert.equal(normalizeSettings({ language: "xx" }).language, systemLanguage());
+  assert.equal(normalizeSettings({ language: "toString" }).language, systemLanguage());
 });
 
 test("tips setting: old booleans are migrated, unknown values fall back", () => {

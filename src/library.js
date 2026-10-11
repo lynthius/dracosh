@@ -1,3 +1,4 @@
+import { t } from "./i18n.js";
 import { randomBytes } from "node:crypto";
 import { normalize } from "./judge.js";
 
@@ -37,17 +38,17 @@ const broken = (why) => Object.assign(new Error(why), { damaged: true });
 // Dracosh, so it's never overwritten, and on one that isn't a library, so nothing is lost by saving over it.
 export function upgradeLibrary(raw) {
   if (raw === undefined) return emptyLibrary();
-  if (!raw || typeof raw !== "object" || Array.isArray(raw)) throw broken("not a library");
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) throw broken(t("errors.why.notLibrary"));
   if (raw.version > LIBRARY_VERSION) {
-    throw new Error(`This library was saved by a newer version of Dracosh (format ${raw.version}). Please update Dracosh.`);
+    throw new Error(t("errors.newerLibrary", { format: raw.version }));
   }
   const decks = raw.decks ?? [];
   const cards = raw.cards ?? [];
-  if (!Array.isArray(decks) || !decks.every(validDeck)) throw broken("a deck without a name or an id");
-  if (!Array.isArray(cards) || !cards.every(validCard)) throw broken("a card without a front or an answer");
+  if (!Array.isArray(decks) || !decks.every(validDeck)) throw broken(t("errors.why.deck"));
+  if (!Array.isArray(cards) || !cards.every(validCard)) throw broken(t("errors.why.card"));
   const deckIds = new Set(decks.map((deck) => deck.id));
-  if (!cards.every((card) => deckIds.has(card.deckId))) throw broken("a card in a deck that doesn't exist");
-  if (new Set(cards.map((card) => card.id)).size !== cards.length) throw broken("two cards with the same id");
+  if (!cards.every((card) => deckIds.has(card.deckId))) throw broken(t("errors.why.cardDeck"));
+  if (new Set(cards.map((card) => card.id)).size !== cards.length) throw broken(t("errors.why.cardIds"));
   return { version: LIBRARY_VERSION, decks, cards };
 }
 
@@ -56,10 +57,10 @@ export const findDeck = (library, nameOrId) =>
 
 export function createDeck(library, { name, type = "translation", languages = { front: "en", back: "pl" }, answerMode, directions = "both", tour = false, now = Date.now() }) {
   const trimmed = String(name ?? "").trim();
-  if (!trimmed) throw new Error("A deck needs a name.");
-  if (Array.from(trimmed).length > MAX_DECK_NAME) throw new Error(`Keep the deck name to ${MAX_DECK_NAME} characters or fewer.`);
+  if (!trimmed) throw new Error(t("errors.deckNeedsName"));
+  if (Array.from(trimmed).length > MAX_DECK_NAME) throw new Error(t("errors.deckNameTooLong", { max: MAX_DECK_NAME }));
   const existing = findDeck(library, trimmed);
-  if (existing) throw new Error(`There is already a deck called "${existing.name}".`);
+  if (existing) throw new Error(t("errors.deckExists", { deck: existing.name }));
   if (!CARD_TYPES.includes(type)) throw new Error(`Unknown card type "${type}".`);
   const mode = answerMode ?? DEFAULT_ANSWER_MODE[type];
   if (!ANSWER_MODES.includes(mode)) throw new Error(`Unknown answer mode "${mode}".`);
@@ -90,8 +91,8 @@ export function addCard(library, deckId, { front, back, example = "", tags = [],
   if (!library.decks.some((deck) => deck.id === deckId)) throw new Error("That deck doesn't exist.");
   const cleanFront = String(front ?? "").trim();
   const cleanBack = cleanList(back);
-  if (!cleanFront) throw new Error("A card needs a front.");
-  if (!cleanBack.length) throw new Error("A card needs at least one answer on the back.");
+  if (!cleanFront) throw new Error(t("errors.cardNeedsFront"));
+  if (!cleanBack.length) throw new Error(t("errors.cardNeedsBack"));
 
   const duplicate = findDuplicate(library, deckId, cleanFront);
   if (duplicate) return { card: null, duplicate };
@@ -107,14 +108,14 @@ export function updateCard(library, cardId, patch, now = Date.now()) {
   if (!card) throw new Error("That card doesn't exist.");
   if (patch.front !== undefined) {
     const front = String(patch.front).trim();
-    if (!front) throw new Error("A card needs a front.");
+    if (!front) throw new Error(t("errors.cardNeedsFront"));
     const duplicate = findDuplicate(library, card.deckId, front);
-    if (duplicate && duplicate.id !== card.id) throw new Error(`"${front}" is already in this deck.`);
+    if (duplicate && duplicate.id !== card.id) throw new Error(t("errors.frontExists", { front }));
     card.front = front;
   }
   if (patch.back !== undefined) {
     const back = cleanList(patch.back);
-    if (!back.length) throw new Error("A card needs at least one answer on the back.");
+    if (!back.length) throw new Error(t("errors.cardNeedsBack"));
     card.back = back;
   }
   if (patch.example !== undefined) card.example = String(patch.example).trim();

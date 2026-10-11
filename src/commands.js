@@ -1,19 +1,21 @@
+import { t } from "./i18n.js";
+
 // `only` limits a command to one phase: "asking" (a question is open) or "waiting" (between questions)
 export const COMMANDS = [
-  { name: "/hint", only: "asking", hint: "Reveal another letter (the card won't climb a box)" },
-  { name: "/add", hint: "Add cards to a deck, or start a new one" },
-  { name: "/decks", hint: "Switch to another deck, or start a new one" },
-  { name: "/settings", hint: "Interval, quiet hours, sound, goal, tips" },
-  { name: "/stats", hint: "Streak, month calendar and badges summary" },
-  { name: "/badges", hint: "All badges and what unlocks them" },
-  { name: "/companion", hint: "Your dragon, its element and the forms ahead" },
-  { name: "/missed", hint: "Cards you got wrong today" },
-  { name: "/pause", hint: "A break (30m, 2h) or days off (3d, 24.12 2.01)" },
-  { name: "/help", aliases: ["/?"], hint: "Keys, how cards come back, the streak" },
-  { name: "/quit", hint: "Exit Dracosh" }
+  { name: "/hint", only: "asking", get hint() { return t("commands.hint"); } },
+  { name: "/add", get hint() { return t("commands.add"); } },
+  { name: "/decks", get hint() { return t("commands.decks"); } },
+  { name: "/settings", get hint() { return t("commands.settings"); } },
+  { name: "/stats", get hint() { return t("commands.stats"); } },
+  { name: "/badges", get hint() { return t("commands.badges"); } },
+  { name: "/companion", get hint() { return t("commands.companion"); } },
+  { name: "/missed", get hint() { return t("commands.missed"); } },
+  { name: "/pause", get hint() { return t("commands.pause"); } },
+  { name: "/help", aliases: ["/?"], get hint() { return t("commands.help"); } },
+  { name: "/quit", get hint() { return t("commands.quit"); } }
 ];
 
-const CORRECT = { name: "/correct", hint: "Count my last answer as correct" };
+const CORRECT = { name: "/correct", get hint() { return t("commands.correct"); } };
 
 // What the "/" menu offers right now (phase-only commands, and /correct right after a wrong answer)
 export function commandsFor({ phase, canOverrule = false }) {

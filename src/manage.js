@@ -1,3 +1,4 @@
+import { t } from "./i18n.js";
 import { backupNow } from "./backup.js";
 import { seedLibrary } from "./starter.js";
 import { addCard, cardsOf, createDeck, emptyLibrary, findDeck, findDuplicate, removeDeck } from "./library.js";
@@ -33,8 +34,8 @@ export async function startDeck({ name, bothWays }) {
   return { deck, removed };
 }
 
-export const SLASH_ANSWER = "An answer can't start with /: in the quiz that opens the commands.";
-export const SLASH_FRONT = "In a deck asked both ways the front is an answer too, so it can't start with /.";
+export const slashAnswer = () => t("errors.slashAnswer");
+export const slashFront = () => t("errors.slashFront");
 
 // the deck with this name (ignoring case), if any: /add says so before asking anything else
 export const existingDeck = async (name) => {
@@ -47,6 +48,17 @@ export async function existingCard(deckName, front) {
   const library = await loadLibrary();
   const deck = findDeck(library, deckName);
   return deck ? findDuplicate(library, deck.id, front) : null;
+}
+
+// The app's language changed: the tour follows it. → { from, to }, its old and new name, or null
+// when there is no tour or nothing changed.
+export async function matchTourLanguage() {
+  const library = await loadLibrary();
+  const tour = library.decks.find((d) => d.tour);
+  const from = tour?.name;
+  if (!tour || !seedLibrary(library)) return null;
+  await saveLibrary(library);
+  return { from, to: library.decks.find((d) => d.tour).name };
 }
 
 // a reset is always preceded by a backup, so `dracosh restore` can undo it
@@ -64,11 +76,11 @@ export async function resetLibrary() {
 export async function addCardTo(deckName, fields) {
   const library = await loadLibrary();
   const deck = findDeck(library, deckName);
-  if (!deck) throw new Error(`The deck "${deckName}" is gone.`);
+  if (!deck) throw new Error(t("errors.deckGone", { deck: deckName }));
   // in the quiz "/" opens the commands, so nothing you'd have to type may start with it
   const slash = (text) => String(text ?? "").trim().startsWith("/");
-  if ([fields.back].flat().some(slash)) throw new Error(SLASH_ANSWER);
-  if (deck.directions !== "forward" && slash(fields.front)) throw new Error(SLASH_FRONT);
+  if ([fields.back].flat().some(slash)) throw new Error(slashAnswer());
+  if (deck.directions !== "forward" && slash(fields.front)) throw new Error(slashFront());
   const result = addCard(library, deck.id, fields);
   if (result.card) await saveLibrary(library);
   return result;

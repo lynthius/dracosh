@@ -1,6 +1,7 @@
+import { t } from "../i18n.js";
 import React, { Fragment, useEffect, useState } from "react";
 import { Box, Text, useInput } from "ink";
-import { ELEMENTS } from "../progress.js";
+import { elementName, ELEMENTS } from "../progress.js";
 import { html, KeyHints, theme, usePanelWidth } from "./kit.js";
 import { ELEMENT_COLOR, Mascot } from "./Mascot.js";
 
@@ -16,7 +17,6 @@ const FACES = {
   5: ["tl", "tr", "c", "bl", "br"],
   6: ["tl", "tr", "ml", "mr", "bl", "br"]
 };
-const ELEMENT_NAME = { earth: "Earth", wind: "Wind", water: "Water", ice: "Ice", fire: "Fire", cosmos: "Cosmos" };
 
 // timeline, in frames: tumbling (faces change, slower and slower, bouncing lower) → landed → the dragon changes
 const LAND_AT = 30;
@@ -78,7 +78,7 @@ export function DieRoll({ element, stage = 0, onClose, play = () => {} }) {
   return html`
     <${Fragment}>
       <${Box} flexDirection="column" borderStyle="round" borderColor=${landed ? color : theme.warn} paddingX=${2} paddingY=${1} width=${panel} alignItems="center">
-        <${Text} bold color=${theme.warn}>Dragon's die<//>
+        <${Text} bold color=${theme.warn}>${t("die.title")}<//>
         <${Box} marginTop=${1} alignItems="flex-end">
           <${Box} flexDirection="column" marginBottom=${bounce} marginRight=${4}>
             <${BigGrid} grid=${dieGrid(face, landed ? color : "#2a2440")} />
@@ -91,14 +91,14 @@ export function DieRoll({ element, stage = 0, onClose, play = () => {} }) {
           ${revealed
             ? html`
                 <${Fragment}>
-                  <${Text} bold color=${color}>${result} · ${ELEMENT_NAME[element]}<//>
-                  <${Text} dimColor>Your dragon awakened the power of ${element}. It's yours for good.<//>
+                  <${Text} bold color=${color}>${t("die.result", { face: result, element: elementName(element) })}<//>
+                  <${Text} dimColor>${t("die.awakened", { element: elementName(element) })}<//>
                 <//>
               `
-            : html`<${Text} dimColor>${landed ? `${result} · ${ELEMENT_NAME[element]}` : "the die is rolling…"}<//>`}
+            : html`<${Text} dimColor>${landed ? t("die.result", { face: result, element: elementName(element) }) : t("die.rolling")}<//>`}
         <//>
       <//>
-      <${Box} paddingX=${1}><${KeyHints} text=${revealed ? "any key to continue" : "any key to skip"} /><//>
+      <${Box} paddingX=${1}><${KeyHints} text=${t(revealed ? "die.keysContinue" : "die.keysSkip")} /><//>
     <//>
   `;
 }

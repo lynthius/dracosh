@@ -1,3 +1,4 @@
+import { t } from "../i18n.js";
 import { useState } from "react";
 import { Box, Text, useInput } from "ink";
 import { COMMANDS, matchCommands } from "../commands.js";
@@ -9,7 +10,7 @@ function Palette({ matches, selected }) {
       ${matches.map(
         (command, i) => html`
           <${Box} key=${command.name}>
-            <${Text} color=${i === selected ? theme.accent : undefined} bold=${i === selected} dimColor=${i !== selected}>${i === selected ? "❯" : " "} ${command.name.padEnd(12)}<//>
+            <${Box} flexShrink=${0}><${Text} color=${i === selected ? theme.accent : undefined} bold=${i === selected} dimColor=${i !== selected}>${i === selected ? "❯" : " "} ${command.name.padEnd(12)}<//><//>
             <${Text} dimColor>${command.hint}<//>
           <//>
         `
@@ -79,7 +80,7 @@ export function AnswerInput({ onSubmit, onCommand, onExit, onEdit, onCancel, com
         <${Text}>${before}<${Text} inverse>${at}<//>${after}<//>
       <//>
       ${matches.length > 0 && html`<${Palette} matches=${matches} selected=${pick} />`}
-      ${isCommand && matches.length === 0 && html`<${Box} marginTop=${1}>${commandOnly ? html`<${Text} color=${theme.bad}>unknown command<//>` : html`<${Text} dimColor>no command like that · enter sends it as your answer<//>`}<//>`}
+      ${isCommand && matches.length === 0 && html`<${Box} marginTop=${1}>${commandOnly ? html`<${Text} color=${theme.bad}>${t("input.unknownCommand")}<//>` : html`<${Text} dimColor>${t("input.notACommand")}<//>`}<//>`}
     <//>
   `;
 }

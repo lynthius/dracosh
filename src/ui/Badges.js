@@ -1,3 +1,4 @@
+import { t } from "../i18n.js";
 import { Fragment, useEffect, useState } from "react";
 import { Box, Text, useInput } from "ink";
 import { html, KeyHints, theme, usePanelWidth } from "./kit.js";
@@ -14,8 +15,8 @@ const LIT_FROM = 5;
 const GREY = "#4a5058";
 
 // a hidden badge reveals nothing until it's won
-const SECRET = { name: "???", desc: "a secret, keep playing" };
-const display = (badge) => (badge.hidden && !badge.unlockedOn ? { ...badge, ...SECRET } : badge);
+const secret = () => ({ name: t("badgesScreen.secretName"), desc: t("badgesScreen.secretDesc") });
+const display = (badge) => (badge.hidden && !badge.unlockedOn ? { ...badge, ...secret() } : badge);
 const WHITE = "#ffffff";
 
 // where a fresh badge is in its little animation: "waiting" (still looks locked), "flash", or "lit"
@@ -74,9 +75,9 @@ export function Badges({ badges, fresh = [], onClose }) {
     <${Fragment}>
       <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.accent} paddingX=${2} width=${panel}>
         <${Box}>
-          <${Text} bold color=${theme.accent}>Badges<//>
+          <${Text} bold color=${theme.accent}>${t("badgesScreen.title")}<//>
           <${Text} dimColor>  ${unlocked}/${badges.length}<//>
-          ${fresh.length > 0 && html`<${Text} color=${theme.warn}>  ${fresh.length} new<//>`}
+          ${fresh.length > 0 && html`<${Text} color=${theme.warn}>${t("badgesScreen.new", { count: fresh.length })}<//>`}
         <//>
 
         <${Box} marginTop=${1}>
@@ -86,7 +87,7 @@ export function Badges({ badges, fresh = [], onClose }) {
           <${Box} flexDirection="column" justifyContent="center">
             <${Box}><${Text} bold color=${shownUnlocked ? badgeColor(badge.id) : undefined} dimColor=${!shownUnlocked}>${badge.name}<//><//>
             <${Box}><${Text}>${badge.desc}<//><//>
-            <${Box}><${Text} dimColor>${badge.unlockedOn ? `unlocked ${badge.unlockedOn}` : "still locked"}<//><//>
+            <${Box}><${Text} dimColor>${badge.unlockedOn ? t("badgesScreen.unlocked", { day: badge.unlockedOn }) : t("badgesScreen.locked")}<//><//>
           <//>
         <//>
 
@@ -116,7 +117,7 @@ export function Badges({ badges, fresh = [], onClose }) {
           )}
         <//>
       <//>
-      <${Box} paddingX=${1}><${KeyHints} text="↑/↓ browse · ←/→ column · esc back" /><//>
+      <${Box} paddingX=${1}><${KeyHints} text=${t("keyHints.badges")} /><//>
     <//>
   `;
 }

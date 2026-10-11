@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useState } from "react";
 import { Box, Text, useInput } from "ink";
-import { Choice, CHOICE_KEYS } from "./Choice.js";
+import { t } from "../i18n.js";
+import { Choice, choiceHints } from "./Choice.js";
 import { html, KeyHints, theme, usePanelWidth } from "./kit.js";
 
 // /decks: your decks with their card counts; Enter quizzes the chosen one from now on, and
@@ -28,12 +29,12 @@ export function Decks({ current, actions, onPick, onNew, onClose }) {
   return html`
     <${Fragment}>
       <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.accent} paddingX=${2} width=${panel}>
-        <${Text} bold color=${theme.accent}>Decks<//>
+        <${Text} bold color=${theme.accent}>${t("decks.title")}<//>
         ${decks?.length > 0 &&
         html`
           <${Box} marginTop=${1}>
             <${Choice}
-              options=${[...decks.map((d) => ({ label: d.name, note: `${d.cards} card${d.cards === 1 ? "" : "s"}${d.tour ? " · the tour" : ""}${d.name === current ? " · now" : ""}` })), { label: "+ New deck" }]}
+              options=${[...decks.map((d) => ({ label: d.name, note: [t("count.cards", { count: d.cards }), d.tour && t("decks.tour"), d.name === current && t("decks.now")].filter(Boolean).join(" · ") })), { label: t("decks.newDeck") }]}
               selected=${picked}
               onMove=${setPicked}
               onPick=${(i) => (i === decks.length ? onNew() : onPick(decks[i].name))}
@@ -43,7 +44,7 @@ export function Decks({ current, actions, onPick, onNew, onClose }) {
         `}
         ${error && html`<${Box} marginTop=${1}><${Text} color=${theme.bad}>${error}<//><//>`}
       <//>
-      <${Box} paddingX=${1}><${KeyHints} text=${`${CHOICE_KEYS} · esc back`} /><//>
+      <${Box} paddingX=${1}><${KeyHints} text=${choiceHints()} /><//>
     <//>
   `;
 }

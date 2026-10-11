@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Text, useStdout } from "ink";
 import htm from "htm";
+import { t } from "../i18n.js";
 
 export const html = htm.bind(React.createElement);
 
@@ -27,13 +28,16 @@ export function Marked({ text, plain = false, ...props }) {
   );
 }
 
-// the key at the start of a hint segment: "enter", "esc", "/add", "↑/↓", "any key", "q"…
-const KEY = /^(any key|↑\/↓|←\/→|enter|esc|tab|\/\S*|[a-z0-9])(?=\s|$)/;
+// the key at the start of a hint segment: "enter", "esc", "/add", "↑/↓", "any key", "q"…; the
+// longer key names come from the locale ("échap", "dowolny klawisz")
+const escapeRegExp = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const keyPattern = () => new RegExp(`^(${[...t("keyHints.keyNames").split("|").map(escapeRegExp), "↑/↓", "←/→", "\\/\\S*", "[\\p{L}\\d]"].join("|")})(?=[\\s,]|$)`, "u");
 
 // A footer like "enter submit · / commands · esc quit": each key stands out, the words after it
 // stay quiet, and the dots between them fade back.
 export function KeyHints({ text }) {
   const parts = text.split(" · ");
+  const KEY = keyPattern();
   return React.createElement(
     Text,
     null,

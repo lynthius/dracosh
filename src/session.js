@@ -1,10 +1,11 @@
+import { t as say } from "./i18n.js"; // `t` and `text` are taken here (the clock, an answer)
 import { closestCandidate, judge } from "./judge.js";
 import { addVacation, applyAnswer, applyCaughtUp, applyOverrule, calendarMonth, cancelVacations, ensureProgress, markBadgesSeen, missedOn, recordMiss, snapshot, undoMiss, unseenBadges, vacationInfo } from "./progress.js";
 import { describeDue, grade, itemKey, nextDueAt, pickNext, startOfTomorrow } from "./scheduler.js";
 import { recordAnswer, saveState } from "./store.js";
 import { createTipDeck } from "./tips.js";
 import { dayKey } from "./dates.js";
-import { PAUSE_HELP, parsePause } from "./pause.js";
+import { parsePause } from "./pause.js";
 import { formatRange } from "./vacation.js";
 
 const LABELS = { "en-pl": "EN → PL", "pl-en": "PL → EN" };
@@ -66,7 +67,7 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
         empty.cheers = day.cheers;
         empty.dayDone = day.done; // false: this deck is done, but another one still has cards today
       }
-      const message = deck?.tour ? "You've finished the tour." : words.length ? "Nothing to practise right now." : `The deck "${deck?.name}" has no cards yet.`;
+      const message = deck?.tour ? say("quiz.empty.tourTitle") : words.length ? say("quiz.empty.laterTitle") : say("quiz.empty.noCardsTitle", { deck: deck?.name });
       throw Object.assign(new Error(message), empty);
     }
     lastNoteId = item.word.noteId;
@@ -110,7 +111,7 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
 
     const reward = applyAnswer(state, { result, goal: getSettings().dailyGoal, rules: rules(), combo: totals.combo, now: t });
     const cheers = [...reward.cheers];
-    if (correct && totals.combo % COMBO_CHEER_EVERY === 0) cheers.push({ kind: "combo", text: `Combo ×${totals.combo}` });
+    if (correct && totals.combo % COMBO_CHEER_EVERY === 0) cheers.push({ kind: "combo", text: say("cheers.combo", { count: totals.combo }) });
 
     await save(state);
     // the last card of the day settles it right away, so quitting now doesn't lose the goal
@@ -122,7 +123,7 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
 
   // Re-grade the last wrong answer as correct and remember the answer for this card.
   async function overrule() {
-    if (!lastWrong) throw new Error("There is no wrong answer to correct.");
+    if (!lastWrong) throw new Error(say("errors.nothingToCorrect"));
     const { question, text, key, before, comboBefore, hinted, at } = lastWrong;
     lastWrong = null;
 
@@ -153,24 +154,23 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
   async function pause(args) {
     const today = dayKey(now());
     const parsed = parsePause(args, today);
-    if (!parsed) throw new Error(PAUSE_HELP);
+    if (!parsed) throw new Error(say("pause.help"));
     if (parsed.action === "snooze") return { snooze: parsed.ms };
     if (parsed.action === "days") {
       // days off start today at the earliest: missed days can't be turned into days off afterwards
       const from = parsed.from < today ? today : parsed.from;
-      if (parsed.to < today) throw new Error("Those days are already over. Days off can only start today or later.");
+      if (parsed.to < today) throw new Error(say("pause.past"));
       addVacation(state, from, parsed.to, now());
       await save(state);
-      const what = from === parsed.to ? `Day off on ${formatRange(from, from)}` : `Days off ${formatRange(from, parsed.to)}`;
-      return { message: `${what}: your streak is safe.` };
+      return { message: from === parsed.to ? say("pause.dayOff", { day: formatRange(from, from) }) : say("pause.daysOff", { range: formatRange(from, parsed.to) }) };
     }
     if (parsed.action === "off") {
       cancelVacations(state, now());
       await save(state);
-      return { snooze: "off", message: "Pause off: questions are back, and no days off are planned" };
+      return { snooze: "off", message: say("pause.off") };
     }
     const { upcoming } = vacationInfo(ensureProgress(state, now()), today);
-    return { list: true, message: upcoming.length ? `Days off: ${upcoming.map((v) => formatRange(v.from, v.to)).join(", ")}` : `No days off planned. ${PAUSE_HELP}` };
+    return { list: true, message: upcoming.length ? say("pause.list", { ranges: upcoming.map((v) => formatRange(v.from, v.to)).join(", ") }) : say("pause.none", { help: say("pause.help") }) };
   }
 
   // a tip for the wait between questions; remembering which ones were shown is best-effort

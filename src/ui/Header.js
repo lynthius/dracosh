@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { t } from "../i18n.js";
 import { Box, Text } from "ink";
 import { formatInterval } from "../settings.js";
 import { formatDay } from "../vacation.js";
@@ -94,22 +95,22 @@ export function Header({ deck, everyMs, wordCount, stats, combo, face, event, ti
       <${Box} flexDirection="column" justifyContent="center">
         <${Box}>
           <${Box} flexShrink=${0}><${Text} bold color=${theme.accent}>Dracosh<//><//>
-          <${Text} dimColor wrap="truncate-end">  ${deck}${wordCount ? ` · ${wordCount} card${wordCount === 1 ? "" : "s"}` : ""} · every ${formatInterval(everyMs)}<//>
+          <${Text} dimColor wrap="truncate-end">${t("header.deckLine", { deck, cards: wordCount ? t("header.cards", { cards: t("count.cards", { count: wordCount }) }) : "", interval: formatInterval(everyMs) })}<//>
         <//>
         <${Box}>
           ${streak.days > 0
-            ? html`<${Box}><${Flame} /><${Text} color=${theme.warn} bold> ${streak.days}-day streak<//><//>`
-            : html`<${Text} dimColor>no streak yet<//>`}
-          ${streak.atRisk && html`<${Text} color=${theme.warn}> · at risk today<//>`}
-          ${stats.vacation.activeUntil && html`<${Text} color=${theme.accent}> · days off until ${formatDay(stats.vacation.activeUntil)}<//>`}
-          ${streak.freezes > 0 && html`<${Text} dimColor> · ${streak.freezes} freeze${streak.freezes > 1 ? "s" : ""}<//>`}
+            ? html`<${Box}><${Flame} /><${Text} color=${theme.warn} bold>${t("header.streak", { count: streak.days })}<//><//>`
+            : html`<${Text} dimColor>${t("header.noStreak")}<//>`}
+          ${streak.atRisk && html`<${Text} color=${theme.warn}>${t("header.atRisk")}<//>`}
+          ${stats.vacation.activeUntil && html`<${Text} color=${theme.accent}>${t("header.daysOffUntil", { day: formatDay(stats.vacation.activeUntil) })}<//>`}
+          ${streak.freezes > 0 && html`<${Text} dimColor>${t("header.freezes", { count: streak.freezes })}<//>`}
         <//>
         <${Box}>
-          <${Text} dimColor>today  <//>
+          <${Text} dimColor>${t("header.today")}<//>
           <${AnimatedBar} value=${today.correct} max=${goal} width=${12} color=${today.goalMet ? theme.good : theme.accent} />
           <${Text} dimColor>  ${Math.min(today.correct, goal)}/${goal}<//>
-          ${today.goalMet && html`<${Text} color=${theme.good}>  goal reached<//>`}
-          ${combo >= 2 && html`<${Text} color=${theme.warn} bold>  combo ×${combo}<//>`}
+          ${today.goalMet && html`<${Text} color=${theme.good}>${t("header.goalReached")}<//>`}
+          ${combo >= 2 && html`<${Text} color=${theme.warn} bold>${t("header.combo", { count: combo })}<//>`}
         <//>
       <//>
     <//>

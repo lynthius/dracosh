@@ -1,7 +1,8 @@
 import { Box, Text, useInput } from "ink";
+import { t } from "../i18n.js";
 import { html, theme } from "./kit.js";
 
-// A question's answers as a list: ↑/↓ and Enter, a number, or an option's own key ("y", "n").
+// A question's answers as a list: ↑/↓ and Enter, a number, or an option's own keys ("t|y" in Polish).
 // Each option: { label, note?, key?, danger? }; `danger` paints it red while it's chosen.
 export function Choice({ options, selected, onMove, onPick, onCancel }) {
   useInput((input, key) => {
@@ -9,7 +10,7 @@ export function Choice({ options, selected, onMove, onPick, onCancel }) {
     if (key.upArrow) return onMove(Math.max(0, selected - 1));
     if (key.downArrow) return onMove(Math.min(options.length - 1, selected + 1));
     if (key.return) return onPick(selected);
-    const index = options.findIndex((o, i) => input === String(i + 1) || (o.key && input.toLowerCase() === o.key));
+    const index = options.findIndex((o, i) => input === String(i + 1) || (o.key && o.key.split("|").includes(input.toLowerCase())));
     if (index >= 0) onPick(index);
   });
 
@@ -30,4 +31,5 @@ export function Choice({ options, selected, onMove, onPick, onCancel }) {
   `;
 }
 
-export const CHOICE_KEYS = "↑/↓ choose · enter confirm";
+// the footer under a list of choices; `end` is what Esc does there ("back" or "cancel")
+export const choiceHints = (end = "back") => t(end === "cancel" ? "keyHints.choiceCancel" : "keyHints.choiceBack", { choose: t("choice.keys") });

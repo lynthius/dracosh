@@ -1,3 +1,4 @@
+import { t } from "../i18n.js";
 import { Fragment, useEffect, useState } from "react";
 import { Box, Text, useInput } from "ink";
 import { html, KeyHints, theme, usePanelWidth } from "./kit.js";
@@ -8,7 +9,6 @@ const FLASH_FROM = 6; // frames 0..5: the old form, wondering
 const REVEAL_AT = 16; // frames 6..15: white-out flashing, then the new form
 const SPARKS = ["✦", "·", "✧", "*"];
 
-const article = (name) => (/^[aeiou]/i.test(name) ? "an" : "a");
 
 // a loose ring of sparkles around the sprite; which ones show varies per frame
 function sparkleRow(frame, seed, width) {
@@ -41,7 +41,7 @@ export function Evolution({ from, to, name, element = null, onClose }) {
   return html`
     <${Fragment}>
       <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.warn} paddingX=${2} paddingY=${1} width=${panel} alignItems="center">
-        <${Text} bold color=${theme.warn}>✦ Evolution ✦<//>
+        <${Text} bold color=${theme.warn}>✦ ${t("evolution.title")} ✦<//>
         <${Box} flexDirection="column" marginTop=${1} alignItems="center">
           <${Text} color=${theme.warn}>${sparks ? sparkleRow(frame, 1, 30) : " "}<//>
           <${Mascot} stage=${stage} face=${revealed ? "happy" : "idle"} flash=${flashing && frame % 2 === 0} scale=${2} element=${element} />
@@ -49,11 +49,11 @@ export function Evolution({ from, to, name, element = null, onClose }) {
         <//>
         <${Box} marginTop=${1} flexDirection="column" alignItems="center">
           ${revealed
-            ? html`<${Text} bold color=${theme.accent}>Your companion evolved into ${article(name)} ${name}!<//>`
-            : html`<${Text} dimColor>Something is happening…<//>`}
+            ? html`<${Text} bold color=${theme.accent}>${t("evolution.evolved", { name })}<//>`
+            : html`<${Text} dimColor>${t("evolution.happening")}<//>`}
         <//>
       <//>
-      <${Box} paddingX=${1}><${KeyHints} text=${revealed ? "enter continue" : "any key to hurry it up"} /><//>
+      <${Box} paddingX=${1}><${KeyHints} text=${t(revealed ? "evolution.keysContinue" : "evolution.keysHurry")} /><//>
     <//>
   `;
 }

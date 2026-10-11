@@ -1,7 +1,16 @@
-import { readFileSync } from "node:fs";
+import { englishMessages, t } from "./i18n.js";
 
-// Short tips about Dracosh itself, shown now and then while you wait for the next card.
-export const TIPS = JSON.parse(readFileSync(new URL("../data/tips.json", import.meta.url), "utf8"));
+// Short tips about Dracosh itself, shown now and then while you wait for the next card. They live in
+// the locale (tips.<id>); the ids come from English, the text from the language in use.
+export const TIPS = Object.keys(englishMessages().tips).map((id) => ({
+  id,
+  get cat() {
+    return t(`tips.${id}.cat`);
+  },
+  get text() {
+    return t(`tips.${id}.text`);
+  }
+}));
 const SOMETIMES_CHANCE = 1 / 3;
 
 // "always" shows a tip on every wait, "sometimes" on about one in three

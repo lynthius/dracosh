@@ -1,3 +1,4 @@
+import { t } from "../i18n.js";
 import React, { Fragment, useEffect, useState } from "react";
 import { Box, Text, useInput } from "ink";
 import { RING } from "./icons.js";
@@ -95,7 +96,7 @@ export function TheOne({ onClose, play = () => {} }) {
 
   const revealed = frame >= REVEAL_AT;
   useInput(() => (revealed ? onClose() : setFrame(REVEAL_AT)));
-  const caption = frame < RISE_FROM ? "the lava is stirring…" : "something rises…";
+  const caption = t(frame < RISE_FROM ? "theOne.stirring" : "theOne.rises");
 
   return html`
     <${Fragment}>
@@ -108,14 +109,14 @@ export function TheOne({ onClose, play = () => {} }) {
           ${revealed
             ? html`
                 <${Fragment}>
-                  <${Text} bold color=${RING.palette.G}>The One...<//>
-                  <${Text} dimColor>Every badge is yours. The hoard is complete.<//>
+                  <${Text} bold color=${RING.palette.G}>${t("theOne.title")}<//>
+                  <${Text} dimColor>${t("theOne.line")}<//>
                 <//>
               `
             : html`<${Text} dimColor>${caption}<//>`}
         <//>
       <//>
-      <${Box} paddingX=${1}><${KeyHints} text=${revealed ? "any key to continue" : "any key to skip"} /><//>
+      <${Box} paddingX=${1}><${KeyHints} text=${t(revealed ? "theOne.keysContinue" : "theOne.keysSkip")} /><//>
     <//>
   `;
 }

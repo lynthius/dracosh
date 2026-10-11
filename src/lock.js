@@ -1,3 +1,4 @@
+import { t } from "./i18n.js";
 import { mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { HOME } from "./store.js";
@@ -29,7 +30,7 @@ export function runningPid() {
   return pid && pid !== process.pid && alive(pid) ? pid : null; // a lock left by a crash doesn't count
 }
 
-export const ALREADY_RUNNING = (pid) => `Dracosh is already running in another window (process ${pid}). Close it first: two windows would overwrite each other's progress.`;
+export const ALREADY_RUNNING = (pid) => t("errors.alreadyRunning", { pid });
 
 // → a release function; throws when another quiz holds the lock. The lock file is created exclusively
 // ("wx"), so of two windows started at the same moment only one gets it; a stale one is replaced once.

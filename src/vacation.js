@@ -1,8 +1,9 @@
 import { addDays, daysBetween } from "./dates.js";
+import { dateLocale } from "./i18n.js";
 
 const MAX_DAYS = 120; // a typo like "2062" shouldn't switch the streak off for years
 
-export const formatDay = (key) => new Date(`${key}T12:00:00`).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+export const formatDay = (key) => new Date(`${key}T12:00:00`).toLocaleDateString(dateLocale(), { day: "numeric", month: "short" });
 export const formatRange = (from, to) => (from === to ? formatDay(from) : `${formatDay(from)} – ${formatDay(to)}`);
 
 // a real calendar date as "YYYY-MM-DD", or null ("31.02" and the like)

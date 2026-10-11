@@ -1,17 +1,18 @@
+import { LANGUAGES, systemLanguage, t } from "./i18n.js";
+
 export const DEFAULTS = { everyMs: 600_000, sound: true, volume: 0.5, dailyGoal: 20, tips: "always", quiet: null, skipWeekends: true, deck: null };
 
 export const INTERVALS = [60_000, 120_000, 300_000, 600_000, 900_000, 1_200_000, 1_800_000, 2_700_000, 3_600_000];
 export const GOALS = [5, 10, 15, 20, 25, 30, 40, 50, 75, 100, 150, 200];
 export const VOLUMES = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1];
 export const TIP_MODES = ["always", "sometimes", "off"];
-export const TIP_LABELS = { always: "always", sometimes: "sometimes (1 in 3 waits)", off: "off" };
 // presets for /settings; any { from, to } in settings.json works too
 export const QUIET_PRESETS = [null, { from: 21, to: 7 }, { from: 22, to: 8 }, { from: 23, to: 7 }, { from: 0, to: 8 }];
 
 export function formatInterval(ms) {
-  if (ms < 60_000) return `${Math.round(ms / 1000)} s`;
-  if (ms < 3_600_000) return `${Math.round(ms / 60_000)} min`;
-  return `${Math.round(ms / 3_600_000)} h`;
+  if (ms < 60_000) return t("time.seconds", { n: Math.round(ms / 1000) });
+  if (ms < 3_600_000) return t("time.minutes", { n: Math.round(ms / 60_000) });
+  return t("time.hours", { n: Math.round(ms / 3_600_000) });
 }
 
 // older versions saved tips as a boolean
@@ -32,7 +33,8 @@ export function normalizeSettings(raw = {}) {
     tips: normalizeTips(raw.tips),
     skipWeekends: typeof raw.skipWeekends === "boolean" ? raw.skipWeekends : DEFAULTS.skipWeekends,
     quiet: raw.quiet && isHour(raw.quiet.from) && isHour(raw.quiet.to) ? { from: raw.quiet.from, to: raw.quiet.to } : null,
-    deck: typeof raw.deck === "string" && raw.deck.trim() ? raw.deck : null // picked in /decks; null = your first deck
+    deck: typeof raw.deck === "string" && raw.deck.trim() ? raw.deck : null, // picked in /decks; null = your first deck
+    language: typeof raw.language === "string" && Object.hasOwn(LANGUAGES, raw.language) ? raw.language : systemLanguage() // until picked in /settings, the system's
   };
 }
 

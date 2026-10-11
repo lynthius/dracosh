@@ -1,7 +1,6 @@
+import { t } from "./i18n.js";
 import { parseSnooze } from "./quiet.js";
 import { parseVacation } from "./vacation.js";
-
-export const PAUSE_HELP = "Try /pause 30m, /pause 2h, /pause 3d or /pause 24.12 2.01";
 
 // "/pause" arguments, one command for a short break and for days off:
 //   ""                     → { action: "list" }       what's paused or planned
