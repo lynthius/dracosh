@@ -1,6 +1,6 @@
 import { t } from "../i18n.js";
 import { useState } from "react";
-import { Box, useInput } from "ink";
+import { Box, useInput, usePaste } from "ink";
 import { COMMANDS, matchCommands } from "../commands.js";
 import { html, Text, theme } from "./kit.js";
 
@@ -26,7 +26,9 @@ const args = (value) => value.trim().split(/\s+/).slice(1).join(" ");
 // ↑/↓ choose, Tab completes, Enter runs.
 // `commandOnly` is the between-questions variant: it starts at "/" and Esc or erasing the "/" closes it.
 // `plain` is a text field with no commands at all ("and/or" is just text there).
-export function AnswerInput({ onSubmit, onCommand, onExit, onEdit, onCancel, commands = COMMANDS, initial = "", commandOnly = false, plain = false }) {
+// `onChange` hears every edit; `onRecall` is ↑ on an empty plain field (/add brings back the last card);
+// `onPaste` takes a paste of several lines (/add reviews them as cards), anything else is typed in.
+export function AnswerInput({ onSubmit, onCommand, onExit, onEdit, onCancel, onChange, onRecall, onPaste, commands = COMMANDS, initial = "", commandOnly = false, plain = false }) {
   const [value, setValue] = useState(initial);
   const [cursor, setCursor] = useState(initial.length);
   const [selected, setSelected] = useState(0);
@@ -39,7 +41,17 @@ export function AnswerInput({ onSubmit, onCommand, onExit, onEdit, onCancel, com
     setCursor(Math.max(0, Math.min(at, next.length)));
     setSelected(0);
     onEdit?.();
+    onChange?.(next);
   };
+
+  // pasted text arrives whole (bracketed paste); lines become spaces unless /add takes them as cards
+  const paste = (text) => {
+    const lines = /[\r\n]/.test(text) ? text.split(/\r\n|\r|\n/).filter((line) => line.trim()) : [text];
+    if (onPaste && lines.length > 1) return onPaste(lines);
+    const typed = lines.join(" ");
+    edit(value.slice(0, cursor) + typed + value.slice(cursor), cursor + typed.length);
+  };
+  usePaste(paste);
 
   useInput((input, key) => {
     if (key.escape) return commandOnly ? onCancel() : value ? edit("") : onExit();
@@ -51,6 +63,7 @@ export function AnswerInput({ onSubmit, onCommand, onExit, onEdit, onCancel, com
       return onCommand(matches[pick]?.name ?? token, rest.join(" "));
     }
     if (key.tab) return matches.length ? edit(`${matches[pick].name}${args(value) ? ` ${args(value)}` : ""}`) : undefined;
+    if (key.upArrow && !value && onRecall) return onRecall();
     if (key.upArrow) return setSelected(Math.max(0, pick - 1));
     if (key.downArrow) return setSelected(Math.min(matches.length - 1, pick + 1));
     if (key.leftArrow) return setCursor((c) => Math.max(0, c - 1));
@@ -64,10 +77,8 @@ export function AnswerInput({ onSubmit, onCommand, onExit, onEdit, onCancel, com
     if (key.ctrl && input === "a") return setCursor(0);
     if (key.ctrl && input === "e") return setCursor(value.length);
     if (key.ctrl || key.meta || key.pageUp || key.pageDown) return;
-    if (input) {
-      const typed = input.replace(/[\r\n]+/g, " ");
-      edit(value.slice(0, cursor) + typed + value.slice(cursor), cursor + typed.length);
-    }
+    // a terminal without bracketed paste sends a paste as typed text, line breaks and all
+    if (input) paste(input);
   });
 
   const before = value.slice(0, cursor);
@@ -76,7 +87,7 @@ export function AnswerInput({ onSubmit, onCommand, onExit, onEdit, onCancel, com
   return html`
     <${Box} flexDirection="column">
       <${Box}>
-        <${Text} color=${theme.accent}>❯ <//>
+        <${Box} flexShrink=${0}><${Text} color=${theme.accent}>❯ <//><//>
         <${Text}>${before}<${Text} inverse>${at}<//>${after}<//>
       <//>
       ${matches.length > 0 && html`<${Palette} matches=${matches} selected=${pick} />`}

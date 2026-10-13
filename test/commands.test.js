@@ -23,8 +23,10 @@ test("the menu only offers commands that make sense right now", () => {
 
 test("normalizeSettings falls back to defaults for invalid values", () => {
   const settings = normalizeSettings({ everyMs: "soon", sound: "yes", volume: 7, dailyGoal: 0 });
-  assert.deepEqual(settings, { everyMs: 600_000, sound: true, volume: 0.5, dailyGoal: 20, tips: "always", quiet: null, skipWeekends: true, deck: null, language: systemLanguage() });
+  assert.deepEqual(settings, { everyMs: 600_000, rhythm: "minutes", sound: true, volume: 0.5, dailyGoal: 20, tips: "sometimes", quiet: null, skipWeekends: true, deck: null, language: systemLanguage() });
   assert.equal(normalizeSettings({ everyMs: 300_000, sound: false, volume: 0.2, dailyGoal: 20 }).dailyGoal, 20);
+  assert.equal(normalizeSettings({ rhythm: "session-10" }).rhythm, "session-10");
+  assert.equal(normalizeSettings({ rhythm: "marathon" }).rhythm, "minutes");
 });
 
 test("the language is one Dracosh speaks, or the system's until one is picked", () => {
@@ -37,7 +39,7 @@ test("tips setting: old booleans are migrated, unknown values fall back", () => 
   assert.equal(normalizeSettings({ tips: true }).tips, "always");
   assert.equal(normalizeSettings({ tips: false }).tips, "off");
   assert.equal(normalizeSettings({ tips: "sometimes" }).tips, "sometimes");
-  assert.equal(normalizeSettings({ tips: "often" }).tips, "always");
+  assert.equal(normalizeSettings({ tips: "often" }).tips, "sometimes");
 });
 
 test("quiet hours are validated", () => {

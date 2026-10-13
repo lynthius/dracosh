@@ -1,6 +1,7 @@
 import { t } from "./i18n.js";
 import { randomBytes } from "node:crypto";
 import { normalize } from "./judge.js";
+import { gapsOf } from "./cardline.js";
 
 // The card library: decks and their cards. Pure functions over a plain object; saving is the caller's job.
 //
@@ -8,11 +9,18 @@ import { normalize } from "./judge.js";
 // note id as their id, so progress recorded by 0.1.0 (keyed by note id) carries over unchanged.
 // New cards get a "c"-prefixed id, which can never collide with Anki's numeric ids.
 
-export const LIBRARY_VERSION = 1;
+// 2: cloze cards, whose back may be empty (an older Dracosh would call such a library damaged)
+export const LIBRARY_VERSION = 2;
 
+// Older libraries carry a card type on each deck; every card is front = back now, so it's only kept.
 export const CARD_TYPES = ["translation", "definition", "qa"];
-export const ANSWER_MODES = ["typed", "self"];
-const DEFAULT_ANSWER_MODE = { translation: "typed", definition: "typed", qa: "self" };
+
+// How a deck is asked: front → back, back → front, or both. Picked after its first card.
+export const DIRECTIONS = ["forward", "backward", "both"];
+
+// the sides of a card typed as an answer in the quiz: in the quiz "/" opens the commands, so neither
+// may start with it. A cloze card is asked by its gaps, whatever the deck's direction.
+export const typedSides = (deck) => (deck.directions === "forward" ? ["back"] : deck.directions === "backward" ? ["front"] : ["front", "back"]);
 
 export const MAX_DECK_NAME = 40; // it has to fit the card's border and the header
 
@@ -31,7 +39,9 @@ const isText = (value) => typeof value === "string";
 const filled = (value) => isText(value) && value.trim() !== "";
 const validLanguages = (languages) => languages == null || (typeof languages === "object" && filled(languages.front) && filled(languages.back));
 const validDeck = (deck) => deck && isText(deck.id) && filled(deck.name) && validLanguages(deck.languages);
-const validCard = (card) => card && isText(card.id) && isText(card.deckId) && filled(card.front) && Array.isArray(card.back) && card.back.length > 0 && card.back.every(filled);
+// a cloze card's answers are its gaps, so its back (shown as a hint) may be empty
+const validCard = (card) =>
+  card && isText(card.id) && isText(card.deckId) && filled(card.front) && Array.isArray(card.back) && (card.cloze ? gapsOf(card.front).length > 0 : card.back.length > 0) && card.back.every(filled);
 const broken = (why) => Object.assign(new Error(why), { damaged: true });
 
 // → the library in its current shape (undefined: there's none yet). Throws on a file written by a newer
@@ -55,18 +65,26 @@ export function upgradeLibrary(raw) {
 export const findDeck = (library, nameOrId) =>
   library.decks.find((deck) => deck.id === nameOrId) ?? library.decks.find((deck) => sameName(deck.name, nameOrId)) ?? null;
 
-export function createDeck(library, { name, type = "translation", languages = { front: "en", back: "pl" }, answerMode, directions = "both", tour = false, now = Date.now() }) {
+export function createDeck(library, { name, type = "translation", languages = { front: "en", back: "pl" }, directions = "both", tour = false, now = Date.now() }) {
   const trimmed = String(name ?? "").trim();
   if (!trimmed) throw new Error(t("errors.deckNeedsName"));
   if (Array.from(trimmed).length > MAX_DECK_NAME) throw new Error(t("errors.deckNameTooLong", { max: MAX_DECK_NAME }));
   const existing = findDeck(library, trimmed);
   if (existing) throw new Error(t("errors.deckExists", { deck: existing.name }));
   if (!CARD_TYPES.includes(type)) throw new Error(`Unknown card type "${type}".`);
-  const mode = answerMode ?? DEFAULT_ANSWER_MODE[type];
-  if (!ANSWER_MODES.includes(mode)) throw new Error(`Unknown answer mode "${mode}".`);
+  if (!DIRECTIONS.includes(directions)) throw new Error(`Unknown direction "${directions}".`);
 
-  const deck = { id: newId("d"), name: trimmed, type, languages: languages ? { ...languages } : null, answerMode: mode, directions, tour, created: now };
+  const deck = { id: newId("d"), name: trimmed, type, languages: languages ? { ...languages } : null, directions, tour, created: now };
   library.decks.push(deck);
+  return deck;
+}
+
+// Progress is kept per direction, so turning one off only stops asking it: its boxes stay for later.
+export function setDirections(library, deckId, directions) {
+  if (!DIRECTIONS.includes(directions)) throw new Error(`Unknown direction "${directions}".`);
+  const deck = library.decks.find((d) => d.id === deckId);
+  if (!deck) throw new Error("That deck doesn't exist.");
+  deck.directions = directions;
   return deck;
 }
 
@@ -87,17 +105,19 @@ export const findDuplicate = (library, deckId, front) => {
 };
 
 // → { card, duplicate }: `duplicate` is the existing card when the front is already in the deck (nothing is added then)
-export function addCard(library, deckId, { front, back, example = "", tags = [], id, now = Date.now() }) {
+// `cloze`: the front has {{gaps}}, each asked as a card of its own; the back is then only a hint
+export function addCard(library, deckId, { front, back, example = "", tags = [], cloze = false, id, now = Date.now() }) {
   if (!library.decks.some((deck) => deck.id === deckId)) throw new Error("That deck doesn't exist.");
   const cleanFront = String(front ?? "").trim();
   const cleanBack = cleanList(back);
+  const isCloze = Boolean(cloze) && gapsOf(cleanFront).length > 0;
   if (!cleanFront) throw new Error(t("errors.cardNeedsFront"));
-  if (!cleanBack.length) throw new Error(t("errors.cardNeedsBack"));
+  if (!cleanBack.length && !isCloze) throw new Error(t("errors.cardNeedsBack"));
 
   const duplicate = findDuplicate(library, deckId, cleanFront);
   if (duplicate) return { card: null, duplicate };
 
-  const card = { id: id ? String(id) : newId("c"), deckId, front: cleanFront, back: cleanBack, example: String(example).trim(), tags: cleanList(tags), created: now, updated: now };
+  const card = { id: id ? String(id) : newId("c"), deckId, front: cleanFront, back: cleanBack, example: String(example).trim(), tags: cleanList(tags), ...(isCloze && { cloze: true }), created: now, updated: now };
   if (library.cards.some((c) => c.id === card.id)) throw new Error(`A card with id ${card.id} already exists.`);
   library.cards.push(card);
   return { card, duplicate: null };
@@ -106,23 +126,29 @@ export function addCard(library, deckId, { front, back, example = "", tags = [],
 export function updateCard(library, cardId, patch, now = Date.now()) {
   const card = library.cards.find((c) => c.id === cardId);
   if (!card) throw new Error("That card doesn't exist.");
-  if (patch.front !== undefined) {
-    const front = String(patch.front).trim();
-    if (!front) throw new Error(t("errors.cardNeedsFront"));
-    const duplicate = findDuplicate(library, card.deckId, front);
-    if (duplicate && duplicate.id !== card.id) throw new Error(t("errors.frontExists", { front }));
-    card.front = front;
-  }
-  if (patch.back !== undefined) {
-    const back = cleanList(patch.back);
-    if (!back.length) throw new Error(t("errors.cardNeedsBack"));
-    card.back = back;
-  }
+  const front = patch.front !== undefined ? String(patch.front).trim() : card.front;
+  const back = patch.back !== undefined ? cleanList(patch.back) : card.back;
+  const cloze = (patch.cloze !== undefined ? Boolean(patch.cloze) : Boolean(card.cloze)) && gapsOf(front).length > 0;
+  if (!front) throw new Error(t("errors.cardNeedsFront"));
+  if (!back.length && !cloze) throw new Error(t("errors.cardNeedsBack"));
+  const duplicate = findDuplicate(library, card.deckId, front);
+  if (duplicate && duplicate.id !== card.id) throw new Error(t("errors.frontExists", { front }));
+  Object.assign(card, { front, back });
+  if (cloze) card.cloze = true;
+  else delete card.cloze;
   if (patch.example !== undefined) card.example = String(patch.example).trim();
   if (patch.tags !== undefined) card.tags = cleanList(patch.tags);
   card.updated = now;
   return card;
 }
 
-// The quiz's word shape, so the scheduler and session keep working unchanged.
-export const toWords = (cards) => cards.map((card) => ({ noteId: card.id, word: card.front, translations: card.back, example: card.example }));
+// The quiz's word shape, so the scheduler and session keep working unchanged. A cloze card is asked one
+// gap at a time ("c1", "c2"…), whatever the deck's direction.
+export const toWords = (cards) =>
+  cards.map((card) => ({
+    noteId: card.id,
+    word: card.front,
+    translations: card.back,
+    example: card.example,
+    ...(card.cloze && { cloze: gapsOf(card.front), directions: gapsOf(card.front).map((_, i) => `c${i + 1}`) })
+  }));

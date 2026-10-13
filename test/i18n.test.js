@@ -5,6 +5,7 @@ import { englishMessages, isPlural, keysOf, LANGUAGES, setLanguage, systemLangua
 import { judge } from "../src/judge.js";
 import { BADGES, ELEMENTS, STAGES } from "../src/progress.js";
 import { TIPS } from "../src/tips.js";
+import { RHYTHMS } from "../src/settings.js";
 
 const english = englishMessages();
 const known = new Set(keysOf(english));
@@ -27,9 +28,11 @@ const dynamicKeys = [
   ...TIPS.flatMap((tip) => [`tips.${tip.id}.cat`, `tips.${tip.id}.text`]),
   "tour.deck",
   "tour.cards",
-  ...["language", "everyMs", "sound", "volume", "dailyGoal", "tips", "skipWeekends", "quiet", "reset"].flatMap((row) => [`settings.rows.${row}.label`, `settings.rows.${row}.hint`]),
+  ...["language", "rhythm", "everyMs", "sound", "volume", "dailyGoal", "tips", "skipWeekends", "quiet", "reset"].flatMap((row) => [`settings.rows.${row}.label`, `settings.rows.${row}.hint`]),
+  ...RHYTHMS.map((rhythm) => `settings.rhythms.${rhythm}`),
   ...["always", "sometimes", "off"].map((mode) => `settings.tipModes.${mode}`),
-  ...["deck", "front", "back", "example"].flatMap((field) => [`add.fields.${field}.label`, `add.fields.${field}.hint`]),
+  ...["deck", "line", "back"].flatMap((field) => [`add.fields.${field}.label`, `add.fields.${field}.hint`]),
+  ...["noBack", "noFront", "slash", "inDeck", "twice"].map((issue) => `add.paste.issues.${issue}`),
   ...["progress", "everything"].flatMap((scope) => ["label", "note", "question", "stays", "yes"].map((part) => `reset.${scope}.${part}`)),
   ...["cards", "progress", "settings"].map((part) => `cli.restore.what.${part}`),
   ...["daily", "before-reset", "before-delete", "before-restore"].map((reason) => `cli.restore.reasons.${reason}`),
@@ -51,7 +54,8 @@ test("locales/en.json has no texts that nothing uses", () => {
 test("placeholders are filled, plurals follow the count, unknown keys show themselves", () => {
   assert.equal(t("count.cards", { count: 1 }), "1 card");
   assert.equal(t("count.cards", { count: 5 }), "5 cards");
-  assert.equal(t("add.added", { front: "kot", deck: "Polish" }), 'Added "kot" to Polish. Next card, or Esc to finish.');
+  assert.equal(t("add.fixed", { front: "kot" }), '"kot" fixed.');
+  assert.equal(t("add.paste.added", { count: 3, deck: "Polish" }), "Added 3 cards to Polish.");
   assert.equal(t("no.such.key"), "no.such.key");
   assert.equal(t("help.title", { unused: 1 }), "Help");
 });

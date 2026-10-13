@@ -3,7 +3,7 @@
     "hint": "Révéler une lettre (la carte ne monte pas de boîte)",
     "add": "Ajouter des cartes à un paquet, ou en créer un",
     "decks": "Passer à un autre paquet, ou en créer un",
-    "settings": "Langue, intervalle, calme, son, objectif, astuces",
+    "settings": "Langue, rythme, intervalle, heures calmes, son, objectif, astuces",
     "stats": "Série, calendrier du mois et résumé des badges",
     "badges": "Tous les badges et comment les débloquer",
     "companion": "Ton dragon, son élément et les formes à venir",
@@ -25,19 +25,22 @@
     "outsideTitle": "En dehors du quiz",
     "keys": {
       "enter": "Entrée",
-      "enterWhat": "valider ta réponse (vide : affiche la réponse) ; entre deux cartes, demander la suivante",
+      "enterWhat": "vérifier la réponse ; sans rien taper, l'afficher et t'évaluer ; entre deux cartes, passer à la suivante",
       "slashWhat": "ouvrir les commandes",
       "esc": "Échap",
-      "escWhat": "effacer ce que tu as tapé, ou quitter",
+      "escWhat": "effacer ce que tu as tapé ; deux fois sur une ligne vide : quitter",
       "qWhat": "quitter, entre deux cartes",
       "anyKey": "une touche",
-      "anyKeyWhat": "réveille un dragon endormi"
+      "anyKeyWhat": "réveille un dragon endormi",
+      "grade": "1 / 2",
+      "gradeWhat": "une fois la réponse affichée : je ne savais pas (ou Échap) / je savais"
     },
     "how": {
       "boxes": "Une bonne réponse fait passer la carte dans une boîte plus lointaine : elle revient après {first}, puis {last} jours. Une erreur la renvoie dans la première boîte.",
       "typos": "Une seule lettre fausse dans un mot assez long compte quand même, et tu vois la bonne orthographe.",
       "streak": "Atteins ton objectif du jour pour garder ta série ; un jour où tu as fait toutes les cartes disponibles compte aussi. Ton dragon grandit avec ta meilleure série.",
-      "freezes": "Un gel couvre un jour manqué. Tu commences avec {max} et tu en récupères un chaque semaine, {max} au maximum."
+      "freezes": "Un gel couvre un jour manqué. Tu commences avec {max} et tu en récupères un chaque semaine, {max} au maximum.",
+      "cards": "Dans /add, une ligne fait une carte : cat = chat; minou // exemple. Les accolades font un trou à remplir : I {{look forward}} to it."
     },
     "outside": {
       "deckExample": "Anglais",
@@ -52,8 +55,6 @@
     "settings": "↑/↓ choisir · ←/→ changer · échap retour",
     "choiceBack": "{choose} · échap retour",
     "choiceCancel": "{choose} · échap annuler",
-    "addNext": "entrée suivant · échap annuler",
-    "addDone": "entrée suivant · échap terminer",
     "resetting": "réinitialisation…",
     "asking": "entrée valider (vide : révéler) · / commandes · échap quitter",
     "empty": "/add · / commandes · q quitter",
@@ -61,7 +62,18 @@
     "correctFirst": "/correct si c'était juste · {rest}",
     "stats": "←/→ mois · échap retour",
     "badges": "↑/↓ parcourir · ←/→ colonne · échap retour",
-    "keyNames": "une touche|entrée|échap|tab"
+    "keyNames": "une touche|entrée|échap|tab",
+    "addFirst": "entrée ajouter · échap annuler",
+    "addMore": "entrée ajouter · ↑ corriger la dernière · échap terminer",
+    "addFixing": "entrée enregistrer · échap laisser",
+    "addBack": "entrée ajouter · échap retour",
+    "pasteReview": "↑/↓ choisir · e corriger · x écarter · entrée ajouter {count} · échap annuler",
+    "pasteFix": "entrée valider · échap retour",
+    "grading": "1 ou ← je ne savais pas · 2 ou → je savais",
+    "sessionWaiting": "entrée carte suivante · / commandes · q quitter",
+    "decks": "→ sens · {choose}",
+    "directionPick": "{choose} · échap garder 1",
+    "addName": "entrée créer · échap annuler"
   },
   "settings": {
     "title": "Réglages",
@@ -69,6 +81,10 @@
       "language": {
         "label": "Langue",
         "hint": "la langue de Dracosh ; la visite change aussi"
+      },
+      "rhythm": {
+        "label": "Rythme",
+        "hint": "une carte à intervalles réguliers, ou une session : les cartes à la suite, Entrée pour la suivante"
       },
       "everyMs": {
         "label": "Intervalle",
@@ -113,7 +129,13 @@
     },
     "weekendsRest": "jours de repos",
     "weekendsCount": "comme les autres jours",
-    "pressEnter": "appuie sur entrée"
+    "pressEnter": "appuie sur entrée",
+    "rhythms": {
+      "minutes": "à intervalles réguliers",
+      "session": "session",
+      "session-10": "session · 10 cartes",
+      "session-20": "session · 20 cartes"
+    }
   },
   "count": {
     "cards": {
@@ -167,7 +189,11 @@
     "title": "Paquets",
     "tour": "la visite",
     "now": "actuel",
-    "newDeck": "+ Nouveau paquet"
+    "newDeck": "+ Nouveau paquet",
+    "directionSaved": "« {deck} » interroge ainsi dès la prochaine carte.",
+    "front": "recto",
+    "back": "verso",
+    "progressKept": "La progression de chaque sens est conservée, même si tu le désactives."
   },
   "add": {
     "fields": {
@@ -175,17 +201,13 @@
         "label": "Nomme ton paquet",
         "hint": "Anglais, Biologie, Capitales… ce que tu veux apprendre"
       },
-      "front": {
-        "label": "Recto",
-        "hint": "le mot ou la question, par ex. cat"
+      "line": {
+        "label": "Nouvelle carte",
+        "hint": "recto = verso, par ex. cat = chat; minou // My cat sleeps.  ·  ou colle une liste entière"
       },
       "back": {
         "label": "Verso",
-        "hint": "la réponse ; sépare-en plusieurs par des virgules, par ex. chat, minou"
-      },
-      "example": {
-        "label": "Exemple",
-        "hint": "facultatif : une phrase qui aide à retenir. Entrée pour passer"
+        "hint": "la réponse  ·  ; sépare plusieurs bonnes réponses  ·  // ajoute un exemple"
       }
     },
     "titlePick": "Ajouter des cartes à…",
@@ -193,18 +215,61 @@
     "titleFirst": "Crée ton premier paquet",
     "titleCard": "Ajouter une carte · {deck}",
     "deckReady": "Ton paquet « {deck} » est prêt. Maintenant, sa première carte :",
-    "added": "« {front} » ajouté à {deck}. Carte suivante, ou Échap pour terminer.",
     "duplicateCard": "« {front} » est déjà dans {deck}.",
     "duplicateDeck": "Il y a déjà un paquet nommé « {deck} ».",
     "nameTooLong": "Le nom ne doit pas dépasser {max} caractères.",
     "needName": "Ton paquet a besoin d'un nom.",
     "needFront": "Une carte a besoin d'un recto.",
     "needBack": "Une carte a besoin d'une réponse.",
-    "waysQuestion": "Comment interroger « {deck} » ?",
+    "preview": {
+      "pair": "{front} = {back}  ·  ensuite, tu choisis le sens des questions",
+      "asks": "{prompt} → ?  tu tapes {answer}",
+      "both": "{forward}  ·  {backward}",
+      "cloze": {
+        "one": "{prompt}  ·  1 trou",
+        "many": "{prompt}  ·  {count} trous",
+        "other": "{prompt}  ·  {count} trous"
+      },
+      "noBack": "Entrée, puis le verso  ·  ou écris recto = verso"
+    },
+    "fixed": "Carte « {front} » corrigée.",
+    "fixing": "Tu corriges « {front} » : Entrée enregistre, Échap la laisse telle quelle.",
+    "more": {
+      "one": "+ 1 carte précédente",
+      "many": "+ {count} cartes précédentes",
+      "other": "+ {count} cartes précédentes"
+    },
+    "directionQuestion": "Dans quel sens interroger « {deck} » ?",
+    "youType": "tu tapes {answer}",
     "bothWays": "Dans les deux sens",
-    "bothWaysNote": "pour les mots : cat → chat, et chat → cat",
-    "oneWay": "Dans un seul sens",
-    "oneWayNote": "pour les questions : recto → verso"
+    "bothWaysNote": "chaque carte dans les deux sens",
+    "directionLater": "Modifiable plus tard : /decks, puis →.",
+    "directionSet": "C'est noté : {how}  ·  carte suivante :",
+    "paste": {
+      "title": "Cartes collées · {deck}",
+      "summary": "Prêtes à ajouter : {count} sur {lines}",
+      "attention": "  ·  à corriger : {count}",
+      "issues": {
+        "noBack": "pas de verso",
+        "noFront": "pas de recto",
+        "inDeck": "déjà dans le paquet",
+        "twice": "deux fois dans la liste",
+        "slash": "commence par /"
+      },
+      "position": "{at}/{count}",
+      "confirm": "Appuie encore sur Échap pour abandonner les cartes collées ; une autre touche les garde.",
+      "nothing": "Rien à ajouter pour l'instant : corrige (e) ou écarte (x) les lignes signalées.",
+      "added": {
+        "one": "1 carte ajoutée à {deck}.",
+        "many": "{count} cartes ajoutées à {deck}.",
+        "other": "{count} cartes ajoutées à {deck}."
+      },
+      "skipped": {
+        "one": "1 ligne ignorée : elle restait à corriger.",
+        "many": "{count} lignes ignorées : elles restaient à corriger.",
+        "other": "{count} lignes ignorées : elles restaient à corriger."
+      }
+    }
   },
   "quiz": {
     "youWrote": "ta réponse : ",
@@ -244,7 +309,16 @@
     "progressReset": "Ta progression repart de zéro. Toutes tes cartes sont toujours là.",
     "cardNotSaved": "La carte en cours n'a pas été enregistrée.",
     "deckReadyElsewhere": "« {deck} » est prêt ; tu révises toujours « {current} ». Change avec /decks.",
-    "hintLabel": "indice"
+    "hintLabel": "indice",
+    "didYouKnow": "Tu le savais ?",
+    "gradeKeys": "1 non · 2 oui",
+    "sessionDone": {
+      "one": "Session terminée : 1 carte. Retour au rythme par intervalles.",
+      "many": "Session terminée : {count} cartes. Retour au rythme par intervalles.",
+      "other": "Session terminée : {count} cartes. Retour au rythme par intervalles."
+    },
+    "sessionProgress": "{done} sur {count} dans cette session",
+    "escAgain": "Échap encore une fois pour quitter."
   },
   "dragon": {
     "stages": {
@@ -548,7 +622,7 @@
     "nothingThatDay": "Rien de raté ce jour-là.",
     "times": " · ratée {count}×",
     "youWrote": "ta réponse : {answer}",
-    "noAnswer": "pas de réponse",
+    "noAnswer": "réponse affichée, pas sue",
     "recovered": " · réussie depuis",
     "more": "…et {count} de plus",
     "keys": "←/→ jour · échap retour"
@@ -620,7 +694,7 @@
     "nothingToCorrect": "Il n'y a pas de mauvaise réponse à corriger.",
     "deckGone": "Le paquet « {deck} » n'existe plus.",
     "slashAnswer": "Une réponse ne peut pas commencer par / : dans le quiz, ça ouvre les commandes.",
-    "slashFront": "Dans un paquet interrogé dans les deux sens, le recto est aussi une réponse, donc il ne peut pas commencer par /.",
+    "slashFront": "Tu tapes ceci comme réponse dans le quiz, donc ça ne peut pas commencer par /.",
     "noDeck": "Il n'y a pas de paquet nommé « {deck} ». Tes paquets : {decks}.",
     "noDecksYet": "aucun pour l'instant",
     "emptyLibrary": "Ta bibliothèque n'a pas encore de paquets.",
@@ -645,10 +719,11 @@
       "noProgress": "aucune progression dedans",
       "progressEntry": "une carte sans boîte ni date",
       "streak": "la série et les badges sont illisibles"
-    }
+    },
+    "slashSwitch": "Il faudrait taper « {text} », et dans le quiz / ouvre les commandes. Modifie d'abord cette carte."
   },
   "cli": {
-    "help": "Dracosh : un entraîneur de vocabulaire et de quiz pour ton terminal\n\nUsage : dracosh [options]\n        dracosh restore [numéro]  liste tes sauvegardes, ou en restaure une\n\n  --deck <nom>     réviser ce paquet, pour cette fois seulement (sinon celui choisi dans /decks)\n  --every <durée>  pause entre les questions : 30s, 10m, 1h (par défaut : {interval})\n  --no-sound       couper les sons\n  --volume <0-1>   volume du son (par défaut : {volume})\n  --stats          afficher la progression et quitter\n  --data           montrer où sont gardées tes cartes, ta progression et tes sauvegardes\n  --preview        parcourir toutes les animations et tous les écrans sur des données inventées (rien n'est enregistré)\n  -y, --yes        restaurer sans demander\n  -h, --help       afficher cette aide\n\nLes options remplacent tes réglages enregistrés pour ce lancement seulement. Change-les pour de bon dans /settings.\n\nPendant l'utilisation : Entrée valide, « / » ouvre le menu des commandes (/add, /decks, /settings, /stats, /help…),\nÉchap quitte (efface d'abord ce que tu as tapé). Ctrl+C marche aussi.\nEntre deux cartes : Entrée demande la suivante tout de suite, q quitte. /help explique le reste.",
+    "help": "Dracosh : un entraîneur de vocabulaire et de quiz pour ton terminal\n\nUsage : dracosh [options]\n        dracosh restore [numéro]  liste tes sauvegardes, ou en restaure une\n\n  --deck <nom>     réviser ce paquet, pour cette fois seulement (sinon celui choisi dans /decks)\n  --every <durée>  pause entre les questions : 30s, 10m, 1h (par défaut : {interval})\n  --no-sound       couper les sons\n  --volume <0-1>   volume du son (par défaut : {volume})\n  --stats          afficher la progression et quitter\n  --data           montrer où sont gardées tes cartes, ta progression et tes sauvegardes\n  --preview        parcourir toutes les animations et tous les écrans sur des données inventées (rien n'est enregistré)\n  -y, --yes        restaurer sans demander\n  -h, --help       afficher cette aide\n\nLes options remplacent tes réglages enregistrés pour ce lancement seulement. Change-les pour de bon dans /settings.\n\nPendant l'utilisation : Entrée valide (à vide, elle montre la réponse, puis 1 ou 2), « / » ouvre le menu des commandes (/add, /decks, /settings, /stats, /help…),\nÉchap quitte (efface d'abord ce que tu as tapé). Ctrl+C marche aussi.\nEntre deux cartes : Entrée demande la suivante tout de suite, q quitte. /help explique le reste.",
     "badEvery": "--every « {value} » invalide. Utilise par ex. 30s, 10m, 1h.",
     "badVolume": "--volume « {value} » invalide. Utilise un nombre de 0 à 1.",
     "unknownCommand": "Commande inconnue « {command} ». Voir dracosh --help.",
@@ -720,7 +795,7 @@
     },
     "keys-esc": {
       "cat": "Touches",
-      "text": "Échap efface ce que tu as tapé. Sur une ligne vide, il quitte Dracosh."
+      "text": "Échap efface ce que tu as tapé. Deux fois sur une ligne vide, il quitte Dracosh."
     },
     "keys-wake": {
       "cat": "Touches",
@@ -760,7 +835,7 @@
     },
     "cards-dont-know": {
       "cat": "Cartes",
-      "text": "Tu ne sais pas ? Appuie sur Entrée sans rien taper et la réponse s'affiche. La carte reviendra bientôt."
+      "text": "Tu ne sais pas ? Entrée sans rien taper montre la réponse, puis 1 si tu ne la savais pas, sinon 2."
     },
     "cards-missed": {
       "cat": "Cartes",
@@ -820,19 +895,31 @@
     },
     "settings-sound": {
       "cat": "Réglages",
-      "text": "Le son et le volume sont dans /settings. dracosh --no-sound coupe le son pour un lancement."
+      "text": "Le son et le volume sont dans /settings, avec les heures calmes pour le soir."
     },
     "data-backup": {
       "cat": "Tes données",
       "text": "Dracosh sauvegarde tes cartes et ta progression chaque jour. dracosh restore restaure une sauvegarde."
     },
-    "data-sync": {
-      "cat": "Tes données",
-      "text": "dracosh --data montre où vivent tes cartes. Fais pointer DRACOSH_HOME vers un dossier synchronisé pour utiliser deux ordinateurs."
+    "cards-line": {
+      "cat": "Cartes",
+      "text": "Dans /add, une ligne fait une carte : cat = chat; minou. Le ; sépare les bonnes réponses, // ajoute un exemple."
     },
-    "data-deck": {
-      "cat": "Tes données",
-      "text": "dracosh --deck \"Anglais\" démarre avec un autre paquet, pour ce lancement seulement."
+    "cards-paste": {
+      "cat": "Cartes",
+      "text": "Colle une liste entière dans /add, une carte par ligne. Tu la vérifies avant que rien ne soit enregistré."
+    },
+    "cards-cloze": {
+      "cat": "Cartes",
+      "text": "Dans /add, les accolades font un trou : I {{look forward}} to it. Au quiz, tu tapes seulement le trou."
+    },
+    "cards-direction": {
+      "cat": "Cartes",
+      "text": "Un paquet peut interroger du recto au verso, du verso au recto ou dans les deux sens. Pour changer : /decks, puis →."
+    },
+    "settings-rhythm": {
+      "cat": "Réglages",
+      "text": "Envie d'enchaîner ? Mets le rythme sur session dans /settings : Entrée donne la carte suivante."
     }
   },
   "preview": {
@@ -858,6 +945,18 @@
       "quiz": {
         "label": "Quiz",
         "hint": "une vraie manche sur des mots de démo, objectif à 5"
+      },
+      "add": {
+        "label": "Ajouter des cartes",
+        "hint": "/add : une ligne par carte, une liste collée, le sens"
+      },
+      "reveal": {
+        "label": "Afficher et noter",
+        "hint": "Entrée à vide, puis 1 ou 2"
+      },
+      "cloze": {
+        "label": "Cartes à trous",
+        "hint": "un trou à la fois"
       },
       "quiz-look": {
         "label": "Écran du quiz",
@@ -948,6 +1047,13 @@
           "Asogaras"
         ],
         "example": "Dans tes propres paquets, une carte ratée revient plus tôt. Si ta réponse a été comptée fausse par erreur, tape `/correct` maintenant."
+      },
+      {
+        "front": "Tu ne connais pas une réponse ? Appuie sur Entrée sans rien taper : la réponse s'affiche, puis appuie sur 2 si tu la savais, sur 1 sinon. Essaie, ou tape `montrer`",
+        "back": [
+          "montrer"
+        ],
+        "example": "Note-toi honnêtement : c'est ce qui décide quand la carte revient. Les phrases entières s'apprennent mieux ainsi."
       },
       {
         "front": "Tape `/` à tout moment pour voir toutes les commandes. Essaie `/badges` après cette carte. Pour l'instant, tape `ok`",

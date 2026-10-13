@@ -12,6 +12,7 @@ import { startOfTomorrow } from "../scheduler.js";
 import { formatDay } from "../vacation.js";
 import { dayKey } from "../dates.js";
 import { shouldShowTip } from "../tips.js";
+import { sessionLength } from "../settings.js";
 import { Badges } from "./Badges.js";
 import { Companion } from "./Companion.js";
 import { Confetti } from "./Confetti.js";
@@ -33,6 +34,7 @@ const SPINNER = ["⠚", "⠓", "⠋", "⠙"]; // the old braille dots on a 2×2 
 const TICK_MS = 250; // the steady redraw: slow enough to stay idle for hours, fast enough for the spinner
 const SLEEP_AFTER_MS = 3 * 60_000; // no key pressed for this long while waiting → the dragon dozes off
 const PAUSED_SLEEP_AFTER_MS = 15_000; // during a pause or quiet hours it nods off again much sooner
+const SETTLE_MS = 400; // keys right after a card appears or its answer is revealed are a double press, not a choice
 const CHEER_STYLE = {
   goal: { icon: "▪", color: theme.good },
   evolve: { icon: "▴", color: theme.accent },
@@ -61,7 +63,7 @@ function Verdict({ outcome, question }) {
   const showDiff = outcome.closest && outcome.given && !outcome.overruled && (wrong || outcome.result === "typo");
   return html`
     <${Box} flexDirection="column">
-      <${Text} color=${wrong ? theme.bad : theme.good} bold>${wrong ? "✗" : "✓"} ${question.expected.join(", ")}${outcome.result === "typo" ? t("quiz.closeEnough") : ""}<//>
+      <${Text} color=${wrong ? theme.bad : theme.good} bold>${wrong ? "✗" : "✓"} ${question.expected.join(" / ")}${outcome.result === "typo" ? t("quiz.closeEnough") : ""}<//>
       ${showDiff && html`<${AnswerDiff} given=${outcome.given} closest=${outcome.closest} />`}
       ${question.word.example && html`<${Box} marginTop=${1}>${question.tour ? html`<${Marked} dimColor text=${question.word.example} />` : html`<${Text} dimColor italic>“${question.word.example}”<//>`}<//>`}
       ${(outcome.hinted || outcome.overruled) &&
@@ -71,6 +73,20 @@ function Verdict({ outcome, question }) {
           ${outcome.overruled && html`<${Text} color=${theme.good}>${t("quiz.countedCorrect")}${question.tour ? "" : t("quiz.acceptedFromNow", { answer: outcome.accepted })}<//>`}
         <//>
       `}
+    <//>
+  `;
+}
+
+// the answer shown after an empty Enter, and the question that follows: did you know it?
+function Revealed({ question, nudge }) {
+  return html`
+    <${Box} flexDirection="column">
+      <${Text} color=${theme.accent} bold>${question.expected.join(" / ")}<//>
+      ${question.word.example && html`<${Box} marginTop=${1}>${question.tour ? html`<${Marked} dimColor text=${question.word.example} />` : html`<${Text} dimColor italic>“${question.word.example}”<//>`}<//>`}
+      <${Box} marginTop=${1}>
+        <${Text} bold>${t("quiz.didYouKnow")}  <//>
+        <${Text} color=${nudge ? theme.warn : theme.text} bold=${nudge}>${t("quiz.gradeKeys")}<//>
+      <//>
     <//>
   `;
 }
@@ -159,7 +175,8 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
   // quiz | settings | reset | add | decks | stats | badges | companion | help | missed | evolve | the-one | die | summary | hatch
   const [screen, setScreen] = useState(() => (session.isFirstRun() ? "hatch" : "quiz"));
   const [tip, setTip] = useState(null);
-  const [phase, setPhase] = useState("loading"); // loading | asking | waiting | empty
+  const [phase, setPhase] = useState("loading"); // loading | asking | grading (answer revealed) | waiting | empty
+  const [nudge, setNudge] = useState(false); // Enter while grading: the 1/2 keys light up
   const [question, setQuestion] = useState(null);
   const [outcome, setOutcome] = useState(null);
   const [problem, setProblem] = useState("");
@@ -176,6 +193,9 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
   const [ceremonies, setCeremonies] = useState([]); // full-screen moments still to show: "evolve", "the-one"
   const [lastActive, setLastActive] = useState(Date.now()); // last key press or new question: the dragon sleeps after a long gap
   const busy = useRef(false);
+  const shownAt = useRef(0); // when the card or its revealed answer appeared (SETTLE_MS)
+  const sessionDone = useRef(0); // cards answered in this study session (the "session" rhythm)
+  const [sessionWait, setSessionWait] = useState(false); // waiting for Enter, not for the clock
   const asleepRef = useRef(false);
   const bestCombo = useRef(0);
   const settingsRef = useRef(settings);
@@ -192,10 +212,14 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
     return Math.max(snoozeRef.current > t ? snoozeRef.current : 0, inQuietHours(t, quiet) ? quietEnd(t, quiet) : 0);
   };
 
-  // `nextDue`: nothing is waiting until then, so the next question waits for it (never sooner than usual)
+  // `nextDue`: nothing is waiting until then, so the next question waits for it (never sooner than usual).
+  // In a study session Enter asks the next card instead of the clock, until the set number is done.
   const waitForNext = useCallback((nextDue = null) => {
     const usual = Date.now() + settingsRef.current.everyMs;
-    setNextAt(nextDue ? Math.max(nextDue, usual) : usual);
+    const length = sessionLength(settingsRef.current.rhythm);
+    const studying = settingsRef.current.rhythm !== "minutes" && !nextDue && (length === null || sessionDone.current < length);
+    setSessionWait(studying);
+    setNextAt(studying ? Infinity : nextDue ? Math.max(nextDue, usual) : usual);
     setRestUntil(nextDue);
     setPhase("waiting");
     setTip(!session.inTour() && shouldShowTip(settingsRef.current.tips) ? session.nextTip() : null);
@@ -213,6 +237,7 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
       setQuestion(next);
       setOutcome(null);
       setEmpty(null);
+      shownAt.current = Date.now();
       setPhase("asking");
     } catch (err) {
       if (!err.empty) {
@@ -252,6 +277,14 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
     }
   }, [now, phase, nextAt, screen, ask, alerts]);
 
+  // Esc on an empty line is easy to press by habit: it quits only when pressed twice in a row
+  const escArmed = useRef(0);
+  const escapeExit = () => {
+    if (Date.now() - escArmed.current < 3000) return requestExit();
+    escArmed.current = Date.now();
+    setNotice(t("quiz.escAgain"));
+  };
+
   // quitting goes through the session summary when there is anything to sum up
   const requestExit = useCallback(() => {
     if (session.totals.asked > 0) return setScreen("summary");
@@ -264,10 +297,20 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
     setLastActive(Date.now());
   });
 
+  // the answer is revealed: you say whether you knew it. 1/2 or ←/→ (AZERTY's digits need Shift, so
+  // & and é too); Esc is "didn't know"; Enter never grades, it only shows the keys again
+  useInput((input, key) => {
+    if (screen !== "quiz" || phase !== "grading" || asleepRef.current || Date.now() - shownAt.current < SETTLE_MS) return;
+    if (input === "1" || input === "&" || key.leftArrow || key.escape) return gradeSelf(false);
+    if (input === "2" || input === "é" || key.rightArrow) return gradeSelf(true);
+    if (key.return) setNudge(true);
+  });
+
   useInput((input, key) => {
     if (screen !== "quiz" || (phase !== "waiting" && phase !== "empty") || commandMode) return;
     if (input === "/") return setCommandMode(true);
-    if (key.escape || input === "q") return requestExit();
+    if (input === "q") return requestExit();
+    if (key.escape) return escapeExit();
     if (key.return && phase === "waiting") ask();
   });
 
@@ -359,6 +402,10 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
     alerts.configure({ sound: next.sound, volume: next.volume });
     persistSettings(patch).catch(() => {});
     if (patch.everyMs && phase === "waiting") setNextAt((at) => at - previous.everyMs + patch.everyMs);
+    if (patch.rhythm) {
+      sessionDone.current = 0;
+      if (phase === "waiting" && !restUntil) waitForNext(); // the wait follows the new rhythm right away
+    }
     if (patch.volume !== undefined || patch.sound === true) alerts.play("correct-0"); // audible preview
     if (patch.language) changeLanguage(patch.language);
   }
@@ -382,15 +429,34 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
       .catch(() => {});
   }
 
-  // an empty answer means "I don't know": the answer is shown and the card counts as missed
+  // An empty answer reveals the card, and you grade yourself (gradeSelf). An empty Enter right after the
+  // card appeared is the second half of the Enter that asked it: ignored.
   async function submit(raw) {
     const text = raw.trim();
+    if (busy.current) return;
+    if (!text) {
+      if (Date.now() - shownAt.current < SETTLE_MS) return;
+      session.reveal(question);
+      shownAt.current = Date.now();
+      setNudge(false);
+      return setPhase("grading");
+    }
+    await settle(() => session.answer(question, text, { hinted: hintLevel > 0 }));
+  }
+
+  const gradeSelf = (knew) => settle(() => session.selfGrade(question, knew, { hinted: hintLevel > 0 }));
+
+  // a graded answer: the verdict, the celebration, then the wait for the next card
+  async function settle(grading) {
     if (busy.current) return;
     busy.current = true;
     let nextDue = null;
     try {
-      const result = await session.answer(question, text, { hinted: hintLevel > 0 });
+      const result = await grading();
       nextDue = result.nextDue;
+      sessionDone.current += 1;
+      const length = sessionLength(settingsRef.current.rhythm);
+      if (length !== null && sessionDone.current === length) setNotice(t("quiz.sessionDone", { count: length }));
       setOutcome(result);
       celebrate(result);
     } catch (err) {
@@ -430,9 +496,10 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
 
   // after /add: a first deck of your own replaces the tour; a deck started from /decks (or in place
   // of an empty one) becomes the one you practise; new cards end an empty state
-  function addDone({ deck: started, removed, added, dropped }) {
+  function addDone({ deck: started, removed, stale = [], added, dropped }) {
     setScreen("quiz");
     if (removed.length) session.forget(removed).catch(() => {});
+    if (stale.length) session.forgetKeys(stale).catch(() => {});
     const switching = started && (removed.length || phase === "empty" || addNew);
     if (switching) switchDeck(started);
     else if (phase === "empty" && added) ask();
@@ -484,7 +551,10 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
         ${screen === "settings" && html`<${Settings} settings=${settings} onChange=${changeSettings} onClose=${() => setScreen("quiz")} onAction=${library ? () => setScreen("reset") : null} />`}
         ${screen === "reset" && html`<${Reset} stats=${stats} actions=${library} onConfirm=${reset} onClose=${() => setScreen("settings")} />`}
         ${screen === "add" && html`<${AddCard} current=${deck} actions=${library} onDone=${addDone} startNew=${addNew} />`}
-        ${screen === "decks" && html`<${Decks} current=${deck} actions=${library} onPick=${switchDeck} onNew=${() => (setAddNew(true), setScreen("add"))} onClose=${() => setScreen("quiz")} />`}
+        ${screen === "decks" && html`<${Decks} current=${deck} actions=${library} onDirections=${async (cardIds, directions) => {
+          await session.setDirections(cardIds, directions);
+          if (phase === "asking" && question && cardIds.includes(question.word.noteId)) ask(); // the open card follows the new way at once
+        }} onPick=${switchDeck} onNew=${() => (setAddNew(true), setScreen("add"))} onClose=${() => setScreen("quiz")} />`}
         ${!["settings", "reset", "add", "decks"].includes(screen) &&
           html`
               <${Fragment}>
@@ -494,10 +564,12 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
                   <${CardTop} label=${question.label} width=${width} color=${border} />
                   <${Box} flexDirection="column" borderStyle="round" borderTop=${false} borderColor=${border} paddingX=${2} paddingTop=${1}>
                     <${Marked} bold text=${question.prompt} plain=${!question.tour} />
+                    ${question.context && html`<${Text} dimColor>(${question.context})<//>`}
                     ${phase === "asking" && hintLevel > 0 && html`<${Text} dimColor>${t("quiz.hintLabel")}   ${makeHint(hintTarget(question.expected), hintLevel)}<//>`}
                     <${Box} marginTop=${1} flexDirection="column">
-                      ${phase === "asking" && html`<${AnswerInput} key=${question.word.noteId + question.direction} onSubmit=${submit} onCommand=${runCommand} onExit=${requestExit} onEdit=${clearProblem} commands=${commandsFor({ phase: "asking" })} />`}
-                      ${phase !== "asking" && outcome && html`<${Verdict} outcome=${outcome} question=${question} />`}
+                      ${phase === "asking" && html`<${AnswerInput} key=${question.word.noteId + question.direction} onSubmit=${submit} onCommand=${runCommand} onExit=${escapeExit} onEdit=${clearProblem} commands=${commandsFor({ phase: "asking" })} />`}
+                      ${phase === "grading" && html`<${Revealed} question=${question} nudge=${nudge} />`}
+                      ${phase !== "asking" && phase !== "grading" && outcome && html`<${Verdict} outcome=${outcome} question=${question} />`}
                     <//>
                   <//>
                 <//>
@@ -512,8 +584,10 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
                 ${notice && html`<${Text} color=${theme.accent}>${notice}<//>`}
                 ${phase === "waiting" && paused && html`<${Text} dimColor>${t("quiz.pausedUntil", { time: formatClock(pausedUntil) })}${inQuietHours(now, settings.quiet) ? t("quiz.quietHours") : ""}<//>`}
                 ${phase === "waiting" && !paused && restUntil && nextAt - now > settings.everyMs && html`<${Text} dimColor>${t("quiz.nothingWaiting", { when: whenDue(restUntil, now) })}<//>`}
+                ${phase === "waiting" && !paused && sessionWait && sessionLength(settings.rhythm) && html`<${Text} dimColor>${t("quiz.sessionProgress", { done: sessionDone.current, count: sessionLength(settings.rhythm) })}<//>`}
                 ${phase === "waiting" &&
                 !paused &&
+                !sessionWait &&
                 !(restUntil && nextAt - now > settings.everyMs) &&
                 html`
                   <${Text}>
@@ -523,7 +597,7 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
                   <//>
                 `}
                 ${(phase === "waiting" || phase === "empty") && commandMode && html`<${AnswerInput} commandOnly initial="/" commands=${commandsFor({ phase: "waiting", canOverrule: session.canOverrule() })} onCommand=${runCommand} onCancel=${() => setCommandMode(false)} onEdit=${clearProblem} />`}
-                ${phase !== "loading" && !commandMode && html`<${KeyHints} text=${phase === "asking" ? t("keyHints.asking") : phase === "empty" ? t("keyHints.empty") : session.canOverrule() ? t("keyHints.correctFirst", { rest: t("keyHints.waiting") }) : t("keyHints.waiting")} />`}
+                ${phase !== "loading" && !commandMode && html`<${KeyHints} text=${phase === "grading" ? t("keyHints.grading") : phase === "asking" ? t("keyHints.asking") : phase === "empty" ? t("keyHints.empty") : session.canOverrule() ? t("keyHints.correctFirst", { rest: t(sessionWait ? "keyHints.sessionWaiting" : "keyHints.waiting") }) : t(sessionWait ? "keyHints.sessionWaiting" : "keyHints.waiting")} />`}
               <//>
               <//>
             `}

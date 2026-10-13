@@ -3,7 +3,7 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
-import { addCard, cardsOf, createDeck, emptyLibrary, findDeck, toWords, updateCard, upgradeLibrary } from "../src/library.js";
+import { addCard, cardsOf, createDeck, emptyLibrary, findDeck, setDirections, toWords, updateCard, upgradeLibrary } from "../src/library.js";
 import { itemKey } from "../src/scheduler.js";
 
 process.env.DRACOSH_HOME = mkdtempSync(join(tmpdir(), "dracosh-"));
@@ -15,11 +15,26 @@ const withDeck = (options = {}) => {
   return { library, deck };
 };
 
-test("a deck gets sensible defaults per card type", () => {
+test("a deck is asked one of three ways, and changing it keeps the progress of every direction", () => {
   const library = emptyLibrary();
-  assert.equal(createDeck(library, { name: "Words" }).answerMode, "typed");
-  assert.equal(createDeck(library, { name: "Terms", type: "definition" }).answerMode, "typed");
-  assert.equal(createDeck(library, { name: "Trivia", type: "qa" }).answerMode, "self");
+  assert.equal(createDeck(library, { name: "Words" }).directions, "both");
+  const deck = createDeck(library, { name: "Terms", directions: "backward" });
+  assert.throws(() => createDeck(library, { name: "Odd", directions: "sideways" }), /Unknown direction/);
+  assert.equal(setDirections(library, deck.id, "forward").directions, "forward");
+  assert.throws(() => setDirections(library, deck.id, "up"), /Unknown direction/);
+});
+
+test("a cloze card needs a gap, not a back, and is asked one gap at a time", () => {
+  const { library, deck } = withDeck();
+  const { card } = addCard(library, deck.id, { front: "I {{look forward}} to {{it}}", back: [], cloze: true });
+  assert.equal(card.cloze, true);
+  assert.throws(() => addCard(library, deck.id, { front: "no gaps here", back: [], cloze: true }), /at least one answer/);
+  const [word] = toWords([card]);
+  assert.deepEqual([word.cloze, word.directions], [["look forward", "it"], ["c1", "c2"]]);
+  assert.equal(upgradeLibrary(structuredClone(library)).cards.length, 1, "a saved cloze card loads again");
+  // fixing it into a plain card needs a back again
+  assert.throws(() => updateCard(library, card.id, { front: "plain now", cloze: false }), /at least one answer/);
+  assert.equal(updateCard(library, card.id, { front: "plain now", back: ["ok"], cloze: false }).cloze, undefined);
 });
 
 test("deck names are required and unique, ignoring case", () => {

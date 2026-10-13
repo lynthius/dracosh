@@ -232,8 +232,11 @@ for (const badge of BADGES) {
 // progress is kept per card and direction ("id:en-pl"); badges count cards
 const cardOf = (key) => key.slice(0, key.lastIndexOf(":"));
 
-// a card is mastered once every direction it's been asked in has reached the last box
-function masteredCards(items) {
+// a card is mastered once every direction it's asked in has reached the last box; a direction its deck
+// no longer asks (`dormant`, kept for when it's turned back on) doesn't hold it back
+function masteredCards(items, dormant = []) {
+  const resting = new Set(dormant);
+  items = items.filter(([key]) => !resting.has(key));
   const byCard = new Map();
   for (const [key, entry] of items) byCard.set(cardOf(key), (byCard.get(cardOf(key)) ?? true) && entry.box === MAX_BOX);
   return [...byCard.values()].filter(Boolean).length;
@@ -264,7 +267,7 @@ function collectStats(state, now, goal) {
     bestStreak: progress.streak.best,
     bestCombo: progress.bestCombo ?? 0,
     freezesUsed: progress.streak.freezesUsed ?? 0,
-    mastered: masteredCards(items),
+    mastered: masteredCards(items, state.dormant),
     practiced: new Set(items.map(([key]) => cardOf(key))).size,
     goalDaysThisMonth: goalDaysInMonth(progress, todayKey),
     totalGoalDays: Object.values(progress.days).filter((d) => d.goalMet).length,

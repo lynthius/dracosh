@@ -8,6 +8,7 @@ import { cellWidth, html, KeyHints, Text, theme, usePanelWidth } from "./kit.js"
 // built at render time, so the texts follow the app language
 const keys = () => [
   [t("help.keys.enter"), t("help.keys.enterWhat")],
+  [t("help.keys.grade"), t("help.keys.gradeWhat")],
   ["/", t("help.keys.slashWhat")],
   [t("help.keys.esc"), t("help.keys.escWhat")],
   ["q", t("help.keys.qWhat")],
@@ -17,6 +18,7 @@ const keys = () => [
 const how = () => [
   t("help.how.boxes", { first: BOX_INTERVALS_DAYS.slice(0, -1).join(", "), last: BOX_INTERVALS_DAYS.at(-1) }),
   t("help.how.typos"),
+  t("help.how.cards"),
   t("help.how.streak"),
   t("help.how.freezes", { max: MAX_FREEZES })
 ];

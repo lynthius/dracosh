@@ -39,7 +39,7 @@ export function Missed({ getMissed, onClose }) {
                         <${Text} bold>  ${item.prompt.replaceAll("`", "")}<//>
                         <${Text} dimColor>  ${item.label}${item.times > 1 ? t("missed.times", { count: item.times }) : ""}<//>
                       <//>
-                      <${Text}>   ${item.expected.join(", ")}<//>
+                      <${Text}>   ${item.expected.join(" / ")}<//>
                       <${Text} dimColor>   ${item.answer ? t("missed.youWrote", { answer: item.answer }) : t("missed.noAnswer")}${item.recovered ? t("missed.recovered") : ""}<//>
                     <//>
                   `

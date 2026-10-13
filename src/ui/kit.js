@@ -54,12 +54,13 @@ export function Marked({ text, plain = false, ...props }) {
 // the key at the start of a hint segment: "enter", "esc", "/add", "↑/↓", "any key", "q"…; the
 // longer key names come from the locale ("échap", "dowolny klawisz")
 const escapeRegExp = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-const keyPattern = () => new RegExp(`^(${[...t("keyHints.keyNames").split("|").map(escapeRegExp), "↑/↓", "←/→", "\\/\\S*", "[\\p{L}\\d]"].join("|")})(?=[\\s,]|$)`, "u");
+const keyPattern = () => new RegExp(`^(${[...t("keyHints.keyNames").split("|").map((name) => escapeRegExp(name).replace(/ /g, "[ \u00a0]")), "↑/↓", "←/→", "\\/\\S*", "[\\p{L}\\d]"].join("|")})(?=[\\s,]|$)`, "u");
 
 // A footer like "enter submit · / commands · esc quit": each key stands out, the words after it
-// stay quiet, and the dots between them fade back.
+// stay quiet, and the dots between them fade back. A narrow pane wraps it between hints, never
+// between a key and what it does.
 export function KeyHints({ text }) {
-  const parts = text.split(" · ");
+  const parts = text.split(" · ").map((part) => part.replace(/ /g, "\u00a0"));
   const KEY = keyPattern();
   return React.createElement(
     Text,

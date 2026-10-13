@@ -3,7 +3,7 @@
     "hint": "Noch einen Buchstaben (die Karte steigt nicht auf)",
     "add": "Karten hinzufügen oder einen neuen Stapel anlegen",
     "decks": "Stapel wechseln oder einen neuen anlegen",
-    "settings": "Sprache, Intervall, Ruhezeiten, Ton, Ziel, Tipps",
+    "settings": "Sprache, Rhythmus, Intervall, Ruhezeiten, Ton, Ziel, Tipps",
     "stats": "Serie, Monatskalender und Abzeichen im Überblick",
     "badges": "Alle Abzeichen und wie man sie freischaltet",
     "companion": "Dein Drache, sein Element und seine nächsten Formen",
@@ -25,19 +25,22 @@
     "outsideTitle": "Außerhalb des Quiz",
     "keys": {
       "enter": "Enter",
-      "enterWhat": "Antwort abschicken (leer zeigt die Antwort); zwischen Karten: die nächste",
+      "enterWhat": "Antwort prüfen; ohne Eingabe zeigen und selbst bewerten; zwischen Karten die nächste holen",
       "slashWhat": "Befehle öffnen",
       "esc": "Esc",
-      "escWhat": "Eingabe löschen oder beenden",
+      "escWhat": "Eingabe löschen; zweimal auf leerer Zeile: beenden",
       "qWhat": "beenden, zwischen Karten",
       "anyKey": "beliebige Taste",
-      "anyKeyWhat": "weckt einen schlafenden Drachen"
+      "anyKeyWhat": "weckt einen schlafenden Drachen",
+      "grade": "1 / 2",
+      "gradeWhat": "nach dem Zeigen: wusste ich nicht (oder Esc) / wusste ich"
     },
     "how": {
       "boxes": "Eine richtige Antwort schiebt die Karte in ein späteres Fach: Sie kommt nach {first}, dann nach {last} Tagen wieder. Ein Fehler schickt sie zurück ins erste Fach.",
       "typos": "Ein falscher Buchstabe in einem längeren Wort zählt trotzdem, und du siehst die richtige Schreibweise.",
       "streak": "Erreiche dein Tagesziel, um deine Serie zu halten; ein Tag, an dem du alle verfügbaren Karten geschafft hast, zählt auch. Dein Drache wächst mit deiner längsten Serie.",
-      "freezes": "Ein Freeze rettet einen verpassten Tag. Du startest mit {max} und bekommst jede Woche einen zurück, höchstens {max}."
+      "freezes": "Ein Freeze rettet einen verpassten Tag. Du startest mit {max} und bekommst jede Woche einen zurück, höchstens {max}.",
+      "cards": "In /add ist eine Zeile eine Karte: cat = Katze; Mieze // Beispiel. Geschweifte Klammern erzeugen eine Lücke: I {{look forward}} to it."
     },
     "outside": {
       "deckExample": "Englisch",
@@ -52,8 +55,6 @@
     "settings": "↑/↓ wählen · ←/→ ändern · esc zurück",
     "choiceBack": "{choose} · esc zurück",
     "choiceCancel": "{choose} · esc abbrechen",
-    "addNext": "enter weiter · esc abbrechen",
-    "addDone": "enter weiter · esc fertig",
     "resetting": "wird zurückgesetzt…",
     "asking": "enter senden (leer: zeigen) · / Befehle · esc beenden",
     "empty": "/add · / Befehle · q beenden",
@@ -61,7 +62,18 @@
     "correctFirst": "/correct falls du richtig lagst · {rest}",
     "stats": "←/→ Monat · esc zurück",
     "badges": "↑/↓ blättern · ←/→ Spalte · esc zurück",
-    "keyNames": "beliebige Taste|enter|esc|tab"
+    "keyNames": "beliebige Taste|enter|esc|tab",
+    "addFirst": "enter hinzufügen · esc abbrechen",
+    "addMore": "enter hinzufügen · ↑ letzte korrigieren · esc fertig",
+    "addFixing": "enter speichern · esc abbrechen",
+    "addBack": "enter hinzufügen · esc zurück",
+    "pasteReview": "↑/↓ wählen · e korrigieren · x verwerfen · enter {count} hinzufügen · esc abbrechen",
+    "pasteFix": "enter fertig · esc zurück",
+    "grading": "1 oder ← wusste ich nicht · 2 oder → wusste ich",
+    "sessionWaiting": "enter nächste Karte · / Befehle · q beenden",
+    "decks": "→ Richtung · {choose}",
+    "directionPick": "{choose} · esc 1 behalten",
+    "addName": "enter anlegen · esc abbrechen"
   },
   "settings": {
     "title": "Einstellungen",
@@ -69,6 +81,10 @@
       "language": {
         "label": "Sprache",
         "hint": "die Sprache von Dracosh; die Tour wechselt mit"
+      },
+      "rhythm": {
+        "label": "Rhythmus",
+        "hint": "alle paar Minuten eine Karte (das Intervall) oder eine Sitzung: Karten direkt nacheinander, Enter holt die nächste"
       },
       "everyMs": {
         "label": "Intervall",
@@ -113,7 +129,13 @@
     },
     "weekendsRest": "Ruhetage",
     "weekendsCount": "wie andere Tage",
-    "pressEnter": "Enter drücken"
+    "pressEnter": "Enter drücken",
+    "rhythms": {
+      "minutes": "alle paar Minuten",
+      "session": "Sitzung",
+      "session-10": "Sitzung · 10 Karten",
+      "session-20": "Sitzung · 20 Karten"
+    }
   },
   "count": {
     "cards": {
@@ -163,7 +185,11 @@
     "title": "Stapel",
     "tour": "die Tour",
     "now": "aktuell",
-    "newDeck": "+ Neuer Stapel"
+    "newDeck": "+ Neuer Stapel",
+    "directionSaved": "„{deck}“ fragt ab der nächsten Karte in der neuen Richtung.",
+    "front": "Vorderseite",
+    "back": "Rückseite",
+    "progressKept": "Der Fortschritt bleibt für jede Richtung erhalten, auch für eine ausgeschaltete."
   },
   "add": {
     "fields": {
@@ -171,17 +197,13 @@
         "label": "Benenne deinen Stapel",
         "hint": "Englisch, Biologie, Hauptstädte… was auch immer du lernen willst"
       },
-      "front": {
-        "label": "Vorderseite",
-        "hint": "das Wort oder die Frage, z. B. cat"
+      "line": {
+        "label": "Neue Karte",
+        "hint": "Vorderseite = Rückseite, z. B. cat = Katze; Mieze // Beispiel  ·  oder füg eine ganze Liste ein"
       },
       "back": {
         "label": "Rückseite",
-        "hint": "die Antwort; mehrere mit Kommas trennen, z. B. Katze, Kätzchen"
-      },
-      "example": {
-        "label": "Beispiel",
-        "hint": "optional: ein Satz als Merkhilfe. Enter überspringt ihn"
+        "hint": "die Antwort  ·  ; trennt mehrere richtige Antworten  ·  // fügt ein Beispiel hinzu"
       }
     },
     "titlePick": "Karten hinzufügen zu…",
@@ -189,18 +211,57 @@
     "titleFirst": "Lege deinen ersten Stapel an",
     "titleCard": "Karte hinzufügen · {deck}",
     "deckReady": "Dein Stapel „{deck}“ ist bereit. Jetzt seine erste Karte:",
-    "added": "„{front}“ zu {deck} hinzugefügt. Nächste Karte, oder Esc zum Beenden.",
     "duplicateCard": "„{front}“ ist schon in {deck}.",
     "duplicateDeck": "Es gibt schon einen Stapel namens „{deck}“.",
     "nameTooLong": "Der Name darf höchstens {max} Zeichen lang sein.",
     "needName": "Dein Stapel braucht einen Namen.",
     "needFront": "Eine Karte braucht eine Vorderseite.",
     "needBack": "Eine Karte braucht eine Antwort.",
-    "waysQuestion": "Wie soll „{deck}“ abgefragt werden?",
+    "preview": {
+      "pair": "{front} = {back}  ·  danach wählst du, wie gefragt wird",
+      "asks": "{prompt} → ?  du tippst {answer}",
+      "both": "{forward}  ·  {backward}",
+      "cloze": {
+        "one": "{prompt}  ·  1 Lücke",
+        "other": "{prompt}  ·  {count} Lücken"
+      },
+      "noBack": "Enter, dann die Rückseite  ·  oder Vorderseite = Rückseite"
+    },
+    "fixed": "„{front}“ korrigiert.",
+    "fixing": "Du korrigierst „{front}“: Enter speichert, Esc lässt die Karte, wie sie war.",
+    "more": {
+      "one": "+ 1 frühere Karte",
+      "other": "+ {count} frühere Karten"
+    },
+    "directionQuestion": "Wie soll „{deck}“ fragen?",
+    "youType": "du tippst {answer}",
     "bothWays": "In beide Richtungen",
-    "bothWaysNote": "für Vokabeln: cat → Katze und Katze → cat",
-    "oneWay": "Nur in eine Richtung",
-    "oneWayNote": "für Fragen: Vorderseite → Rückseite"
+    "bothWaysNote": "jede Karte in beide Richtungen",
+    "directionLater": "Später änderbar: /decks, dann →.",
+    "directionSet": "Alles klar: {how}  ·  nächste Karte:",
+    "paste": {
+      "title": "Eingefügte Karten · {deck}",
+      "summary": "Bereit: {count} von {lines}",
+      "attention": "  ·  zu korrigieren: {count}",
+      "issues": {
+        "noBack": "keine Rückseite",
+        "noFront": "keine Vorderseite",
+        "inDeck": "schon im Stapel",
+        "twice": "doppelt in der Liste",
+        "slash": "beginnt mit /"
+      },
+      "position": "{at}/{count}",
+      "confirm": "Ein weiteres Esc verwirft die eingefügten Karten; jede andere Taste behält sie.",
+      "nothing": "Noch nichts hinzuzufügen: markierte Zeilen korrigieren (e) oder verwerfen (x).",
+      "added": {
+        "one": "1 Karte zu {deck} hinzugefügt.",
+        "other": "{count} Karten zu {deck} hinzugefügt."
+      },
+      "skipped": {
+        "one": "1 Zeile übersprungen: Sie musste noch korrigiert werden.",
+        "other": "{count} Zeilen übersprungen: Sie mussten noch korrigiert werden."
+      }
+    }
   },
   "quiz": {
     "youWrote": "deine Antwort: ",
@@ -240,7 +301,15 @@
     "progressReset": "Dein Fortschritt fängt neu an. Alle deine Karten sind noch da.",
     "cardNotSaved": "Die angefangene Karte wurde nicht gespeichert.",
     "deckReadyElsewhere": "„{deck}“ ist bereit; du übst noch „{current}“. Wechsle mit /decks.",
-    "hintLabel": "Hinweis"
+    "hintLabel": "Hinweis",
+    "didYouKnow": "Wusstest du es?",
+    "gradeKeys": "1 nein · 2 ja",
+    "sessionDone": {
+      "one": "Sitzung geschafft: 1 Karte. Ab jetzt wieder alle paar Minuten.",
+      "other": "Sitzung geschafft: {count} Karten. Ab jetzt wieder alle paar Minuten."
+    },
+    "sessionProgress": "{done} von {count} in dieser Sitzung",
+    "escAgain": "Noch einmal Esc zum Beenden."
   },
   "dragon": {
     "stages": {
@@ -515,7 +584,7 @@
     "nothingThatDay": "An diesem Tag keine Fehler.",
     "times": " · {count}× falsch",
     "youWrote": "deine Antwort: {answer}",
-    "noAnswer": "keine Antwort",
+    "noAnswer": "Antwort gezeigt, nicht gewusst",
     "recovered": " · seitdem richtig",
     "more": "…und {count} weitere",
     "keys": "←/→ Tag · esc zurück"
@@ -583,7 +652,7 @@
     "nothingToCorrect": "Es gibt keine falsche Antwort zu korrigieren.",
     "deckGone": "Den Stapel „{deck}“ gibt es nicht mehr.",
     "slashAnswer": "Eine Antwort kann nicht mit / anfangen: Im Quiz öffnet das die Befehle.",
-    "slashFront": "In einem Stapel, der in beide Richtungen abgefragt wird, ist die Vorderseite auch eine Antwort, also kann sie nicht mit / anfangen.",
+    "slashFront": "Das tippst du im Quiz als Antwort, also kann es nicht mit / anfangen.",
     "noDeck": "Es gibt keinen Stapel namens „{deck}“. Deine Stapel: {decks}.",
     "noDecksYet": "noch keine",
     "emptyLibrary": "Deine Bibliothek hat noch keine Stapel.",
@@ -608,10 +677,11 @@
       "noProgress": "kein Fortschritt darin",
       "progressEntry": "eine Karte ohne Fach oder Datum",
       "streak": "Serie und Abzeichen sind nicht lesbar"
-    }
+    },
+    "slashSwitch": "„{text}“ müsste getippt werden, und im Quiz öffnet / die Befehle. Ändere zuerst diese Karte."
   },
   "cli": {
-    "help": "Dracosh: ein Vokabel- und Quiztrainer für dein Terminal\n\nAufruf: dracosh [Optionen]\n        dracosh restore [Nummer]  deine Sicherungen auflisten oder eine zurückholen\n\n  --deck <Name>    diesen Stapel abfragen, nur dieses Mal (sonst den in /decks gewählten)\n  --every <Zeit>   Abstand zwischen Fragen: 30s, 10m, 1h (Standard: {interval})\n  --no-sound       Töne ausschalten\n  --volume <0-1>   Lautstärke (Standard: {volume})\n  --stats          Fortschritt ausgeben und beenden\n  --data           zeigen, wo Karten, Fortschritt und Sicherungen liegen\n  --preview        alle Animationen und Bildschirme mit erfundenen Daten ansehen (nichts wird gespeichert)\n  -y, --yes        ohne Nachfrage zurückholen\n  -h, --help       diese Hilfe zeigen\n\nOptionen ändern deine gespeicherten Einstellungen nur für diesen Start. Die gespeicherten änderst du in /settings.\n\nWährenddessen: Enter schickt ab, „/“ öffnet das Befehlsmenü (/add, /decks, /settings, /stats, /help…),\nEsc beendet (löscht vorher die Eingabe). Strg+C geht auch.\nZwischen Karten: Enter fragt sofort die nächste, q beendet. /help erklärt den Rest.",
+    "help": "Dracosh: ein Vokabel- und Quiztrainer für dein Terminal\n\nAufruf: dracosh [Optionen]\n        dracosh restore [Nummer]  deine Sicherungen auflisten oder eine zurückholen\n\n  --deck <Name>    diesen Stapel abfragen, nur dieses Mal (sonst den in /decks gewählten)\n  --every <Zeit>   Abstand zwischen Fragen: 30s, 10m, 1h (Standard: {interval})\n  --no-sound       Töne ausschalten\n  --volume <0-1>   Lautstärke (Standard: {volume})\n  --stats          Fortschritt ausgeben und beenden\n  --data           zeigen, wo Karten, Fortschritt und Sicherungen liegen\n  --preview        alle Animationen und Bildschirme mit erfundenen Daten ansehen (nichts wird gespeichert)\n  -y, --yes        ohne Nachfrage zurückholen\n  -h, --help       diese Hilfe zeigen\n\nOptionen ändern deine gespeicherten Einstellungen nur für diesen Start. Die gespeicherten änderst du in /settings.\n\nWährenddessen: Enter schickt ab (leer zeigt es die Antwort, dann 1 oder 2), „/“ öffnet das Befehlsmenü (/add, /decks, /settings, /stats, /help…),\nEsc beendet (löscht vorher die Eingabe). Strg+C geht auch.\nZwischen Karten: Enter fragt sofort die nächste, q beendet. /help erklärt den Rest.",
     "badEvery": "Ungültiges --every „{value}“. Nutze z. B. 30s, 10m, 1h.",
     "badVolume": "Ungültiges --volume „{value}“. Nutze eine Zahl von 0 bis 1.",
     "unknownCommand": "Unbekannter Befehl „{command}“. Siehe dracosh --help.",
@@ -680,7 +750,7 @@
     },
     "keys-esc": {
       "cat": "Tasten",
-      "text": "Esc löscht deine Eingabe. Auf einer leeren Zeile beendet es Dracosh."
+      "text": "Esc löscht deine Eingabe. Zweimal auf einer leeren Zeile beendet es Dracosh."
     },
     "keys-wake": {
       "cat": "Tasten",
@@ -720,7 +790,7 @@
     },
     "cards-dont-know": {
       "cat": "Karten",
-      "text": "Weißt du es nicht? Drück Enter ohne Eingabe, und die Antwort erscheint. Die Karte kommt bald wieder."
+      "text": "Weißt du es nicht? Enter ohne Eingabe zeigt die Antwort, dann 1, wenn du sie nicht wusstest, sonst 2."
     },
     "cards-missed": {
       "cat": "Karten",
@@ -780,19 +850,31 @@
     },
     "settings-sound": {
       "cat": "Einstellungen",
-      "text": "Ton und Lautstärke findest du in /settings. dracosh --no-sound schaltet den Ton für einen Start aus."
+      "text": "Ton und Lautstärke findest du in /settings, neben den Ruhezeiten für den Abend."
     },
     "data-backup": {
       "cat": "Deine Daten",
       "text": "Dracosh sichert deine Karten und deinen Fortschritt jeden Tag. dracosh restore holt eine Sicherung zurück."
     },
-    "data-sync": {
-      "cat": "Deine Daten",
-      "text": "dracosh --data zeigt, wo deine Karten liegen. Setze DRACOSH_HOME auf einen synchronisierten Ordner, um zwei Computer zu nutzen."
+    "cards-line": {
+      "cat": "Karten",
+      "text": "In /add ist eine Zeile eine Karte: cat = Katze; Mieze. Das ; trennt richtige Antworten, // fügt ein Beispiel an."
     },
-    "data-deck": {
-      "cat": "Deine Daten",
-      "text": "dracosh --deck \"Englisch\" startet mit einem anderen Stapel, nur für diesen Start."
+    "cards-paste": {
+      "cat": "Karten",
+      "text": "Füg in /add eine ganze Liste ein, eine Karte pro Zeile. Du prüfst sie, bevor etwas gespeichert wird."
+    },
+    "cards-cloze": {
+      "cat": "Karten",
+      "text": "In /add erzeugen geschweifte Klammern eine Lücke: I {{look forward}} to it. Im Quiz tippst du nur die Lücke."
+    },
+    "cards-direction": {
+      "cat": "Karten",
+      "text": "Ein Stapel fragt vorwärts, rückwärts oder in beide Richtungen. Ändern: /decks, dann →."
+    },
+    "settings-rhythm": {
+      "cat": "Einstellungen",
+      "text": "Lieber am Stück lernen? Stell den Rhythmus in /settings auf Sitzung: Enter holt die nächste Karte."
     }
   },
   "preview": {
@@ -817,6 +899,18 @@
       "quiz": {
         "label": "Quiz",
         "hint": "eine echte Runde mit Demo-Wörtern, Ziel bei 5"
+      },
+      "add": {
+        "label": "Karten hinzufügen",
+        "hint": "/add: eine Zeile pro Karte, eine eingefügte Liste, die Richtung"
+      },
+      "reveal": {
+        "label": "Zeigen und bewerten",
+        "hint": "leeres Enter, dann 1 oder 2"
+      },
+      "cloze": {
+        "label": "Lückenkarten",
+        "hint": "eine Lücke nach der anderen"
       },
       "quiz-look": {
         "label": "Quiz-Bildschirm",
@@ -907,6 +1001,13 @@
           "Asogaras"
         ],
         "example": "In deinen eigenen Stapeln kommt eine falsch beantwortete Karte früher wieder. Wurde deine Antwort fälschlich als falsch gewertet, tippe jetzt `/correct`."
+      },
+      {
+        "front": "Weißt du eine Antwort nicht? Drück Enter ohne Eingabe: Die Antwort erscheint, und du drückst 2, wenn du sie wusstest, oder 1, wenn nicht. Probier es aus oder tippe `zeigen`",
+        "back": [
+          "zeigen"
+        ],
+        "example": "Bewerte dich ehrlich: Davon hängt ab, wann eine Karte wiederkommt. Ganze Sätze lernst du so am leichtesten."
       },
       {
         "front": "Tippe jederzeit `/`, um alle Befehle zu sehen. Probier nach dieser Karte `/badges`. Jetzt tippe erst mal `ok`",

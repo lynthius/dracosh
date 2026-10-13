@@ -3,11 +3,11 @@
     "hint": "Odsłoń kolejną literę (karta nie przejdzie wyżej)",
     "add": "Dodaj karty do talii albo stwórz nową",
     "decks": "Przełącz się na inną talię albo stwórz nową",
-    "settings": "Język, interwał, godziny ciszy, dźwięk, cel, porady",
+    "settings": "Język, rytm, interwał, godziny ciszy, dźwięk, cel, porady",
     "stats": "Seria, kalendarz miesiąca i podsumowanie odznak",
     "badges": "Wszystkie odznaki i co je odblokowuje",
     "companion": "Twój smok, jego żywioł i kolejne formy",
-    "missed": "Błędne karty z dnia",
+    "missed": "Dzisiejsze błędne karty",
     "pause": "Przerwa (30m, 2h) albo wolne dni (3d, 24.12 2.01)",
     "help": "Klawisze, kiedy karty wracają, seria",
     "quit": "Zamknij Dracosha",
@@ -25,19 +25,22 @@
     "outsideTitle": "Poza quizem",
     "keys": {
       "enter": "Enter",
-      "enterWhat": "wyślij odpowiedź (pusta odkrywa odpowiedź); między kartami, pokaż kolejną",
+      "enterWhat": "sprawdź odpowiedź; bez wpisywania pokaż ją i oceń się; między kartami pokaż kolejną",
       "slashWhat": "otwórz komendy",
       "esc": "Esc",
-      "escWhat": "wyczyść wpisany tekst albo wyjdź",
+      "escWhat": "wyczyść wpisany tekst; dwa razy na pustej linii: wyjdź",
       "qWhat": "wyjdź, między kartami",
       "anyKey": "dowolny klawisz",
-      "anyKeyWhat": "budzi śpiącego smoka"
+      "anyKeyWhat": "budzi śpiącego smoka",
+      "grade": "1 / 2",
+      "gradeWhat": "po pokazaniu odpowiedzi: nie pamiętam (albo Esc) / pamiętam"
     },
     "how": {
       "boxes": "Dobra odpowiedź przenosi kartę do wyższego pudełka: wraca po {first}, a potem po {last} dniach. Błąd odsyła ją do pierwszego pudełka.",
       "typos": "Jedna zła litera w dłuższym słowie wciąż się liczy, a Dracosh pokazuje poprawną pisownię.",
       "streak": "Osiągaj cel dnia, żeby utrzymać serię; dzień, w którym zrobisz wszystkie dostępne karty, też się liczy. Twój smok rośnie wraz z najdłuższą serią.",
-      "freezes": "Zamrożenie ratuje opuszczony dzień. Na start masz {max} i co tydzień jedno wraca, maksymalnie {max}."
+      "freezes": "Zamrożenie ratuje opuszczony dzień. Na start masz {max} i co tydzień jedno wraca, maksymalnie {max}.",
+      "cards": "W /add jedna linia to karta: cat = kot; kotek // przykład. Nawiasy klamrowe tworzą lukę do uzupełnienia: I {{look forward}} to it."
     },
     "outside": {
       "deckExample": "Angielski",
@@ -52,8 +55,6 @@
     "settings": "↑/↓ wybierz · ←/→ zmień · esc wstecz",
     "choiceBack": "{choose} · esc wstecz",
     "choiceCancel": "{choose} · esc anuluj",
-    "addNext": "enter dalej · esc anuluj",
-    "addDone": "enter dalej · esc koniec",
     "resetting": "resetowanie…",
     "asking": "enter wyślij (pusta: pokaż) · / komendy · esc wyjdź",
     "empty": "/add · / komendy · q wyjdź",
@@ -61,7 +62,18 @@
     "correctFirst": "/correct, jeśli było dobrze · {rest}",
     "stats": "←/→ miesiąc · esc wstecz",
     "badges": "↑/↓ przeglądaj · ←/→ kolumna · esc wstecz",
-    "keyNames": "dowolny klawisz|enter|esc|tab"
+    "keyNames": "dowolny klawisz|enter|esc|tab",
+    "addFirst": "enter dodaj · esc anuluj",
+    "addMore": "enter dodaj · ↑ popraw ostatnią · esc koniec",
+    "addFixing": "enter zapisz · esc zostaw",
+    "addBack": "enter dodaj · esc wstecz",
+    "pasteReview": "↑/↓ wybierz · e popraw · x odrzuć · enter dodaj {count} · esc anuluj",
+    "pasteFix": "enter gotowe · esc wstecz",
+    "grading": "1 lub ← nie pamiętam · 2 lub → pamiętam",
+    "sessionWaiting": "enter następna karta · / komendy · q wyjdź",
+    "decks": "→ kierunek · {choose}",
+    "directionPick": "{choose} · esc zostaw 1",
+    "addName": "enter utwórz · esc anuluj"
   },
   "settings": {
     "title": "Ustawienia",
@@ -69,6 +81,10 @@
       "language": {
         "label": "Język",
         "hint": "język Dracosha; samouczek też się przełączy"
+      },
+      "rhythm": {
+        "label": "Rytm",
+        "hint": "karta co kilka minut (interwał) albo sesja: karty jedna po drugiej, Enter daje następną"
       },
       "everyMs": {
         "label": "Interwał",
@@ -113,7 +129,13 @@
     },
     "weekendsRest": "dni wolne",
     "weekendsCount": "jak inne dni",
-    "pressEnter": "naciśnij enter"
+    "pressEnter": "naciśnij enter",
+    "rhythms": {
+      "minutes": "co kilka minut",
+      "session": "sesja",
+      "session-10": "sesja · 10 kart",
+      "session-20": "sesja · 20 kart"
+    }
   },
   "count": {
     "cards": {
@@ -170,8 +192,12 @@
   "decks": {
     "title": "Talie",
     "tour": "samouczek",
-    "now": "teraz",
-    "newDeck": "+ Nowa talia"
+    "now": "aktywna",
+    "newDeck": "+ Nowa talia",
+    "directionSaved": "Od następnej karty talia „{deck}” pyta w nowy sposób.",
+    "front": "przód",
+    "back": "tył",
+    "progressKept": "Postęp każdego kierunku zostaje, nawet gdy go wyłączysz."
   },
   "add": {
     "fields": {
@@ -179,36 +205,79 @@
         "label": "Nazwij talię",
         "hint": "Angielski, Biologia, Stolice… czego tylko chcesz się uczyć"
       },
-      "front": {
-        "label": "Przód",
-        "hint": "słowo albo pytanie, np. cat"
+      "line": {
+        "label": "Nowa karta",
+        "hint": "przód = tył, np. cat = kot; kotek // My cat sleeps.  ·  albo wklej całą listę"
       },
       "back": {
         "label": "Tył",
-        "hint": "odpowiedź; kilka oddziel przecinkami, np. kot, kotek"
-      },
-      "example": {
-        "label": "Przykład",
-        "hint": "opcjonalnie: zdanie, które pomaga zapamiętać. Enter pomija"
+        "hint": "odpowiedź  ·  ; oddziela kilka dobrych odpowiedzi  ·  // dodaje przykładowe zdanie"
       }
     },
     "titlePick": "Dodaj karty do…",
     "titleNew": "Nowa talia",
-    "titleFirst": "Załóż swoją pierwszą talię",
+    "titleFirst": "Stwórz swoją pierwszą talię",
     "titleCard": "Dodaj kartę · {deck}",
     "deckReady": "Talia „{deck}” jest gotowa. Teraz jej pierwsza karta:",
-    "added": "Dodano „{front}” do talii {deck}. Następna karta albo Esc, żeby zakończyć.",
     "duplicateCard": "„{front}” już jest w talii {deck}.",
     "duplicateDeck": "Talia „{deck}” już istnieje.",
     "nameTooLong": "Nazwa może mieć najwyżej {max} znaków.",
     "needName": "Talia potrzebuje nazwy.",
     "needFront": "Karta potrzebuje przodu.",
     "needBack": "Karta potrzebuje odpowiedzi.",
-    "waysQuestion": "Jak pytać w talii „{deck}”?",
+    "preview": {
+      "pair": "{front} = {back}  ·  po tej karcie wybierzesz, jak pytać",
+      "asks": "{prompt} → ?  wpisujesz {answer}",
+      "both": "{forward}  ·  {backward}",
+      "cloze": {
+        "one": "{prompt}  ·  1 luka",
+        "few": "{prompt}  ·  {count} luki",
+        "many": "{prompt}  ·  {count} luk",
+        "other": "{prompt}  ·  {count} luki"
+      },
+      "noBack": "Enter, potem tył  ·  albo wpisz przód = tył"
+    },
+    "fixed": "Poprawiono „{front}”.",
+    "fixing": "Poprawiasz „{front}”: Enter zapisuje, Esc zostawia bez zmian.",
+    "more": {
+      "one": "+ 1 wcześniejsza karta",
+      "few": "+ {count} wcześniejsze karty",
+      "many": "+ {count} wcześniejszych kart",
+      "other": "+ {count} wcześniejszej karty"
+    },
+    "directionQuestion": "Jak pytać w talii „{deck}”?",
+    "youType": "wpisujesz {answer}",
     "bothWays": "W obie strony",
-    "bothWaysNote": "do słówek: cat → kot i kot → cat",
-    "oneWay": "Tylko w jedną stronę",
-    "oneWayNote": "do pytań: przód → tył"
+    "bothWaysNote": "każda karta pytana w obie strony",
+    "directionLater": "Zmienisz to później: /decks, potem →.",
+    "directionSet": "Jasne: {how}  ·  następna karta:",
+    "paste": {
+      "title": "Wklejone karty · {deck}",
+      "summary": "Gotowe do dodania: {count} z {lines}",
+      "attention": "  ·  do poprawy: {count}",
+      "issues": {
+        "noBack": "brak tyłu",
+        "noFront": "brak przodu",
+        "inDeck": "już jest w talii",
+        "twice": "dwa razy na liście",
+        "slash": "zaczyna się od /"
+      },
+      "position": "{at}/{count}",
+      "confirm": "Esc jeszcze raz odrzuca wklejone karty. Inny klawisz je zostawia.",
+      "nothing": "Na razie nie ma czego dodać: popraw (e) albo odrzuć (x) zaznaczone linie.",
+      "added": {
+        "one": "Dodano 1 kartę do talii {deck}.",
+        "few": "Dodano {count} karty do talii {deck}.",
+        "many": "Dodano {count} kart do talii {deck}.",
+        "other": "Dodano {count} karty do talii {deck}."
+      },
+      "skipped": {
+        "one": "Pominięto 1 linię: wymagała poprawki.",
+        "few": "Pominięto {count} linie: wymagały poprawki.",
+        "many": "Pominięto {count} linii: wymagały poprawki.",
+        "other": "Pominięto {count} linii: wymagały poprawki."
+      }
+    }
   },
   "quiz": {
     "youWrote": "twoja odpowiedź: ",
@@ -229,7 +298,7 @@
     },
     "empty": {
       "tourTitle": "Samouczek za tobą.",
-      "tourNext": "Teraz twoja kolej: wpisz /add i załóż własną talię.",
+      "tourNext": "Teraz twoja kolej: wpisz /add i stwórz własną talię.",
       "noCardsTitle": "Talia „{deck}” nie ma jeszcze kart.",
       "noCardsNext": "Wpisz /add, żeby dodać pierwszą.",
       "deckDoneTitle": "Na dziś w talii „{deck}” nic więcej.",
@@ -248,7 +317,17 @@
     "progressReset": "Postępy zaczynają się od nowa. Wszystkie karty są na miejscu.",
     "cardNotSaved": "Rozpoczęta karta nie została zapisana.",
     "deckReadyElsewhere": "Talia „{deck}” jest gotowa; wciąż ćwiczysz „{current}”. Przełącz przez /decks.",
-    "hintLabel": "podpowiedź"
+    "hintLabel": "podpowiedź",
+    "didYouKnow": "Pamiętasz?",
+    "gradeKeys": "1 nie · 2 tak",
+    "sessionDone": {
+      "one": "Koniec sesji: 1 karta. Teraz znów co kilka minut.",
+      "few": "Koniec sesji: {count} karty. Teraz znów co kilka minut.",
+      "many": "Koniec sesji: {count} kart. Teraz znów co kilka minut.",
+      "other": "Koniec sesji: {count} karty. Teraz znów co kilka minut."
+    },
+    "sessionProgress": "{done} z {count} w tej sesji",
+    "escAgain": "Esc jeszcze raz, żeby wyjść."
   },
   "dragon": {
     "stages": {
@@ -563,7 +642,7 @@
     "nothingThatDay": "Tego dnia bez błędów.",
     "times": " · błędnie {count}×",
     "youWrote": "twoja odpowiedź: {answer}",
-    "noAnswer": "bez odpowiedzi",
+    "noAnswer": "pokazana, nie pamiętam",
     "recovered": " · potem już dobrze",
     "more": "…i jeszcze {count}",
     "keys": "←/→ dzień · esc wstecz"
@@ -636,7 +715,7 @@
     "nothingToCorrect": "Nie ma błędnej odpowiedzi do poprawienia.",
     "deckGone": "Talii „{deck}” już nie ma.",
     "slashAnswer": "Odpowiedź nie może zaczynać się od /: w quizie to otwiera komendy.",
-    "slashFront": "W talii pytanej w obie strony przód też jest odpowiedzią, więc nie może zaczynać się od /.",
+    "slashFront": "To wpisujesz w quizie jako odpowiedź, więc nie może zaczynać się od /.",
     "noDeck": "Nie ma talii „{deck}”. Twoje talie: {decks}.",
     "noDecksYet": "jeszcze żadnej",
     "emptyLibrary": "Twoja biblioteka nie ma jeszcze talii.",
@@ -661,10 +740,11 @@
       "noProgress": "brak w nim postępów",
       "progressEntry": "karta bez pudełka albo daty",
       "streak": "nie da się odczytać serii i odznak"
-    }
+    },
+    "slashSwitch": "Trzeba by wpisać „{text}”, a w quizie / otwiera komendy. Najpierw popraw tę kartę."
   },
   "cli": {
-    "help": "Dracosh: trener słówek i quizów w terminalu\n\nUżycie: dracosh [opcje]\n        dracosh restore [numer]   lista kopii zapasowych albo przywrócenie jednej z nich\n\n  --deck <nazwa>   quiz z tej talii, tylko tym razem (inaczej ta wybrana w /decks)\n  --every <czas>   odstęp między pytaniami: 30s, 10m, 1h (domyślnie: {interval})\n  --no-sound       wyłącz dźwięki\n  --volume <0-1>   głośność (domyślnie: {volume})\n  --stats          wypisz postępy i zakończ\n  --data           pokaż, gdzie są karty, postępy i kopie zapasowe\n  --preview        obejrzyj wszystkie animacje i ekrany na zmyślonych danych (nic się nie zapisuje)\n  -y, --yes        przywróć bez pytania\n  -h, --help       pokaż tę pomoc\n\nOpcje zmieniają zapisane ustawienia tylko na to uruchomienie. Zapisane zmienisz w /settings.\n\nW trakcie: Enter wysyła, „/” otwiera menu komend (/add, /decks, /settings, /stats, /help…),\nEsc wychodzi (najpierw czyści wpisany tekst). Ctrl+C też działa.\nMiędzy kartami: Enter od razu zadaje następną, q wychodzi. Resztę wyjaśnia /help.",
+    "help": "Dracosh: trener słówek i quizów w terminalu\n\nUżycie: dracosh [opcje]\n        dracosh restore [numer]   lista kopii zapasowych albo przywrócenie jednej z nich\n\n  --deck <nazwa>   quiz z tej talii, tylko tym razem (inaczej ta wybrana w /decks)\n  --every <czas>   odstęp między pytaniami: 30s, 10m, 1h (domyślnie: {interval})\n  --no-sound       wyłącz dźwięki\n  --volume <0-1>   głośność (domyślnie: {volume})\n  --stats          wypisz postępy i zakończ\n  --data           pokaż, gdzie są karty, postępy i kopie zapasowe\n  --preview        obejrzyj wszystkie animacje i ekrany na zmyślonych danych (nic się nie zapisuje)\n  -y, --yes        przywróć bez pytania\n  -h, --help       pokaż tę pomoc\n\nOpcje zmieniają zapisane ustawienia tylko na to uruchomienie. Zapisane zmienisz w /settings.\n\nW trakcie: Enter wysyła (pusty pokazuje odpowiedź, potem 1 albo 2), „/” otwiera menu komend (/add, /decks, /settings, /stats, /help…),\nEsc wychodzi (najpierw czyści wpisany tekst). Ctrl+C też działa.\nMiędzy kartami: Enter od razu zadaje następną, q wychodzi. Resztę wyjaśnia /help.",
     "badEvery": "Niepoprawne --every „{value}”. Użyj np. 30s, 10m, 1h.",
     "badVolume": "Niepoprawne --volume „{value}”. Podaj liczbę od 0 do 1.",
     "unknownCommand": "Nieznana komenda „{command}”. Zobacz dracosh --help.",
@@ -739,7 +819,7 @@
     },
     "keys-esc": {
       "cat": "Klawisze",
-      "text": "Esc czyści wpisany tekst. Na pustej linii zamyka Dracosha."
+      "text": "Esc czyści wpisany tekst. Dwa razy na pustej linii zamyka Dracosha."
     },
     "keys-wake": {
       "cat": "Klawisze",
@@ -751,7 +831,7 @@
     },
     "cards-decks": {
       "cat": "Karty",
-      "text": "/decks przełącza na inną talię albo zakłada nową. Następnym razem Dracosh też ją otworzy."
+      "text": "/decks przełącza na inną talię albo tworzy nową. Następnym razem Dracosh też ją otworzy."
     },
     "cards-add": {
       "cat": "Karty",
@@ -779,7 +859,7 @@
     },
     "cards-dont-know": {
       "cat": "Karty",
-      "text": "Nie wiesz? Naciśnij Enter bez wpisywania, a pojawi się odpowiedź. Karta niedługo wróci."
+      "text": "Nie wiesz? Naciśnij Enter bez wpisywania, zobacz odpowiedź i naciśnij 1, jeśli jej nie pamiętasz, albo 2."
     },
     "cards-missed": {
       "cat": "Karty",
@@ -839,19 +919,31 @@
     },
     "settings-sound": {
       "cat": "Ustawienia",
-      "text": "Dźwięk i głośność są w /settings. dracosh --no-sound wyłącza dźwięk na jedno uruchomienie."
+      "text": "Dźwięk i głośność są w /settings, obok godzin ciszy na wieczór."
     },
     "data-backup": {
       "cat": "Twoje dane",
       "text": "Dracosh codziennie robi kopię zapasową kart i postępów. dracosh restore ją przywraca."
     },
-    "data-sync": {
-      "cat": "Twoje dane",
-      "text": "dracosh --data pokazuje, gdzie są twoje karty. Ustaw DRACOSH_HOME na synchronizowany folder, żeby używać dwóch komputerów."
+    "cards-line": {
+      "cat": "Karty",
+      "text": "W /add jedna linia to karta: cat = kot; kotek. Średnik oddziela dobre odpowiedzi, // dodaje przykład."
     },
-    "data-deck": {
-      "cat": "Twoje dane",
-      "text": "dracosh --deck \"Angielski\" startuje z inną talią, tylko na to uruchomienie."
+    "cards-paste": {
+      "cat": "Karty",
+      "text": "Wklej do /add całą listę, po jednej karcie w linii. Sprawdzisz ją, zanim cokolwiek się zapisze."
+    },
+    "cards-cloze": {
+      "cat": "Karty",
+      "text": "W /add nawiasy klamrowe tworzą lukę: I {{look forward}} to it. W quizie wpisujesz tylko lukę."
+    },
+    "cards-direction": {
+      "cat": "Karty",
+      "text": "Talię można pytać od przodu, od tyłu albo w obie strony. Zmienisz to w /decks, strzałką →."
+    },
+    "settings-rhythm": {
+      "cat": "Ustawienia",
+      "text": "Chcesz uczyć się jednym ciągiem? Ustaw rytm na sesję w /settings: Enter pokazuje następną kartę."
     }
   },
   "preview": {
@@ -878,6 +970,18 @@
       "quiz": {
         "label": "Quiz",
         "hint": "prawdziwa runda na słówkach demo, cel: 5"
+      },
+      "add": {
+        "label": "Dodawanie kart",
+        "hint": "/add: karta w jednej linii, wklejona lista, kierunek"
+      },
+      "reveal": {
+        "label": "Pokaż i oceń",
+        "hint": "pusty Enter, potem 1 albo 2"
+      },
+      "cloze": {
+        "label": "Karty z luką",
+        "hint": "po jednej luce"
       },
       "quiz-look": {
         "label": "Ekran quizu",
@@ -970,6 +1074,13 @@
         "example": "W twoich taliach karta z błędem wraca szybciej. Jeśli Dracosh niesłusznie uznał odpowiedź za błędną, wpisz teraz `/correct`."
       },
       {
+        "front": "Nie znasz odpowiedzi? Naciśnij Enter bez wpisywania: pojawi się odpowiedź, a ty naciśniesz 2, jeśli ją pamiętasz, albo 1, jeśli nie. Spróbuj albo wpisz `pokaż`",
+        "back": [
+          "pokaż"
+        ],
+        "example": "Oceniaj się uczciwie: od tego zależy, kiedy karta wróci. Tak najłatwiej uczyć się całych zdań."
+      },
+      {
         "front": "Wpisz `/` w dowolnej chwili, żeby zobaczyć wszystkie komendy. Po tej karcie zajrzyj do `/badges`. Na razie wpisz `ok`",
         "back": [
           "ok",
@@ -997,7 +1108,7 @@
         "back": [
           "gotowe"
         ],
-        "example": "Teraz twoja kolej: wpisz `/add` i załóż własną talię. Samouczek zrobi jej miejsce."
+        "example": "Teraz twoja kolej: wpisz `/add` i stwórz własną talię. Samouczek zrobi jej miejsce."
       }
     ]
   }

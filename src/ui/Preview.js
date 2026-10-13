@@ -1,7 +1,10 @@
 import { t } from "../i18n.js";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { Box, useApp, useInput } from "ink";
-import { DEMO_WORDS } from "../demo.js";
+import { DEMO_CLOZE, DEMO_SENTENCES, DEMO_WORDS } from "../demo.js";
+import { addCard, createDeck, emptyLibrary } from "../library.js";
+import { libraryActions } from "../manage.js";
+import { AddCard } from "./AddCard.js";
 import { addDays, dayKey } from "../dates.js";
 import { BADGES, elementName, ELEMENTS, ensureProgress, rollElement, STAGES } from "../progress.js";
 import { createSession } from "../session.js";
@@ -24,8 +27,8 @@ import { TheOne } from "./TheOne.js";
 
 const FACES = ["idle", "smile", "happy", "sad", "blink", "sleep"];
 
-// a throwaway session; `progress` fills in a believable last few weeks
-function fakeSession({ settings = {}, progress = false } = {}) {
+// a throwaway session; `progress` fills in a believable last few weeks; `words` and `deck` replace the demo words
+function fakeSession({ settings = {}, progress = false, words = DEMO_WORDS, deck } = {}) {
   const state = { items: {}, newToday: { date: "", count: 0 }, hatched: true };
   const all = { ...DEFAULTS, dailyGoal: 5, everyMs: 6000, tips: "always", ...settings };
   if (progress) {
@@ -39,7 +42,15 @@ function fakeSession({ settings = {}, progress = false } = {}) {
     p.streak = { ...p.streak, count: 12, best: 34, lastGoalDay: addDays(today, -2) };
     BADGES.slice(0, 13).forEach((b, i) => (p.badges[b.id] = addDays(today, -i * 3)));
   }
-  return createSession({ loadWords: async () => ({ words: DEMO_WORDS }), state, getSettings: () => all, save: async () => {} });
+  return createSession({ loadWords: async () => ({ words, deck }), state, getSettings: () => all, save: async () => {} });
+}
+
+// /add on a library that lives in memory: a deck with a few cards, and room for a new one
+function fakeLibrary() {
+  let library = emptyLibrary();
+  const deck = createDeck(library, { name: "Demo", languages: null, directions: "both" });
+  for (const word of DEMO_WORDS.slice(0, 3)) addCard(library, deck.id, { front: word.word, back: word.translations });
+  return libraryActions({ load: async () => library, save: async (next) => (library = next), backup: async () => {} });
 }
 
 // a 250 ms tick for the lab's own little animations (the snoring z's)
@@ -176,7 +187,7 @@ const scene = (id, text = () => [t(`preview.scenes.${id}.label`), t(`preview.sce
 const SCENES = [
   scene("hatch"),
   ...STAGES.slice(1).map((stage, i) => scene(`evolve-${i + 1}`, () => [t("preview.evolution", { name: stage.name }), t("preview.evolutionHint", { count: stage.from })])),
-  ...["mascot", "quiz", "quiz-look", "unlock", "the-one", "die", "confetti", "stats", "badges", "summary"].map((id) => scene(id))
+  ...["mascot", "quiz", "add", "reveal", "cloze", "quiz-look", "unlock", "the-one", "die", "confetti", "stats", "badges", "summary"].map((id) => scene(id))
 ];
 
 function Menu({ selected, onMove, onPick, onQuit }) {
@@ -251,6 +262,12 @@ export function Preview({ alerts }) {
   }
   if (scene === "summary")
     return wrap(html`<${Summary} stats=${history.stats()} totals=${{ asked: 23, correct: 20 }} bestCombo=${9} onDone=${back} />`);
+  if (scene === "add") return wrap(html`<${AddCard} key=${run} current="Demo" actions=${fakeLibrary()} onDone=${back} />`);
+  if (scene === "reveal" || scene === "cloze") {
+    const words = scene === "reveal" ? DEMO_SENTENCES : DEMO_CLOZE;
+    const session = fakeSession({ words, deck: { name: "Demo", directions: "forward" } });
+    return html`<${App} key=${run} session=${session} deck="Demo" initialSettings=${{ ...DEFAULTS, dailyGoal: 5, everyMs: 6000, tips: "off", rhythm: "session" }} alerts=${alerts} persistSettings=${async () => {}} onExit=${back} />`;
+  }
   if (scene === "quiz") {
     return html`<${App} key=${run} session=${quizSession} deck="Demo" initialSettings=${{ ...DEFAULTS, dailyGoal: 5, everyMs: 6000, tips: "always" }} alerts=${alerts} persistSettings=${async () => {}} onExit=${back} />`;
   }

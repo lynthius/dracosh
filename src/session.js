@@ -1,4 +1,5 @@
 import { t as say } from "./i18n.js"; // `t` and `text` are taken here (the clock, an answer)
+import { blankGap } from "./cardline.js";
 import { closestCandidate, judge } from "./judge.js";
 import { addVacation, applyAnswer, applyCaughtUp, applyOverrule, calendarMonth, cancelVacations, ensureProgress, markBadgesSeen, missedOn, recordMiss, snapshot, undoMiss, unseenBadges, vacationInfo } from "./progress.js";
 import { describeDue, grade, itemKey, nextDueAt, pickNext, startOfTomorrow } from "./scheduler.js";
@@ -12,7 +13,8 @@ const LABELS = { "en-pl": "EN → PL", "pl-en": "PL → EN" };
 
 // the tag on the card's border: the language pair for a language deck, the deck's name otherwise
 function labelOf(deck, direction) {
-  if (!deck) return LABELS[direction];
+  if (!deck) return LABELS[direction] ?? "";
+  if (direction.startsWith("c")) return deck.name; // a cloze gap: no direction to show
   if (!deck.languages) return deck.name;
   const { front, back } = deck.languages;
   const [from, to] = direction === "en-pl" ? [front, back] : [back, front];
@@ -74,27 +76,52 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
     lastWrong = null;
 
     const forward = item.direction === "en-pl";
+    const gap = item.direction.startsWith("c") ? Number(item.direction.slice(1)) - 1 : null;
+    const [prompt, expected] =
+      gap !== null
+        ? [blankGap(item.word.word, gap), [item.word.cloze[gap]]]
+        : forward
+          ? [item.word.word, item.word.translations]
+          : [item.word.translations.join(" / "), [item.word.word]];
     return {
       word: item.word,
       direction: item.direction,
       label: labelOf(deck, item.direction),
-      prompt: forward ? item.word.word : item.word.translations.join(", "),
-      expected: forward ? item.word.translations : [item.word.word],
+      prompt,
+      expected,
+      // a cloze card's back is a hint under the sentence ("Cieszę się na to")
+      context: gap !== null ? item.word.translations.join(" / ") : "",
       wordCount: words.length,
       tour: Boolean(deck?.tour) // the tour marks what to type with `backticks`
     };
   }
 
-  // Each deck decides which way it's asked (set when it's made): both ways, or one way only
-  // ("2 + 2" → "4"). The front-to-back direction is keyed "en-pl" internally, whatever the languages.
+  // Each deck decides which way it's asked (picked after its first card): front to back ("2 + 2" → "4"),
+  // back to front (a definition shown, its term typed), or both. The front-to-back direction is keyed
+  // "en-pl" internally, whatever the languages; a cloze card's gaps ("c1", "c2"…) come with the card.
   function directionsOf(deck) {
-    return deck?.directions === "forward" ? ["en-pl"] : ["en-pl", "pl-en"];
+    return deck?.directions === "forward" ? ["en-pl"] : deck?.directions === "backward" ? ["pl-en"] : ["en-pl", "pl-en"];
   }
 
+  // A typed answer, checked. (An empty one is a reveal: see reveal and selfGrade.)
   async function answer(question, text, { hinted = false } = {}) {
     const key = itemKey(question.word.noteId, question.direction);
     // answers you once declared right (/correct) count for this card from now on
     const result = judge(text, [...question.expected, ...(state.accepted?.[key] ?? [])]);
+    return record(question, { result, text, hinted });
+  }
+
+  // An empty Enter shows the answer and nothing is written yet: you say whether you knew it (selfGrade).
+  const reveal = (question) => ({ expected: question.expected, example: question.word.example });
+
+  // After a reveal. "Knew it" counts exactly like a typed right answer: boxes, goal, streak, combo and
+  // badges. Long answers can't be typed word for word, and they must be able to earn everything too.
+  async function selfGrade(question, knew, { hinted = false } = {}) {
+    return { ...(await record(question, { result: knew ? "exact" : "wrong", text: "", hinted })), self: true };
+  }
+
+  async function record(question, { result, text, hinted }) {
+    const key = itemKey(question.word.noteId, question.direction);
     const correct = result !== "wrong";
     const t = now();
     const before = state.items[key];
@@ -107,7 +134,8 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
     totals.combo = correct ? totals.combo + 1 : 0;
     lastWrong = correct ? null : { question, text, key, before, comboBefore, hinted, at: t };
     // a blank answer on a tour card just shows it: the tour isn't something to have "missed"
-    if (!correct && !(question.tour && !text.trim())) recordMiss(state, { key, label: question.label, prompt: question.prompt, expected: question.expected, answer: text, at: t }, t);
+    const prompt = question.context ? `${question.prompt} (${question.context})` : question.prompt; // a cloze gap keeps its hint
+    if (!correct && !(question.tour && !text.trim())) recordMiss(state, { key, label: question.label, prompt, expected: question.expected, answer: text, at: t }, t);
 
     const reward = applyAnswer(state, { result, goal: getSettings().dailyGoal, rules: rules(), combo: totals.combo, now: t });
     const cheers = [...reward.cheers];
@@ -117,7 +145,7 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
     // the last card of the day settles it right away, so quitting now doesn't lose the goal
     if (!question.tour) cheers.push(...(await settleDay()).cheers);
     // given/closest feed the per-letter diff the UI shows after a miss or a forgiven typo
-    const closest = result === "exact" ? null : closestCandidate(text, [...question.expected, ...(state.accepted?.[key] ?? [])]);
+    const closest = result === "exact" || !text ? null : closestCandidate(text, [...question.expected, ...(state.accepted?.[key] ?? [])]);
     return { result, hinted: hinted && correct, dueIn: describeDue(entry, t), combo: totals.combo, cheers, given: text, closest, nextDue: upNext() };
   }
 
@@ -186,6 +214,27 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
     const gone = (key) => ids.has(key.slice(0, key.lastIndexOf(":")));
     for (const key of Object.keys(state.items)) if (gone(key)) delete state.items[key];
     for (const key of Object.keys(state.accepted ?? {})) if (gone(key)) delete state.accepted[key];
+    if (state.dormant) state.dormant = state.dormant.filter((key) => !gone(key));
+    await save(state);
+  }
+
+  // A deck is asked another way now (/decks): the directions it no longer asks rest. Their progress stays
+  // for when they're back, but doesn't count against mastering the card.
+  async function setDirections(cardIds, directions) {
+    const asked = new Set(directions === "forward" ? ["en-pl"] : directions === "backward" ? ["pl-en"] : ["en-pl", "pl-en"]);
+    const dormant = new Set(state.dormant ?? []);
+    for (const id of cardIds) for (const direction of ["en-pl", "pl-en"]) (asked.has(direction) ? dormant.delete : dormant.add).call(dormant, itemKey(id, direction));
+    state.dormant = [...dormant];
+    await save(state);
+  }
+
+  // progress of cards that changed shape (a cloze card fixed into a plain one, a gap removed) is dropped
+  async function forgetKeys(keys) {
+    for (const key of keys) {
+      delete state.items[key];
+      delete state.accepted?.[key];
+    }
+    if (state.dormant) state.dormant = state.dormant.filter((key) => !keys.includes(key));
     await save(state);
   }
 
@@ -223,5 +272,5 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
     return fresh;
   }
 
-  return { totals, next, answer, overrule, canOverrule, stats, month, missed, nextTip, pause, isFirstRun, markHatched, openBadges, forget, reset, inTour: () => inTour };
+  return { totals, next, answer, reveal, selfGrade, setDirections, forgetKeys, overrule, canOverrule, stats, month, missed, nextTip, pause, isFirstRun, markHatched, openBadges, forget, reset, inTour: () => inTour };
 }

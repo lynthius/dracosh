@@ -1,7 +1,7 @@
 import { Fragment, useState } from "react";
 import { Box, useInput } from "ink";
 import { language, LANGUAGES, t } from "../i18n.js";
-import { GOALS, INTERVALS, QUIET_PRESETS, TIP_MODES, VOLUMES, formatInterval } from "../settings.js";
+import { GOALS, INTERVALS, QUIET_PRESETS, RHYTHMS, TIP_MODES, VOLUMES, formatInterval } from "../settings.js";
 import { formatQuiet } from "../quiet.js";
 import { Bar, html, KeyHints, Text, theme, usePanelWidth } from "./kit.js";
 
@@ -12,6 +12,7 @@ function VolumeValue({ value }) {
 // label and hint come from settings.rows.<key> in the locale
 const ALL_ROWS = [
   { key: "language", options: Object.keys(LANGUAGES), format: (code) => LANGUAGES[code] },
+  { key: "rhythm", options: RHYTHMS, format: (v) => t(`settings.rhythms.${v}`) },
   { key: "everyMs", options: INTERVALS, format: formatInterval },
   { key: "sound", options: [true, false], format: (v) => t(v ? "settings.on" : "settings.off"), toggle: true },
   { key: "volume", options: VOLUMES, format: (v) => html`<${VolumeValue} value=${v} />` },

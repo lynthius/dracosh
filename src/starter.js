@@ -8,7 +8,7 @@ import { addCard, cardsOf, createDeck, findDeck } from "./library.js";
 // highlighted, in the tour only. Answers never start with "/", because "/" opens the commands.
 export const STARTER_DECK = "Getting started"; // the tour's English name, which the first versions were found by
 // bump it when the cards change: an older copy of the tour in someone's library gets replaced
-const STARTER_VERSION = 7;
+const STARTER_VERSION = 8;
 
 // the tour as an earlier version created it (the first one had no version number yet)
 const isStarter = (deck) => deck.starter !== undefined || (deck.name === STARTER_DECK && deck.type === "qa" && !deck.languages);
@@ -40,7 +40,7 @@ export function seedLibrary(library, now = Date.now()) {
     library.cards = library.cards.filter((card) => card.deckId !== deck.id);
     const name = t("tour.deck");
     if ((findDeck(library, name) ?? deck) === deck) deck.name = name;
-  } else deck = createDeck(library, { name: t("tour.deck"), type: "qa", answerMode: "typed", languages: null, directions: "forward", tour: true, now });
+  } else deck = createDeck(library, { name: t("tour.deck"), type: "qa", languages: null, directions: "forward", tour: true, now });
   Object.assign(deck, { tour: true, starter: STARTER_VERSION, tourLanguage: lang });
   for (const card of tourCards()) addCard(library, deck.id, { ...card, now });
   return true;
