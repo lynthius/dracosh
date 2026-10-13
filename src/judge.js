@@ -22,9 +22,26 @@ function plain(s) {
   return text || s.trim().toLowerCase(); // an answer made only of punctuation ("?") is still itself
 }
 
-// plain(), and diacritics folded too (ł doesn't decompose, so it is mapped by hand)
+// Letters that don't decompose into a base letter and an accent, spelled the way a keyboard without them would
+const SPELLED = { ł: "l", ß: "ss", æ: "ae", œ: "oe", ø: "o", đ: "d", ð: "d", þ: "th", ı: "i" };
+// й, ї and ў are letters of their own in Ukrainian and Belarusian (on every keyboard there), not и, і, у with an accent
+const OWN = { й: "\ue000", ї: "\ue001", ў: "\ue002" };
+const OWN_BACK = Object.fromEntries(Object.entries(OWN).map(([letter, mark]) => [mark, letter]));
+
+// Diacritics folded away from lowercase text: "żółw" → "zolw", "straße" → "strasse", "ﬁ" → "fi"
+export function fold(s) {
+  return s
+    .normalize("NFKC")
+    .replace(/[йїў]/g, (ch) => OWN[ch])
+    .replace(/[łßæœøđðþı]/g, (ch) => SPELLED[ch])
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[\ue000-\ue002]/g, (ch) => OWN_BACK[ch]);
+}
+
+// plain(), and diacritics folded too
 export function normalize(s) {
-  return plain(s).replace(/ł/g, "l").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  return fold(plain(s));
 }
 
 // Damerau-Levenshtein (optimal string alignment): a swap of two neighbours counts as one edit
@@ -62,7 +79,7 @@ export function closestCandidate(answer, candidates) {
 
 // → "exact" | "accent" | "typo" | "wrong"; accepts any one of the candidate answers. Missing or wrong
 // diacritics ("zolw" for "żółw") are "accent": right, quietly (not everyone has the letters on their
-// keyboard), with the right spelling in the verdict. One more typo is forgiven on longer answers, but
+// keyboard), with the missing letters marked in the verdict. One more typo is forgiven on longer answers, but
 // never in numbers: "123457" isn't "123456".
 export function judge(answer, candidates) {
   if (!answer.trim()) return "wrong";

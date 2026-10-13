@@ -171,6 +171,7 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
   }
 
   const canOverrule = () => lastWrong !== null && lastWrong.text.trim() !== ""; // nothing typed, nothing to accept
+  const wrongAnswer = () => lastWrong?.text ?? "";
 
   const stats = () => snapshot(state, { goal: getSettings().dailyGoal, rules: rules(), now: now() });
 
@@ -272,5 +273,5 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
     return fresh;
   }
 
-  return { totals, next, answer, reveal, selfGrade, setDirections, forgetKeys, overrule, canOverrule, stats, month, missed, nextTip, pause, isFirstRun, markHatched, openBadges, forget, reset, inTour: () => inTour };
+  return { totals, next, answer, reveal, selfGrade, setDirections, forgetKeys, overrule, canOverrule, wrongAnswer, stats, month, missed, nextTip, pause, isFirstRun, markHatched, openBadges, forget, reset, inTour: () => inTour };
 }

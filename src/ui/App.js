@@ -1,7 +1,7 @@
 import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { Box, useApp, useInput, useStdout } from "ink";
 import { commandsFor } from "../commands.js";
-import { diffChars } from "../diff.js";
+import { accentMarks, diffChars } from "../diff.js";
 import { AnswerInput } from "./AnswerInput.js";
 import { Header } from "./Header.js";
 import { setLanguage, t } from "../i18n.js";
@@ -58,12 +58,24 @@ function AnswerDiff({ given, closest }) {
   `;
 }
 
+// the right answers after one written without its accents, the letters you wrote plain underlined: jabłko
+function AccentedAnswers({ expected, given, closest }) {
+  return expected.map((answer, i) => {
+    const marks = answer === closest ? accentMarks(given, answer) : null;
+    return html`
+      <${Text} key=${i}>
+        ${i > 0 ? " / " : ""}${marks ? marks.map((p, k) => html`<${Text} key=${k} underline=${!p.ok}>${p.ch}<//>`) : answer}
+      <//>
+    `;
+  });
+}
+
 function Verdict({ outcome, question }) {
   const wrong = outcome.result === "wrong";
   const showDiff = outcome.closest && outcome.given && !outcome.overruled && (wrong || outcome.result === "typo");
   return html`
     <${Box} flexDirection="column">
-      <${Text} color=${wrong ? theme.bad : theme.good} bold>${wrong ? "✗" : "✓"} ${question.expected.join(" / ")}${outcome.result === "typo" ? t("quiz.closeEnough") : ""}<//>
+      <${Text} color=${wrong ? theme.bad : theme.good} bold>${wrong ? "✗" : "✓"} ${outcome.result === "accent" ? html`<${AccentedAnswers} expected=${question.expected} given=${outcome.given} closest=${outcome.closest} />` : question.expected.join(" / ")}${outcome.result === "typo" ? t("quiz.closeEnough") : ""}<//>
       ${showDiff && html`<${AnswerDiff} given=${outcome.given} closest=${outcome.closest} />`}
       ${question.word.example && html`<${Box} marginTop=${1}>${question.tour ? html`<${Marked} dimColor text=${question.word.example} />` : html`<${Text} dimColor italic>“${question.word.example}”<//>`}<//>`}
       ${(outcome.hinted || outcome.overruled) &&
@@ -266,18 +278,19 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
 
   // with nothing to practise, the quiz picks up again by itself once the next card is due
   useEffect(() => {
-    if (phase !== "empty" || !empty?.nextDue || screen !== "quiz" || now < empty.nextDue || pauseEnd(now)) return;
+    if (phase !== "empty" || !empty?.nextDue || screen !== "quiz" || confirming || now < empty.nextDue || pauseEnd(now)) return;
     alerts.ask();
     ask();
-  }, [now, phase, empty, screen, ask, alerts]);
+  }, [now, phase, empty, screen, confirming, ask, alerts]);
 
   useEffect(() => {
-    if (phase !== "waiting" || screen === "summary" || screen === "evolve" || screen === "the-one" || screen === "die") return;
+    // a /correct question stays open: the next card waits for its answer
+    if (phase !== "waiting" || confirming || screen === "summary" || screen === "evolve" || screen === "the-one" || screen === "die") return;
     if (now >= nextAt && !pauseEnd(now)) {
       alerts.ask();
       ask();
     }
-  }, [now, phase, nextAt, screen, ask, alerts]);
+  }, [now, phase, nextAt, screen, confirming, ask, alerts]);
 
   // Esc on an empty line is easy to press by habit: it quits only when pressed twice in a row
   const escArmed = useRef(0);
@@ -309,9 +322,10 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
   });
 
   useInput((input, key) => {
-    if (screen !== "quiz" || !confirming) return;
+    // only the yes key accepts: Enter is too easy to press twice after "/correct" from the menu
+    if (screen !== "quiz" || !confirming || asleepRef.current) return;
     const is = (keys) => t(keys).split("|").includes(input.toLowerCase());
-    if (is("choice.yesKey") || key.return) return overrule();
+    if (is("choice.yesKey")) return overrule();
     if (is("choice.noKey") || key.escape) setConfirming(false);
   });
 
@@ -320,7 +334,7 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
     if (input === "/") return setCommandMode(true);
     if (input === "q") return requestExit();
     if (key.escape) return escapeExit();
-    if (key.return && phase === "waiting") ask();
+    if (key.return && phase === "waiting" && !busy.current) ask();
   });
 
   const clearProblem = useCallback(() => {
@@ -396,6 +410,8 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
   // /correct, confirmed: the last answer counts as right and is accepted from now on
   function overrule() {
     setConfirming(false);
+    if (busy.current) return;
+    busy.current = true;
     return session
         .overrule()
         .then((result) => {
@@ -404,7 +420,10 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
           if (phase === "empty") return ask(); // the card's next date changed: look again
           waitForNext(result.nextDue);
         })
-        .catch((err) => setProblem(t("quiz.saveFailed", { error: err.message })));
+        .catch((err) => setProblem(t("quiz.saveFailed", { error: err.message })))
+        .finally(() => {
+          busy.current = false;
+        });
   }
 
   function changeSettings(patch) {
@@ -595,7 +614,7 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
                 ${problem && html`<${Text} color=${theme.bad}>${problem}<//>`}
                 ${phase === "loading" && html`<${Text}><${Text} color=${theme.accent}>${frame}<//><${Text} dimColor>${t("quiz.loading")}<//><//>`}
                 ${notice && html`<${Text} color=${theme.accent}>${notice}<//>`}
-                ${confirming && html`<${Text} color=${theme.warn}>${t("quiz.correctConfirm", { answer: outcome?.given ?? "" })}<//>`}
+                ${confirming && html`<${Text} color=${theme.warn}>${t("quiz.correctConfirm", { answer: session.wrongAnswer() })}<//>`}
                 ${phase === "waiting" && paused && html`<${Text} dimColor>${t("quiz.pausedUntil", { time: formatClock(pausedUntil) })}${inQuietHours(now, settings.quiet) ? t("quiz.quietHours") : ""}<//>`}
                 ${phase === "waiting" && !paused && restUntil && nextAt - now > settings.everyMs && html`<${Text} dimColor>${t("quiz.nothingWaiting", { when: whenDue(restUntil, now) })}<//>`}
                 ${phase === "waiting" && !paused && sessionWait && sessionLength(settings.rhythm) && html`<${Text} dimColor>${t("quiz.sessionProgress", { done: sessionDone.current, count: sessionLength(settings.rhythm) })}<//>`}

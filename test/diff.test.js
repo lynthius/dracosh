@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { diffChars } from "../src/diff.js";
+import { accentMarks, diffChars } from "../src/diff.js";
 import { closestCandidate } from "../src/judge.js";
 
 const marks = (given, target) => diffChars(given, target).map((p) => (p.ok ? "=" : "x")).join("");
@@ -42,4 +42,11 @@ test("a completely different answer is mostly red", () => {
 test("closestCandidate picks the nearest of several translations", () => {
   assert.equal(closestCandidate("czrwony", ["niebieski", "czerwony"]), "czerwony");
   assert.equal(closestCandidate("ZABA", ["żaba", "ropucha"]), "żaba");
+});
+
+test("an answer right but for its accents marks only the letters written plain", () => {
+  const marked = (given, target) => accentMarks(given, target)?.map((p) => (p.ok ? "=" : "x")).join("");
+  assert.equal(marked("jablko", "jabłko"), "===x==");
+  assert.equal(marked("ZOLW", "żółw"), "xxx=");
+  assert.equal(marked("strasse", "straße"), undefined, "letters that don't line up mark nothing");
 });

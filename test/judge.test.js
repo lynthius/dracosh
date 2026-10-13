@@ -16,6 +16,22 @@ test("judge accepts any one of several translations; missing diacritics count, q
   assert.equal(judge("", targets), "wrong");
 });
 
+test("letters without an accent mark fold the way a keyboard without them spells them", () => {
+  assert.equal(judge("strasse", ["straße"]), "accent");
+  assert.equal(judge("STRASSE", ["Straße"]), "accent");
+  assert.equal(judge("straße", ["strasse"]), "accent");
+  assert.equal(judge("coeur", ["cœur"]), "accent");
+  assert.equal(judge("encyclopaedia", ["encyclopædia"]), "accent");
+  assert.equal(judge("so", ["sø"]), "accent");
+  assert.equal(judge("fin", ["ﬁn"]), "accent");
+});
+
+test("й, ї and ў are letters of their own, not accented и, і, у", () => {
+  assert.equal(judge("мии", ["мий"]), "wrong");
+  assert.equal(judge("іжак", ["їжак"]), "wrong");
+  assert.equal(judge("ежик", ["ёжик"]), "accent", "ё is е with an accent");
+});
+
 test("judge forgives one typo only on longer answers", () => {
   assert.equal(judge("optymalizcja", ["optymalizacja"]), "typo");
   assert.equal(judge("optymalziacja", ["optymalizacja"]), "typo"); // swapped neighbours
