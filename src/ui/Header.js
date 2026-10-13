@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { t } from "../i18n.js";
-import { Box } from "ink";
+import { Box, useStdout } from "ink";
 import { formatInterval } from "../settings.js";
 import { formatDay } from "../vacation.js";
-import { AnimatedBar, html, Text, theme } from "./kit.js";
+import { AnimatedBar, cellWidth, cutToWidth, html, Text, theme } from "./kit.js";
 import { Flame } from "./icons.js";
 import { Mascot, MASCOT_WIDTH } from "./Mascot.js";
 
@@ -78,7 +78,18 @@ export function Snore({ tick }) {
   `;
 }
 
-export function Header({ deck, everyMs, wordCount, stats, combo, face, event, tick = 0, asleep = false }) {
+// "Polish · 50 cards · every 10 min", shortened from the end in a narrow pane: the interval goes
+// first, then the card count, and only then is the deck's name cut. A study session has no interval.
+function deckLine({ deck, wordCount, pace, room }) {
+  const cards = wordCount ? t("header.cards", { cards: t("count.cards", { count: wordCount }) }) : "";
+  const tries = [pace && t("header.deckLine", { deck, cards, interval: pace }), `  ${deck}${cards}`, `  ${deck}`].filter(Boolean);
+  return tries.find((line) => cellWidth(line) <= room) ?? `  ${cutToWidth(deck, Math.max(4, room - 2))}`;
+}
+
+export function Header({ deck, everyMs, rhythm = "minutes", wordCount, stats, combo, face, event, tick = 0, asleep = false }) {
+  const { stdout } = useStdout();
+  const room = (stdout?.columns || 80) - MASCOT_WIDTH - 3 - 2 - "Dracosh".length;
+  const pace = rhythm === "minutes" ? formatInterval(everyMs) : null;
   const { streak, today, goal, companion } = stats;
   const move = useMove(event);
   const blinking = useBlink();
@@ -95,7 +106,7 @@ export function Header({ deck, everyMs, wordCount, stats, combo, face, event, ti
       <${Box} flexDirection="column" justifyContent="center">
         <${Box}>
           <${Box} flexShrink=${0}><${Text} bold color=${theme.accent}>Dracosh<//><//>
-          <${Text} dimColor wrap="truncate-end">${t("header.deckLine", { deck, cards: wordCount ? t("header.cards", { cards: t("count.cards", { count: wordCount }) }) : "", interval: formatInterval(everyMs) })}<//>
+          <${Text} dimColor wrap="truncate-end">${deckLine({ deck, wordCount, pace, room })}<//>
         <//>
         <${Box}>
           ${streak.days > 0

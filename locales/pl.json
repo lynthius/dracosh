@@ -73,7 +73,8 @@
     "sessionWaiting": "enter następna karta · / komendy · q wyjdź",
     "decks": "→ kierunek · {choose}",
     "directionPick": "{choose} · esc zostaw 1",
-    "addName": "enter utwórz · esc anuluj"
+    "addName": "enter utwórz · esc anuluj",
+    "confirm": "{yes} tak · {no} nie"
   },
   "settings": {
     "title": "Ustawienia",
@@ -327,7 +328,8 @@
       "other": "Koniec sesji: {count} karty. Teraz znów co kilka minut."
     },
     "sessionProgress": "{done} z {count} w tej sesji",
-    "escAgain": "Esc jeszcze raz, żeby wyjść."
+    "escAgain": "Esc jeszcze raz, żeby wyjść.",
+    "correctConfirm": "Uznać „{answer}” za dobrą odpowiedź i przyjmować ją od teraz?"
   },
   "dragon": {
     "stages": {

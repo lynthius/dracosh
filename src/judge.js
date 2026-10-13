@@ -60,15 +60,16 @@ export function closestCandidate(answer, candidates) {
   return best;
 }
 
-// → "exact" | "typo" | "wrong"; accepts any one of the candidate answers. Missing or wrong
-// diacritics ("zolw" for "żółw") count, as "typo", so the right spelling is shown. One more typo is
-// forgiven on longer answers, but never in numbers: "123457" isn't "123456".
+// → "exact" | "accent" | "typo" | "wrong"; accepts any one of the candidate answers. Missing or wrong
+// diacritics ("zolw" for "żółw") are "accent": right, quietly (not everyone has the letters on their
+// keyboard), with the right spelling in the verdict. One more typo is forgiven on longer answers, but
+// never in numbers: "123457" isn't "123456".
 export function judge(answer, candidates) {
   if (!answer.trim()) return "wrong";
   const given = normalize(answer);
   if (candidates.some((c) => plain(c) === plain(answer))) return "exact";
   const targets = candidates.map(normalize);
-  if (targets.includes(given)) return "typo";
+  if (targets.includes(given)) return "accent";
   // "email" for "e-mail", "icecream" for "ice cream": right, but shown with the spelling
   const compact = (s) => s.replace(/\s/g, ""); // hyphens between letters are spaces by now
   if (targets.some((t) => compact(t) === compact(given))) return "typo";

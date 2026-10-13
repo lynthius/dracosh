@@ -73,7 +73,8 @@
     "sessionWaiting": "enter next card · / commands · q quit",
     "decks": "→ direction · {choose}",
     "directionPick": "{choose} · esc keep 1",
-    "addName": "enter create · esc cancel"
+    "addName": "enter create · esc cancel",
+    "confirm": "{yes} yes · {no} no"
   },
   "settings": {
     "title": "Settings",
@@ -306,7 +307,8 @@
       "other": "Session done: {count} cards. From now on, one every few minutes."
     },
     "sessionProgress": "{done} of {count} in this session",
-    "escAgain": "Esc again to quit."
+    "escAgain": "Esc again to quit.",
+    "correctConfirm": "Count \"{answer}\" as right, and accept it from now on?"
   },
   "dragon": {
     "stages": {

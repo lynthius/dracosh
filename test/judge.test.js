@@ -7,11 +7,11 @@ test("normalize ignores case, diacritics, ł and punctuation", () => {
   assert.equal(normalize("Parkinson's  Law"), "parkinsons law");
 });
 
-test("judge accepts any one of several translations; missing diacritics count, shown as close", () => {
+test("judge accepts any one of several translations; missing diacritics count, quietly", () => {
   const targets = ["rozgrzeszyć", "uniewinnić", "uwolnić"];
   assert.equal(judge("UNIEWINNIĆ", targets), "exact");
-  assert.equal(judge("UNIEWINNIC", targets), "typo");
-  assert.equal(judge("rozgrzeszyc", targets), "typo");
+  assert.equal(judge("UNIEWINNIC", targets), "accent");
+  assert.equal(judge("rozgrzeszyc", targets), "accent");
   assert.equal(judge("zupełnie coś innego", targets), "wrong");
   assert.equal(judge("", targets), "wrong");
 });

@@ -73,7 +73,8 @@
     "sessionWaiting": "enter наступна картка · / команди · q вийти",
     "decks": "→ напрям · {choose}",
     "directionPick": "{choose} · esc залишити 1",
-    "addName": "enter створити · esc скасувати"
+    "addName": "enter створити · esc скасувати",
+    "confirm": "{yes} так · {no} ні"
   },
   "settings": {
     "title": "Налаштування",
@@ -327,7 +328,8 @@
       "other": "Сесію завершено: {count} картки. Тепер знову раз на кілька хвилин."
     },
     "sessionProgress": "{done} з {count} у цій сесії",
-    "escAgain": "Ще раз Esc, щоб вийти."
+    "escAgain": "Ще раз Esc, щоб вийти.",
+    "correctConfirm": "Зарахувати «{answer}» як правильну й приймати її надалі?"
   },
   "dragon": {
     "stages": {

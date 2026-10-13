@@ -73,7 +73,8 @@
     "sessionWaiting": "entrée carte suivante · / commandes · q quitter",
     "decks": "→ sens · {choose}",
     "directionPick": "{choose} · échap garder 1",
-    "addName": "entrée créer · échap annuler"
+    "addName": "entrée créer · échap annuler",
+    "confirm": "{yes} oui · {no} non"
   },
   "settings": {
     "title": "Réglages",
@@ -318,7 +319,8 @@
       "other": "Session terminée : {count} cartes. Retour au rythme par intervalles."
     },
     "sessionProgress": "{done} sur {count} dans cette session",
-    "escAgain": "Échap encore une fois pour quitter."
+    "escAgain": "Échap encore une fois pour quitter.",
+    "correctConfirm": "Compter « {answer} » comme juste et l'accepter désormais ?"
   },
   "dragon": {
     "stages": {

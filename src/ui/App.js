@@ -177,6 +177,7 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
   const [tip, setTip] = useState(null);
   const [phase, setPhase] = useState("loading"); // loading | asking | grading (answer revealed) | waiting | empty
   const [nudge, setNudge] = useState(false); // Enter while grading: the 1/2 keys light up
+  const [confirming, setConfirming] = useState(false); // /correct waits for yes or no
   const [question, setQuestion] = useState(null);
   const [outcome, setOutcome] = useState(null);
   const [problem, setProblem] = useState("");
@@ -232,6 +233,7 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
     setNotice("");
     setHintLevel(0);
     setCommandMode(false);
+    setConfirming(false);
     try {
       const next = await session.next();
       setQuestion(next);
@@ -307,7 +309,14 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
   });
 
   useInput((input, key) => {
-    if (screen !== "quiz" || (phase !== "waiting" && phase !== "empty") || commandMode) return;
+    if (screen !== "quiz" || !confirming) return;
+    const is = (keys) => t(keys).split("|").includes(input.toLowerCase());
+    if (is("choice.yesKey") || key.return) return overrule();
+    if (is("choice.noKey") || key.escape) setConfirming(false);
+  });
+
+  useInput((input, key) => {
+    if (screen !== "quiz" || (phase !== "waiting" && phase !== "empty") || commandMode || confirming) return;
     if (input === "/") return setCommandMode(true);
     if (input === "q") return requestExit();
     if (key.escape) return escapeExit();
@@ -380,8 +389,14 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
         })
         .catch((err) => setProblem(err.message));
     }
-    if (name === "/correct" && session.canOverrule()) {
-      return session
+    if (name === "/correct" && session.canOverrule()) return setConfirming(true); // asked first: a misclick would accept the answer for good
+    setProblem(t("quiz.unknownCommand", { name }));
+  }
+
+  // /correct, confirmed: the last answer counts as right and is accepted from now on
+  function overrule() {
+    setConfirming(false);
+    return session
         .overrule()
         .then((result) => {
           setOutcome(result);
@@ -390,8 +405,6 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
           waitForNext(result.nextDue);
         })
         .catch((err) => setProblem(t("quiz.saveFailed", { error: err.message })));
-    }
-    setProblem(t("quiz.unknownCommand", { name }));
   }
 
   function changeSettings(patch) {
@@ -546,7 +559,7 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
 
   return html`
     <${Box} flexDirection="column" marginY=${1}>
-      <${Header} deck=${deck} everyMs=${settings.everyMs} wordCount=${question?.wordCount ?? empty?.count} stats=${stats} combo=${session.totals.combo} face=${face} event=${petEvent} tick=${tick} asleep=${asleep} />
+      <${Header} deck=${deck} everyMs=${settings.everyMs} rhythm=${settings.rhythm} wordCount=${question?.wordCount ?? empty?.count} stats=${stats} combo=${session.totals.combo} face=${face} event=${petEvent} tick=${tick} asleep=${asleep} />
       <${Box} marginTop=${1} flexDirection="column">
         ${screen === "settings" && html`<${Settings} settings=${settings} onChange=${changeSettings} onClose=${() => setScreen("quiz")} onAction=${library ? () => setScreen("reset") : null} />`}
         ${screen === "reset" && html`<${Reset} stats=${stats} actions=${library} onConfirm=${reset} onClose=${() => setScreen("settings")} />`}
@@ -582,6 +595,7 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
                 ${problem && html`<${Text} color=${theme.bad}>${problem}<//>`}
                 ${phase === "loading" && html`<${Text}><${Text} color=${theme.accent}>${frame}<//><${Text} dimColor>${t("quiz.loading")}<//><//>`}
                 ${notice && html`<${Text} color=${theme.accent}>${notice}<//>`}
+                ${confirming && html`<${Text} color=${theme.warn}>${t("quiz.correctConfirm", { answer: outcome?.given ?? "" })}<//>`}
                 ${phase === "waiting" && paused && html`<${Text} dimColor>${t("quiz.pausedUntil", { time: formatClock(pausedUntil) })}${inQuietHours(now, settings.quiet) ? t("quiz.quietHours") : ""}<//>`}
                 ${phase === "waiting" && !paused && restUntil && nextAt - now > settings.everyMs && html`<${Text} dimColor>${t("quiz.nothingWaiting", { when: whenDue(restUntil, now) })}<//>`}
                 ${phase === "waiting" && !paused && sessionWait && sessionLength(settings.rhythm) && html`<${Text} dimColor>${t("quiz.sessionProgress", { done: sessionDone.current, count: sessionLength(settings.rhythm) })}<//>`}
@@ -597,7 +611,7 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
                   <//>
                 `}
                 ${(phase === "waiting" || phase === "empty") && commandMode && html`<${AnswerInput} commandOnly initial="/" commands=${commandsFor({ phase: "waiting", canOverrule: session.canOverrule() })} onCommand=${runCommand} onCancel=${() => setCommandMode(false)} onEdit=${clearProblem} />`}
-                ${phase !== "loading" && !commandMode && html`<${KeyHints} text=${phase === "grading" ? t("keyHints.grading") : phase === "asking" ? t("keyHints.asking") : phase === "empty" ? t("keyHints.empty") : session.canOverrule() ? t("keyHints.correctFirst", { rest: t(sessionWait ? "keyHints.sessionWaiting" : "keyHints.waiting") }) : t(sessionWait ? "keyHints.sessionWaiting" : "keyHints.waiting")} />`}
+                ${phase !== "loading" && !commandMode && html`<${KeyHints} text=${confirming ? t("keyHints.confirm", { yes: t("choice.yesKey").split("|")[0], no: t("choice.noKey").split("|")[0] }) : phase === "grading" ? t("keyHints.grading") : phase === "asking" ? t("keyHints.asking") : phase === "empty" ? t("keyHints.empty") : session.canOverrule() ? t("keyHints.correctFirst", { rest: t(sessionWait ? "keyHints.sessionWaiting" : "keyHints.waiting") }) : t(sessionWait ? "keyHints.sessionWaiting" : "keyHints.waiting")} />`}
               <//>
               <//>
             `}

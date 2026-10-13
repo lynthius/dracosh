@@ -73,7 +73,8 @@
     "sessionWaiting": "enter nächste Karte · / Befehle · q beenden",
     "decks": "→ Richtung · {choose}",
     "directionPick": "{choose} · esc 1 behalten",
-    "addName": "enter anlegen · esc abbrechen"
+    "addName": "enter anlegen · esc abbrechen",
+    "confirm": "{yes} ja · {no} nein"
   },
   "settings": {
     "title": "Einstellungen",
@@ -309,7 +310,8 @@
       "other": "Sitzung geschafft: {count} Karten. Ab jetzt wieder alle paar Minuten."
     },
     "sessionProgress": "{done} von {count} in dieser Sitzung",
-    "escAgain": "Noch einmal Esc zum Beenden."
+    "escAgain": "Noch einmal Esc zum Beenden.",
+    "correctConfirm": "„{answer}“ als richtig zählen und ab jetzt annehmen?"
   },
   "dragon": {
     "stages": {

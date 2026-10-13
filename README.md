@@ -57,7 +57,7 @@ Type the answer and press Enter. Not sure, or the answer is a whole sentence? Pr
 | `/add` | add cards to one of your decks, or start a new deck (one line per card, ↑ fixes the last one) |
 | `/decks` | switch to another deck (Dracosh remembers it), start a new one, or press → to change how a deck is asked |
 | `/hint` | reveal one more letter |
-| `/correct` | your answer was right after all; it's accepted from now on |
+| `/correct` | your answer was right after all; after a yes it's accepted from now on |
 | `/settings` | language, rhythm (a card every few minutes, or a study session), interval, daily goal, sound, quiet hours, weekends, tips, and a reset |
 | `/stats` | streak and a calendar of your month |
 | `/badges` | all badges and how to get them |

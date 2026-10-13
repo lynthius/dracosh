@@ -255,9 +255,14 @@ export function AddCard({ current, actions, onDone, startNew = false }) {
     setStep("line");
   }
 
+  // Keys that aren't an answer to the question (the next card, typed straight away) keep the first
+  // choice and go into the field, so nothing typed is lost
+  const typedAhead = useRef("");
+  const picking = useRef(false);
   async function pickDirection(index) {
+    if (picking.current) return;
+    picking.current = true;
     const chosen = ["forward", "backward", "both"][index];
-    setStep("saving");
     try {
       await actions.setDirections(deck.name, chosen);
       setDeck((d) => ({ ...d, directions: chosen, isNew: false }));
@@ -265,6 +270,9 @@ export function AddCard({ current, actions, onDone, startNew = false }) {
     } catch (err) {
       setError(err.message);
     }
+    clearField(typedAhead.current);
+    typedAhead.current = "";
+    picking.current = false;
     setStep("line");
   }
 
@@ -296,6 +304,16 @@ export function AddCard({ current, actions, onDone, startNew = false }) {
       setStep("review");
     }
   }
+
+  useInput(
+    (input, key) => {
+      if (picking.current ? input && !key.return : input && !/^[1-3]$/.test(input) && !key.ctrl && !key.meta && !key.return && !key.escape && !key.tab) {
+        typedAhead.current += input;
+        pickDirection(0);
+      }
+    },
+    { isActive: step === "direction" }
+  );
 
   useInput(
     (input, key) => {
