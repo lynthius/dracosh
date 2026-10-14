@@ -1,12 +1,8 @@
 // Character diff of your answer against the expected one, for the "you wrote" line after a miss.
-// Comparison is as forgiving as the judge: case, Polish diacritics and ł are ignored per character.
+// Comparison is as forgiving as the judge: case and diacritics are ignored per character.
+import { fold } from "./judge.js";
 
-const foldChar = (ch) =>
-  ch
-    .toLowerCase()
-    .replace(/ł/g, "l")
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "");
+const foldChar = (ch) => fold(ch.toLowerCase());
 
 // → [{ ch, ok }] for every character of `given`: ok = this character lines up with `target`.
 // Alignment comes from a Levenshtein backtrace, so a single missing or extra letter doesn't
@@ -43,4 +39,14 @@ export function diffChars(given, target) {
     }
   }
   return [...given].map((ch, k) => ({ ch, ok: marks[k] }));
+}
+
+// → [{ ch, ok }] for every character of `target`, after an answer right but for its accents ("jablko"
+// for "jabłko"): ok = you wrote this very letter, so only ł is marked. null when the two don't line
+// up letter for letter ("strasse" for "straße").
+export function accentMarks(given, target) {
+  const mine = [...given.trim().normalize("NFC").toLowerCase()];
+  const letters = [...target.normalize("NFC")];
+  if (mine.length !== letters.length) return null;
+  return letters.map((ch, i) => ({ ch, ok: ch.toLowerCase() === mine[i] }));
 }

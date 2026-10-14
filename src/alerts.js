@@ -1,3 +1,4 @@
+import { t } from "./i18n.js";
 import { execFile } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -21,7 +22,8 @@ export function createAlerts(initial = {}) {
     // a new question while you're in another window: sound plus a Notification Center banner
     ask() {
       play("ask");
-      if (enabled) execFile("osascript", ["-e", 'display notification "A new word is waiting" with title "Dracosh"'], () => {});
+      // the text goes to AppleScript as an argument, never into the script itself
+      if (enabled) execFile("osascript", ["-e", "on run argv", "-e", 'display notification (item 1 of argv) with title "Dracosh"', "-e", "end run", t("alerts.newCard")], () => {});
     },
     // The biggest thing that just happened wins: evolution > goal > combo cheer > the answer itself.
     // On a plain correct answer the pitch rises with the combo and resets on a miss. Badges ring

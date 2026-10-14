@@ -1,3 +1,4 @@
+import { t } from "./i18n.js";
 import { cardsOf, findDeck, toWords } from "./library.js";
 import { loadLibrary } from "./store.js";
 
@@ -6,7 +7,7 @@ import { loadLibrary } from "./store.js";
 // deck, or the tour while you have none.
 export function missingDeck(library, deckRef) {
   const names = library.decks.map((d) => `"${d.name}"`).join(", ");
-  return new Error(deckRef ? `There's no deck called "${deckRef}". Your decks: ${names || "none yet"}.` : "Your library has no decks yet.");
+  return new Error(deckRef ? t("errors.noDeck", { deck: deckRef, decks: names || t("errors.noDecksYet") }) : t("errors.emptyLibrary"));
 }
 
 export async function loadWords(deckRef) {

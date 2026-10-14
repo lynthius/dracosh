@@ -1,32 +1,38 @@
 import { Fragment } from "react";
-import { Box, Text, useInput } from "ink";
+import { Box, useInput } from "ink";
+import { t } from "../i18n.js";
 import { MAX_FREEZES } from "../progress.js";
 import { BOX_INTERVALS_DAYS } from "../scheduler.js";
-import { html, KeyHints, theme, usePanelWidth } from "./kit.js";
+import { cellWidth, html, KeyHints, Text, theme, usePanelWidth } from "./kit.js";
 
-const KEYS = [
-  ["Enter", "submit your answer (empty shows the answer); between cards, ask the next one"],
-  ["/", "open the commands"],
-  ["Esc", "clear what you typed, or quit"],
-  ["q", "quit, between cards"],
-  ["any key", "wakes a sleeping dragon"]
+// built at render time, so the texts follow the app language
+const keys = () => [
+  [t("help.keys.enter"), t("help.keys.enterWhat")],
+  [t("help.keys.grade"), t("help.keys.gradeWhat")],
+  ["/", t("help.keys.slashWhat")],
+  [t("help.keys.esc"), t("help.keys.escWhat")],
+  ["q", t("help.keys.qWhat")],
+  [t("help.keys.anyKey"), t("help.keys.anyKeyWhat")]
 ];
 
-const HOW = [
-  `A right answer moves a card to a later box: it comes back in ${BOX_INTERVALS_DAYS.slice(0, -1).join(", ")}, then ${BOX_INTERVALS_DAYS.at(-1)} days. A miss sends it back to the first box.`,
-  "One wrong letter in a longer word still counts, and you see the right spelling.",
-  "Reach your daily goal to keep your streak going; a day where you did every card there was counts too. Your dragon grows with your best streak.",
-  `A freeze covers a day you missed. You start with ${MAX_FREEZES} and get one back each week, ${MAX_FREEZES} at most.`
+const how = () => [
+  t("help.how.boxes", { first: BOX_INTERVALS_DAYS.slice(0, -1).join(", "), last: BOX_INTERVALS_DAYS.at(-1) }),
+  t("help.how.typos"),
+  t("help.how.cards"),
+  t("help.how.streak"),
+  t("help.how.freezes", { max: MAX_FREEZES })
 ];
 
-const OUTSIDE = [
-  ['dracosh --deck "Polish"', "quiz another deck"],
-  ["dracosh --data", "where your cards and backups are"],
-  ["dracosh restore", "bring back a backup"],
-  ["dracosh --help", "every option"]
+const outside = () => [
+  [`dracosh --deck "${t("help.outside.deckExample")}"`, t("help.outside.deck")],
+  ["dracosh --data", t("help.outside.data")],
+  ["dracosh restore", t("help.outside.restore")],
+  ["dracosh --help", t("help.outside.help")]
 ];
 
-function Rows({ rows, width }) {
+// the left column fits its longest entry, whatever the language
+function Rows({ rows }) {
+  const width = Math.max(...rows.map(([left]) => cellWidth(left))) + 2;
   return rows.map(
     ([left, right]) => html`
       <${Box} key=${left}>
@@ -55,14 +61,14 @@ export function Help({ onClose }) {
   return html`
     <${Fragment}>
       <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.accent} paddingX=${2} width=${panel}>
-        <${Text} bold color=${theme.accent}>Help<//>
-        <${Section} title="Keys"><${Rows} rows=${KEYS} width=${10} /><//>
-        <${Section} title="How it works">
-          ${HOW.map((line) => html`<${Box} key=${line}><${Box} width=${2} flexShrink=${0}><${Text} dimColor>·<//><//><${Text}>${line}<//><//>`)}
+        <${Text} bold color=${theme.accent}>${t("help.title")}<//>
+        <${Section} title=${t("help.keysTitle")}><${Rows} rows=${keys()} /><//>
+        <${Section} title=${t("help.howTitle")}>
+          ${how().map((line) => html`<${Box} key=${line}><${Box} width=${2} flexShrink=${0}><${Text} dimColor>·<//><//><${Text}>${line}<//><//>`)}
         <//>
-        <${Section} title="Outside the quiz"><${Rows} rows=${OUTSIDE} width=${26} /><//>
+        <${Section} title=${t("help.outsideTitle")}><${Rows} rows=${outside()} /><//>
       <//>
-      <${Box} paddingX=${1}><${KeyHints} text="esc back" /><//>
+      <${Box} paddingX=${1}><${KeyHints} text=${t("keyHints.back")} /><//>
     <//>
   `;
 }

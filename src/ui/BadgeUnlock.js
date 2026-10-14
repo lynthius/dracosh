@@ -1,7 +1,8 @@
+import { t } from "../i18n.js";
 import { useEffect, useState } from "react";
-import { Box, Text } from "ink";
+import { Box } from "ink";
 import { badgeColor } from "./icons.js";
-import { html, theme } from "./kit.js";
+import { html, Text, theme } from "./kit.js";
 
 const FRAME_MS = 90;
 const FLASH_FRAMES = [5, 7]; // white-out frames before the name lights up in its rank color
@@ -41,7 +42,7 @@ export function BadgeUnlock({ id, name, desc, delay = 0, sound = badgeSound(0), 
   return html`
     <${Box}>
       <${Text} color=${color}>✦ <//>
-      <${Text} color=${theme.warn}>Badge unlocked: <//>
+      <${Text} color=${theme.warn}>${t("badgeUnlock.label")}<//>
       <${Text} bold color=${color}>${name}<//>
       <${Text} dimColor> · ${desc}<//>
       <${Text} color=${theme.warn}>${sparks}<//>

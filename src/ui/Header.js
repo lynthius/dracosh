@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { Box, Text } from "ink";
+import { t } from "../i18n.js";
+import { Box, useStdout } from "ink";
 import { formatInterval } from "../settings.js";
 import { formatDay } from "../vacation.js";
-import { AnimatedBar, html, theme } from "./kit.js";
+import { AnimatedBar, cellWidth, cutToWidth, html, Text, theme } from "./kit.js";
 import { Flame } from "./icons.js";
 import { Mascot, MASCOT_WIDTH } from "./Mascot.js";
 
@@ -77,11 +78,52 @@ export function Snore({ tick }) {
   `;
 }
 
-export function Header({ deck, everyMs, wordCount, stats, combo, face, event, tick = 0, asleep = false }) {
+// "Polish · 50 cards · every 10 min", shortened from the end in a narrow pane: the interval goes
+// first, then the card count, and only then is the deck's name cut. A study session has no interval.
+function deckLine({ deck, wordCount, pace, room }) {
+  const cards = wordCount ? t("header.cards", { cards: t("count.cards", { count: wordCount }) }) : "";
+  const tries = [pace && t("header.deckLine", { deck, cards, interval: pace }), `  ${deck}${cards}`, `  ${deck}`].filter(Boolean);
+  return tries.find((line) => cellWidth(line) <= room) ?? `  ${cutToWidth(deck, Math.max(4, room - 2))}`;
+}
+
+// The extras that fit beside what a row always shows, most important first: `[[name, text], …]` → Set of names
+function fitting(base, extras, room) {
+  let used = base;
+  const shown = new Set();
+  for (const [name, text] of extras) {
+    if (!text) continue;
+    if (used + cellWidth(text) > room) break; // a smaller extra never jumps the queue
+    used += cellWidth(text);
+    shown.add(name);
+  }
+  return shown;
+}
+
+const BAR_WIDTH = 12;
+const MIN_BAR_WIDTH = 4;
+
+export function Header({ deck, everyMs, rhythm = "minutes", wordCount, stats, combo, face, event, tick = 0, asleep = false }) {
+  const { stdout } = useStdout();
+  const rowRoom = (stdout?.columns || 80) - MASCOT_WIDTH - 3 - 2;
+  const room = rowRoom - "Dracosh".length;
+  const pace = rhythm === "minutes" ? formatInterval(everyMs) : null;
   const { streak, today, goal, companion } = stats;
   const move = useMove(event);
   const blinking = useBlink();
   const hot = combo >= 3 && !asleep;
+  // a narrow pane keeps the streak and today's count; the extras beside them go when they don't fit
+  const streakText = streak.days > 0 ? t("header.streak", { count: streak.days }) : t("header.noStreak");
+  const second = fitting(cellWidth(streakText) + (streak.days > 0 ? 1 : 0), [
+    ["atRisk", streak.atRisk && t("header.atRisk")],
+    ["daysOff", stats.vacation.activeUntil && t("header.daysOffUntil", { day: formatDay(stats.vacation.activeUntil) })],
+    ["freezes", streak.freezes > 0 && t("header.freezes", { count: streak.freezes })]
+  ], rowRoom);
+  const count = `  ${Math.min(today.correct, goal)}/${goal}`;
+  const barWidth = Math.min(BAR_WIDTH, rowRoom - cellWidth(t("header.today")) - cellWidth(count));
+  const third = fitting(cellWidth(t("header.today")) + Math.max(0, barWidth) + cellWidth(count), [
+    ["combo", combo >= 2 && t("header.combo", { count: combo })],
+    ["goal", today.goalMet && t("header.goalReached")]
+  ], rowRoom);
   const shown = asleep ? "sleep" : blinking && BLINKABLE.has(face) ? "blink" : face;
   return html`
     <${Box} paddingX=${1}>
@@ -94,22 +136,22 @@ export function Header({ deck, everyMs, wordCount, stats, combo, face, event, ti
       <${Box} flexDirection="column" justifyContent="center">
         <${Box}>
           <${Box} flexShrink=${0}><${Text} bold color=${theme.accent}>Dracosh<//><//>
-          <${Text} dimColor wrap="truncate-end">  ${deck}${wordCount ? ` · ${wordCount} card${wordCount === 1 ? "" : "s"}` : ""} · every ${formatInterval(everyMs)}<//>
+          <${Text} dimColor wrap="truncate-end">${deckLine({ deck, wordCount, pace, room })}<//>
         <//>
-        <${Box}>
+        <${Box} height=${1} overflow="hidden">
           ${streak.days > 0
-            ? html`<${Box}><${Flame} /><${Text} color=${theme.warn} bold> ${streak.days}-day streak<//><//>`
-            : html`<${Text} dimColor>no streak yet<//>`}
-          ${streak.atRisk && html`<${Text} color=${theme.warn}> · at risk today<//>`}
-          ${stats.vacation.activeUntil && html`<${Text} color=${theme.accent}> · days off until ${formatDay(stats.vacation.activeUntil)}<//>`}
-          ${streak.freezes > 0 && html`<${Text} dimColor> · ${streak.freezes} freeze${streak.freezes > 1 ? "s" : ""}<//>`}
+            ? html`<${Box}><${Flame} /><${Text} color=${theme.warn} bold wrap="truncate-end">${streakText}<//><//>`
+            : html`<${Text} dimColor wrap="truncate-end">${streakText}<//>`}
+          ${second.has("atRisk") && html`<${Text} color=${theme.warn}>${t("header.atRisk")}<//>`}
+          ${second.has("daysOff") && html`<${Text} color=${theme.accent}>${t("header.daysOffUntil", { day: formatDay(stats.vacation.activeUntil) })}<//>`}
+          ${second.has("freezes") && html`<${Text} dimColor>${t("header.freezes", { count: streak.freezes })}<//>`}
         <//>
-        <${Box}>
-          <${Text} dimColor>today  <//>
-          <${AnimatedBar} value=${today.correct} max=${goal} width=${12} color=${today.goalMet ? theme.good : theme.accent} />
-          <${Text} dimColor>  ${Math.min(today.correct, goal)}/${goal}<//>
-          ${today.goalMet && html`<${Text} color=${theme.good}>  goal reached<//>`}
-          ${combo >= 2 && html`<${Text} color=${theme.warn} bold>  combo ×${combo}<//>`}
+        <${Box} height=${1} overflow="hidden">
+          <${Text} dimColor>${t("header.today")}<//>
+          ${barWidth >= MIN_BAR_WIDTH && html`<${AnimatedBar} value=${today.correct} max=${goal} width=${barWidth} color=${today.goalMet ? theme.good : theme.accent} />`}
+          <${Text} dimColor>${count}<//>
+          ${third.has("goal") && html`<${Text} color=${theme.good}>${t("header.goalReached")}<//>`}
+          ${third.has("combo") && html`<${Text} color=${theme.warn} bold>${t("header.combo", { count: combo })}<//>`}
         <//>
       <//>
     <//>

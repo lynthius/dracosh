@@ -32,16 +32,13 @@ function pickDue(due, now, random) {
   return due[due.length - 1];
 }
 
-// Mixes due reviews with new words (up to the daily cap), at random; with nothing to do, practises a soon-due item.
-// Never asks the same note twice in a row when there is any alternative. A `tour` deck is different:
-// each card is asked once, in deck order, and never comes back as a review (null when it's done).
 // What to ask next: a due review or a new card (up to the daily cap), mixed at random; null when there
 // is nothing to do right now. Cards are never asked before they're due: answering early would move them
 // up the boxes without the spacing that makes them stick. Never the same note twice in a row while
 // anything else is waiting. A `tour` deck is different: each card is asked once, in deck order, and
-// never comes back as a review.
+// never comes back as a review. A word's own `directions` (a cloze card's gaps) replace the deck's.
 export function pickNext({ words, state, now = Date.now(), lastNoteId = null, directions = DIRECTIONS, tour = false, random = Math.random }) {
-  const candidates = words.flatMap((word) => directions.map((direction) => ({ word, direction, entry: state.items[itemKey(word.noteId, direction)] })));
+  const candidates = words.flatMap((word) => (word.directions ?? directions).map((direction) => ({ word, direction, entry: state.items[itemKey(word.noteId, direction)] })));
   if (tour) return candidates.find((c) => !c.entry) ?? null;
 
   const canIntroduce = newToday(state, now) < NEW_PER_DAY;
@@ -60,7 +57,7 @@ export function pickNext({ words, state, now = Date.now(), lastNoteId = null, di
 export function nextDueAt({ words, state, now = Date.now(), directions = DIRECTIONS }) {
   let next = null;
   for (const word of words) {
-    for (const direction of directions) {
+    for (const direction of word.directions ?? directions) {
       const entry = state.items[itemKey(word.noteId, direction)];
       const at = entry ? entry.due : startOfTomorrow(now);
       if (next === null || at < next) next = at;

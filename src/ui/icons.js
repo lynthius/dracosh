@@ -1,6 +1,5 @@
-import { Text } from "ink";
 import { BADGES } from "../progress.js";
-import { html } from "./kit.js";
+import { html, Text } from "./kit.js";
 import { PixelGrid } from "./Mascot.js";
 
 // 8×8 pixel icons for the badge groups, drawn with the same half-block technique as the mascot.

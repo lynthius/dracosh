@@ -1,3 +1,4 @@
+import { t } from "./i18n.js";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
@@ -18,7 +19,8 @@ const emptyState = () => ({ version: STATE_VERSION, items: {}, newToday: { date:
 const isObject = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
 
 // what to say when a data file can't be used as it is
-export const damaged = (file, why) => new Error(`${file} looks damaged (${why}). Run "dracosh restore" to bring back a backup.`);
+// marked, not only worded: the message is in the app's language
+export const damaged = (file, why) => Object.assign(new Error(t("errors.damaged", { file, why })), { damaged: true });
 
 export async function readJson(file, fallback) {
   try {
@@ -26,7 +28,7 @@ export async function readJson(file, fallback) {
   } catch (err) {
     if (err.code === "ENOENT") return fallback;
     if (err instanceof SyntaxError) throw damaged(file, err.message);
-    throw new Error(`Can't read ${file}: ${err.message}`);
+    throw new Error(t("errors.cantRead", { file, error: err.message }));
   }
 }
 
@@ -59,8 +61,8 @@ export const saveLibrary = (library) => writeJson(LIBRARY_FILE, library);
 export async function loadState() {
   const state = await readJson(STATE_FILE, undefined);
   if (state === undefined) return emptyState();
-  if (!isObject(state) || !isObject(state.items)) throw damaged(STATE_FILE, "no progress in it");
-  if (!Object.values(state.items).every((entry) => isObject(entry) && Number.isFinite(entry.box) && Number.isFinite(entry.due))) throw damaged(STATE_FILE, "a card without its box or date");
+  if (!isObject(state) || !isObject(state.items)) throw damaged(STATE_FILE, t("errors.why.noProgress"));
+  if (!Object.values(state.items).every((entry) => isObject(entry) && Number.isFinite(entry.box) && Number.isFinite(entry.due))) throw damaged(STATE_FILE, t("errors.why.progressEntry"));
   const { progress } = state;
   const validProgress =
     isObject(progress) &&
@@ -70,8 +72,8 @@ export async function loadState() {
     ["count", "best", "freezes"].every((key) => Number.isFinite(progress.streak[key])) &&
     isObject(progress.badges) &&
     (progress.vacations === undefined || Array.isArray(progress.vacations));
-  if (progress !== undefined && !validProgress) throw damaged(STATE_FILE, "the streak and badges are unreadable");
-  if (state.version > STATE_VERSION) throw new Error(`${STATE_FILE} was saved by a newer version of Dracosh. Please update Dracosh.`);
+  if (progress !== undefined && !validProgress) throw damaged(STATE_FILE, t("errors.why.streak"));
+  if (state.version > STATE_VERSION) throw new Error(t("errors.newerState", { file: STATE_FILE }));
   if (!isObject(state.newToday)) state.newToday = { date: "", count: 0 };
   return state;
 }
@@ -89,7 +91,7 @@ export function recordAnswer(state, noteId, direction, entry, now = Date.now(), 
 
 // hand-edited into something odd, even broken JSON: the defaults take over (nothing worth a restore)
 export const loadSettingsRaw = async () => {
-  const raw = await readJson(SETTINGS_FILE, {}).catch((err) => (err.message.includes("looks damaged") ? {} : Promise.reject(err)));
+  const raw = await readJson(SETTINGS_FILE, {}).catch((err) => (err.damaged ? {} : Promise.reject(err)));
   return isObject(raw) ? raw : {};
 };
 

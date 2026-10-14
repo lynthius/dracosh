@@ -39,6 +39,48 @@ test("an older copy of the tour is replaced by the current one, once", async () 
   assert.equal(cardsOf(library, mine.id).length, 1, "your own decks stay as they are");
 });
 
+test("an older tour replaced in another language takes that language's name too", async () => {
+  const { emptyLibrary } = await import("../src/library.js");
+  const { setLanguage } = await import("../src/i18n.js");
+  const library = emptyLibrary();
+  const old = createDeck(library, { name: STARTER_DECK, type: "qa", languages: null, directions: "forward" });
+  addCard(library, old.id, { front: "What wakes a sleeping dragon?", back: ["any key"] });
+  try {
+    setLanguage("pl");
+    assert.equal(seedLibrary(library), true);
+    assert.equal(old.name, "Pierwsze kroki");
+    assert.equal(seedLibrary(library), false);
+  } finally {
+    setLanguage("en");
+  }
+});
+
+test("the tour follows the app's language and keeps what's already done", async () => {
+  const { emptyLibrary } = await import("../src/library.js");
+  const { setLanguage } = await import("../src/i18n.js");
+  const library = emptyLibrary();
+  seedLibrary(library);
+  const ids = library.cards.map((card) => card.id);
+  try {
+    setLanguage("pl");
+    assert.equal(seedLibrary(library), true);
+    assert.equal(seedLibrary(library), false, "once per language");
+    assert.equal(library.decks[0].name, "Pierwsze kroki");
+    assert.deepEqual(library.cards.map((card) => card.id), ids, "same cards, so their progress stays");
+    assert.match(library.cards[0].front, /`cześć`/);
+    assert.deepEqual(library.cards[0].back, ["cześć"]);
+
+    setLanguage("en");
+    const mine = createDeck(library, { name: "Pierwsze kroki 2", languages: null });
+    mine.name = "Getting started"; // a deck of yours took the tour's English name meanwhile
+    assert.equal(seedLibrary(library), true);
+    assert.equal(library.decks[0].name, "Pierwsze kroki", "the tour keeps its name rather than clash with yours");
+    assert.match(library.cards[0].front, /`hello`/);
+  } finally {
+    setLanguage("en");
+  }
+});
+
 test("decks are picked by name, and a wrong name lists the real ones", async () => {
   const library = await loadLibrary();
   const spanish = createDeck(library, { name: "Spanish", languages: { front: "es", back: "en" } });

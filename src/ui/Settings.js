@@ -1,23 +1,28 @@
 import { Fragment, useState } from "react";
-import { Box, Text, useInput } from "ink";
-import { GOALS, INTERVALS, QUIET_PRESETS, TIP_LABELS, TIP_MODES, VOLUMES, formatInterval } from "../settings.js";
+import { Box, useInput } from "ink";
+import { language, LANGUAGES, t } from "../i18n.js";
+import { GOALS, INTERVALS, QUIET_PRESETS, RHYTHMS, TIP_MODES, VOLUMES, formatInterval } from "../settings.js";
 import { formatQuiet } from "../quiet.js";
-import { Bar, html, KeyHints, theme, usePanelWidth } from "./kit.js";
+import { Bar, html, KeyHints, Text, theme, usePanelWidth } from "./kit.js";
 
 function VolumeValue({ value }) {
   return html`<${Text}><${Bar} value=${value} max=${1} width=${10} />  ${Math.round(value * 100)}%<//>`;
 }
 
+// label and hint come from settings.rows.<key> in the locale
 const ALL_ROWS = [
-  { key: "everyMs", label: "Interval", options: INTERVALS, format: formatInterval, hint: "time between questions" },
-  { key: "sound", label: "Sound", options: [true, false], format: (v) => (v ? "on" : "off"), hint: "answer and new-card sounds", toggle: true },
-  { key: "volume", label: "Volume", options: VOLUMES, format: (v) => html`<${VolumeValue} value=${v} />`, hint: "plays a preview when changed" },
-  { key: "dailyGoal", label: "Daily goal", options: GOALS, format: (n) => `${n} correct`, hint: "keeps your streak alive" },
-  { key: "tips", label: "Tips", options: TIP_MODES, format: (v) => TIP_LABELS[v], hint: "a short tip about Dracosh while you wait" },
-  { key: "skipWeekends", label: "Weekends", options: [true, false], format: (v) => (v ? "rest days" : "count like other days"), hint: "rest days never break your streak (doing them still counts)", toggle: true },
-  { key: "quiet", label: "Quiet hours", options: QUIET_PRESETS, format: formatQuiet, hint: "no questions, sounds or banners during these hours" },
-  { key: "reset", label: "Reset", action: true, format: () => "press enter", hint: "start over: your progress only, or everything (a backup is made first)" }
+  { key: "language", options: Object.keys(LANGUAGES), format: (code) => LANGUAGES[code] },
+  { key: "rhythm", options: RHYTHMS, format: (v) => t(`settings.rhythms.${v}`) },
+  { key: "everyMs", options: INTERVALS, format: formatInterval },
+  { key: "sound", options: [true, false], format: (v) => t(v ? "settings.on" : "settings.off"), toggle: true },
+  { key: "volume", options: VOLUMES, format: (v) => html`<${VolumeValue} value=${v} />` },
+  { key: "dailyGoal", options: GOALS, format: (n) => t("settings.goal", { n }) },
+  { key: "tips", options: TIP_MODES, format: (v) => t(`settings.tipModes.${v}`) },
+  { key: "skipWeekends", options: [true, false], format: (v) => t(v ? "settings.weekendsRest" : "settings.weekendsCount"), toggle: true },
+  { key: "quiet", options: QUIET_PRESETS, format: formatQuiet },
+  { key: "reset", action: true, format: () => t("settings.pressEnter") }
 ];
+const label = (row) => t(`settings.rows.${row.key}.label`);
 
 const nearestIndex = (options, value) => {
   const exact = options.findIndex((option) => JSON.stringify(option) === JSON.stringify(value));
@@ -31,6 +36,8 @@ export function Settings({ settings, onChange, onClose, onAction }) {
   const panel = usePanelWidth();
   const [row, setRow] = useState(0);
   const ROWS = onAction ? ALL_ROWS : ALL_ROWS.filter((item) => !item.action);
+  const values = { ...settings, language: settings.language ?? language() };
+  const labelWidth = Math.max(...ROWS.map((item) => label(item).length)) + 2;
 
   useInput((input, key) => {
     if (key.escape || input === "q") return onClose();
@@ -40,30 +47,30 @@ export function Settings({ settings, onChange, onClose, onAction }) {
     const current = ROWS[row];
     if (current.action) return key.return ? onAction(current.key) : undefined;
     const direction = key.leftArrow ? -1 : key.rightArrow ? 1 : 0;
-    if (current.toggle && (direction || key.return || input === " ")) return onChange({ [current.key]: !settings[current.key] });
+    if (current.toggle && (direction || key.return || input === " ")) return onChange({ [current.key]: !values[current.key] });
     if (!direction) return;
-    const index = nearestIndex(current.options, settings[current.key]);
+    const index = nearestIndex(current.options, values[current.key]);
     const next = current.options[Math.min(current.options.length - 1, Math.max(0, index + direction))];
-    if (JSON.stringify(next) !== JSON.stringify(settings[current.key])) onChange({ [current.key]: next });
+    if (JSON.stringify(next) !== JSON.stringify(values[current.key])) onChange({ [current.key]: next });
   });
 
   return html`
     <${Fragment}>
     <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.accent} paddingX=${2} width=${panel}>
-      <${Text} bold color=${theme.accent}>Settings<//>
+      <${Text} bold color=${theme.accent}>${t("settings.title")}<//>
       <${Box} flexDirection="column" marginTop=${1}>
         ${ROWS.map(
           (item, i) => html`
             <${Box} key=${item.key}>
-              <${Text} color=${i === row ? theme.accent : undefined} bold=${i === row}>${i === row ? "❯" : " "} ${item.label.padEnd(13)}<//>
-              <${Text} color=${i === row ? theme.accent : undefined}>${i === row && !item.action ? "❮ " : "  "}${item.format(settings[item.key])}${i === row && !item.action ? " ❯" : ""}<//>
+              <${Box} flexShrink=${0}><${Text} color=${i === row ? theme.accent : undefined} bold=${i === row}>${i === row ? "❯" : " "} ${label(item).padEnd(labelWidth)}<//><//>
+              <${Text} color=${i === row ? theme.accent : undefined}>${i === row && !item.action ? "❮ " : "  "}${item.format(values[item.key])}${i === row && !item.action ? " ❯" : ""}<//>
             <//>
           `
         )}
       <//>
-      <${Box} marginTop=${1}><${Text} dimColor>${ROWS[row].hint}<//><//>
+      <${Box} marginTop=${1}><${Text} dimColor>${t(`settings.rows.${ROWS[row].key}.hint`)}<//><//>
     <//>
-    <${Box} paddingX=${1}><${KeyHints} text="↑/↓ select · ←/→ change · esc back" /><//>
+    <${Box} paddingX=${1}><${KeyHints} text=${t("keyHints.settings")} /><//>
     <//>
   `;
 }

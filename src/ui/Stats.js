@@ -1,10 +1,10 @@
+import { t } from "../i18n.js";
 import { Fragment, useState } from "react";
-import { Box, Text, useInput } from "ink";
+import { Box, useInput } from "ink";
 import { dragonName } from "../progress.js";
 import { formatRange } from "../vacation.js";
-import { html, KeyHints, theme, usePanelWidth } from "./kit.js";
+import { html, KeyHints, Text, theme, usePanelWidth } from "./kit.js";
 
-const DAY_LETTERS = ["M", "T", "W", "T", "F", "S", "S"];
 // One shape for every day; only the color tells them apart, GitHub-contribution style.
 const TILE = {
   goal: theme.good,
@@ -31,7 +31,7 @@ function Calendar({ month, goal }) {
   return html`
     <${Box} flexDirection="column">
       <${Box}>
-        ${DAY_LETTERS.map((letter, i) =>
+        ${t("stats.weekdays").split(" ").map((letter, i) =>
           i === todayColumn ? html`<${Text} key=${i} color=${theme.accent} bold>${letter} <//>` : html`<${Text} key=${i} dimColor>${letter} <//>`
         )}
       <//>
@@ -48,16 +48,17 @@ function Calendar({ month, goal }) {
 
 function Legend({ goal }) {
   const items = [
-    [TILE.goal, `goal (${goal})`],
-    [TILE.halfway, "halfway"],
-    [TILE.some, "some"],
-    [TILE.none, "none"],
-    [TILE.rest, "rest"],
-    [TILE.today, "today"]
+    [TILE.goal, t("stats.legend.goal", { goal })],
+    [TILE.halfway, t("stats.legend.halfway")],
+    [TILE.some, t("stats.legend.some")],
+    [TILE.none, t("stats.legend.none")],
+    [TILE.rest, t("stats.legend.rest")],
+    [TILE.today, t("stats.legend.today")]
   ];
+  // a box per item, so a longer language wraps whole items instead of splitting one
   return html`
-    <${Text}>
-      ${items.map(([color, label]) => html`<${Text} key=${label}><${Text} color=${color}>■<//><${Text} dimColor> ${label}  <//><//>`)}
+    <${Box} flexWrap="wrap" columnGap=${2}>
+      ${items.map(([color, label]) => html`<${Text} key=${label}><${Text} color=${color}>■<//><${Text} dimColor> ${label}<//><//>`)}
     <//>
   `;
 }
@@ -75,37 +76,37 @@ export function Stats({ stats, getMonth, onClose }) {
   const accuracy = today.asked ? Math.round((today.correct / today.asked) * 100) : null;
   const unlocked = stats.badges.filter((b) => b.unlockedOn).length;
   const month = getMonth(offset);
-  const next = companion.nextAt ? ` · next form at a ${companion.nextAt}-day streak` : " · fully evolved";
+  const next = companion.nextAt ? t("stats.nextForm", { count: companion.nextAt }) : t("stats.fullyEvolved");
   const title = dragonName(companion.index, companion.element);
 
   return html`
     <${Fragment}>
       <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.accent} paddingX=${2} width=${panel}>
-        <${Text} bold color=${theme.accent}>Stats<//>
+        <${Text} bold color=${theme.accent}>${t("stats.title")}<//>
 
         <${Box} marginTop=${1} flexDirection="column">
           <${Text}>
-            ${streak.days > 0 ? html`<${Text} color=${theme.warn} bold>${streak.days}-day streak<//>` : html`<${Text} dimColor>no streak yet<//>`}
-            <${Text} dimColor> · best ${streak.best} · ${streak.freezes} freeze${streak.freezes === 1 ? "" : "s"} in stock<//>
+            ${streak.days > 0 ? html`<${Text} color=${theme.warn} bold>${t("stats.streak", { count: streak.days })}<//>` : html`<${Text} dimColor>${t("stats.noStreak")}<//>`}
+            <${Text} dimColor>${t("stats.bestAndFreezes", { best: streak.best, count: streak.freezes })}<//>
           <//>
-          <${Text} dimColor>today      ${today.correct}/${goal} correct${accuracy === null ? "" : ` · ${accuracy}% accuracy`}<//>
-          <${Text} dimColor>cards      ${stats.mastered} mastered · ${stats.practiced} practised · ${stats.totalCorrect} correct in total<//>
-          <${Text} dimColor>companion  ${title} (${companion.index + 1}/6)${next}<//>
-          <${Text} dimColor>rest days  ${stats.skipWeekends ? "weekends" : "no weekends"}${stats.vacation.upcoming.length ? ` · days off ${stats.vacation.upcoming.map((v) => formatRange(v.from, v.to)).join(", ")}` : ""}<//>
+          <${Text} dimColor>${t("stats.today", { correct: today.correct, goal, accuracy: accuracy === null ? "" : t("stats.accuracy", { percent: accuracy }) })}<//>
+          <${Text} dimColor>${t("stats.cards", { mastered: stats.mastered, practised: stats.practiced, total: stats.totalCorrect })}<//>
+          <${Text} dimColor>${t("stats.companion", { name: title, stage: companion.index + 1, next })}<//>
+          <${Text} dimColor>${t("stats.restDays", { weekends: t(stats.skipWeekends ? "stats.weekends" : "stats.noWeekends"), daysOff: stats.vacation.upcoming.length ? t("stats.daysOff", { ranges: stats.vacation.upcoming.map((v) => formatRange(v.from, v.to)).join(", ") }) : "" })}<//>
         <//>
 
         <${Box} marginTop=${1} flexDirection="column">
           <${Text} bold>${month.label}<//>
           <${Box} marginTop=${1}><${Calendar} month=${month} goal=${goal} /><//>
           <${Box} marginTop=${1} flexDirection="column">
-            <${Text} dimColor>Goal reached on ${month.goalDays} of ${month.daysSoFar} days · ${month.correct} correct answers<//>
+            <${Text} dimColor>${t("stats.month", { goalDays: month.goalDays, days: month.daysSoFar, correct: month.correct })}<//>
             <${Legend} goal=${goal} />
           <//>
         <//>
 
-        <${Box} marginTop=${1}><${Text} dimColor>${unlocked}/${stats.badges.length} badges · /badges lists them all<//><//>
+        <${Box} marginTop=${1}><${Text} dimColor>${t("stats.badgesLine", { unlocked, total: stats.badges.length })}<//><//>
       <//>
-      <${Box} paddingX=${1}><${KeyHints} text="←/→ month · esc back" /><//>
+      <${Box} paddingX=${1}><${KeyHints} text=${t("keyHints.stats")} /><//>
     <//>
   `;
 }

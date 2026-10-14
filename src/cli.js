@@ -5,6 +5,7 @@ import { parseArgs } from "node:util";
 import { createInterface } from "node:readline/promises";
 import { createAlerts } from "./alerts.js";
 import { existsSync } from "node:fs";
+import { language, setLanguage, t } from "./i18n.js";
 import { BACKUP_DIR, dailyBackup, listBackups, restoreBackup } from "./backup.js";
 import { ensureProgress, snapshot } from "./progress.js";
 import { BOX_INTERVALS_DAYS } from "./scheduler.js";
@@ -19,36 +20,17 @@ import * as manage from "./manage.js";
 import { findDeck } from "./library.js";
 import { loadAllWords, loadWords, missingDeck } from "./words.js";
 
-const HELP = `Dracosh: a vocabulary and quiz trainer for your terminal
-
-Usage: dracosh [options]
-       dracosh restore [number]   list your backups, or bring one back
-
-  --deck <name>    quiz this deck, this run only (otherwise the one picked in /decks)
-  --every <time>   pause between questions: 30s, 10m, 1h (default: ${formatInterval(DEFAULTS.everyMs)})
-  --no-sound       turn sound effects off
-  --volume <0-1>   sound volume (default: ${DEFAULTS.volume})
-  --stats          print progress and exit
-  --data           show where your cards, progress and backups are kept
-  --preview        browse every animation and screen on made-up data (nothing is saved)
-  -y, --yes        restore without asking first
-  -h, --help       show this help
-
-Flags override your saved settings for this run only. Change the saved ones with /settings.
-
-While running: Enter submits, "/" opens the command menu (/add, /decks, /settings, /stats, /help…),
-Esc quits (clears the line first if you typed something). Ctrl+C also works.
-Between cards: Enter asks the next one right away, q quits. /help explains the rest.`;
+const help = () => t("cli.help", { interval: formatInterval(DEFAULTS.everyMs), volume: DEFAULTS.volume });
 
 function parseEvery(value) {
   const match = /^(\d+(?:\.\d+)?)(s|m|h)$/.exec(value);
-  if (!match) throw new Error(`Invalid --every "${value}". Use e.g. 30s, 10m, 1h.`);
+  if (!match) throw new Error(t("cli.badEvery", { value }));
   return Number(match[1]) * { s: 1000, m: 60_000, h: 3_600_000 }[match[2]];
 }
 
 function parseVolume(value) {
   const volume = Number(value);
-  if (!(volume >= 0 && volume <= 1)) throw new Error(`Invalid --volume "${value}". Use a number from 0 to 1.`);
+  if (!(volume >= 0 && volume <= 1)) throw new Error(t("cli.badVolume", { value }));
   return volume;
 }
 
@@ -56,26 +38,26 @@ function printStats(state, settings) {
   ensureProgress(state);
   const stats = snapshot(state, { goal: settings.dailyGoal });
   const { streak, today } = stats;
-  console.log(`Streak ${streak.days} days (best ${streak.best}) · ${streak.freezes} freeze(s) in stock`);
-  console.log(`Today ${today.correct}/${stats.goal} correct${today.goalMet ? " ✓ goal reached" : ""}`);
-  console.log(`Badges ${stats.badges.filter((b) => b.unlockedOn).length}/${stats.badges.length} · ${stats.mastered} cards mastered · companion: ${stats.companion.name}`);
+  console.log(t("cli.stats.streak", { days: streak.days, best: streak.best, count: streak.freezes }));
+  console.log(t("cli.stats.today", { correct: today.correct, goal: stats.goal, goal_reached: today.goalMet ? t("cli.stats.goalReached") : "" }));
+  console.log(t("cli.stats.badges", { unlocked: stats.badges.filter((b) => b.unlockedOn).length, total: stats.badges.length, mastered: stats.mastered, companion: stats.companion.name }));
 
   const entries = Object.values(state.items);
   if (!entries.length) return;
-  const perBox = BOX_INTERVALS_DAYS.map((days, i) => `box ${i + 1} (${days}d): ${entries.filter((e) => e.box === i + 1).length}`);
+  const perBox = BOX_INTERVALS_DAYS.map((days, i) => t("cli.stats.box", { box: i + 1, days, count: entries.filter((e) => e.box === i + 1).length }));
   const correct = entries.reduce((sum, e) => sum + e.correct, 0);
   const total = entries.reduce((sum, e) => sum + e.seen, 0);
-  console.log(`${entries.length} cards practised, ${correct}/${total} correct (${Math.round((correct / total) * 100)}%)`);
+  console.log(t("cli.stats.practised", { count: entries.length, correct, total, percent: Math.round((correct / total) * 100) }));
   console.log(perBox.join("  "));
 }
 
 const formatTime = (ms) => new Date(ms).toLocaleString("sv").slice(0, 16);
-const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
 async function confirm(question) {
   const rl = createInterface({ input: process.stdin, output: process.stdout });
   try {
-    return /^y(es)?$/i.test((await rl.question(`${question} [y/N] `)).trim());
+    const answer = (await rl.question(`${question} ${t("cli.restore.askSuffix")} `)).trim().toLowerCase();
+    return t("cli.restore.yes").split("|").includes(answer);
   } finally {
     rl.close();
   }
@@ -86,43 +68,48 @@ async function printData() {
   const library = await loadLibrary();
   const state = await loadState();
   const backups = await listBackups();
-  const at = (file) => (existsSync(file) ? "" : " (not created yet)");
-  console.log(`Dracosh keeps everything in ${HOME}\n`);
-  console.log(`  library.json   your decks and cards: ${plural(library.decks.length, "deck")} · ${plural(library.cards.length, "card")}${at(DATA_FILES.library)}`);
-  console.log(`  state.json     progress, streak and badges: ${Object.keys(state.items).length} practised${at(DATA_FILES.state)}`);
-  console.log(`  settings.json  your settings${at(DATA_FILES.settings)}`);
-  console.log(`  backups/       ${backups.length ? `${plural(backups.length, "backup")}, the newest from ${formatTime(backups[0].created)}` : "none yet"}`);
-  console.log(`\nTo keep it somewhere else (a synced folder, say), set DRACOSH_HOME. dracosh restore brings a backup back.`);
+  const missing = (file) => (existsSync(file) ? "" : t("cli.data.notCreated"));
+  console.log(`${t("cli.data.where", { home: HOME })}\n`);
+  console.log(t("cli.data.library", { decks: t("count.decks", { count: library.decks.length }), cards: t("count.cards", { count: library.cards.length }), missing: missing(DATA_FILES.library) }));
+  console.log(t("cli.data.state", { count: Object.keys(state.items).length, missing: missing(DATA_FILES.state) }));
+  console.log(t("cli.data.settings", { missing: missing(DATA_FILES.settings) }));
+  const what = backups.length ? t("cli.data.backupsSome", { backups: t("cli.backups", { count: backups.length }), time: formatTime(backups[0].created) }) : t("cli.data.none");
+  console.log(t("cli.data.backups", { what }));
+  console.log(`\n${t("cli.data.footer")}`);
 }
 
 async function restore(choice, { yes }) {
   const backups = await listBackups();
-  if (!backups.length) return console.log(`No backups yet. Dracosh makes one every day you use it, in ${BACKUP_DIR}`);
+  if (!backups.length) return console.log(t("cli.restore.none", { dir: BACKUP_DIR }));
   if (!choice) {
-    console.log(`Backups in ${BACKUP_DIR}, newest first:\n`);
+    console.log(`${t("cli.restore.listTitle", { dir: BACKUP_DIR })}\n`);
+    const reason = (b) => t(`cli.restore.reasons.${b.reason}`);
+    const width = Math.max(...backups.map((b) => reason(b).length));
     backups.forEach((b, i) => {
-      const what = `${plural(b.decks, "deck")} · ${plural(b.cards, "card")} · ${b.practiced} practised`;
-      console.log(`  ${String(i + 1).padStart(2)}  ${formatTime(b.created)}  ${b.reason.padEnd(14)}  ${what}`);
+      const what = t("cli.restore.row", { decks: t("count.decks", { count: b.decks }), cards: t("count.cards", { count: b.cards }), practised: b.practiced });
+      console.log(`  ${String(i + 1).padStart(2)}  ${formatTime(b.created)}  ${reason(b).padEnd(width)}  ${what}`);
     });
-    return console.log(`\nBring one back with: dracosh restore <number>`);
+    return console.log(`\n${t("cli.restore.howTo")}`);
   }
 
   const backup = backups[Number(choice) - 1];
-  if (!backup) throw new Error(`There's no backup number ${choice}. Run "dracosh restore" to see the list.`);
+  if (!backup) throw new Error(t("cli.restore.noSuch", { number: choice }));
   const running = runningPid();
   if (running) throw new Error(ALREADY_RUNNING(running));
   const has = ["cards", "progress", "settings"].filter((_, i) => [backup.cards || backup.decks, backup.hasState, backup.hasSettings][i]);
-  console.log(`This brings back your ${has.join(", ").replace(/, (?=[^,]*$)/, " and ")} from the backup of ${formatTime(backup.created)}.`);
-  console.log("What you have now is backed up first, so you can undo this.");
+  const what = new Intl.ListFormat(language(), { type: "conjunction" }).format(has.map((part) => t(`cli.restore.what.${part}`)));
+  console.log(t("cli.restore.bringsBack", { what, time: formatTime(backup.created) }));
+  console.log(t("cli.restore.undo"));
   if (!yes) {
-    if (!process.stdin.isTTY) throw new Error("Add --yes to restore without a prompt.");
-    if (!(await confirm("Restore it?"))) return console.log("Nothing changed.");
+    if (!process.stdin.isTTY) throw new Error(t("cli.restore.needsYes"));
+    if (!(await confirm(t("cli.restore.ask")))) return console.log(t("cli.restore.nothingChanged"));
   }
   await restoreBackup(backup.file);
-  console.log("Restored.");
+  console.log(t("cli.restore.done"));
 }
 
 async function main() {
+  setLanguage(normalizeSettings(await loadSettingsRaw().catch(() => ({}))).language);
   const { values, positionals } = parseArgs({
     allowPositionals: true,
     options: {
@@ -137,10 +124,10 @@ async function main() {
       help: { type: "boolean", short: "h", default: false }
     }
   });
-  if (values.help) return console.log(HELP);
+  if (values.help) return console.log(help());
   const [command, ...args] = positionals;
   if (command === "restore") return restore(args[0], values);
-  if (command) throw new Error(`Unknown command "${command}". See dracosh --help.`);
+  if (command) throw new Error(t("cli.unknownCommand", { command }));
   if (values.data) return printData();
 
   const saved = normalizeSettings(await loadSettingsRaw());
@@ -152,14 +139,14 @@ async function main() {
   };
 
   if (values.preview) {
-    if (!process.stdin.isTTY) throw new Error("dracosh needs an interactive terminal.");
+    if (!process.stdin.isTTY) throw new Error(t("cli.needsTerminal"));
     const alerts = createAlerts({ sound: settings.sound, volume: settings.volume });
     return render(React.createElement(Preview, { alerts })).waitUntilExit();
   }
 
   const state = await loadState();
   if (values.stats) return printStats(state, settings);
-  if (!process.stdin.isTTY) throw new Error("dracosh needs an interactive terminal.");
+  if (!process.stdin.isTTY) throw new Error(t("cli.needsTerminal"));
   // a fresh install starts with the "Getting started" deck
   const library = await loadLibrary();
   const seeded = seedLibrary(library);
@@ -189,7 +176,7 @@ async function main() {
 
 main().catch((err) => {
   if (["EACCES", "EPERM", "ENOTDIR", "EEXIST"].includes(err.code)) {
-    console.error(`Dracosh can't use ${HOME} for its data (${err.code}). Point DRACOSH_HOME at a folder you can write to.`);
+    console.error(t("cli.cantUseFolder", { home: HOME, code: err.code }));
     process.exit(1);
   }
   console.error(err.message);

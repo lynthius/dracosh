@@ -260,3 +260,103 @@ test("a day of misses only isn't a day done, even when the miss comes back after
   assert.ok(!miss.cheers.some((c) => c.kind === "goal"));
   assert.equal(session.stats().today.goalMet, false);
 });
+
+test("revealing writes nothing; 'knew it' then counts exactly like a typed right answer", async () => {
+  const typed = setup();
+  const self = setup();
+  const q1 = await typed.session.next();
+  await typed.session.answer(q1, q1.expected[0]);
+  const q2 = await self.session.next();
+  const shown = self.session.reveal(q2);
+  assert.deepEqual(shown.expected, q2.expected);
+  assert.equal(self.saves.length, 0, "a reveal alone saves nothing");
+  const result = await self.session.selfGrade(q2, true);
+  assert.equal(result.self, true);
+  assert.equal(result.result, "exact");
+  const entry = (state) => Object.values(state.items)[0];
+  assert.equal(entry(self.state).box, entry(typed.state).box, "same box");
+  assert.deepEqual(self.session.totals, typed.session.totals, "same totals and combo");
+  assert.deepEqual(self.session.stats().today, typed.session.stats().today, "same daily goal progress");
+});
+
+test("'didn't know' is a miss: back to the first box, listed in /missed, nothing to /correct", async () => {
+  const { session, state } = setup();
+  const q = await session.next();
+  const result = await session.selfGrade(q, false);
+  assert.equal(result.result, "wrong");
+  assert.equal(Object.values(state.items)[0].box, 1);
+  assert.equal(session.totals.combo, 0);
+  assert.equal(session.missed(0).items?.length ?? session.missed(0).length, 1);
+  assert.equal(session.canOverrule(), false);
+});
+
+test("a hint before revealing keeps the card in its box, as with a typed answer", async () => {
+  const { session, state } = setup();
+  const q = await session.next();
+  await session.selfGrade(q, true, { hinted: true });
+  assert.equal(Object.values(state.items)[0].box, 1);
+});
+
+test("a cloze card is asked one gap at a time, with the others filled in and the back as a hint", async () => {
+  const cloze = [{ noteId: "z", word: "I {{look forward}} to {{it}}", translations: ["Cieszę się na to"], cloze: ["look forward", "it"], directions: ["c1", "c2"] }];
+  const state = { items: {}, newToday: { date: "", count: 0 } };
+  const session = createSession({ loadWords: async () => ({ words: cloze, deck: { name: "Phrases", directions: "both" } }), state, getSettings: () => DEFAULTS, save: async () => {}, now: () => NOON });
+  const asked = new Map();
+  for (let i = 0; i < 2; i++) {
+    const q = await session.next();
+    asked.set(q.direction, q);
+    await session.answer(q, q.expected[0]);
+  }
+  assert.deepEqual([...asked.keys()].sort(), ["c1", "c2"], "the deck's directions don't apply to a cloze card");
+  assert.equal(asked.get("c1").prompt, "I ____ to it");
+  assert.deepEqual(asked.get("c1").expected, ["look forward"]);
+  assert.equal(asked.get("c2").prompt, "I look forward to ____");
+  assert.equal(asked.get("c1").context, "Cieszę się na to");
+  assert.equal(asked.get("c1").label, "Phrases");
+  assert.deepEqual(Object.keys(state.items).sort(), ["z:c1", "z:c2"]);
+});
+
+test("a deck asked one way never asks the other, and switching it later without losing progress", async () => {
+  const state = { items: {}, newToday: { date: "", count: 0 } };
+  const deck = { name: "Terms", directions: "backward" };
+  const session = createSession({ loadWords: async () => ({ words, deck }), state, getSettings: () => DEFAULTS, save: async () => {}, now: () => NOON });
+  for (let i = 0; i < 2; i++) {
+    const q = await session.next();
+    assert.equal(q.direction, "pl-en");
+    await session.answer(q, q.expected[0]);
+  }
+  const kept = structuredClone(state.items);
+  deck.directions = "both";
+  assert.equal((await session.next()).direction, "en-pl", "the other way starts as new cards");
+  assert.deepEqual(state.items, kept, "turning a direction on touches the progress of none");
+  deck.directions = "forward";
+  assert.equal((await session.next()).direction, "en-pl");
+  assert.deepEqual(state.items, kept, "nor does turning one off");
+});
+
+test("a direction the deck no longer asks doesn't stop a card from being mastered, and comes back when asked again", async () => {
+  const { session, state } = setup();
+  state.items = { "1:en-pl": { box: 5, due: NOON + 1e9 }, "1:pl-en": { box: 1, due: NOON - 1 } };
+  assert.equal(session.stats().mastered, 0);
+  await session.setDirections([1], "forward");
+  assert.equal(session.stats().mastered, 1);
+  assert.equal(state.items["1:pl-en"].box, 1, "its progress stays");
+  await session.setDirections([1], "both");
+  assert.equal(session.stats().mastered, 0);
+});
+
+test("a gap removed from a cloze card takes its progress with it", async () => {
+  const { session, state } = setup();
+  state.items = { "z:c1": { box: 2 }, "z:c2": { box: 3 } };
+  await session.forgetKeys(["z:c2"]);
+  assert.deepEqual(Object.keys(state.items), ["z:c1"]);
+});
+
+test("a missed cloze gap is listed with its hint", async () => {
+  const cloze = [{ noteId: "z", word: "I {{look forward}} to it", translations: ["Cieszę się"], cloze: ["look forward"], directions: ["c1"] }];
+  const state = { items: {}, newToday: { date: "", count: 0 } };
+  const session = createSession({ loadWords: async () => ({ words: cloze, deck: { name: "Phrases" } }), state, getSettings: () => DEFAULTS, save: async () => {}, now: () => NOON });
+  await session.selfGrade(await session.next(), false);
+  const [miss] = session.missed(0).items ?? session.missed(0);
+  assert.equal(miss.prompt, "I ____ to it (Cieszę się)");
+});

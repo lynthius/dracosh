@@ -1,3 +1,4 @@
+import { t } from "./i18n.js";
 import { copyFile, readdir, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { dayKey } from "./dates.js";
@@ -87,7 +88,7 @@ export async function listBackups() {
 // A file the backup doesn't have is left as it is: a restore never deletes your cards or progress.
 export async function restoreBackup(file, now = Date.now()) {
   const backup = await readJson(file, null);
-  if (backup?.format !== BACKUP_FORMAT || !backup.files) throw new Error(`${file} isn't a Dracosh backup.`);
+  if (backup?.format !== BACKUP_FORMAT || !backup.files) throw new Error(t("errors.notABackup", { file }));
   await backupNow("before-restore", now);
   for (const [name, target] of Object.entries(DATA_FILES)) {
     if (backup.files[name]) await writeJson(target, backup.files[name]);

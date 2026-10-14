@@ -1,3 +1,4 @@
+import { dateLocale, t } from "./i18n.js";
 import { addDays, dayKey, daysBetween, weekStart } from "./dates.js";
 import { BOX_INTERVALS_DAYS } from "./scheduler.js";
 
@@ -11,19 +12,27 @@ const FALL_MIN = 30; // a lost streak this long counts as a fall for "Dragon's d
 // The die's faces: winning "Dragon's die" rolls one, and the dragon keeps that element for good.
 export const ELEMENTS = ["earth", "wind", "water", "ice", "fire", "cosmos"];
 export const rollElement = (random = Math.random) => ELEMENTS[Math.floor(random() * ELEMENTS.length)];
-export const ELEMENT_ADJECTIVE = { earth: "Earth", wind: "Wind", water: "Water", ice: "Ice", fire: "Fire", cosmos: "Cosmic" };
+export const elementName = (element) => t(`dragon.elements.${element}.name`);
+export const elementAdjective = (element) => t(`dragon.elements.${element}.adjective`);
 
 // what the dragon is called: its form, with its element in front once it has one ("Ice Drake")
-export const dragonName = (stage, element = null) => (element ? `${ELEMENT_ADJECTIVE[element]} ${STAGES[stage].name}` : STAGES[stage].name);
+export const dragonName = (stage, element = null) => (element ? t("dragon.named", { element: elementAdjective(element), stage: STAGES[stage].name }) : STAGES[stage].name);
 
 // The companion evolves permanently with your best streak, so a broken streak never takes a form away.
+const stage = (id, from) => ({
+  id,
+  from,
+  get name() {
+    return t(`dragon.stages.${id}`);
+  }
+});
 export const STAGES = [
-  { name: "Hatchling", from: 0 },
-  { name: "Imp", from: 7 },
-  { name: "Whelp", from: 30 },
-  { name: "Drake", from: 90 },
-  { name: "Dragon", from: 180 },
-  { name: "Legend", from: 365 }
+  stage("hatchling", 0),
+  stage("imp", 7),
+  stage("whelp", 30),
+  stage("drake", 90),
+  stage("dragon", 180),
+  stage("legend", 365)
 ];
 
 export function stageFor(bestStreak) {
@@ -159,66 +168,75 @@ function perfectWeek(progress, today) {
 
 // `s` = stats from collectStats() plus `event`: what this very answer was (correct, hour, days since last activity)
 export const BADGES = [
-  { id: "hello", name: "Hello!", desc: "your first correct answer", test: (s) => s.totalCorrect >= 1 },
-  { id: "first-steps", name: "First steps", desc: "10 correct answers", test: (s) => s.totalCorrect >= 10 },
-  { id: "century", name: "Century", desc: "100 correct answers", test: (s) => s.totalCorrect >= 100 },
-  { id: "thousand", name: "Thousand", desc: "1,000 correct answers", test: (s) => s.totalCorrect >= 1000 },
-  { id: "five-thousand", name: "Five thousand", desc: "5,000 correct answers", test: (s) => s.totalCorrect >= 5000 },
-  { id: "ten-thousand", name: "Ten thousand", desc: "10,000 correct answers", test: (s) => s.totalCorrect >= 10000 },
-  { id: "dragons-hoard", name: "Dragon's hoard", desc: "20,000 correct answers", test: (s) => s.totalCorrect >= 20000 },
+  { id: "hello", test: (s) => s.totalCorrect >= 1 },
+  { id: "first-steps", test: (s) => s.totalCorrect >= 10 },
+  { id: "century", test: (s) => s.totalCorrect >= 100 },
+  { id: "thousand", test: (s) => s.totalCorrect >= 1000 },
+  { id: "five-thousand", test: (s) => s.totalCorrect >= 5000 },
+  { id: "ten-thousand", test: (s) => s.totalCorrect >= 10000 },
+  { id: "dragons-hoard", test: (s) => s.totalCorrect >= 20000 },
 
-  { id: "on-a-roll", name: "On a roll", desc: "3-day streak", test: (s) => s.bestStreak >= 3 },
-  { id: "week", name: "Full week", desc: "7-day streak", test: (s) => s.bestStreak >= 7 },
-  { id: "fortnight", name: "Fortnight", desc: "14-day streak", test: (s) => s.bestStreak >= 14 },
-  { id: "month", name: "Iron habit", desc: "30-day streak", test: (s) => s.bestStreak >= 30 },
-  { id: "hundred-days", name: "Centurion", desc: "100-day streak", test: (s) => s.bestStreak >= 100 },
-  { id: "dragonheart", name: "Dragonheart", desc: "180-day streak", test: (s) => s.bestStreak >= 180 },
+  { id: "on-a-roll", test: (s) => s.bestStreak >= 3 },
+  { id: "week", test: (s) => s.bestStreak >= 7 },
+  { id: "fortnight", test: (s) => s.bestStreak >= 14 },
+  { id: "month", test: (s) => s.bestStreak >= 30 },
+  { id: "hundred-days", test: (s) => s.bestStreak >= 100 },
+  { id: "dragonheart", test: (s) => s.bestStreak >= 180 },
 
-  { id: "keeper", name: "Word keeper", desc: "10 cards mastered", test: (s) => s.mastered >= 10 },
-  { id: "collector", name: "Collector", desc: "25 cards mastered", test: (s) => s.mastered >= 25 },
-  { id: "dictionary", name: "Walking dictionary", desc: "50 cards mastered", test: (s) => s.mastered >= 50 },
-  { id: "lexicon", name: "Living lexicon", desc: "150 cards mastered", test: (s) => s.mastered >= 150 },
-  { id: "explorer", name: "Explorer", desc: "250 cards practised", test: (s) => s.practiced >= 250 },
+  { id: "keeper", test: (s) => s.mastered >= 10 },
+  { id: "collector", test: (s) => s.mastered >= 25 },
+  { id: "dictionary", test: (s) => s.mastered >= 50 },
+  { id: "lexicon", test: (s) => s.mastered >= 150 },
+  { id: "explorer", test: (s) => s.practiced >= 250 },
 
-  { id: "flawless", name: "Flawless", desc: "10+ answers in a day, no miss", test: (s) => s.today.asked >= 10 && s.today.correct === s.today.asked },
-  { id: "overachiever", name: "Overachiever", desc: "double your daily goal in a day", test: (s) => s.today.correct >= s.goal * 2 },
-  { id: "marathon", name: "Marathon", desc: "30 correct answers in a day", test: (s) => s.today.correct >= 30 },
+  { id: "flawless", test: (s) => s.today.asked >= 10 && s.today.correct === s.today.asked },
+  { id: "overachiever", test: (s) => s.today.correct >= s.goal * 2 },
+  { id: "marathon", test: (s) => s.today.correct >= 30 },
 
-  { id: "hot-streak", name: "Hot streak", desc: "10 correct in a row", test: (s) => s.bestCombo >= 10 },
-  { id: "unstoppable", name: "Unstoppable", desc: "25 correct in a row", test: (s) => s.bestCombo >= 25 },
-  { id: "combo-master", name: "Combo master", desc: "50 correct in a row", test: (s) => s.bestCombo >= 50 },
+  { id: "hot-streak", test: (s) => s.bestCombo >= 10 },
+  { id: "unstoppable", test: (s) => s.bestCombo >= 25 },
+  { id: "combo-master", test: (s) => s.bestCombo >= 50 },
 
-  { id: "early-bird", name: "Early bird", desc: "a correct answer before 8:00", test: (s) => s.event.correct && s.event.hour < 8 },
-  { id: "night-owl", name: "Night owl", desc: "a correct answer after 23:00", test: (s) => s.event.correct && s.event.hour >= 23 },
+  { id: "early-bird", test: (s) => s.event.correct && s.event.hour < 8 },
+  { id: "night-owl", test: (s) => s.event.correct && s.event.hour >= 23 },
 
-  { id: "comeback", name: "Welcome back", desc: "back after 5+ days away", test: (s) => s.event.correct && s.event.daysAway >= COMEBACK_AFTER_DAYS },
-  { id: "redemption", name: "Redemption", desc: "5 words missed today, got right later the same day", test: (s) => s.recoveredToday >= 5 },
-  { id: "frozen", name: "Frozen in time", desc: "a freeze saved your streak", test: (s) => s.freezesUsed >= 1 },
-  { id: "weekend", name: "Weekend warrior", desc: "goal on both Saturday and Sunday", test: (s) => s.weekendDone },
-  { id: "perfect-week", name: "Perfect week", desc: "goal every day, Monday to Sunday", test: (s) => s.perfectWeek },
-  { id: "regular", name: "Regular", desc: "goal on 20 days in one month", test: (s) => s.goalDaysThisMonth >= 20 },
-  { id: "machine", name: "The machine", desc: "goal on 25 days in one month", test: (s) => s.goalDaysThisMonth >= 25 },
-  { id: "hundred-club", name: "Hundred club", desc: "goal reached on 100 days in total", test: (s) => s.totalGoalDays >= 100 },
+  { id: "comeback", test: (s) => s.event.correct && s.event.daysAway >= COMEBACK_AFTER_DAYS },
+  { id: "redemption", test: (s) => s.recoveredToday >= 5 },
+  { id: "frozen", test: (s) => s.freezesUsed >= 1 },
+  { id: "weekend", test: (s) => s.weekendDone },
+  { id: "perfect-week", test: (s) => s.perfectWeek },
+  { id: "regular", test: (s) => s.goalDaysThisMonth >= 20 },
+  { id: "machine", test: (s) => s.goalDaysThisMonth >= 25 },
+  { id: "hundred-club", test: (s) => s.totalGoalDays >= 100 },
 
 
   // keep this one last: it checks the others, including any unlocked earlier in the same answer
-  { id: "one-ring", name: "The One...", desc: "every other badge", test: (s) => BADGES.every((b) => b.id === "one-ring" || b.hidden || s.badges[b.id]) },
+  { id: "one-ring", test: (s) => BADGES.every((b) => b.id === "one-ring" || b.hidden || s.badges[b.id]) },
 
   // hidden: shown as "???" until won, and not needed for The One
   {
     id: "dragons-die",
-    name: "Dragon's die",
-    desc: "lost a 30+ day streak, then built a longer one",
     hidden: true,
     test: (s) => s.fallenStreak >= FALL_MIN && s.streakCount > s.fallenStreak
   }
 ];
 
+// a badge's name and description come from the locale (badges.<id>), read each time they're shown
+for (const badge of BADGES) {
+  Object.defineProperties(badge, {
+    name: { get: () => t(`badges.${badge.id}.name`), enumerable: true },
+    desc: { get: () => t(`badges.${badge.id}.desc`), enumerable: true }
+  });
+}
+
 // progress is kept per card and direction ("id:en-pl"); badges count cards
 const cardOf = (key) => key.slice(0, key.lastIndexOf(":"));
 
-// a card is mastered once every direction it's been asked in has reached the last box
-function masteredCards(items) {
+// a card is mastered once every direction it's asked in has reached the last box; a direction its deck
+// no longer asks (`dormant`, kept for when it's turned back on) doesn't hold it back
+function masteredCards(items, dormant = []) {
+  const resting = new Set(dormant);
+  items = items.filter(([key]) => !resting.has(key));
   const byCard = new Map();
   for (const [key, entry] of items) byCard.set(cardOf(key), (byCard.get(cardOf(key)) ?? true) && entry.box === MAX_BOX);
   return [...byCard.values()].filter(Boolean).length;
@@ -249,7 +267,7 @@ function collectStats(state, now, goal) {
     bestStreak: progress.streak.best,
     bestCombo: progress.bestCombo ?? 0,
     freezesUsed: progress.streak.freezesUsed ?? 0,
-    mastered: masteredCards(items),
+    mastered: masteredCards(items, state.dormant),
     practiced: new Set(items.map(([key]) => cardOf(key))).size,
     goalDaysThisMonth: goalDaysInMonth(progress, todayKey),
     totalGoalDays: Object.values(progress.days).filter((d) => d.goalMet).length,
@@ -270,17 +288,17 @@ function award(state, progress, day, today, { correct, goal, rules, now, daysAwa
     if (caughtUp) day.caughtUp = true;
     const stageBefore = stageFor(progress.streak.best);
     const streak = completeDay(progress, today, rules);
-    cheers.push({ kind: "goal", text: `${caughtUp ? "All done for today" : "Daily goal reached"} · ${streak}-day streak` });
+    cheers.push({ kind: "goal", text: t(caughtUp ? "cheers.allDone" : "cheers.goal", { count: streak }) });
     const stageAfter = stageFor(progress.streak.best);
     if (stageAfter.index > stageBefore.index)
-      cheers.push({ kind: "evolve", text: `Your companion evolved into a${/^[aeiou]/i.test(stageAfter.name) ? "n" : ""} ${stageAfter.name}!` });
+      cheers.push({ kind: "evolve", text: t("cheers.evolved", { name: stageAfter.name }) });
   }
 
   const stats = { ...collectStats(state, now, goal), event: { correct, hour: new Date(now).getHours(), daysAway } };
   for (const badge of BADGES) {
     if (!progress.badges[badge.id] && badge.test(stats)) {
       progress.badges[badge.id] = today;
-      cheers.push({ kind: "badge", id: badge.id, name: badge.name, desc: badge.desc, text: `Badge unlocked: ${badge.name} · ${badge.desc}` });
+      cheers.push({ kind: "badge", id: badge.id, name: badge.name, desc: badge.desc, text: t("cheers.badge", { name: badge.name, desc: badge.desc }) });
       // rolled and saved right away, before any animation, so quitting mid-roll can't reroll it
       if (badge.id === "dragons-die" && !progress.element && !progress.elementDropped) {
         progress.element = rollElement(random);
@@ -367,7 +385,6 @@ export function snapshot(state, { goal, rules = NO_RULES, now = Date.now() }) {
   };
 }
 
-const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
 // One calendar month, weeks Monday..Sunday: each day has the number of correct answers and whether the goal was met.
 // `offset` moves back (negative) or forward from the current month.
@@ -391,7 +408,7 @@ export function calendarMonth(state, { offset = 0, rules = NO_RULES, now = Date.
   for (let i = 0; i < padded.length; i += 7) weeks.push([...padded.slice(i, i + 7), ...Array(Math.max(0, i + 7 - padded.length)).fill(null)]);
 
   return {
-    label: `${MONTH_NAMES[first.getMonth()]} ${first.getFullYear()}`,
+    label: new Intl.DateTimeFormat(dateLocale(), { month: "long", year: "numeric" }).format(first),
     weeks,
     goalDays: cells.filter((c) => c.goalMet).length,
     correct: cells.reduce((sum, c) => sum + c.correct, 0),

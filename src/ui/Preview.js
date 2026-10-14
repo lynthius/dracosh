@@ -1,8 +1,12 @@
+import { t } from "../i18n.js";
 import { Fragment, useEffect, useMemo, useState } from "react";
-import { Box, Text, useApp, useInput } from "ink";
-import { DEMO_WORDS } from "../demo.js";
+import { Box, useApp, useInput } from "ink";
+import { DEMO_CLOZE, DEMO_SENTENCES, DEMO_WORDS } from "../demo.js";
+import { addCard, createDeck, emptyLibrary } from "../library.js";
+import { libraryActions } from "../manage.js";
+import { AddCard } from "./AddCard.js";
 import { addDays, dayKey } from "../dates.js";
-import { BADGES, ELEMENTS, ensureProgress, rollElement, STAGES } from "../progress.js";
+import { BADGES, elementName, ELEMENTS, ensureProgress, rollElement, STAGES } from "../progress.js";
 import { createSession } from "../session.js";
 import { DEFAULTS } from "../settings.js";
 import { DieRoll } from "./DieRoll.js";
@@ -13,7 +17,7 @@ import { Confetti } from "./Confetti.js";
 import { Evolution } from "./Evolution.js";
 import { Hatch } from "./Hatch.js";
 import { Header, Snore, useBlink, useMove } from "./Header.js";
-import { html, KeyHints, theme, usePanelWidth } from "./kit.js";
+import { html, KeyHints, Text, theme, usePanelWidth } from "./kit.js";
 import { Mascot } from "./Mascot.js";
 import { Stats } from "./Stats.js";
 import { Summary } from "./Summary.js";
@@ -23,8 +27,8 @@ import { TheOne } from "./TheOne.js";
 
 const FACES = ["idle", "smile", "happy", "sad", "blink", "sleep"];
 
-// a throwaway session; `progress` fills in a believable last few weeks
-function fakeSession({ settings = {}, progress = false } = {}) {
+// a throwaway session; `progress` fills in a believable last few weeks; `words` and `deck` replace the demo words
+function fakeSession({ settings = {}, progress = false, words = DEMO_WORDS, deck } = {}) {
   const state = { items: {}, newToday: { date: "", count: 0 }, hatched: true };
   const all = { ...DEFAULTS, dailyGoal: 5, everyMs: 6000, tips: "always", ...settings };
   if (progress) {
@@ -38,7 +42,15 @@ function fakeSession({ settings = {}, progress = false } = {}) {
     p.streak = { ...p.streak, count: 12, best: 34, lastGoalDay: addDays(today, -2) };
     BADGES.slice(0, 13).forEach((b, i) => (p.badges[b.id] = addDays(today, -i * 3)));
   }
-  return createSession({ loadWords: async () => ({ words: DEMO_WORDS }), state, getSettings: () => all, save: async () => {} });
+  return createSession({ loadWords: async () => ({ words, deck }), state, getSettings: () => all, save: async () => {} });
+}
+
+// /add on a library that lives in memory: a deck with a few cards, and room for a new one
+function fakeLibrary() {
+  let library = emptyLibrary();
+  const deck = createDeck(library, { name: "Demo", languages: null, directions: "both" });
+  for (const word of DEMO_WORDS.slice(0, 3)) addCard(library, deck.id, { front: word.word, back: word.translations });
+  return libraryActions({ load: async () => library, save: async (next) => (library = next), backup: async () => {} });
 }
 
 // a 250 ms tick for the lab's own little animations (the snoring z's)
@@ -78,14 +90,14 @@ function MascotLab({ onBack }) {
   return html`
     <${Fragment}>
       <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.accent} paddingX=${2} paddingY=${1} width=${panel} alignItems="center">
-        <${Text} bold color=${theme.accent}>Mascot lab<//>
+        <${Text} bold color=${theme.accent}>${t("preview.mascotLab")}<//>
         <${Box} marginY=${1} flexDirection="column" alignItems="center">
           <${Mascot} stage=${stage} face=${shownFace} hot=${hot} flicker=${hot && tick % 2 === 0} scale=${2} dx=${move.dx ?? 0} dy=${move.dy ?? 0} element=${ELEMENTS[element] ?? null} />
         <//>
         ${FACES[face] === "sleep" && html`<${Box}><${Mascot} stage=${stage} face="sleep" /><${Snore} tick=${clock} /><//>`}
-        <${Text}>${STAGES[stage].name}<${Text} dimColor> · face ${FACES[face]} · ${ELEMENTS[element] ?? "no element"}${hot ? " · combo glow" : ""}<//><//>
+        <${Text}>${STAGES[stage].name}<${Text} dimColor>${t("preview.mascotLine", { face: t(`preview.faces.${FACES[face]}`), element: ELEMENTS[element] ? elementName(ELEMENTS[element]) : t("preview.noElement"), glow: hot ? t("preview.glow") : "" })}<//><//>
       <//>
-      <${Box} paddingX=${1}><${KeyHints} text="←/→ form · ↑/↓ face · e element · j jump · s shake · h glow · esc back" /><//>
+      <${Box} paddingX=${1}><${KeyHints} text=${t("preview.mascotKeys")} /><//>
     <//>
   `;
 }
@@ -104,10 +116,10 @@ function BadgeUnlockLab({ onBack, play }) {
   return html`
     <${Fragment}>
       <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.good} paddingX=${2} width=${panel}>
-        <${Text} color=${theme.good} bold>✓ dragon<//>
+        <${Text} color=${theme.good} bold>✓ ${t("preview.scenes.unlock.label")}<//>
         ${badges.map((badge, i) => html`<${BadgeUnlock} key=${`${run}-${badge.id}`} id=${badge.id} name=${badge.name} desc=${badge.desc} delay=${i * 700} sound=${badgeSound(i)} play=${play} />`)}
       <//>
-      <${Box} paddingX=${1}><${KeyHints} text="enter replay · esc back" /><//>
+      <${Box} paddingX=${1}><${KeyHints} text=${t("preview.replay")} /><//>
     <//>
   `;
 }
@@ -139,7 +151,7 @@ function QuizLookLab({ onBack }) {
         <${Text} bold>la mariposa<//>
         <${Box} marginTop=${1}><${Text} color=${theme.accent}>❯ <//><${Text} inverse> <//><//>
       <//>
-      <${Box} paddingX=${1}><${Text} dimColor>${STAGES[stage].name} · ${ELEMENTS[element] ?? "no element"} · ←/→ form · e element · c combo · esc back<//><//>
+      <${Box} paddingX=${1}><${KeyHints} text=${t("preview.lookKeys", { stage: STAGES[stage].name, element: ELEMENTS[element] ? elementName(ELEMENTS[element]) : t("preview.noElement") })} /><//>
     <//>
   `;
 }
@@ -154,27 +166,28 @@ function ConfettiLab({ onBack }) {
   return html`
     <${Fragment}>
       <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.good} paddingX=${2} width=${panel}>
-        <${Text} color=${theme.good} bold>▪ Daily goal reached · 12-day streak<//>
+        <${Text} color=${theme.good} bold>▪ ${t("cheers.goal", { count: 12 })}<//>
       <//>
       <${Box} height=${5}><${Confetti} key=${run} width=${panel} onDone=${() => {}} /><//>
-      <${Box} paddingX=${1}><${KeyHints} text="enter replay · esc back" /><//>
+      <${Box} paddingX=${1}><${KeyHints} text=${t("preview.replay")} /><//>
     <//>
   `;
 }
 
+// labels and hints come from the locale, read each time the menu is drawn
+const scene = (id, text = () => [t(`preview.scenes.${id}.label`), t(`preview.scenes.${id}.hint`)]) => ({
+  id,
+  get label() {
+    return text()[0];
+  },
+  get hint() {
+    return text()[1];
+  }
+});
 const SCENES = [
-  { id: "hatch", label: "Hatching", hint: "the first-launch intro" },
-  ...STAGES.slice(1).map((stage, i) => ({ id: `evolve-${i + 1}`, label: `Evolution → ${stage.name}`, hint: `reached at a ${stage.from}-day best streak` })),
-  { id: "mascot", label: "Mascot lab", hint: "forms, faces, elements, moves, glow" },
-  { id: "quiz", label: "Quiz", hint: "a live round on demo words, goal at 5" },
-  { id: "quiz-look", label: "Quiz screen", hint: "the header with any form and element" },
-  { id: "unlock", label: "Badge unlocked", hint: "three badges won at once" },
-  { id: "the-one", label: "The One...", hint: "the ring rises from the lava" },
-  { id: "die", label: "Dragon's die", hint: "the secret badge: a roll for an element" },
-  { id: "confetti", label: "Confetti", hint: "the daily-goal burst" },
-  { id: "stats", label: "Stats", hint: "calendar tiles, weeks of fake history" },
-  { id: "badges", label: "Badges", hint: "all unlocked, three of them new" },
-  { id: "summary", label: "Session summary", hint: "what you see when quitting" }
+  scene("hatch"),
+  ...STAGES.slice(1).map((stage, i) => scene(`evolve-${i + 1}`, () => [t("preview.evolution", { name: stage.name }), t("preview.evolutionHint", { count: stage.from })])),
+  ...["mascot", "quiz", "add", "reveal", "cloze", "quiz-look", "unlock", "the-one", "die", "confetti", "stats", "badges", "summary"].map((id) => scene(id))
 ];
 
 function Menu({ selected, onMove, onPick, onQuit }) {
@@ -188,7 +201,7 @@ function Menu({ selected, onMove, onPick, onQuit }) {
   return html`
     <${Fragment}>
       <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.accent} paddingX=${2} width=${panel}>
-        <${Box}><${Text} bold color=${theme.accent}>Preview<//><${Text} dimColor>  made-up data · nothing is saved<//><//>
+        <${Box}><${Text} bold color=${theme.accent}>${t("preview.title")}<//><${Text} dimColor>${t("preview.subtitle")}<//><//>
         <${Box} flexDirection="column" marginTop=${1}>
           ${SCENES.map(
             (scene, i) => html`
@@ -202,7 +215,7 @@ function Menu({ selected, onMove, onPick, onQuit }) {
           )}
         <//>
       <//>
-      <${Box} paddingX=${1}><${KeyHints} text="↑/↓ choose · enter play · esc quit" /><//>
+      <${Box} paddingX=${1}><${KeyHints} text=${t("preview.keys")} /><//>
     <//>
   `;
 }
@@ -249,6 +262,12 @@ export function Preview({ alerts }) {
   }
   if (scene === "summary")
     return wrap(html`<${Summary} stats=${history.stats()} totals=${{ asked: 23, correct: 20 }} bestCombo=${9} onDone=${back} />`);
+  if (scene === "add") return wrap(html`<${AddCard} key=${run} current="Demo" actions=${fakeLibrary()} onDone=${back} />`);
+  if (scene === "reveal" || scene === "cloze") {
+    const words = scene === "reveal" ? DEMO_SENTENCES : DEMO_CLOZE;
+    const session = fakeSession({ words, deck: { name: "Demo", directions: "forward" } });
+    return html`<${App} key=${run} session=${session} deck="Demo" initialSettings=${{ ...DEFAULTS, dailyGoal: 5, everyMs: 6000, tips: "off", rhythm: "session" }} alerts=${alerts} persistSettings=${async () => {}} onExit=${back} />`;
+  }
   if (scene === "quiz") {
     return html`<${App} key=${run} session=${quizSession} deck="Demo" initialSettings=${{ ...DEFAULTS, dailyGoal: 5, everyMs: 6000, tips: "always" }} alerts=${alerts} persistSettings=${async () => {}} onExit=${back} />`;
   }

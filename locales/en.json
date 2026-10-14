@@ -1,0 +1,1029 @@
+{
+  "commands": {
+    "hint": "Reveal another letter (the card won't climb a box)",
+    "add": "Add cards to a deck, or start a new one",
+    "decks": "Switch to another deck, or start a new one",
+    "settings": "Language, rhythm, interval, quiet hours, sound, goal, tips",
+    "stats": "Streak, month calendar and badges summary",
+    "badges": "All badges and what unlocks them",
+    "companion": "Your dragon, its element and the forms ahead",
+    "missed": "Cards you got wrong today",
+    "pause": "A break (30m, 2h) or days off (3d, 24.12 2.01)",
+    "help": "Keys, how cards come back, the streak",
+    "quit": "Exit Dracosh",
+    "correct": "Count my last answer as correct"
+  },
+  "time": {
+    "seconds": "{n} s",
+    "minutes": "{n} min",
+    "hours": "{n} h"
+  },
+  "help": {
+    "title": "Help",
+    "keysTitle": "Keys",
+    "howTitle": "How it works",
+    "outsideTitle": "Outside the quiz",
+    "keys": {
+      "enter": "Enter",
+      "enterWhat": "check your answer; with nothing typed, show it and grade yourself; between cards, ask the next one",
+      "slashWhat": "open the commands",
+      "esc": "Esc",
+      "escWhat": "clear what you typed; twice on an empty line: quit",
+      "qWhat": "quit, between cards",
+      "anyKey": "any key",
+      "anyKeyWhat": "wakes a sleeping dragon",
+      "grade": "1 / 2",
+      "gradeWhat": "after the answer is shown: didn't know (or Esc) / knew it"
+    },
+    "how": {
+      "boxes": "A right answer moves a card to a later box: it comes back in {first}, then {last} days. A miss sends it back to the first box.",
+      "typos": "One wrong letter in a longer word still counts, and you see the right spelling.",
+      "streak": "Reach your daily goal to keep your streak going; a day where you did every card there was counts too. Your dragon grows with your best streak.",
+      "freezes": "A freeze covers a day you missed. You start with {max} and get one back each week, {max} at most.",
+      "cards": "In /add a line is a card: kot = cat; kitty // example. Braces make a gap to fill in: I {{look forward}} to it."
+    },
+    "outside": {
+      "deckExample": "Polish",
+      "deck": "quiz another deck",
+      "data": "where your cards and backups are",
+      "restore": "bring back a backup",
+      "help": "every option"
+    }
+  },
+  "keyHints": {
+    "back": "esc back",
+    "settings": "↑/↓ select · ←/→ change · esc back",
+    "choiceBack": "{choose} · esc back",
+    "choiceCancel": "{choose} · esc cancel",
+    "resetting": "resetting…",
+    "asking": "enter submit (empty: reveal) · / commands · esc quit",
+    "empty": "/add · / commands · q quit",
+    "waiting": "enter ask now · / commands · q quit",
+    "correctFirst": "/correct if you were right · {rest}",
+    "stats": "←/→ month · esc back",
+    "badges": "↑/↓ browse · ←/→ column · esc back",
+    "keyNames": "any key|enter|esc|tab",
+    "addFirst": "enter add · esc cancel",
+    "addMore": "enter add · ↑ fix the last one · esc done",
+    "addFixing": "enter save · esc leave it",
+    "addBack": "enter add · esc back",
+    "pasteReview": "↑/↓ move · e fix · x drop · enter add {count} · esc cancel",
+    "pasteFix": "enter done · esc back",
+    "grading": "1 or ← didn't know · 2 or → knew it",
+    "sessionWaiting": "enter next card · / commands · q quit",
+    "decks": "→ direction · {choose}",
+    "directionPick": "{choose} · esc or typing on keeps 1",
+    "addName": "enter create · esc cancel",
+    "confirm": "{yes} yes · {no} no"
+  },
+  "settings": {
+    "title": "Settings",
+    "rows": {
+      "language": {
+        "label": "Language",
+        "hint": "the language Dracosh speaks; the tour switches too"
+      },
+      "rhythm": {
+        "label": "Rhythm",
+        "hint": "a card every few minutes (the interval), or a session: one card after another, Enter for the next"
+      },
+      "everyMs": {
+        "label": "Interval",
+        "hint": "time between questions"
+      },
+      "sound": {
+        "label": "Sound",
+        "hint": "answer and new-card sounds"
+      },
+      "volume": {
+        "label": "Volume",
+        "hint": "plays a preview when changed"
+      },
+      "dailyGoal": {
+        "label": "Daily goal",
+        "hint": "keeps your streak alive"
+      },
+      "tips": {
+        "label": "Tips",
+        "hint": "a short tip about Dracosh while you wait"
+      },
+      "skipWeekends": {
+        "label": "Weekends",
+        "hint": "rest days never break your streak (doing them still counts)"
+      },
+      "quiet": {
+        "label": "Quiet hours",
+        "hint": "no questions, sounds or banners during these hours"
+      },
+      "reset": {
+        "label": "Reset",
+        "hint": "start over: your progress only, or everything (a backup is made first)"
+      }
+    },
+    "on": "on",
+    "off": "off",
+    "goal": "{n} correct",
+    "tipModes": {
+      "always": "always",
+      "sometimes": "sometimes (1 in 3 waits)",
+      "off": "off"
+    },
+    "weekendsRest": "rest days",
+    "weekendsCount": "count like other days",
+    "pressEnter": "press enter",
+    "rhythms": {
+      "minutes": "every few minutes",
+      "session": "session",
+      "session-10": "session · 10 cards",
+      "session-20": "session · 20 cards"
+    }
+  },
+  "count": {
+    "cards": {
+      "one": "{count} card",
+      "other": "{count} cards"
+    },
+    "decks": {
+      "one": "{count} deck",
+      "other": "{count} decks"
+    },
+    "badges": {
+      "one": "{count} badge",
+      "other": "{count} badges"
+    }
+  },
+  "choice": {
+    "keys": "↑/↓ choose · enter confirm",
+    "yesKey": "y",
+    "noKey": "n"
+  },
+  "reset": {
+    "pickTitle": "Reset: what should start over?",
+    "bestStreak": "a {count}-day best streak",
+    "yourDragon": "your {name}",
+    "progress": {
+      "label": "Progress",
+      "note": "badges, streak and the dragon start over; your cards stay",
+      "question": "Reset your progress?",
+      "stays": "Your decks, cards and how well you know them stay.",
+      "yes": "Yes, reset progress"
+    },
+    "everything": {
+      "label": "Everything",
+      "note": "a fresh start with the tour; settings stay",
+      "question": "Reset everything?",
+      "stays": "Dracosh starts over like a fresh install, with the tour. Settings stay.",
+      "yes": "Yes, reset everything"
+    },
+    "clears": "This clears {what}.",
+    "backupFirst": "A backup is made first, so dracosh restore can undo it.",
+    "no": "No, keep it all"
+  },
+  "decks": {
+    "title": "Decks",
+    "tour": "the tour",
+    "now": "current",
+    "newDeck": "+ New deck",
+    "directionSaved": "\"{deck}\" asks the new way from the next card.",
+    "front": "front",
+    "back": "back",
+    "progressKept": "Progress stays for every direction, even one you turn off."
+  },
+  "add": {
+    "fields": {
+      "deck": {
+        "label": "Name your deck",
+        "hint": "Polish, Biology, Capitals… whatever you want to learn"
+      },
+      "line": {
+        "label": "New card",
+        "hint": "front = back, like kot = cat; kitty // Mój kot śpi.  ·  or paste a whole list"
+      },
+      "back": {
+        "label": "Back",
+        "hint": "the answer  ·  ; separates several right answers  ·  // adds an example"
+      }
+    },
+    "titlePick": "Add cards to…",
+    "titleNew": "New deck",
+    "titleFirst": "Start your first deck",
+    "titleCard": "Add a card · {deck}",
+    "deckReady": "Your deck \"{deck}\" is ready. Now its first card:",
+    "duplicateCard": "\"{front}\" is already in {deck}.",
+    "duplicateDeck": "There is already a deck called \"{deck}\".",
+    "nameTooLong": "Keep the name to {max} characters or fewer.",
+    "needName": "Your deck needs a name.",
+    "needFront": "A card needs a front.",
+    "needBack": "A card needs an answer.",
+    "preview": {
+      "pair": "{front} = {back}  ·  you'll pick how it's asked after this card",
+      "asks": "{prompt} → ?  you type {answer}",
+      "both": "{forward}  ·  {backward}",
+      "cloze": {
+        "one": "{prompt}  ·  1 gap",
+        "other": "{prompt}  ·  {count} gaps"
+      },
+      "noBack": "Enter, then the back  ·  or write front = back"
+    },
+    "fixed": "\"{front}\" fixed.",
+    "fixing": "Fixing \"{front}\": Enter saves, Esc leaves it as it was.",
+    "more": {
+      "one": "+ 1 earlier card",
+      "other": "+ {count} earlier cards"
+    },
+    "directionQuestion": "How should \"{deck}\" ask?",
+    "youType": "you type {answer}",
+    "bothWays": "Both ways",
+    "bothWaysNote": "every card asked both ways",
+    "directionLater": "You can change it later: /decks, then →.",
+    "directionSet": "Got it: {how}  ·  next card:",
+    "paste": {
+      "title": "Pasted cards · {deck}",
+      "summary": "Ready to add: {count} of {lines}",
+      "attention": "  ·  to fix: {count}",
+      "issues": {
+        "noBack": "no back",
+        "noFront": "no front",
+        "inDeck": "already in the deck",
+        "twice": "twice in the list",
+        "slash": "starts with /"
+      },
+      "position": "{at}/{count}",
+      "confirm": "Esc again drops the pasted cards. Any other key keeps them.",
+      "nothing": "Nothing to add yet: fix (e) or drop (x) the flagged lines.",
+      "added": {
+        "one": "Added 1 card to {deck}.",
+        "other": "Added {count} cards to {deck}."
+      },
+      "skipped": {
+        "one": "1 line skipped: it still needed fixing.",
+        "other": "{count} lines skipped: they still needed fixing."
+      }
+    }
+  },
+  "quiz": {
+    "youWrote": "you wrote ",
+    "closeEnough": "  (close enough)",
+    "hintUsed": "hint used · the card stays in its box",
+    "countedCorrect": "counted as correct",
+    "acceptedFromNow": " · \"{answer}\" is accepted from now on",
+    "tip": "tip · {cat}",
+    "loading": " loading…",
+    "pausedUntil": "paused until {time}",
+    "quietHours": " (quiet hours)",
+    "nothingWaiting": "nothing waiting · next card {when}",
+    "nextCardIn": "  next card in {time}",
+    "when": {
+      "at": "at {time}",
+      "tomorrow": "tomorrow",
+      "on": "on {day}"
+    },
+    "empty": {
+      "tourTitle": "You've finished the tour.",
+      "tourNext": "Now make it yours: type /add to start your own deck.",
+      "noCardsTitle": "\"{deck}\" has no cards yet.",
+      "noCardsNext": "Type /add to add the first one.",
+      "deckDoneTitle": "Nothing more in \"{deck}\" today.",
+      "deckDoneNext": "Its cards come back {when}. Other decks still have cards: /decks",
+      "dayDoneTitle": "All done for today.",
+      "dayDoneNext": "Your cards come back {when}. Want more today? /add some new ones.",
+      "laterTitle": "Nothing to practise right now.",
+      "laterNext": "The next card is due {when}. It will come by itself."
+    },
+    "previewNoAdd": "The preview can't add cards; run dracosh for that.",
+    "previewNoDecks": "The preview has one demo deck; run dracosh for yours.",
+    "pausedUntilNotice": "Paused until {time}",
+    "pausedUntilList": "Paused until {time}. ",
+    "saveFailed": "Couldn't save progress: {error}",
+    "unknownCommand": "Unknown command {name}",
+    "progressReset": "Your progress starts over. Your cards are all still here.",
+    "cardNotSaved": "The card you were writing wasn't saved.",
+    "deckReadyElsewhere": "\"{deck}\" is ready; you're still practising \"{current}\". Switch with /decks.",
+    "hintLabel": "hint",
+    "didYouKnow": "Did you know it?",
+    "gradeKeys": "1 no · 2 yes",
+    "sessionDone": {
+      "one": "Session done: 1 card. From now on, one every few minutes.",
+      "other": "Session done: {count} cards. From now on, one every few minutes."
+    },
+    "sessionProgress": "{done} of {count} in this session",
+    "escAgain": "Esc again to quit.",
+    "correctConfirm": "Count \"{answer}\" as right, and accept it from now on?"
+  },
+  "dragon": {
+    "stages": {
+      "hatchling": "Hatchling",
+      "imp": "Imp",
+      "whelp": "Whelp",
+      "drake": "Drake",
+      "dragon": "Dragon",
+      "legend": "Legend"
+    },
+    "elements": {
+      "earth": {
+        "name": "Earth",
+        "adjective": "Earth"
+      },
+      "wind": {
+        "name": "Wind",
+        "adjective": "Wind"
+      },
+      "water": {
+        "name": "Water",
+        "adjective": "Water"
+      },
+      "ice": {
+        "name": "Ice",
+        "adjective": "Ice"
+      },
+      "fire": {
+        "name": "Fire",
+        "adjective": "Fire"
+      },
+      "cosmos": {
+        "name": "Cosmos",
+        "adjective": "Cosmic"
+      }
+    },
+    "named": "{element} {stage}"
+  },
+  "badges": {
+    "hello": {
+      "name": "Hello!",
+      "desc": "your first correct answer"
+    },
+    "first-steps": {
+      "name": "First steps",
+      "desc": "10 correct answers"
+    },
+    "century": {
+      "name": "Century",
+      "desc": "100 correct answers"
+    },
+    "thousand": {
+      "name": "Thousand",
+      "desc": "1,000 correct answers"
+    },
+    "five-thousand": {
+      "name": "Five thousand",
+      "desc": "5,000 correct answers"
+    },
+    "ten-thousand": {
+      "name": "Ten thousand",
+      "desc": "10,000 correct answers"
+    },
+    "dragons-hoard": {
+      "name": "Dragon's hoard",
+      "desc": "20,000 correct answers"
+    },
+    "on-a-roll": {
+      "name": "On a roll",
+      "desc": "3-day streak"
+    },
+    "week": {
+      "name": "Full week",
+      "desc": "7-day streak"
+    },
+    "fortnight": {
+      "name": "Fortnight",
+      "desc": "14-day streak"
+    },
+    "month": {
+      "name": "Iron habit",
+      "desc": "30-day streak"
+    },
+    "hundred-days": {
+      "name": "Centurion",
+      "desc": "100-day streak"
+    },
+    "dragonheart": {
+      "name": "Dragonheart",
+      "desc": "180-day streak"
+    },
+    "keeper": {
+      "name": "Word keeper",
+      "desc": "10 cards mastered"
+    },
+    "collector": {
+      "name": "Collector",
+      "desc": "25 cards mastered"
+    },
+    "dictionary": {
+      "name": "Walking dictionary",
+      "desc": "50 cards mastered"
+    },
+    "lexicon": {
+      "name": "Living lexicon",
+      "desc": "150 cards mastered"
+    },
+    "explorer": {
+      "name": "Explorer",
+      "desc": "250 cards practised"
+    },
+    "flawless": {
+      "name": "Flawless",
+      "desc": "10+ answers in a day, no miss"
+    },
+    "overachiever": {
+      "name": "Overachiever",
+      "desc": "double your daily goal in a day"
+    },
+    "marathon": {
+      "name": "Marathon",
+      "desc": "30 correct answers in a day"
+    },
+    "hot-streak": {
+      "name": "Hot streak",
+      "desc": "10 correct in a row"
+    },
+    "unstoppable": {
+      "name": "Unstoppable",
+      "desc": "25 correct in a row"
+    },
+    "combo-master": {
+      "name": "Combo master",
+      "desc": "50 correct in a row"
+    },
+    "early-bird": {
+      "name": "Early bird",
+      "desc": "a correct answer before 8:00"
+    },
+    "night-owl": {
+      "name": "Night owl",
+      "desc": "a correct answer after 23:00"
+    },
+    "comeback": {
+      "name": "Welcome back",
+      "desc": "back after 5+ days away"
+    },
+    "redemption": {
+      "name": "Redemption",
+      "desc": "5 cards missed today, got right later the same day"
+    },
+    "frozen": {
+      "name": "Frozen in time",
+      "desc": "a freeze saved your streak"
+    },
+    "weekend": {
+      "name": "Weekend warrior",
+      "desc": "goal on both Saturday and Sunday"
+    },
+    "perfect-week": {
+      "name": "Perfect week",
+      "desc": "goal every day, Monday to Sunday"
+    },
+    "regular": {
+      "name": "Regular",
+      "desc": "goal on 20 days in one month"
+    },
+    "machine": {
+      "name": "The machine",
+      "desc": "goal on 25 days in one month"
+    },
+    "hundred-club": {
+      "name": "Hundred club",
+      "desc": "goal reached on 100 days in total"
+    },
+    "one-ring": {
+      "name": "The One...",
+      "desc": "every other badge"
+    },
+    "dragons-die": {
+      "name": "Dragon's die",
+      "desc": "lost a 30+ day streak, then built a longer one"
+    }
+  },
+  "cheers": {
+    "goal": "Daily goal reached · {count}-day streak",
+    "allDone": "All done for today · {count}-day streak",
+    "evolved": "Your companion evolved: {name}!",
+    "badge": "Badge unlocked: {name} · {desc}",
+    "combo": "Combo ×{count}"
+  },
+  "header": {
+    "deckLine": "  {deck}{cards} · every {interval}",
+    "cards": " · {cards}",
+    "streak": " {count}-day streak",
+    "noStreak": "no streak yet",
+    "atRisk": " · at risk today",
+    "daysOffUntil": " · days off until {day}",
+    "freezes": {
+      "one": " · {count} freeze",
+      "other": " · {count} freezes"
+    },
+    "today": "today  ",
+    "goalReached": "  goal reached",
+    "combo": "  combo ×{count}"
+  },
+  "stats": {
+    "title": "Stats",
+    "legend": {
+      "goal": "goal ({goal})",
+      "halfway": "halfway",
+      "some": "some",
+      "none": "none",
+      "rest": "rest",
+      "today": "today"
+    },
+    "nextForm": " · next form at a {count}-day streak",
+    "fullyEvolved": " · fully evolved",
+    "streak": "{count}-day streak",
+    "noStreak": "no streak yet",
+    "bestAndFreezes": {
+      "one": " · best {best} · {count} freeze in stock",
+      "other": " · best {best} · {count} freezes in stock"
+    },
+    "today": "today      {correct}/{goal} correct{accuracy}",
+    "accuracy": " · {percent}% accuracy",
+    "cards": "cards      {mastered} mastered · {practised} practised · {total} correct in total",
+    "companion": "companion  {name} ({stage}/6){next}",
+    "restDays": "rest days  {weekends}{daysOff}",
+    "weekends": "weekends",
+    "noWeekends": "no weekends",
+    "daysOff": " · days off {ranges}",
+    "month": "Goal reached on {goalDays} of {days} days · {correct} correct answers",
+    "weekdays": "M T W T F S S",
+    "badgesLine": "{unlocked}/{total} badges · /badges lists them all"
+  },
+  "badgesScreen": {
+    "title": "Badges",
+    "new": "  {count} new",
+    "unlocked": "unlocked {day}",
+    "locked": "still locked",
+    "secretName": "???",
+    "secretDesc": "a secret, keep playing"
+  },
+  "companion": {
+    "title": "Companion",
+    "yourDragon": "Your dragon: ",
+    "element": "Element: {element}",
+    "rolled": " · rolled a {face} on Dragon's die, {day}",
+    "noElement": "No element yet. Some say a die decides it…",
+    "evolves": "Evolves with your best streak ({count} days) and never loses a form.",
+    "fromStart": "from the start",
+    "needsDays": "needs {count} days",
+    "days": "{count} days",
+    "now": "  ← now",
+    "unknown": "???"
+  },
+  "missed": {
+    "title": "Missed",
+    "today": "today",
+    "yesterday": "yesterday · {date}",
+    "nothingToday": "Nothing missed so far today.",
+    "nothingThatDay": "Nothing missed that day.",
+    "times": " · missed {count}×",
+    "youWrote": "you wrote: {answer}",
+    "noAnswer": "answer shown, didn't know",
+    "recovered": " · got it right since",
+    "more": "…and {count} more",
+    "keys": "←/→ day · esc back"
+  },
+  "summary": {
+    "title": "Session over",
+    "result": "{correct}/{asked} correct · {percent}%",
+    "bestCombo": " · best combo ×{count}",
+    "today": "today  ",
+    "goalReached": "  goal reached",
+    "streak": "{count}-day streak",
+    "noStreak": "no streak yet",
+    "atRisk": " · still at risk today",
+    "waiting": "Your {name} will be waiting.",
+    "keys": "see you later · any key to leave"
+  },
+  "hatch": {
+    "stirs": "something stirs inside…",
+    "hatching": "it's hatching…",
+    "hatched": "Your dragon has hatched!",
+    "line": "Answer cards to keep it happy. It grows with your streak.",
+    "keysSkip": "any key to skip",
+    "keysStart": "any key to start"
+  },
+  "evolution": {
+    "evolved": "Your companion evolved: {name}!",
+    "happening": "Something is happening…",
+    "keysHurry": "any key to hurry it up",
+    "keysContinue": "enter continue",
+    "title": "Evolution"
+  },
+  "theOne": {
+    "stirring": "the lava is stirring…",
+    "rises": "something rises…",
+    "title": "The One...",
+    "line": "Every badge is yours. The hoard is complete.",
+    "keysSkip": "any key to skip",
+    "keysContinue": "any key to continue"
+  },
+  "die": {
+    "title": "Dragon's die",
+    "rolling": "the die is rolling…",
+    "result": "{face} · {element}",
+    "awakened": "Your dragon awakened the power of {element}. It's yours for good.",
+    "keysSkip": "any key to skip",
+    "keysContinue": "any key to continue"
+  },
+  "badgeUnlock": {
+    "label": "Badge unlocked: "
+  },
+  "input": {
+    "unknownCommand": "unknown command",
+    "notACommand": "no command like that · enter sends it as your answer"
+  },
+  "pause": {
+    "help": "Try /pause 30m, /pause 2h, /pause 3d or /pause 24.12 2.01",
+    "past": "Those days are already over. Days off can only start today or later.",
+    "dayOff": "Day off on {day}: your streak is safe.",
+    "daysOff": "Days off {range}: your streak is safe.",
+    "off": "Pause off: questions are back, and no days off are planned",
+    "list": "Days off: {ranges}",
+    "none": "No days off planned. {help}"
+  },
+  "errors": {
+    "nothingToCorrect": "There is no wrong answer to correct.",
+    "deckGone": "The deck \"{deck}\" is gone.",
+    "slashAnswer": "An answer can't start with /: in the quiz that opens the commands.",
+    "slashFront": "You type this as an answer in the quiz, so it can't start with /.",
+    "noDeck": "There's no deck called \"{deck}\". Your decks: {decks}.",
+    "noDecksYet": "none yet",
+    "emptyLibrary": "Your library has no decks yet.",
+    "deckNeedsName": "A deck needs a name.",
+    "deckNameTooLong": "Keep the deck name to {max} characters or fewer.",
+    "deckExists": "There is already a deck called \"{deck}\".",
+    "cardNeedsFront": "A card needs a front.",
+    "cardNeedsBack": "A card needs at least one answer on the back.",
+    "frontExists": "\"{front}\" is already in this deck.",
+    "newerLibrary": "This library was saved by a newer version of Dracosh (format {format}). Please update Dracosh.",
+    "newerState": "{file} was saved by a newer version of Dracosh. Please update Dracosh.",
+    "damaged": "{file} looks damaged ({why}). Run \"dracosh restore\" to bring back a backup.",
+    "cantRead": "Can't read {file}: {error}",
+    "notABackup": "{file} isn't a Dracosh backup.",
+    "alreadyRunning": "Dracosh is already running in another window (process {pid}). Close it first: two windows would overwrite each other's progress.",
+    "why": {
+      "notLibrary": "not a library",
+      "deck": "a deck without a name or an id",
+      "card": "a card without a front or an answer",
+      "cardDeck": "a card in a deck that doesn't exist",
+      "cardIds": "two cards with the same id",
+      "noProgress": "no progress in it",
+      "progressEntry": "a card without its box or date",
+      "streak": "the streak and badges are unreadable"
+    },
+    "slashSwitch": "\"{text}\" would have to be typed, and in the quiz / opens the commands. Change that card first."
+  },
+  "cli": {
+    "help": "Dracosh: a vocabulary and quiz trainer for your terminal\n\nUsage: dracosh [options]\n       dracosh restore [number]   list your backups, or bring one back\n\n  --deck <name>    quiz this deck, this run only (otherwise the one picked in /decks)\n  --every <time>   pause between questions: 30s, 10m, 1h (default: {interval})\n  --no-sound       turn sound effects off\n  --volume <0-1>   sound volume (default: {volume})\n  --stats          print progress and exit\n  --data           show where your cards, progress and backups are kept\n  --preview        browse every animation and screen on made-up data (nothing is saved)\n  -y, --yes        restore without asking first\n  -h, --help       show this help\n\nFlags override your saved settings for this run only. Change the saved ones with /settings.\n\nWhile running: Enter submits (with nothing typed it shows the answer, then 1 or 2), \"/\" opens the command menu (/add, /decks, /settings, /stats, /help…),\nEsc quits (clears the line first if you typed something). Ctrl+C also works.\nBetween cards: Enter asks the next one right away, q quits. /help explains the rest.",
+    "badEvery": "Invalid --every \"{value}\". Use e.g. 30s, 10m, 1h.",
+    "badVolume": "Invalid --volume \"{value}\". Use a number from 0 to 1.",
+    "unknownCommand": "Unknown command \"{command}\". See dracosh --help.",
+    "needsTerminal": "dracosh needs an interactive terminal.",
+    "cantUseFolder": "Dracosh can't use {home} for its data ({code}). Point DRACOSH_HOME at a folder you can write to.",
+    "stats": {
+      "streak": {
+        "one": "Streak {days} days (best {best}) · {count} freeze in stock",
+        "other": "Streak {days} days (best {best}) · {count} freezes in stock"
+      },
+      "today": "Today {correct}/{goal} correct{goal_reached}",
+      "goalReached": " ✓ goal reached",
+      "badges": "Badges {unlocked}/{total} · {mastered} cards mastered · companion: {companion}",
+      "practised": "{count} cards practised, {correct}/{total} correct ({percent}%)",
+      "box": "box {box} ({days}d): {count}"
+    },
+    "data": {
+      "where": "Dracosh keeps everything in {home}",
+      "library": "  library.json   your decks and cards: {decks} · {cards}{missing}",
+      "state": "  state.json     progress, streak and badges: {count} practised{missing}",
+      "settings": "  settings.json  your settings{missing}",
+      "backups": "  backups/       {what}",
+      "backupsSome": "{backups}, the newest from {time}",
+      "none": "none yet",
+      "notCreated": " (not created yet)",
+      "footer": "To keep it somewhere else (a synced folder, say), set DRACOSH_HOME. dracosh restore brings a backup back."
+    },
+    "restore": {
+      "none": "No backups yet. Dracosh makes one every day you use it, in {dir}",
+      "listTitle": "Backups in {dir}, newest first:",
+      "row": "{decks} · {cards} · {practised} practised",
+      "howTo": "Bring one back with: dracosh restore <number>",
+      "noSuch": "There's no backup number {number}. Run \"dracosh restore\" to see the list.",
+      "what": {
+        "cards": "cards",
+        "progress": "progress",
+        "settings": "settings"
+      },
+      "bringsBack": "This brings back your {what} from the backup of {time}.",
+      "undo": "What you have now is backed up first, so you can undo this.",
+      "needsYes": "Add --yes to restore without a prompt.",
+      "ask": "Restore it?",
+      "askSuffix": "[y/N]",
+      "yes": "y|yes",
+      "nothingChanged": "Nothing changed.",
+      "done": "Restored.",
+      "reasons": {
+        "daily": "daily",
+        "before-reset": "before reset",
+        "before-delete": "before delete",
+        "before-restore": "before restore"
+      }
+    },
+    "backups": {
+      "one": "{count} backup",
+      "other": "{count} backups"
+    }
+  },
+  "tips": {
+    "keys-enter": {
+      "cat": "Keys",
+      "text": "Don't want to wait? Press Enter between cards and the next one comes right away."
+    },
+    "keys-esc": {
+      "cat": "Keys",
+      "text": "Esc clears what you typed. Press it twice on an empty line to quit."
+    },
+    "keys-wake": {
+      "cat": "Keys",
+      "text": "Leave Dracosh alone for a few minutes and your dragon dozes off. Any key wakes it."
+    },
+    "keys-filter": {
+      "cat": "Keys",
+      "text": "Type / and a letter or two to narrow the commands: /pa finds /pause."
+    },
+    "cards-decks": {
+      "cat": "Cards",
+      "text": "/decks switches to another deck or starts a new one. Dracosh opens that deck next time too."
+    },
+    "cards-add": {
+      "cat": "Cards",
+      "text": "/add puts new cards into the deck you're practising. Esc when you're done."
+    },
+    "cards-typo": {
+      "cat": "Cards",
+      "text": "One wrong letter in a longer word still counts as right. Dracosh shows you the correct spelling."
+    },
+    "cards-boxes": {
+      "cat": "Cards",
+      "text": "A right answer sends a card to a later box: it comes back in 1, 3, 7, 14, then 30 days."
+    },
+    "cards-miss": {
+      "cat": "Cards",
+      "text": "A missed card goes back to the first box and comes back within minutes, until it sticks."
+    },
+    "cards-hint": {
+      "cat": "Cards",
+      "text": "Stuck on a card? /hint reveals one more letter. The card still counts, but stays in its box."
+    },
+    "cards-correct": {
+      "cat": "Cards",
+      "text": "Marked wrong although you were right? Type /correct before the next card and it counts."
+    },
+    "cards-dont-know": {
+      "cat": "Cards",
+      "text": "Don't know it? Press Enter with nothing typed, look, then 1 if you didn't know it or 2 if you did."
+    },
+    "cards-missed": {
+      "cat": "Cards",
+      "text": "/missed lists the cards you got wrong today. Use ← and → to look at earlier days."
+    },
+    "cards-new": {
+      "cat": "Cards",
+      "text": "Dracosh mixes new cards in with your reviews, up to 20 new ones a day."
+    },
+    "streak-goal": {
+      "cat": "Streak",
+      "text": "Reach your daily goal to keep your streak going. You can change the goal in /settings."
+    },
+    "streak-freeze": {
+      "cat": "Streak",
+      "text": "A freeze saves your streak on a day you missed. You start with two and get one back each week."
+    },
+    "streak-weekends": {
+      "cat": "Streak",
+      "text": "Weekends are rest days by default: skipping them never breaks your streak. Change it in /settings."
+    },
+    "streak-days-off": {
+      "cat": "Streak",
+      "text": "Going away? /pause 7d keeps your streak safe for a week. /pause 24.12 2.01 takes dates."
+    },
+    "streak-stats": {
+      "cat": "Streak",
+      "text": "/stats shows your streak and a calendar of the month. Use ← and → to see other months."
+    },
+    "dragon-forms": {
+      "cat": "Your dragon",
+      "text": "Your dragon grows with your best streak: a new form at 7, 30, 90, 180 and 365 days."
+    },
+    "dragon-companion": {
+      "cat": "Your dragon",
+      "text": "/companion shows your dragon and the forms still ahead of it."
+    },
+    "dragon-combo": {
+      "cat": "Your dragon",
+      "text": "Three right answers in a row and your dragon starts to glow. Keep the combo going!"
+    },
+    "dragon-badges": {
+      "cat": "Your dragon",
+      "text": "/badges shows every badge and what unlocks it. One of them stays secret until you win it."
+    },
+    "pause-break": {
+      "cat": "Breaks",
+      "text": "Need some focus? /pause 30m or /pause 2h holds the cards. /pause off brings them back."
+    },
+    "pause-quiet": {
+      "cat": "Breaks",
+      "text": "Set quiet hours in /settings and Dracosh stays silent while you sleep."
+    },
+    "settings-every": {
+      "cat": "Settings",
+      "text": "Cards too often, or not often enough? Change the interval in /settings."
+    },
+    "settings-sound": {
+      "cat": "Settings",
+      "text": "Sound and volume are in /settings, along with quiet hours for the evening."
+    },
+    "data-backup": {
+      "cat": "Your data",
+      "text": "Dracosh backs up your cards and progress every day. dracosh restore brings a backup back."
+    },
+    "cards-line": {
+      "cat": "Cards",
+      "text": "In /add one line makes a card: kot = cat; kitty. The ; separates right answers, // adds an example."
+    },
+    "cards-paste": {
+      "cat": "Cards",
+      "text": "Paste a whole list into /add, one card per line. You check it before anything is saved."
+    },
+    "cards-cloze": {
+      "cat": "Cards",
+      "text": "In /add, braces make a gap: I {{look forward}} to it. In the quiz you type only the gap."
+    },
+    "cards-direction": {
+      "cat": "Cards",
+      "text": "A deck can be asked front to back, back to front or both ways. /decks, then → changes it."
+    },
+    "settings-rhythm": {
+      "cat": "Settings",
+      "text": "Want to study in one go? Set the rhythm to session in /settings: Enter brings the next card."
+    }
+  },
+  "preview": {
+    "title": "Preview",
+    "subtitle": "  made-up data · nothing is saved",
+    "keys": "↑/↓ choose · enter play · esc quit",
+    "replay": "enter replay · esc back",
+    "evolution": "Evolution → {name}",
+    "evolutionHint": "reached at a {count}-day best streak",
+    "scenes": {
+      "hatch": {
+        "label": "Hatching",
+        "hint": "the first-launch intro"
+      },
+      "mascot": {
+        "label": "Mascot lab",
+        "hint": "forms, faces, elements, moves, glow"
+      },
+      "quiz": {
+        "label": "Quiz",
+        "hint": "a live round on demo words, goal at 5"
+      },
+      "add": {
+        "label": "Adding cards",
+        "hint": "/add: one line per card, a pasted list, the direction"
+      },
+      "reveal": {
+        "label": "Show and grade",
+        "hint": "empty Enter, then 1 or 2"
+      },
+      "cloze": {
+        "label": "Cloze cards",
+        "hint": "one gap at a time"
+      },
+      "quiz-look": {
+        "label": "Quiz screen",
+        "hint": "the header with any form and element"
+      },
+      "unlock": {
+        "label": "Badge unlocked",
+        "hint": "three badges won at once"
+      },
+      "the-one": {
+        "label": "The One...",
+        "hint": "the ring rises from the lava"
+      },
+      "die": {
+        "label": "Dragon's die",
+        "hint": "the secret badge: a roll for an element"
+      },
+      "confetti": {
+        "label": "Confetti",
+        "hint": "the daily-goal burst"
+      },
+      "stats": {
+        "label": "Stats",
+        "hint": "calendar tiles, weeks of fake history"
+      },
+      "badges": {
+        "label": "Badges",
+        "hint": "all unlocked, three of them new"
+      },
+      "summary": {
+        "label": "Session summary",
+        "hint": "what you see when quitting"
+      }
+    },
+    "mascotLab": "Mascot lab",
+    "mascotLine": " · face {face} · {element}{glow}",
+    "noElement": "no element",
+    "glow": " · combo glow",
+    "mascotKeys": "←/→ form · ↑/↓ face · e element · j jump · s shake · h glow · esc back",
+    "lookKeys": "{stage} · {element} · ←/→ form · e element · c combo · esc back",
+    "faces": {
+      "idle": "idle",
+      "smile": "smile",
+      "happy": "happy",
+      "sad": "sad",
+      "blink": "blink",
+      "sleep": "sleep"
+    }
+  },
+  "alerts": {
+    "newCard": "A new card is waiting"
+  },
+  "tour": {
+    "deck": "Getting started",
+    "cards": [
+      {
+        "front": "Welcome! Every few minutes a card asks you something. Type the answer and press Enter. Try it and type `hello`",
+        "back": [
+          "hello"
+        ],
+        "example": "Press `Enter` now for the next card, or wait and it will come by itself."
+      },
+      {
+        "front": "Small typos still count. Type `dragon`, but miss a letter on purpose (like `dragn`)",
+        "back": [
+          "dragon"
+        ],
+        "example": "A typo counts as right, and Dracosh shows you the correct spelling."
+      },
+      {
+        "front": "A card can accept more than one answer. What is 2 + 2? (`4` and `four` both work)",
+        "back": [
+          "4",
+          "four"
+        ],
+        "example": "Every right answer moves a card to a later box, so you see it less and less often."
+      },
+      {
+        "front": "Stuck? Type `/hint` and press Enter, and the answer shows up letter by letter. Try it, then type `apple`",
+        "back": [
+          "apple"
+        ],
+        "example": "A hinted answer still counts, but the card stays in its box for now."
+      },
+      {
+        "front": "What is your dragon's secret name? Nobody knows, so get this one wrong on purpose and type `dog`",
+        "back": [
+          "Asogaras"
+        ],
+        "example": "In your own decks a missed card comes back sooner. If you were marked wrong by mistake, type `/correct` now."
+      },
+      {
+        "front": "Don't know an answer? Press Enter with nothing typed: the answer shows up, and you press 2 if you knew it or 1 if you didn't. Try it, or type `show`",
+        "back": [
+          "show"
+        ],
+        "example": "Grade yourself honestly: it decides when a card comes back. Whole sentences are easiest this way."
+      },
+      {
+        "front": "Type `/` at any time to see all commands. Try `/badges` after this card. For now, type `ok`",
+        "back": [
+          "ok",
+          "okay"
+        ],
+        "example": "`/stats` shows your calendar, `/companion` your dragon, `/settings` how often cards come."
+      },
+      {
+        "front": "Reach your daily goal every day to keep your streak. Your dragon grows with it. Type `every day`",
+        "back": [
+          "every day",
+          "everyday",
+          "daily"
+        ],
+        "example": "Miss a day and a freeze saves your streak, if you have one left."
+      },
+      {
+        "front": "Need a break? `/pause 1h` holds the cards for an hour, `/pause 3d` gives you days off. For now, type `later`",
+        "back": [
+          "later"
+        ],
+        "example": "Leave Dracosh alone for a few minutes and the dragon dozes off. Any key wakes it."
+      },
+      {
+        "front": "That's the tour! Type `done`",
+        "back": [
+          "done"
+        ],
+        "example": "Now make it yours and type `/add` to start your own deck. The tour makes room for it."
+      }
+    ]
+  }
+}

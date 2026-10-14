@@ -1,6 +1,7 @@
+import { t } from "../i18n.js";
 import React, { Fragment, useEffect, useState } from "react";
-import { Box, Text, useInput } from "ink";
-import { html, KeyHints, theme, usePanelWidth } from "./kit.js";
+import { Box, useInput } from "ink";
+import { html, KeyHints, Text, theme, usePanelWidth } from "./kit.js";
 import { Mascot } from "./Mascot.js";
 
 const FRAME_MS = 110;
@@ -72,7 +73,7 @@ export function Hatch({ onDone, play = () => {} }) {
   useInput(() => (revealed ? onDone() : setFrame(REVEAL_AT)));
 
   const flashing = frame >= FLASH_AT && !revealed;
-  const caption = revealed ? "" : frame >= CRACK_AT[0] ? "it's hatching…" : "something stirs inside…";
+  const caption = revealed ? "" : t(frame >= CRACK_AT[0] ? "hatch.hatching" : "hatch.stirs");
 
   return html`
     <${Fragment}>
@@ -87,14 +88,14 @@ export function Hatch({ onDone, play = () => {} }) {
           ${revealed
             ? html`
                 <${Fragment}>
-                  <${Text} bold color=${theme.good}>Your dragon has hatched!<//>
-                  <${Text} dimColor>Answer cards to keep it happy. It grows with your streak.<//>
+                  <${Text} bold color=${theme.good}>${t("hatch.hatched")}<//>
+                  <${Text} dimColor>${t("hatch.line")}<//>
                 <//>
               `
             : html`<${Text} dimColor>${caption}<//>`}
         <//>
       <//>
-      <${Box} paddingX=${1}><${KeyHints} text=${revealed ? "any key to start" : "any key to skip"} /><//>
+      <${Box} paddingX=${1}><${KeyHints} text=${t(revealed ? "hatch.keysStart" : "hatch.keysSkip")} /><//>
     <//>
   `;
 }

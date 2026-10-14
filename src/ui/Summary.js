@@ -1,6 +1,7 @@
+import { t } from "../i18n.js";
 import { Fragment } from "react";
-import { Box, Text, useInput } from "ink";
-import { Bar, html, KeyHints, theme, usePanelWidth } from "./kit.js";
+import { Box, useInput } from "ink";
+import { Bar, html, KeyHints, Text, theme, usePanelWidth } from "./kit.js";
 import { dragonName } from "../progress.js";
 import { Flame } from "./icons.js";
 import { Mascot, MASCOT_WIDTH } from "./Mascot.js";
@@ -20,22 +21,22 @@ export function Summary({ stats, totals, bestCombo, onDone }) {
           <${Mascot} face=${face} stage=${companion.index} element=${companion.element} />
         <//>
         <${Box} flexDirection="column" justifyContent="center">
-          <${Box}><${Text} bold color=${theme.accent}>Session over<//><//>
-          <${Box}><${Text}>${totals.correct}/${totals.asked} correct · ${accuracy}%${bestCombo >= 2 ? ` · best combo ×${bestCombo}` : ""}<//><//>
+          <${Box}><${Text} bold color=${theme.accent}>${t("summary.title")}<//><//>
+          <${Box}><${Text}>${t("summary.result", { correct: totals.correct, asked: totals.asked, percent: accuracy })}${bestCombo >= 2 ? t("summary.bestCombo", { count: bestCombo }) : ""}<//><//>
           <${Box}>
-            <${Text} dimColor>today  <//>
+            <${Text} dimColor>${t("summary.today")}<//>
             <${Bar} value=${today.correct} max=${goal} width=${12} color=${today.goalMet ? theme.good : theme.accent} />
             <${Text} dimColor>  ${Math.min(today.correct, goal)}/${goal}<//>
-            ${today.goalMet && html`<${Text} color=${theme.good}>  goal reached<//>`}
+            ${today.goalMet && html`<${Text} color=${theme.good}>${t("summary.goalReached")}<//>`}
           <//>
           <${Box}>
             ${streak.days > 0 && html`<${Box}><${Flame} /><${Text}> <//><//>`}
-            <${Text} dimColor>${streak.days > 0 ? `${streak.days}-day streak` : "no streak yet"}${streak.atRisk ? " · still at risk today" : ""}<//>
+            <${Text} dimColor>${streak.days > 0 ? t("summary.streak", { count: streak.days }) : t("summary.noStreak")}${streak.atRisk ? t("summary.atRisk") : ""}<//>
           <//>
-          <${Box}><${Text} dimColor>Your ${dragonName(companion.index, companion.element)} will be waiting.<//><//>
+          <${Box}><${Text} dimColor>${t("summary.waiting", { name: dragonName(companion.index, companion.element) })}<//><//>
         <//>
       <//>
-      <${Box} paddingX=${1}><${KeyHints} text="see you later · any key to leave" /><//>
+      <${Box} paddingX=${1}><${KeyHints} text=${t("summary.keys")} /><//>
     <//>
   `;
 }
