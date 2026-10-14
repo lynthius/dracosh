@@ -72,7 +72,7 @@
     "grading": "1 lub ← nie pamiętam · 2 lub → pamiętam",
     "sessionWaiting": "enter następna karta · / komendy · q wyjdź",
     "decks": "→ ustawienia · {choose}",
-    "directionPick": "{choose} · esc lub pisanie dalej zostawia 1",
+    "directionPick": "{choose} · → języki · esc lub pisanie dalej zostawia 1",
     "addName": "enter utwórz · esc anuluj",
     "confirm": "{yes} tak · {no} nie",
     "languagePick": "pisz, by szukać · ↑/↓ wybierz · enter potwierdź · esc wstecz"
@@ -201,7 +201,8 @@
     "back": "tył",
     "progressKept": "Postęp każdego kierunku zostaje, nawet gdy go wyłączysz.",
     "askRow": "Jak pyta",
-    "languagesRow": "Języki"
+    "languagesRow": "Języki",
+    "detectRow": "Rozpoznaj z kart"
   },
   "add": {
     "fields": {
@@ -253,7 +254,7 @@
     "youType": "wpisujesz {answer}",
     "bothWays": "W obie strony",
     "bothWaysNote": "każda karta pytana w obie strony",
-    "directionLater": "Zmienisz to później: /decks, potem →.",
+    "directionLater": "Oba zmienisz później: /decks, potem →.",
     "directionSet": "Jasne: {how}  ·  następna karta:",
     "paste": {
       "title": "Wklejone karty · {deck}",
@@ -282,7 +283,8 @@
         "other": "Pominięto {count} linii: wymagały poprawki."
       }
     },
-    "languagesLine": "Języki: {pair}  ·  → zmień"
+    "languagesLine": "Języki: {pair}",
+    "languagesNow": "Wygląda na: {pair}. Jeśli nie, popraw w /decks →."
   },
   "quiz": {
     "youWrote": "twoja odpowiedź: ",
@@ -1119,14 +1121,17 @@
     ]
   },
   "languages": {
-    "unknown": "nieznany",
-    "unknownNote": "odpowiedzi sprawdzane ogólnie",
-    "guessed": "zgadnięto po kartach",
+    "notYet": "jeszcze nie wiadomo",
+    "mixed": "inny lub mieszany",
+    "mixedNote": "bez reguł jednego języka",
+    "current": "obecny",
+    "guessed": "rozpoznane po kartach",
     "frontQuestion": "W jakim języku jest przód kart w talii „{deck}”?",
     "backQuestion": "W jakim języku jest tył kart w talii „{deck}”?",
     "example": "np. {sample}",
     "search": "szukaj:",
     "noMatch": "Żaden język nie pasuje do „{query}”.",
-    "saved": "„{deck}”: {pair}."
+    "saved": "Języki talii „{deck}”: {pair}.",
+    "detecting": "Talia „{deck}” znów rozpoznaje języki z kart."
   }
 }

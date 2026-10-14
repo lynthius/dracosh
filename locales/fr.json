@@ -72,7 +72,7 @@
     "grading": "1 ou ← je ne savais pas · 2 ou → je savais",
     "sessionWaiting": "entrée carte suivante · / commandes · q quitter",
     "decks": "→ réglages · {choose}",
-    "directionPick": "{choose} · échap ou continuer à taper garde 1",
+    "directionPick": "{choose} · → langues · échap ou continuer à taper garde 1",
     "addName": "entrée créer · échap annuler",
     "confirm": "{yes} oui · {no} non",
     "languagePick": "tape pour chercher · ↑/↓ choisir · entrée valider · échap retour"
@@ -197,7 +197,8 @@
     "back": "verso",
     "progressKept": "La progression de chaque sens est conservée, même si tu le désactives.",
     "askRow": "Sens des questions",
-    "languagesRow": "Langues"
+    "languagesRow": "Langues",
+    "detectRow": "Détecter d’après les cartes"
   },
   "add": {
     "fields": {
@@ -247,7 +248,7 @@
     "youType": "tu tapes {answer}",
     "bothWays": "Dans les deux sens",
     "bothWaysNote": "chaque carte dans les deux sens",
-    "directionLater": "Modifiable plus tard : /decks, puis →.",
+    "directionLater": "Les deux se modifient plus tard : /decks, puis →.",
     "directionSet": "C'est noté : {how}  ·  carte suivante :",
     "paste": {
       "title": "Cartes collées · {deck}",
@@ -274,7 +275,8 @@
         "other": "{count} lignes ignorées : elles restaient à corriger."
       }
     },
-    "languagesLine": "Langues : {pair}  ·  → modifier"
+    "languagesLine": "Langues : {pair}",
+    "languagesNow": "On dirait : {pair}. Sinon, corrige dans /decks →."
   },
   "quiz": {
     "youWrote": "ta réponse : ",
@@ -1096,14 +1098,17 @@
     ]
   },
   "languages": {
-    "unknown": "inconnue",
-    "unknownNote": "réponses vérifiées de façon générale",
-    "guessed": "d’après les cartes",
-    "frontQuestion": "En quelle langue sont les rectos de « {deck} » ?",
-    "backQuestion": "En quelle langue sont les versos de « {deck} » ?",
-    "example": "p. ex. {sample}",
+    "notYet": "à déterminer",
+    "mixed": "autre ou mélangée",
+    "mixedNote": "sans règles d’une langue",
+    "current": "actuelle",
+    "guessed": "d’après tes cartes",
+    "frontQuestion": "Quelle langue au recto des cartes de « {deck} » ?",
+    "backQuestion": "Quelle langue au verso des cartes de « {deck} » ?",
+    "example": "p. ex. {sample}",
     "search": "recherche :",
     "noMatch": "Aucune langue ne correspond à « {query} ».",
-    "saved": "« {deck} » : {pair}."
+    "saved": "Langues de « {deck} » : {pair}.",
+    "detecting": "« {deck} » détecte à nouveau ses langues d’après les cartes."
   }
 }

@@ -16,7 +16,7 @@ It's made for people who live in a terminal or spend most of the day at a comput
 - Add cards, start decks and switch between them right in the app (`/add`, `/decks`)
 - One line is a card: `kot = cat; kitty // Mój kot śpi.` (`;` separates right answers, `//` adds an example). Paste a whole list and check it before it's saved
 - Each deck is asked the way you pick after its first card: front → back, back → front, or both ways; change it any time in `/decks`
-- Dracosh works out which languages a deck is in from its cards (Spanish → Polish, say) and shows the pair on each card; when it can't tell or guesses wrong, set them in `/decks`
+- Dracosh works out which languages a deck is in from its cards, its name and the language you use it in (Spanish → Polish, say), and tells you when it has a guess; when it can't tell or guesses wrong, set them in `/decks`
 - Type the answer, or press Enter with nothing typed to see it and say whether you knew it (`1` or `2`): handy for whole sentences, and it counts just the same
 - Cloze cards for sentences: `I {{look forward}} to it` asks one gap at a time
 - Forgiving answer checks: case and punctuation don't matter, a missing Polish letter (ż, ó, ł…) still counts and shows the right spelling, one typo is fine on longer words, and after a miss you see letter by letter where you went wrong

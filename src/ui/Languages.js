@@ -1,44 +1,69 @@
 import { Fragment, useState } from "react";
 import { Box, useInput } from "ink";
-import { t } from "../i18n.js";
-import { DECK_LANGUAGES, languageName, UNKNOWN } from "../language.js";
+import { language, t } from "../i18n.js";
+import { fold } from "../judge.js";
+import { DECK_LANGUAGES, isKnown, languageName, UNKNOWN } from "../language.js";
 import { cutToWidth, html, KeyHints, Text, theme, usePanelWidth } from "./kit.js";
 
 const SHOWN = 7; // rows of the list at a time
 
-// "polski → angielski"; a side not known yet reads "unknown"
-export const pairText = ({ front, back }) => `${languageName(front) ?? t("languages.unknown")} → ${languageName(back) ?? t("languages.unknown")}`;
+// One side as read: "polski"; a side you said is none in particular, "other or mixed"; one the cards
+// didn't tell yet, "not sure yet"
+const sideName = (code, guessed) => languageName(code) ?? t(guessed ? "languages.notYet" : "languages.mixed");
+export const pairText = ({ front, back, guessed }) =>
+  guessed && !isKnown(front) && !isKnown(back) ? t("languages.notYet") : `${sideName(front, guessed)} → ${sideName(back, guessed)}`;
 
-const fold = (text) => text.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+const look = (text) => fold(text.toLowerCase());
 
-// the languages whose name (in the UI's language or in English) or code matches what's typed;
-// a code that isn't on the list but is a real language ("eu", "sw") is offered too
-function matching(query) {
-  const all = [UNKNOWN, ...DECK_LANGUAGES];
-  const q = fold(query.trim());
+// a code as Intl writes it today ("iw" is "he", "in" is "id"), or null when it names no language
+function canonical(code) {
+  try {
+    const [lang] = Intl.getCanonicalLocales(code)[0].split("-"); // "sh" is "sr-Latn": Serbian
+    return /^[a-z]{2,3}$/.test(lang) && languageName(lang, "en") !== lang ? lang : null;
+  } catch {
+    return null;
+  }
+}
+
+// The languages whose name matches what's typed: in the UI's language, in English or in the language
+// itself ("deutsch", "español"), or by code. The ones set or guessed and your own language come first;
+// "other or mixed" last.
+function matching(query, first) {
+  const all = [...new Set([...first.filter(isKnown), language(), ...DECK_LANGUAGES]), UNKNOWN];
+  const q = look(query.trim());
   if (!q) return all;
-  const names = (code) => (code === UNKNOWN ? [t("languages.unknown")] : [languageName(code), languageName(code, "en"), code]);
-  const found = all.filter((code) => names(code).some((name) => name && fold(name).includes(q)));
-  const starts = found.filter((code) => names(code).some((name) => name && fold(name).startsWith(q)));
+  const names = (code) => (code === UNKNOWN ? [t("languages.mixed")] : [languageName(code), languageName(code, "en"), languageName(code, code), code]);
+  const found = all.filter((code) => names(code).some((name) => name && look(name).includes(q)));
+  const starts = found.filter((code) => names(code).some((name) => name && look(name).startsWith(q)));
   const ordered = [...new Set([...starts, ...found])];
-  if (/^[a-z]{2}$/.test(q) && !ordered.includes(q) && languageName(q, "en") !== q) ordered.unshift(q);
+  const typed = /^[a-z]{2}$/.test(q) ? canonical(q) : null;
+  if (typed && !ordered.includes(typed)) ordered.unshift(typed);
   return ordered;
 }
 
 // Which language the front and the back are in, one side after the other: type to search, ↑/↓ and Enter.
 // `languages` holds what's set or guessed now (`guessed` marks a guess); → onDone({ front, back }).
+// Esc clears the search, then goes back a side, then leaves (onCancel).
 export function LanguagePicker({ deck, sample, languages, onDone, onCancel }) {
   const panel = usePanelWidth();
   const [side, setSide] = useState("front");
   const [chosen, setChosen] = useState({ front: languages.front, back: languages.back });
   const [query, setQuery] = useState("");
-  const options = matching(query);
-  const [selected, setSelected] = useState(Math.max(0, options.indexOf(languages.front)));
+  const listFor = (text, which = side) => matching(text, [chosen[which], languages[which]]);
+  const options = listFor(query);
+  // the language chosen so far stays selected until you search; then the best match is; never
+  // "other or mixed" by itself
+  const selectedIn = (list, which = side, text = query) => (text ? 0 : Math.max(0, isKnown(chosen[which]) ? list.indexOf(chosen[which]) : 0));
+  const [selected, setSelected] = useState(() => selectedIn(options));
 
-  function start(nextSide, list = matching("")) {
-    setSide(nextSide);
-    setQuery("");
-    setSelected(Math.max(0, list.indexOf(chosen[nextSide])));
+  function search(text, which = side) {
+    setQuery(text);
+    setSelected(selectedIn(listFor(text, which), which, text));
+  }
+
+  function turnTo(which) {
+    setSide(which);
+    search("", which);
   }
 
   function pick() {
@@ -46,57 +71,61 @@ export function LanguagePicker({ deck, sample, languages, onDone, onCancel }) {
     if (!code) return;
     const next = { ...chosen, [side]: code };
     setChosen(next);
-    if (side === "front") return start("back");
+    if (side === "front") {
+      setSide("back");
+      setQuery("");
+      const list = matching("", [next.back, languages.back]);
+      return setSelected(Math.max(0, isKnown(next.back) ? list.indexOf(next.back) : 0));
+    }
     onDone(next);
   }
 
   useInput((input, key) => {
     if (key.escape) {
-      if (query) {
-        setQuery("");
-        return setSelected(0);
-      }
-      return side === "back" ? start("front") : onCancel();
+      if (query) return search("");
+      return side === "back" ? turnTo("front") : onCancel();
     }
     if (key.return) return pick();
     if (key.upArrow) return setSelected((i) => Math.max(0, i - 1));
-    if (key.downArrow) return setSelected((i) => Math.min(options.length - 1, i + 1));
-    if (key.backspace || key.delete) {
-      setQuery((q) => q.slice(0, -1));
-      return setSelected(0);
-    }
-    if (input && !key.ctrl && !key.meta && !key.tab) {
-      setQuery((q) => q + input);
-      setSelected(0);
-    }
+    if (key.downArrow) return setSelected((i) => Math.max(0, Math.min(options.length - 1, i + 1)));
+    if (key.backspace || key.delete) return query && search(query.slice(0, -1));
+    if (key.ctrl && input === "u") return search("");
+    const text = input.replace(/[\u0000-\u001f\u007f]/g, ""); // a paste's line breaks and tabs aren't a name
+    if (text && !key.ctrl && !key.meta) search(query + text);
   });
 
   const example = sample ? cutToWidth(side === "front" ? sample.front : sample.back.join(" / "), 24) : "";
-  const first = Math.max(0, Math.min(selected - Math.floor(SHOWN / 2), options.length - SHOWN));
-  const noteOf = (code) =>
-    code === UNKNOWN ? t("languages.unknownNote") : code === languages[side] ? (languages.guessed ? t("languages.guessed") : t("decks.now")) : "";
+  const top = Math.max(0, Math.min(selected - Math.floor(SHOWN / 2), options.length - SHOWN));
+  const noteOf = (code) => {
+    if (code === UNKNOWN) return t("languages.mixedNote");
+    if (code !== languages[side]) return "";
+    return languages.guessed ? t("languages.guessed") : t("languages.current");
+  };
   return html`
     <${Fragment}>
       <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.accent} paddingX=${2} width=${panel}>
         <${Text} bold color=${theme.accent}>${t(side === "front" ? "languages.frontQuestion" : "languages.backQuestion", { deck })}<//>
         ${example && html`<${Text} dimColor>${t("languages.example", { sample: example })}<//>`}
         <${Box} marginTop=${1}>
-          <${Text} dimColor>${t("languages.search")} <//>
-          <${Text}>${query}<//>
-          <${Text} inverse> <//>
+          <${Box} flexShrink=${0}><${Text} dimColor>${t("languages.search")} <//><//>
+          <${Text} wrap="truncate-start">${query}<//>
+          <${Box} flexShrink=${0}><${Text} inverse> <//><//>
         <//>
-        <${Box} marginTop=${1} flexDirection="column">
-          ${options.length === 0 && html`<${Text} dimColor>${t("languages.noMatch", { query })}<//>`}
-          ${options.slice(first, first + SHOWN).map((code, i) => {
-            const on = first + i === selected;
-            const name = code === UNKNOWN ? t("languages.unknown") : `${languageName(code)} (${code})`;
+        <${Box} flexDirection="column">
+          ${options.length === 0 && html`<${Text} dimColor wrap="truncate-end">${t("languages.noMatch", { query: cutToWidth(query, 20) })}<//>`}
+          <${Text} dimColor>${top > 0 ? "  ↑" : " "}<//>
+          ${options.slice(top, top + SHOWN).map((code, i) => {
+            const on = top + i === selected;
+            const name = code === UNKNOWN ? t("languages.mixed") : languageName(code);
+            const note = noteOf(code);
             return html`
               <${Box} key=${code}>
-                <${Text} color=${on ? theme.accent : undefined} bold=${on}>${on ? "❯" : " "} ${name}<//>
-                ${noteOf(code) && html`<${Text} dimColor>  ${noteOf(code)}<//>`}
+                <${Box} flexShrink=${0}><${Text} color=${on ? theme.accent : undefined} bold=${on}>${on ? "❯" : " "} ${name}<//><//>
+                ${note && html`<${Text} dimColor wrap="truncate-end">  ${note}<//>`}
               <//>
             `;
           })}
+          <${Text} dimColor>${top + SHOWN < options.length ? "  ↓" : " "}<//>
         <//>
       <//>
       <${Box} paddingX=${1}><${KeyHints} text=${t("keyHints.languagePick")} /><//>

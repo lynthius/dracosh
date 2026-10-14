@@ -1,6 +1,5 @@
 import { t as say } from "./i18n.js"; // `t` and `text` are taken here (the clock, an answer)
 import { blankGap } from "./cardline.js";
-import { isKnown } from "./language.js";
 import { closestCandidate, judge } from "./judge.js";
 import { addVacation, applyAnswer, applyCaughtUp, applyOverrule, calendarMonth, cancelVacations, ensureProgress, markBadgesSeen, missedOn, recordMiss, snapshot, undoMiss, unseenBadges, vacationInfo } from "./progress.js";
 import { describeDue, grade, itemKey, nextDueAt, pickNext, startOfTomorrow } from "./scheduler.js";
@@ -12,14 +11,9 @@ import { formatRange } from "./vacation.js";
 
 const LABELS = { "en-pl": "EN → PL", "pl-en": "PL → EN" };
 
-// the tag on the card's border: the language pair for a language deck, the deck's name otherwise
+// the tag on the card's border: the deck's name (language codes like "DE → UK" read as countries)
 function labelOf(deck, direction) {
-  if (!deck) return LABELS[direction] ?? "";
-  if (direction.startsWith("c")) return deck.name; // a cloze gap: no direction to show
-  const { front, back } = deck.languages ?? {};
-  if (!isKnown(front) || !isKnown(back)) return deck.name;
-  const [from, to] = direction === "en-pl" ? [front, back] : [back, front];
-  return `${from.toUpperCase()} → ${to.toUpperCase()}`;
+  return deck ? deck.name : (LABELS[direction] ?? "");
 }
 const COMBO_CHEER_EVERY = 5;
 

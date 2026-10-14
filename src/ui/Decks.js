@@ -3,6 +3,7 @@ import { Box, useInput } from "ink";
 import { t } from "../i18n.js";
 import { Choice, choiceHints } from "./Choice.js";
 import { LanguagePicker, pairText } from "./Languages.js";
+import { isKnown } from "../language.js";
 import { cutToWidth, html, KeyHints, Text, theme, usePanelWidth } from "./kit.js";
 
 const DIRECTIONS = ["forward", "backward", "both"];
@@ -43,6 +44,7 @@ export function Decks({ current, actions, onPick, onNew, onClose, onDirections }
   async function setDirections(index) {
     const { deck } = setting;
     setSetting(null);
+    setMenu(null);
     try {
       const { cardIds } = await actions.setDirections(deck.name, DIRECTIONS[index]);
       await onDirections?.(cardIds, DIRECTIONS[index]);
@@ -53,20 +55,21 @@ export function Decks({ current, actions, onPick, onNew, onClose, onDirections }
     }
   }
 
+  // the menu stays underneath: Esc in the direction or language picker comes back to it
   function openSetting(index) {
     const { deck } = menu;
-    setMenu(null);
     if (index === 0) return setSetting({ deck, selected: Math.max(0, DIRECTIONS.indexOf(deck.directions)) });
-    setNaming(deck);
+    if (index === 1) return setNaming(deck);
+    setLanguages(null, deck); // detect them from the cards again
   }
 
-  async function setLanguages(languages) {
-    const deck = naming;
+  async function setLanguages(languages, deck = naming) {
     setNaming(null);
+    setMenu(null);
     try {
       const saved = await actions.setLanguages(deck.name, languages);
       setDecks((all) => all.map((d) => (d.name === deck.name ? { ...d, languages: saved } : d)));
-      setMessage(t("languages.saved", { deck: deck.name, pair: pairText(saved) }));
+      setMessage(languages ? t("languages.saved", { deck: deck.name, pair: pairText(saved) }) : t("languages.detecting", { deck: deck.name }));
     } catch (err) {
       setError(err.message);
     }
@@ -84,8 +87,11 @@ export function Decks({ current, actions, onPick, onNew, onClose, onDirections }
 
   if (naming) return html`<${LanguagePicker} deck=${naming.name} sample=${naming.sample} languages=${naming.languages} onDone=${setLanguages} onCancel=${() => setNaming(null)} />`;
 
+  if (setting) return directionPicker();
+
   if (menu) {
     const { deck } = menu;
+    const guessedNote = deck.languages.guessed && deck.cards > 0 ? ` · ${t("languages.guessed")}` : "";
     const how = directionOptions(deck)[Math.max(0, DIRECTIONS.indexOf(deck.directions))].label;
     return html`
       <${Fragment}>
@@ -95,7 +101,8 @@ export function Decks({ current, actions, onPick, onNew, onClose, onDirections }
             <${Choice}
               options=${[
                 { label: t("decks.askRow"), note: deck.directions === "both" ? t("add.bothWays") : how },
-                { label: t("decks.languagesRow"), note: pairText(deck.languages) + (deck.languages.guessed ? ` · ${t("languages.guessed")}` : "") }
+                { label: t("decks.languagesRow"), note: pairText(deck.languages) + guessedNote },
+                ...(deck.languages.guessed ? [] : [{ label: t("decks.detectRow") }])
               ]}
               selected=${menu.selected}
               onMove=${(selected) => setMenu((m) => ({ ...m, selected }))}
@@ -109,7 +116,7 @@ export function Decks({ current, actions, onPick, onNew, onClose, onDirections }
     `;
   }
 
-  if (setting)
+  function directionPicker() {
     return html`
       <${Fragment}>
         <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.accent} paddingX=${2} width=${panel}>
@@ -122,6 +129,10 @@ export function Decks({ current, actions, onPick, onNew, onClose, onDirections }
         <${Box} paddingX=${1}><${KeyHints} text=${choiceHints()} /><//>
       <//>
     `;
+  }
+
+  // a deck's languages show in the list once the cards tell at least one
+  const languagesNote = (d) => (!d.tour && d.cards > 0 && (isKnown(d.languages.front) || isKnown(d.languages.back)) ? pairText(d.languages) : "");
 
   return html`
     <${Fragment}>
@@ -131,7 +142,7 @@ export function Decks({ current, actions, onPick, onNew, onClose, onDirections }
         html`
           <${Box} marginTop=${1}>
             <${Choice}
-              options=${[...decks.map((d) => ({ label: d.name, note: [t("count.cards", { count: d.cards }), d.tour && t("decks.tour"), d.name === current && t("decks.now")].filter(Boolean).join(" · ") })), { label: t("decks.newDeck") }]}
+              options=${[...decks.map((d) => ({ label: d.name, note: [t("count.cards", { count: d.cards }), languagesNote(d), d.tour && t("decks.tour"), d.name === current && t("decks.now")].filter(Boolean).join(" · ") })), { label: t("decks.newDeck") }]}
               selected=${picked}
               onMove=${setPicked}
               onPick=${(i) => (i === decks.length ? onNew() : onPick(decks[i].name))}

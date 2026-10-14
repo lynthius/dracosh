@@ -72,7 +72,7 @@
     "grading": "1 oder ← wusste ich nicht · 2 oder → wusste ich",
     "sessionWaiting": "enter nächste Karte · / Befehle · q beenden",
     "decks": "→ Einstellungen · {choose}",
-    "directionPick": "{choose} · esc oder weitertippen behält 1",
+    "directionPick": "{choose} · → Sprachen · esc oder weitertippen behält 1",
     "addName": "enter anlegen · esc abbrechen",
     "confirm": "{yes} ja · {no} nein",
     "languagePick": "tippen zum Suchen · ↑/↓ wählen · enter bestätigen · esc zurück"
@@ -193,7 +193,8 @@
     "back": "Rückseite",
     "progressKept": "Der Fortschritt bleibt für jede Richtung erhalten, auch für eine ausgeschaltete.",
     "askRow": "Abfragerichtung",
-    "languagesRow": "Sprachen"
+    "languagesRow": "Sprachen",
+    "detectRow": "Aus den Karten erkennen"
   },
   "add": {
     "fields": {
@@ -241,7 +242,7 @@
     "youType": "du tippst {answer}",
     "bothWays": "In beide Richtungen",
     "bothWaysNote": "jede Karte in beide Richtungen",
-    "directionLater": "Später änderbar: /decks, dann →.",
+    "directionLater": "Beides später änderbar: /decks, dann →.",
     "directionSet": "Alles klar: {how}  ·  nächste Karte:",
     "paste": {
       "title": "Eingefügte Karten · {deck}",
@@ -266,7 +267,8 @@
         "other": "{count} Zeilen übersprungen: Sie mussten noch korrigiert werden."
       }
     },
-    "languagesLine": "Sprachen: {pair}  ·  → ändern"
+    "languagesLine": "Sprachen: {pair}",
+    "languagesNow": "Sieht nach {pair} aus. Falls nicht, in /decks → korrigieren."
   },
   "quiz": {
     "youWrote": "deine Antwort: ",
@@ -1048,14 +1050,17 @@
     ]
   },
   "languages": {
-    "unknown": "unbekannt",
-    "unknownNote": "Antworten allgemein geprüft",
-    "guessed": "aus den Karten erraten",
-    "frontQuestion": "In welcher Sprache sind die Vorderseiten von „{deck}“?",
-    "backQuestion": "In welcher Sprache sind die Rückseiten von „{deck}“?",
+    "notYet": "noch unklar",
+    "mixed": "andere oder gemischt",
+    "mixedNote": "ohne Regeln einer Sprache",
+    "current": "aktuell",
+    "guessed": "aus deinen Karten erkannt",
+    "frontQuestion": "Welche Sprache steht vorne auf den Karten von „{deck}“?",
+    "backQuestion": "Welche Sprache steht hinten auf den Karten von „{deck}“?",
     "example": "z. B. {sample}",
     "search": "Suche:",
     "noMatch": "Keine Sprache passt zu „{query}“.",
-    "saved": "„{deck}“: {pair}."
+    "saved": "Sprachen von „{deck}“: {pair}.",
+    "detecting": "„{deck}“ erkennt die Sprachen wieder aus den Karten."
   }
 }

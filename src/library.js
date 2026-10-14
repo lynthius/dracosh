@@ -37,7 +37,7 @@ function cleanList(values) {
 
 const isText = (value) => typeof value === "string";
 const filled = (value) => isText(value) && value.trim() !== "";
-const validLanguages = (languages) => languages == null || (typeof languages === "object" && filled(languages.front) && filled(languages.back));
+const validLanguages = (languages) => languages == null || (typeof languages === "object" && [languages.front, languages.back].every((code) => isText(code) && LANGUAGE_CODE.test(code)));
 const validDeck = (deck) => deck && isText(deck.id) && filled(deck.name) && validLanguages(deck.languages);
 // a cloze card's answers are its gaps, so its back (shown as a hint) may be empty
 const validCard = (card) =>
@@ -74,7 +74,7 @@ export function createDeck(library, { name, type = "translation", languages = nu
   if (!CARD_TYPES.includes(type)) throw new Error(`Unknown card type "${type}".`);
   if (!DIRECTIONS.includes(directions)) throw new Error(`Unknown direction "${directions}".`);
 
-  const deck = { id: newId("d"), name: trimmed, type, languages: languages ? { ...languages } : null, directions, tour, created: now };
+  const deck = { id: newId("d"), name: trimmed, type, languages: cleanLanguages(languages), directions, tour, created: now };
   library.decks.push(deck);
   return deck;
 }
@@ -90,11 +90,19 @@ export function setDirections(library, deckId, directions) {
 
 // `languages`: { front, back } as ISO 639-1 codes ("und": not one language), or null to go back to guessing
 const LANGUAGE_CODE = /^[a-z]{2,3}$/;
+function cleanLanguages(languages) {
+  if (!languages) return null;
+  const code = (value) => (typeof value === "string" ? value.trim().toLowerCase() : "");
+  const [front, back] = [code(languages.front), code(languages.back)];
+  if (!LANGUAGE_CODE.test(front) || !LANGUAGE_CODE.test(back)) throw new Error(`Unknown language "${languages.front} → ${languages.back}".`);
+  return { front, back };
+}
+
 export function setLanguages(library, deckId, languages) {
-  if (languages && ![languages.front, languages.back].every((code) => LANGUAGE_CODE.test(code ?? ""))) throw new Error(`Unknown language "${languages.front} → ${languages.back}".`);
+  const clean = cleanLanguages(languages);
   const deck = library.decks.find((d) => d.id === deckId);
   if (!deck) throw new Error("That deck doesn't exist.");
-  deck.languages = languages ? { front: languages.front, back: languages.back } : null;
+  deck.languages = clean;
   return deck;
 }
 

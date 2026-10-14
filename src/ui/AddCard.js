@@ -147,13 +147,30 @@ export function AddCard({ current, actions, onDone, startNew = false }) {
       setDirection(0);
       setSample(card);
       setLangs(null);
-      actions.languagesOf(deck.name).then(setLangs, () => {});
+      actions.languagesOf(deck.name).then((found) => {
+        setLangs(found);
+        shownPair.current = pairText(found);
+      }, () => {});
       picking.current = false;
       typedAhead.current = "";
       return setStep("direction");
     }
     setStep("line");
+    noticeLanguages();
   };
+
+  // As cards come in, the guess at the deck's languages firms up: a new guess is said once, so a
+  // wrong one doesn't go unnoticed
+  const shownPair = useRef(null);
+  function noticeLanguages() {
+    actions.languagesOf(deck?.name ?? "").then((found) => {
+      const pair = pairText(found);
+      const tells = isKnown(found.front) && isKnown(found.back);
+      // it stays under the field until the next card is saved
+      setLanguageNote(found.guessed && tells && shownPair.current !== pair ? pair : "");
+      if (tells) shownPair.current = pair;
+    }, () => {});
+  }
 
   async function save(fields) {
     if (busy.current) return;
@@ -257,6 +274,7 @@ export function AddCard({ current, actions, onDone, startNew = false }) {
   function pickDeck(index) {
     if (index === decks.length) return setStep("deck");
     setDeck({ name: decks[index].name, directions: decks[index].directions, isNew: false });
+    actions.languagesOf(decks[index].name).then((found) => (shownPair.current = pairText(found)), () => {});
     clearField();
     setStep("line");
   }
@@ -266,6 +284,9 @@ export function AddCard({ current, actions, onDone, startNew = false }) {
   // Typing the next card right away keeps option 1: the keys wait in `typedAhead` until the field is back.
   // `picking` stays set for the rest of the step, so a key that lands while the pick saves can't pick again.
   const [langs, setLangs] = useState(null); // the new deck's languages, as guessed from its first card
+  const [languageNote, setLanguageNote] = useState(""); // a new guess at the deck's languages
+  const writes = useRef(Promise.resolve()); // library writes one after another, so none overwrites another
+  const inTurn = (write) => (writes.current = writes.current.catch(() => {}).then(write));
   const typedAhead = useRef("");
   const picking = useRef(false);
   const pickedByChoice = useRef(false);
@@ -275,7 +296,7 @@ export function AddCard({ current, actions, onDone, startNew = false }) {
     picking.current = true;
     const chosen = ["forward", "backward", "both"][index];
     try {
-      await actions.setDirections(deck.name, chosen);
+      await inTurn(() => actions.setDirections(deck.name, chosen));
       setDeck((d) => ({ ...d, directions: chosen, isNew: false }));
       setMessage(t("add.directionSet", { how: askedAs(sample, chosen) }));
     } catch (err) {
@@ -364,7 +385,9 @@ export function AddCard({ current, actions, onDone, startNew = false }) {
   async function saveLanguages(languages) {
     setStep("direction");
     try {
-      setLangs(await actions.setLanguages(deck.name, languages));
+      const saved = await inTurn(() => actions.setLanguages(deck.name, languages));
+      setLangs(saved);
+      shownPair.current = pairText(saved);
     } catch (err) {
       setError(err.message);
     }
@@ -395,6 +418,7 @@ export function AddCard({ current, actions, onDone, startNew = false }) {
           <//>
         `}
         ${message && html`<${Box} marginTop=${1}><${Text} color=${theme.good}>${message}<//><//>`}
+        ${languageNote && step === "line" && html`<${Text} dimColor>${t("add.languagesNow", { pair: languageNote })}<//>`}
         ${step === "back" && draft && html`<${Box} marginTop=${1}><${Text} dimColor>${draft.front}  =<//><//>`}
         ${fieldLabel &&
         html`
@@ -453,8 +477,8 @@ export function AddCard({ current, actions, onDone, startNew = false }) {
                 }}
               />
             <//>
-            ${langs && (isKnown(langs.front) || isKnown(langs.back)) && html`<${Box} marginTop=${1}><${Text} dimColor>${t("add.languagesLine", { pair: pairText(langs) })}<//><//>`}
-            <${Box} marginTop=${langs && (isKnown(langs.front) || isKnown(langs.back)) ? 0 : 1}><${Text} dimColor>${t("add.directionLater")}<//><//>
+            ${langs && html`<${Box} marginTop=${1}><${Text} dimColor>${t("add.languagesLine", { pair: pairText(langs) })}<//><//>`}
+            <${Box} marginTop=${langs ? 0 : 1}><${Text} dimColor>${t("add.directionLater")}<//><//>
           <//>
         `}
         ${(step === "review" || step === "fix") &&

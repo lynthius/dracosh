@@ -72,7 +72,7 @@
     "grading": "1 or ← didn't know · 2 or → knew it",
     "sessionWaiting": "enter next card · / commands · q quit",
     "decks": "→ settings · {choose}",
-    "directionPick": "{choose} · esc or typing on keeps 1",
+    "directionPick": "{choose} · → languages · esc or typing on keeps 1",
     "addName": "enter create · esc cancel",
     "confirm": "{yes} yes · {no} no",
     "languagePick": "type to search · ↑/↓ choose · enter confirm · esc back"
@@ -190,7 +190,8 @@
     "back": "back",
     "progressKept": "Progress stays for every direction, even one you turn off.",
     "askRow": "How it asks",
-    "languagesRow": "Languages"
+    "languagesRow": "Languages",
+    "detectRow": "Detect from the cards"
   },
   "add": {
     "fields": {
@@ -238,7 +239,7 @@
     "youType": "you type {answer}",
     "bothWays": "Both ways",
     "bothWaysNote": "every card asked both ways",
-    "directionLater": "You can change it later: /decks, then →.",
+    "directionLater": "You can change both later: /decks, then →.",
     "directionSet": "Got it: {how}  ·  next card:",
     "paste": {
       "title": "Pasted cards · {deck}",
@@ -263,7 +264,8 @@
         "other": "{count} lines skipped: they still needed fixing."
       }
     },
-    "languagesLine": "Languages: {pair}  ·  → change"
+    "languagesLine": "Languages: {pair}",
+    "languagesNow": "Looks like {pair}. If not, fix it in /decks →."
   },
   "quiz": {
     "youWrote": "you wrote ",
@@ -1031,14 +1033,17 @@
     ]
   },
   "languages": {
-    "unknown": "unknown",
-    "unknownNote": "answers checked the general way",
-    "guessed": "guessed from the cards",
-    "frontQuestion": "Which language are the fronts of \"{deck}\" in?",
-    "backQuestion": "Which language are the backs of \"{deck}\" in?",
+    "notYet": "not sure yet",
+    "mixed": "other or mixed",
+    "mixedNote": "no rules of one language",
+    "current": "current",
+    "guessed": "detected from your cards",
+    "frontQuestion": "What language is on the front of the cards in \"{deck}\"?",
+    "backQuestion": "What language is on the back of the cards in \"{deck}\"?",
     "example": "like {sample}",
     "search": "search:",
     "noMatch": "No language matches \"{query}\".",
-    "saved": "\"{deck}\": {pair}."
+    "saved": "Languages of \"{deck}\": {pair}.",
+    "detecting": "\"{deck}\" detects its languages from the cards again."
   }
 }

@@ -145,10 +145,12 @@ test("a switch that would make a '/' text something to type is refused; otherwis
 test("a deck's languages are guessed from its cards until you set them; null goes back to guessing", async () => {
   await startDeck({ name: "Niemiecki" });
   await addCardsTo("Niemiecki", [{ front: "die Katze", back: ["kot"] }, { front: "der Hund", back: ["pies"] }, { front: "die Straße", back: ["ulica"] }]);
-  assert.deepEqual(await languagesOf("Niemiecki"), { front: "de", back: "und", guessed: true });
+  assert.deepEqual(await languagesOf("Niemiecki"), { front: "de", back: "und", guessed: true }, "the backs show no sign of a language yet");
   assert.deepEqual(await setLanguages("Niemiecki", { front: "de", back: "pl" }), { front: "de", back: "pl", guessed: false });
   assert.deepEqual((await allDecks()).find((d) => d.name === "Niemiecki").languages, { front: "de", back: "pl", guessed: false });
   assert.equal((await loadWords("Niemiecki")).deck.languages.back, "pl", "the quiz sees them too");
   await assert.rejects(setLanguages("Niemiecki", { front: "German", back: "pl" }));
+  await assert.rejects(setLanguages("Niemiecki", { front: ["de"], back: "pl" }), "only a code, never something that reads like one");
+  assert.deepEqual(await setLanguages("Niemiecki", { front: "DE", back: " pl " }), { front: "de", back: "pl", guessed: false });
   assert.equal((await setLanguages("Niemiecki", null)).guessed, true);
 });
