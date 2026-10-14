@@ -65,3 +65,25 @@ test("editDistance", () => {
   assert.equal(editDistance("ab", "ba"), 1);
   assert.equal(editDistance("", "abc"), 3);
 });
+
+test("an answer in German may spell ä, ö, ü out; Danish and Norwegian æ, ø, å; no other language", () => {
+  assert.equal(judge("Baer", ["Bär"], { lang: "de" }), "accent");
+  assert.equal(judge("schoen", ["schön"], { lang: "de" }), "accent");
+  assert.equal(judge("Muenchen", ["München"], { lang: "de" }), "accent");
+  assert.equal(judge("Bar", ["Bär"], { lang: "de" }), "accent", "a missing accent still counts");
+  assert.equal(judge("aeble", ["æble"], { lang: "da" }), "accent");
+  assert.equal(judge("paa", ["på"], { lang: "no" }), "accent");
+  assert.equal(judge("Baer", ["Bär"]), "wrong", "a deck's language unknown: no German spellings");
+  assert.equal(judge("paeivae", ["päivä"], { lang: "fi" }), "wrong", "in Finnish ae isn't ä");
+});
+
+test("Chinese, Japanese and Korean answers are checked exactly: one character is a whole word", () => {
+  assert.equal(judge("猫", ["猫"]), "exact");
+  assert.equal(judge("犬", ["猫"]), "wrong");
+  assert.equal(judge("ありがとう", ["ありがとう"]), "exact");
+  assert.equal(judge("ありがと", ["ありがとう"]), "wrong", "no typo forgiven, however long");
+  assert.equal(judge("我 爱 你", ["我爱你"]), "exact", "spaces don't count");
+  assert.equal(judge("ＡＢＣ", ["ABC", "字"]), "exact", "full-width letters are the same letters");
+  assert.equal(judge("고양이", ["고양이"]), "exact");
+  assert.equal(judge("고양", ["고양이"]), "wrong");
+});

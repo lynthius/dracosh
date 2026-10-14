@@ -77,15 +77,35 @@ export function closestCandidate(answer, candidates) {
   return best;
 }
 
+// The way a language writes its own letters without them: German "Baer" for "Bär", Danish "aa" for "å".
+// Only for answers in that language: in Finnish or Swedish "ae" isn't "ä".
+const SPELLED_OUT = {
+  de: { ä: "ae", ö: "oe", ü: "ue" },
+  da: { æ: "ae", ø: "oe", å: "aa" },
+  no: { æ: "ae", ø: "oe", å: "aa" }
+};
+function spellings(candidate, lang) {
+  const forms = [normalize(candidate)];
+  const letters = SPELLED_OUT[lang];
+  if (letters) forms.push(normalize(plain(candidate).replace(/[äöüæøå]/g, (ch) => letters[ch] ?? ch)));
+  return forms;
+}
+
+// Chinese, Japanese and Korean: one character is a whole word, so nothing is folded or forgiven
+const ONE_CHARACTER_WORDS = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/u;
+const exactly = (s) => plain(s).normalize("NFKC").replace(/\s/g, ""); // full-width "ＡＢＣ" is "abc"; spaces don't count
+
 // → "exact" | "accent" | "typo" | "wrong"; accepts any one of the candidate answers. Missing or wrong
 // diacritics ("zolw" for "żółw") are "accent": right, quietly (not everyone has the letters on their
-// keyboard), with the missing letters marked in the verdict. One more typo is forgiven on longer answers, but
-// never in numbers: "123457" isn't "123456".
-export function judge(answer, candidates) {
+// keyboard), with the missing letters marked in the verdict. `lang` is the answer's language, when the
+// deck's languages are known: it adds that language's own spellings ("Baer" for "Bär"). One more typo
+// is forgiven on longer answers, but never in numbers: "123457" isn't "123456".
+export function judge(answer, candidates, { lang = null } = {}) {
   if (!answer.trim()) return "wrong";
-  const given = normalize(answer);
   if (candidates.some((c) => plain(c) === plain(answer))) return "exact";
-  const targets = candidates.map(normalize);
+  if (candidates.some((c) => ONE_CHARACTER_WORDS.test(c))) return candidates.some((c) => exactly(c) === exactly(answer)) ? "exact" : "wrong";
+  const given = normalize(answer);
+  const targets = candidates.flatMap((c) => spellings(c, lang));
   if (targets.includes(given)) return "accent";
   // "email" for "e-mail", "icecream" for "ice cream": right, but shown with the spelling
   const compact = (s) => s.replace(/\s/g, ""); // hyphens between letters are spaces by now

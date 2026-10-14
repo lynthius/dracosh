@@ -86,6 +86,8 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
       expected,
       // a cloze card's back is a hint under the sentence ("Cieszę się na to")
       context: gap !== null ? item.word.translations.join(" / ") : "",
+      // what the answer is written in, when the deck's languages are known: its own spellings count
+      answerLanguage: (forward ? deck?.languages?.back : deck?.languages?.front) ?? null,
       wordCount: words.length,
       tour: Boolean(deck?.tour) // the tour marks what to type with `backticks`
     };
@@ -102,7 +104,7 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
   async function answer(question, text, { hinted = false } = {}) {
     const key = itemKey(question.word.noteId, question.direction);
     // answers you once declared right (/correct) count for this card from now on
-    const result = judge(text, [...question.expected, ...(state.accepted?.[key] ?? [])]);
+    const result = judge(text, [...question.expected, ...(state.accepted?.[key] ?? [])], { lang: question.answerLanguage });
     return record(question, { result, text, hinted });
   }
 

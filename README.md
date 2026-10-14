@@ -19,7 +19,7 @@ It's made for people who live in a terminal or spend most of the day at a comput
 - Dracosh works out which languages a deck is in from its cards, its name and the language you use it in (Spanish → Polish, say), and tells you when it has a guess; when it can't tell or guesses wrong, set them in `/decks`
 - Type the answer, or press Enter with nothing typed to see it and say whether you knew it (`1` or `2`): handy for whole sentences, and it counts just the same
 - Cloze cards for sentences: `I {{look forward}} to it` asks one gap at a time
-- Forgiving answer checks: case and punctuation don't matter, a missing Polish letter (ż, ó, ł…) still counts and shows the right spelling, one typo is fine on longer words, and after a miss you see letter by letter where you went wrong
+- Forgiving answer checks: case and punctuation don't matter, a missing accent or special letter (ż, ł, é, ß, ø…) still counts and the right spelling is shown with it marked, German "Baer" for "Bär" and Danish "aa" for "å" count too, one typo is fine on longer words, and after a miss you see letter by letter where you went wrong. Chinese, Japanese and Korean answers are checked exactly
 - Leitner boxes, so the cards you know come back less and less often; a card is only asked when it's due
 - Daily goal, streaks (weekends and days off don't break them) and 36 badges (one of them a secret)
 - A pixel dragon that hatches from an egg, evolves over a year of streaks, blinks, and falls asleep if you ignore it
