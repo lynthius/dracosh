@@ -18,6 +18,7 @@ It's made for people who live in a terminal or spend most of the day at a comput
 - Add cards, start decks and switch between them right in the app (`/add`, `/decks`)
 - One line is a card: `kot = cat; kitty // Mój kot śpi.` (`;` separates right answers, `//` adds an example). Paste a whole list and check it before it's saved
 - Each deck is asked the way you pick after its first card: front → back, back → front, or both ways; change it any time in `/decks`
+- Pronunciation, if you turn it on in `/settings`: once the answer is out, the word is read aloud in the deck's language with a macOS voice (other systems later)
 - Dracosh works out which languages a deck is in from its cards, its name and the language you use it in (Spanish → Polish, say), and tells you when it has a guess; when it can't tell or guesses wrong, set them in `/decks`
 - Type the answer, or press Enter with nothing typed to see it and say whether you knew it (`1` or `2`): handy for whole sentences, and it counts just the same
 - Cloze cards for sentences: `I {{look forward}} to it` asks one gap at a time
@@ -61,7 +62,7 @@ Type the answer and press Enter. Not sure, or the answer is a whole sentence? Pr
 | `/decks` | switch to another deck (Dracosh remembers it), start a new one, or press → to change how a deck is asked and which languages it's in |
 | `/hint` | reveal one more letter |
 | `/correct` | your answer was right after all; after a yes it's accepted from now on |
-| `/settings` | language, rhythm (a card every few minutes, or a study session), interval, daily goal, sound, quiet hours, weekends, tips, and a reset |
+| `/settings` | language, rhythm (a card every few minutes, or a study session), interval, daily goal, sound, pronunciation, quiet hours, weekends, tips, and a reset |
 | `/stats` | streak and a calendar of your month |
 | `/badges` | all badges and how to get them |
 | `/companion` | your dragon, its element and the forms ahead |

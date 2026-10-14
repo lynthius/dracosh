@@ -97,6 +97,10 @@
         "label": "Sound",
         "hint": "answer and new-card sounds"
       },
+      "speak": {
+        "label": "Read aloud",
+        "hint": "reads the word aloud in the deck's language, once the answer is out (macOS voices)"
+      },
       "volume": {
         "label": "Volume",
         "hint": "plays a preview when changed"

@@ -97,6 +97,10 @@
         "label": "Ton",
         "hint": "Töne für Antworten und neue Karten"
       },
+      "speak": {
+        "label": "Aussprache",
+        "hint": "liest das Wort in der Sprache des Stapels vor, sobald die Antwort steht (macOS-Stimmen)"
+      },
       "volume": {
         "label": "Lautstärke",
         "hint": "spielt beim Ändern eine Hörprobe"

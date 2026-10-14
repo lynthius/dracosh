@@ -97,6 +97,10 @@
         "label": "Son",
         "hint": "les sons des réponses et des nouvelles cartes"
       },
+      "speak": {
+        "label": "Prononciation",
+        "hint": "lit le mot à voix haute dans la langue du paquet, une fois la réponse affichée (voix de macOS)"
+      },
       "volume": {
         "label": "Volume",
         "hint": "joue un aperçu quand tu le changes"

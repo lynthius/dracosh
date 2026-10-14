@@ -1,5 +1,6 @@
 import { language, t as say } from "./i18n.js"; // `t` and `text` are taken here (the clock, an answer)
-import { blankGap } from "./cardline.js";
+import { blankGap, plainFront } from "./cardline.js";
+import { isKnown } from "./language.js";
 import { ALMOST, closestCandidate, judge } from "./judge.js";
 import { addVacation, applyAnswer, applyCaughtUp, markWorkWaiting, applyOverrule, calendarMonth, cancelVacations, ensureProgress, markBadgesSeen, missedOn, recordMiss, snapshot, undoMiss, unseenBadges, vacationInfo } from "./progress.js";
 import { BOX_INTERVALS_DAYS, describeDue, grade, itemKey, nextDueAt, pickNext, startOfTomorrow } from "./scheduler.js";
@@ -16,6 +17,20 @@ function labelOf(deck, direction) {
   return deck ? deck.name : (LABELS[direction] ?? "");
 }
 const COMBO_CHEER_EVERY = 5;
+
+// What pronunciation reads aloud: the side in the language you're learning, the answer when it's in
+// another language than Dracosh's (a cloze card: its whole sentence), else the question → { text, lang } or null
+// `answer`: the right answer you gave (one of several), read instead of the first one
+export function toSpeak(question, ui, answer = null) {
+  if (question.tour) return null;
+  const foreign = (lang) => isKnown(lang) && lang !== ui;
+  const cloze = question.direction.startsWith("c");
+  const given = answer && question.expected.includes(answer) ? answer : question.expected[0];
+  if (foreign(question.answerLanguage)) return { text: cloze ? plainFront(question.word.word) : given, lang: question.answerLanguage };
+  // a cloze card's prompt is its sentence with a gap: nothing to read there
+  if (!cloze && foreign(question.promptLanguage)) return { text: question.prompt.split(" / ")[0], lang: question.promptLanguage };
+  return null;
+}
 
 // Quiz logic without any I/O of its own: words, settings and persistence are injected, the UI only renders what this returns.
 // `loadAllWords` → [{ words, deck }] for every deck of yours: "all done for today" means the whole library.

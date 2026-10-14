@@ -360,3 +360,22 @@ test("a missed cloze gap is listed with its hint", async () => {
   const [miss] = session.missed(0).items ?? session.missed(0);
   assert.equal(miss.prompt, "I ____ to it (Cieszę się)");
 });
+
+test("pronunciation reads the side in the language you're learning", async () => {
+  const { toSpeak } = await import("../src/session.js");
+  const q = (direction, answerLanguage, promptLanguage, extra = {}) => ({ direction, answerLanguage, promptLanguage, expected: ["der Hund"], prompt: "pies", word: { word: "pies" }, ...extra });
+  assert.deepEqual(toSpeak(q("en-pl", "de", "pl"), "pl"), { text: "der Hund", lang: "de" });
+  assert.deepEqual(toSpeak(q("pl-en", "pl", "de", { expected: ["pies"], prompt: "der Hund / Hund" }), "pl"), { text: "der Hund", lang: "de" });
+  assert.deepEqual(toSpeak(q("c1", "de", null, { word: { word: "Ich {{gehe}} nach Hause" } }), "pl"), { text: "Ich gehe nach Hause", lang: "de" });
+  assert.equal(toSpeak(q("en-pl", "und", "und"), "pl"), null, "no language known, nothing to read");
+  assert.equal(toSpeak(q("en-pl", "de", "pl", { tour: true }), "pl"), null);
+});
+
+test("pronunciation reads the answer you gave, and nothing from a cloze card's gapped sentence", async () => {
+  const { toSpeak } = await import("../src/session.js");
+  const card = { direction: "en-pl", answerLanguage: "en", promptLanguage: "pl", expected: ["cat", "kitty"], prompt: "kot", word: { word: "kot" } };
+  assert.deepEqual(toSpeak(card, "pl", "kitty"), { text: "kitty", lang: "en" });
+  assert.deepEqual(toSpeak(card, "pl", "dog"), { text: "cat", lang: "en" }, "a wrong answer: the right one is read");
+  const cloze = { direction: "c1", answerLanguage: "pl", promptLanguage: "en", expected: ["kot"], prompt: "Mój ____ śpi", word: { word: "Mój {{kot}} śpi" } };
+  assert.equal(toSpeak(cloze, "pl"), null);
+});

@@ -3,6 +3,7 @@ import { Box, useApp, useInput, useStdout } from "ink";
 import { commandsFor } from "../commands.js";
 import { accentMarks, diffChars } from "../diff.js";
 import { ALMOST } from "../judge.js";
+import { toSpeak } from "../session.js";
 import { AnswerInput } from "./AnswerInput.js";
 import { Header } from "./Header.js";
 import { setLanguage, t } from "../i18n.js";
@@ -439,7 +440,7 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
     const next = { ...previous, ...patch };
     settingsRef.current = next;
     setSettings(next);
-    alerts.configure({ sound: next.sound, volume: next.volume });
+    alerts.configure({ sound: next.sound, volume: next.volume, speak: next.speak });
     persistSettings(patch).catch(() => {});
     if (patch.everyMs && phase === "waiting") setNextAt((at) => at - previous.everyMs + patch.everyMs);
     if (patch.rhythm) {
@@ -477,11 +478,19 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
     if (!text) {
       if (Date.now() - shownAt.current < SETTLE_MS) return;
       session.reveal(question);
+      say(question);
       shownAt.current = Date.now();
       setNudge(false);
       return setPhase("grading");
     }
-    await settle(() => session.answer(question, text, { hinted: hintLevel > 0 }));
+    const result = await settle(() => session.answer(question, text, { hinted: hintLevel > 0 }));
+    if (result) say(question, result.closest);
+  }
+
+  // pronunciation (/settings), once the answer is out
+  function say(q, answer) {
+    const spoken = toSpeak(q, settingsRef.current.language, answer);
+    if (spoken) alerts.speak(spoken.text, spoken.lang);
   }
 
   const gradeSelf = (knew) => settle(() => session.selfGrade(question, knew, { hinted: hintLevel > 0 }));
@@ -499,8 +508,10 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
       if (length !== null && sessionDone.current === length) setNotice(t("quiz.sessionDone", { count: length }));
       setOutcome(result);
       celebrate(result);
+      return result;
     } catch (err) {
       setProblem(t("quiz.saveFailed", { error: err.message }));
+      return null;
     } finally {
       busy.current = false;
       waitForNext(nextDue);

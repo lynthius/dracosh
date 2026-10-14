@@ -97,6 +97,10 @@
         "label": "Dźwięk",
         "hint": "dźwięki odpowiedzi i nowej karty"
       },
+      "speak": {
+        "label": "Wymowa",
+        "hint": "czyta słowo na głos w języku talii, gdy odpowiedź jest już widoczna (głosy macOS)"
+      },
       "volume": {
         "label": "Głośność",
         "hint": "po zmianie zagra próbka"
