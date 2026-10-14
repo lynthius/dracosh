@@ -120,6 +120,9 @@ function spelledAnyWay(answer, candidate, lang) {
 
 // German umlauts and articles are what a learner has to get right: an answer without them still counts,
 // but as "almost" (the card doesn't move up)
+const NO_GENDER = new Set(["to", "att", "at", "å"]); // infinitive markers
+// elided or plural articles that don't show the gender, per language
+const NO_GENDER_SHOWN = { fr: new Set(["l'", "les", "des", "de l'"]), it: new Set(["l'"]), ca: new Set(["l'"]) };
 const GENDERED = new Set(["de", "fr", "es", "it", "pt", "ca", "nl", "sv", "da", "no", "nb", "nn"]);
 
 // Articles (and the infinitive's "to", "att", "å") in front of a word. An answer in that language may
@@ -177,7 +180,10 @@ const readings = (candidate) => {
 // out or swapped ("Hund", "die Hund" for "der Hund") is "article", and a German umlaut left plain
 // ("Bar" for "Bär") is "umlaut": right, but not quite, so the card stays where it was. One more typo
 // is forgiven on longer answers, but never in numbers: "123457" isn't "123456".
-export function judge(answer, candidates, { lang = null } = {}) {
+// `otherLang`: the other side's language (a card may be written the other way round); `native`: the
+// language you use Dracosh in, where a left-out article is no slip
+export const ALMOST = ["article", "umlaut", "article-umlaut"];
+export function judge(answer, candidates, { lang = null, otherLang = null, native = null } = {}) {
   if (!answer.trim()) return "wrong";
   if (candidates.some((c) => plain(c) === plain(answer))) return "exact";
   // each candidate on its own: a card with "猫" and "cat" still forgives a typo in "cat"
@@ -189,15 +195,28 @@ export function judge(answer, candidates, { lang = null } = {}) {
   const targets = candidates.flatMap((c) => spellings(c, lang));
   const ways = candidates.map((c) => spelledAnyWay(answer, c, lang));
   if (ways.includes("spelled")) return "accent";
-  if (ways.includes("plain")) return lang === "de" ? "umlaut" : "accent";
+  if (ways.includes("plain")) return lang === "de" && native !== "de" ? "umlaut" : "accent";
   if (targets.includes(given)) return "accent";
-  if (ARTICLES[lang]) {
-    const mine = splitArticle(answer, lang);
-    const same = candidates.map((c) => splitArticle(c, lang)).filter((c) => spellings(c.word, lang).includes(normalize(mine.word)));
-    // an article added, or any article in English (no gender there): as good; one left out or
-    // swapped where it carries the gender: almost
-    if (same.some((c) => !c.article || c.article === mine.article || lang === "en" || (!mine.article && !GENDERED.has(lang)))) return "accent";
-    if (same.length) return "article";
+  // the answer's language first, then the other side's, for a card written the other way round
+  // (only when the answer's own language has articles too, and for an article of two letters or more:
+  // Italian "i" in Polish "i tak" is no article)
+  for (const one of [...new Set([lang, ARTICLES[lang] ? otherLang : null])].filter((l) => ARTICLES[l])) {
+    const mine = splitArticle(answer, one);
+    const other = one !== lang;
+    const same = candidates
+      .map((c) => splitArticle(c, one))
+      .filter((c) => (!other || c.article.length >= 2) && spellings(c.word, one).includes(normalize(mine.word)));
+    if (!same.length) continue;
+    // Strict only in a language you're learning (your own you know), and only where the article
+    // shows the gender: an article added, English "the", an infinitive's "to", an elided "l'" or a
+    // plural "les" is as good as none
+    const learning = GENDERED.has(one) && one !== native;
+    const genderless = (c) => !learning || !c.article || c.article === mine.article || NO_GENDER.has(c.article) || NO_GENDER.has(mine.article) || Boolean(NO_GENDER_SHOWN[one]?.has(c.article));
+    const fine = same.filter(genderless);
+    // a German word still needs its umlauts after an added article ("die Bar" for "Bär")
+    const plainUmlaut = (list) => one === "de" && learning && list.every((c) => spelledAnyWay(mine.word, c.word, one) === "plain");
+    if (fine.length) return plainUmlaut(fine) ? "umlaut" : "accent";
+    return plainUmlaut(same) ? "article-umlaut" : "article";
   }
   // "email" for "e-mail", "icecream" for "ice cream": right, but shown with the spelling
   const compact = (s) => s.replace(/\s/g, ""); // hyphens between letters are spaces by now

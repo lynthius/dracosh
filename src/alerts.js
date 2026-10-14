@@ -33,7 +33,7 @@ export function createAlerts(initial = {}) {
       for (const kind of ["evolve", "goal", "combo"]) {
         if (cheers.includes(kind)) return play(kind);
       }
-      if (result === "typo" || result === "article" || result === "umlaut") return play("close");
+      if (result === "typo" || result === "article" || result === "umlaut" || result === "article-umlaut") return play("close");
       play(`correct-${Math.min(Math.max(combo - 1, 0), LADDER_STEPS - 1)}`);
     }
   };

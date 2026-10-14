@@ -16,12 +16,21 @@ export function newToday(state, now) {
 }
 
 // A review is waiting for the whole day it falls due, from midnight: a card answered at 17:00 yesterday
-// can be done this morning. A card just missed (streak 0) comes back at its minute, as it's meant to.
+// can be done this morning. But never sooner than half a day after it was answered, so a sitting across
+// midnight doesn't ask it again minutes later. A card just missed (streak 0) comes back at its minute.
+const MIN_GAP = 12 * 60 * MINUTE;
 export function readyAt(entry) {
   if (!entry.streak) return entry.due;
   const day = new Date(entry.due);
   day.setHours(0, 0, 0, 0);
-  return day.getTime();
+  return Math.min(entry.due, Math.max(day.getTime(), (entry.last ?? 0) + MIN_GAP));
+}
+
+// the same time of day, `days` calendar days later (a day with a clock change is still one day)
+function daysLater(now, days) {
+  const date = new Date(now);
+  date.setDate(date.getDate() + days);
+  return date.getTime();
 }
 
 const NEW_RATIO = 0.3; // when both due and unseen items exist, this share of questions introduces a new one
@@ -89,7 +98,7 @@ export function grade(entry, correct, now = Date.now(), { hinted = false } = {})
     // right after a miss the card starts over at box 1 (back tomorrow) instead of skipping ahead
     const relearning = prev.seen > 0 && prev.streak === 0;
     const box = hinted || relearning ? Math.max(prev.box, 1) : Math.min(prev.box + 1, BOX_INTERVALS_DAYS.length);
-    return { ...prev, box, due: now + BOX_INTERVALS_DAYS[box - 1] * DAY, seen: prev.seen + 1, correct: prev.correct + 1, streak: prev.streak + 1, last: now };
+    return { ...prev, box, due: daysLater(now, BOX_INTERVALS_DAYS[box - 1]), seen: prev.seen + 1, correct: prev.correct + 1, streak: prev.streak + 1, last: now };
   }
   return { ...prev, box: 1, due: now + RELEARN_DELAY, seen: prev.seen + 1, wrong: prev.wrong + 1, streak: 0, last: now };
 }

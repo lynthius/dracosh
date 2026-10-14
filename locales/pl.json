@@ -321,7 +321,8 @@
         "few": "{count} nowe karty czekają na jutro (do {max} nowych dziennie).",
         "many": "{count} nowych kart czeka na jutro (do {max} nowych dziennie).",
         "other": "{count} nowej karty czeka na jutro (do {max} nowych dziennie)."
-      }
+      },
+      "dayDoneHeldNext": "Karty wrócą {when}."
     },
     "previewNoAdd": "Podgląd nie dodaje kart; do tego uruchom dracosh.",
     "previewNoDecks": "Podgląd ma jedną talię demo; po swoje uruchom dracosh.",
@@ -345,8 +346,16 @@
     "escAgain": "Esc jeszcze raz, żeby wyjść.",
     "correctConfirm": "Uznać „{answer}” za dobrą odpowiedź i przyjmować ją od teraz?",
     "almost": {
-      "article": "Prawie: zwróć uwagę na rodzajnik. Karta zostaje na swoim poziomie.",
-      "umlaut": "Prawie: zwróć uwagę na umlaut (ä, ö, ü). Karta zostaje na swoim poziomie."
+      "article": "Prawie: zwróć uwagę na rodzajnik.",
+      "umlaut": "Prawie: zwróć uwagę na umlaut (ä, ö, ü); można też pisać ae, oe, ue.",
+      "article-umlaut": "Prawie: zwróć uwagę na rodzajnik i umlaut; można też pisać ae, oe, ue.",
+      "held": "Karta wróci {now}, a nie {would}.",
+      "days": {
+        "one": "jutro",
+        "few": "za {count} dni",
+        "many": "za {count} dni",
+        "other": "za {count} dnia"
+      }
     }
   },
   "dragon": {

@@ -1,8 +1,8 @@
-import { t as say } from "./i18n.js"; // `t` and `text` are taken here (the clock, an answer)
+import { language, t as say } from "./i18n.js"; // `t` and `text` are taken here (the clock, an answer)
 import { blankGap } from "./cardline.js";
-import { closestCandidate, judge } from "./judge.js";
-import { addVacation, applyAnswer, applyCaughtUp, applyOverrule, calendarMonth, cancelVacations, ensureProgress, markBadgesSeen, missedOn, recordMiss, snapshot, undoMiss, unseenBadges, vacationInfo } from "./progress.js";
-import { describeDue, grade, itemKey, nextDueAt, pickNext, startOfTomorrow } from "./scheduler.js";
+import { ALMOST, closestCandidate, judge } from "./judge.js";
+import { addVacation, applyAnswer, applyCaughtUp, markWorkWaiting, applyOverrule, calendarMonth, cancelVacations, ensureProgress, markBadgesSeen, missedOn, recordMiss, snapshot, undoMiss, unseenBadges, vacationInfo } from "./progress.js";
+import { BOX_INTERVALS_DAYS, describeDue, grade, itemKey, nextDueAt, pickNext, startOfTomorrow } from "./scheduler.js";
 import { recordAnswer, saveState } from "./store.js";
 import { createTipDeck } from "./tips.js";
 import { dayKey } from "./dates.js";
@@ -34,7 +34,10 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
     let nextDue = null;
     for (const { words, deck } of decks) {
       const directions = directionsOf(deck);
-      if (pickNext({ words, state, now: t, directions })) return { done: false, cheers: [] };
+      if (pickNext({ words, state, now: t, directions })) {
+        markWorkWaiting(ensureProgress(state, t), dayKey(t));
+        return { done: false, cheers: [] };
+      }
       const due = nextDueAt({ words, state, now: t, directions });
       if (due !== null && due < startOfTomorrow(t)) return { done: false, cheers: [] };
       if (due !== null && (nextDue === null || due < nextDue)) nextDue = due;
@@ -56,6 +59,7 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
     current = { words, deck };
     inTour = Boolean(deck?.tour);
     const item = pickNext({ words, state, now: now(), lastNoteId, directions: directionsOf(deck), tour: deck?.tour });
+    if (item && !deck?.tour) markWorkWaiting(ensureProgress(state, now()), dayKey(now())); // not a rest day after all
     // nothing to ask is a normal state, not an error: the UI shows a way on (a finished tour, a new
     // deck) or when the next card is due. Done with everything for today counts as the daily goal.
     if (!item) {
@@ -92,6 +96,7 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
       context: gap !== null ? item.word.translations.join(" / ") : "",
       // what the answer is written in, when the deck's languages are known: its own spellings count
       answerLanguage: (forward ? deck?.languages?.back : deck?.languages?.front) ?? null,
+      promptLanguage: (forward ? deck?.languages?.front : deck?.languages?.back) ?? null,
       wordCount: words.length,
       tour: Boolean(deck?.tour) // the tour marks what to type with `backticks`
     };
@@ -108,7 +113,7 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
   async function answer(question, text, { hinted = false } = {}) {
     const key = itemKey(question.word.noteId, question.direction);
     // answers you once declared right (/correct) count for this card from now on
-    const result = judge(text, [...question.expected, ...(state.accepted?.[key] ?? [])], { lang: question.answerLanguage });
+    const result = judge(text, [...question.expected, ...(state.accepted?.[key] ?? [])], { lang: question.answerLanguage, otherLang: question.promptLanguage, native: language() });
     return record(question, { result, text, hinted });
   }
 
@@ -128,7 +133,10 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
     const before = state.items[key];
     const comboBefore = totals.combo;
     // almost right (an article left out, an umlaut left plain) counts, but the card doesn't move up, like with a hint
-    const entry = grade(before, correct, t, { hinted: hinted || result === "article" || result === "umlaut" });
+    const almost = ALMOST.includes(result);
+    const entry = grade(before, correct, t, { hinted: hinted || almost });
+    const would = almost ? grade(before, true, t, { hinted }) : entry; // a hint alone would have held it too
+    const held = would.box > entry.box ? { days: BOX_INTERVALS_DAYS[entry.box - 1], would: BOX_INTERVALS_DAYS[would.box - 1] } : null;
     recordAnswer(state, question.word.noteId, question.direction, entry, t, { countNew: !question.tour });
 
     totals.asked += 1;
@@ -148,7 +156,7 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
     if (!question.tour) cheers.push(...(await settleDay()).cheers);
     // given/closest feed the per-letter diff the UI shows after a miss or a forgiven typo
     const closest = result === "exact" || !text ? null : closestCandidate(text, [...question.expected, ...(state.accepted?.[key] ?? [])], { lang: question.answerLanguage });
-    return { result, hinted: hinted && correct, dueIn: describeDue(entry, t), combo: totals.combo, cheers, given: text, closest, nextDue: upNext() };
+    return { result, held, hinted: hinted && correct, dueIn: describeDue(entry, t), combo: totals.combo, cheers, given: text, closest, nextDue: upNext() };
   }
 
   // Re-grade the last wrong answer as correct and remember the answer for this card.
@@ -275,5 +283,13 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
     return fresh;
   }
 
-  return { totals, next, answer, reveal, selfGrade, setDirections, forgetKeys, overrule, canOverrule, wrongAnswer, stats, month, missed, nextTip, pause, isFirstRun, markHatched, openBadges, forget, reset, inTour: () => inTour };
+  // cards added (or a direction switched on): there's work today, whether or not it's asked yet, so a
+  // quiet stretch ends here
+  async function workAdded() {
+    markWorkWaiting(ensureProgress(state, now()), dayKey(now()));
+    await save(state);
+    await settleDay(); // nothing askable after all (a direction switched off): the quiet stretch goes on
+  }
+
+  return { totals, next, answer, workAdded, reveal, selfGrade, setDirections, forgetKeys, overrule, canOverrule, wrongAnswer, stats, month, missed, nextTip, pause, isFirstRun, markHatched, openBadges, forget, reset, inTour: () => inTour };
 }

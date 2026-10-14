@@ -300,7 +300,8 @@
       "newTomorrow": {
         "one": "{count} new card waits for tomorrow (up to {max} new ones a day).",
         "other": "{count} new cards wait for tomorrow (up to {max} new ones a day)."
-      }
+      },
+      "dayDoneHeldNext": "Your cards come back {when}."
     },
     "previewNoAdd": "The preview can't add cards; run dracosh for that.",
     "previewNoDecks": "The preview has one demo deck; run dracosh for yours.",
@@ -322,8 +323,14 @@
     "escAgain": "Esc again to quit.",
     "correctConfirm": "Count \"{answer}\" as right, and accept it from now on?",
     "almost": {
-      "article": "Almost: mind the article. The card stays at its level.",
-      "umlaut": "Almost: mind the umlaut (ä, ö, ü). The card stays at its level."
+      "article": "Almost: mind the article.",
+      "umlaut": "Almost: mind the umlaut (ä, ö, ü); ae, oe, ue work too.",
+      "article-umlaut": "Almost: mind the article and the umlaut; ae, oe, ue work too.",
+      "held": "The card comes back {now}, not {would}.",
+      "days": {
+        "one": "tomorrow",
+        "other": "in {count} days"
+      }
     }
   },
   "dragon": {

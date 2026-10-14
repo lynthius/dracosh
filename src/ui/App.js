@@ -2,6 +2,7 @@ import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { Box, useApp, useInput, useStdout } from "ink";
 import { commandsFor } from "../commands.js";
 import { accentMarks, diffChars } from "../diff.js";
+import { ALMOST } from "../judge.js";
 import { AnswerInput } from "./AnswerInput.js";
 import { Header } from "./Header.js";
 import { setLanguage, t } from "../i18n.js";
@@ -42,6 +43,8 @@ const CHEER_STYLE = {
   combo: { icon: "»", color: theme.warn }
 };
 
+const QUIET_NIGHT_UNTIL = 7; // o'clock: no "new card" sound before then when a day's cards come in
+
 function clock(ms) {
   const total = Math.max(0, Math.ceil(ms / 1000));
   return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
@@ -76,8 +79,9 @@ function Verdict({ outcome, question }) {
   const showDiff = outcome.closest && outcome.given && !outcome.overruled && (wrong || outcome.result === "typo");
   return html`
     <${Box} flexDirection="column">
-      <${Text} color=${wrong ? theme.bad : theme.good} bold>${wrong ? "✗" : "✓"} ${outcome.result === "accent" || outcome.result === "umlaut" ? html`<${AccentedAnswers} expected=${question.expected} given=${outcome.given} closest=${outcome.closest} />` : question.expected.join(" / ")}${outcome.result === "typo" ? t("quiz.closeEnough") : ""}<//>
-      ${(outcome.result === "article" || outcome.result === "umlaut") && html`<${Text} color=${theme.warn}>${t(`quiz.almost.${outcome.result}`)}<//>`}
+      <${Text} color=${wrong ? theme.bad : theme.good} bold>${wrong ? "✗" : "✓"} ${outcome.result === "accent" || outcome.result === "umlaut" || outcome.result === "article-umlaut" ? html`<${AccentedAnswers} expected=${question.expected} given=${outcome.given} closest=${outcome.closest} />` : question.expected.join(" / ")}${outcome.result === "typo" ? t("quiz.closeEnough") : ""}<//>
+      ${ALMOST.includes(outcome.result) &&
+      html`<${Text} color=${theme.warn}>${t(`quiz.almost.${outcome.result}`)}${outcome.held ? ` ${t("quiz.almost.held", { now: t("quiz.almost.days", { count: outcome.held.days }), would: t("quiz.almost.days", { count: outcome.held.would }) })}` : ""}<//>`}
       ${showDiff && html`<${AnswerDiff} given=${outcome.given} closest=${outcome.closest} />`}
       ${question.word.example && html`<${Box} marginTop=${1}>${question.tour ? html`<${Marked} dimColor text=${question.word.example} />` : html`<${Text} dimColor italic>“${question.word.example}”<//>`}<//>`}
       ${(outcome.hinted || outcome.overruled) &&
@@ -153,7 +157,7 @@ function EmptyDeck({ deck, tour, count, nextDue, dayDone, heldNew = 0, now, widt
       : nextDue >= startOfTomorrow(now) && !dayDone
         ? [t("quiz.empty.deckDoneTitle", { deck }), t("quiz.empty.deckDoneNext", { when: whenDue(nextDue, now) })]
         : nextDue >= startOfTomorrow(now)
-        ? [t("quiz.empty.dayDoneTitle"), t("quiz.empty.dayDoneNext", { when: whenDue(nextDue, now) })]
+        ? [t("quiz.empty.dayDoneTitle"), t(heldNew > 0 ? "quiz.empty.dayDoneHeldNext" : "quiz.empty.dayDoneNext", { when: whenDue(nextDue, now) })]
         : [t("quiz.empty.laterTitle"), t("quiz.empty.laterNext", { when: whenDue(nextDue, now) })];
   return html`
     <${Box} flexDirection="column" width=${width}>
@@ -282,7 +286,8 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
   // with nothing to practise, the quiz picks up again by itself once the next card is due
   useEffect(() => {
     if (phase !== "empty" || !empty?.nextDue || screen !== "quiz" || confirming || now < empty.nextDue || pauseEnd(now)) return;
-    alerts.ask();
+    // a new day's cards are ready from midnight: they wait quietly till morning instead of chiming at night
+    if (new Date(now).getHours() >= QUIET_NIGHT_UNTIL) alerts.ask();
     ask();
   }, [now, phase, empty, screen, confirming, ask, alerts]);
 
@@ -535,6 +540,7 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
     setScreen("quiz");
     if (removed.length) session.forget(removed).catch(() => {});
     if (stale.length) session.forgetKeys(stale).catch(() => {});
+    if (added) session.workAdded().catch(() => {});
     const switching = started && (removed.length || phase === "empty" || addNew);
     if (switching) switchDeck(started);
     else if (phase === "empty" && added) ask();
@@ -588,6 +594,7 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
         ${screen === "add" && html`<${AddCard} current=${deck} actions=${library} onDone=${addDone} startNew=${addNew} />`}
         ${screen === "decks" && html`<${Decks} current=${deck} actions=${library} onDirections=${async (cardIds, directions) => {
           await session.setDirections(cardIds, directions);
+          await session.workAdded();
           if (phase === "asking" && question && cardIds.includes(question.word.noteId)) ask(); // the open card follows the new way at once
         }} onPick=${switchDeck} onNew=${() => (setAddNew(true), setScreen("add"))} onClose=${() => setScreen("quiz")} />`}
         ${!["settings", "reset", "add", "decks"].includes(screen) &&

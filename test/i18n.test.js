@@ -33,7 +33,7 @@ const dynamicKeys = [
   ...["always", "sometimes", "off"].map((mode) => `settings.tipModes.${mode}`),
   ...["deck", "line", "back"].flatMap((field) => [`add.fields.${field}.label`, `add.fields.${field}.hint`]),
   ...["noBack", "noFront", "slash", "inDeck", "twice"].map((issue) => `add.paste.issues.${issue}`),
-  ...["article", "umlaut"].map((reason) => `quiz.almost.${reason}`),
+  ...["article", "umlaut", "article-umlaut"].map((reason) => `quiz.almost.${reason}`),
   ...["progress", "everything"].flatMap((scope) => ["label", "note", "question", "stays", "yes"].map((part) => `reset.${scope}.${part}`)),
   ...["cards", "progress", "settings"].map((part) => `cli.restore.what.${part}`),
   ...["daily", "before-reset", "before-delete", "before-restore"].map((reason) => `cli.restore.reasons.${reason}`),

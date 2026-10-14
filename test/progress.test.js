@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { addDays, daysBetween, dayKey, weekStart } from "../src/dates.js";
-import { addVacation, applyAnswer, applyCaughtUp, BADGES, freezesNow, calendarMonth, currentStreak, ELEMENTS, ensureProgress, missedOn, recordMiss, snapshot, stageFor, undoMiss } from "../src/progress.js";
+import { addVacation, applyAnswer, applyCaughtUp, BADGES, markQuiet, markWorkWaiting, freezesNow, calendarMonth, currentStreak, ELEMENTS, ensureProgress, missedOn, recordMiss, snapshot, stageFor, undoMiss } from "../src/progress.js";
 
 const at = (day, hour = 10) => new Date(`${day}T${String(hour).padStart(2, "0")}:00:00`).getTime();
 const freshState = (now) => {
@@ -356,4 +356,29 @@ test("days with nothing to practise don't break the streak or make a comeback, o
   const back = answer(state, at("2026-10-12"), { goal: 1 });
   assert.ok(!badgeIds(back.cheers).some((t) => /Welcome back/.test(t)), "nothing was due in between");
   assert.equal(snapshot(state, { goal: 1, now: at("2026-10-12") }).streak.days, 2);
+});
+
+test("a later day done doesn't take back the rest days before it, and new work ends a quiet stretch", () => {
+  const state = freshState(at("2026-09-01"));
+  answer(state, at("2026-09-01"), { goal: 1 });
+  applyCaughtUp(state, { goal: 1, now: at("2026-09-01"), nextDue: at("2026-09-05") });
+  applyCaughtUp(state, { goal: 1, now: at("2026-09-03"), nextDue: at("2026-09-05") }); // opened on a quiet day
+  answer(state, at("2026-09-05"), { goal: 1 });
+  applyCaughtUp(state, { goal: 1, now: at("2026-09-05"), nextDue: at("2026-09-12") });
+  answer(state, at("2026-09-12"), { goal: 1 });
+  const now = snapshot(state, { goal: 1, now: at("2026-09-12") });
+  assert.equal(now.streak.days, 3, "every day with something due was done");
+  assert.equal(now.streak.freezes, 2, "no freeze went on a quiet day");
+
+  applyCaughtUp(state, { goal: 1, now: at("2026-09-12"), nextDue: at("2026-09-20") });
+  markWorkWaiting(state.progress, "2026-09-13"); // cards added on the 13th
+  assert.equal(snapshot(state, { goal: 1, now: at("2026-09-15") }).streak.freezes < 2, true, "skipping them costs");
+});
+
+test("a change that turns out to add no work (a direction switched off) leaves the quiet stretch as it was", () => {
+  const progress = { quietDays: [] };
+  markQuiet(progress, "2026-09-02", "2026-09-05");
+  markWorkWaiting(progress, "2026-09-02"); // something changed in /decks…
+  markQuiet(progress, "2026-09-02", "2026-09-05"); // …and the day is settled again: nothing to do after all
+  assert.deepEqual(progress.quietDays, [{ from: "2026-09-02", until: "2026-09-05" }]);
 });

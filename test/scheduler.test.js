@@ -135,3 +135,13 @@ test("the daily limit counts new cards, not each way they're asked", async () =>
   delete state.items["a:pl-en"];
   assert.ok(pickNext({ words, state, now, directions: ["en-pl", "pl-en"] }), "a started card's other way still comes at the limit");
 });
+
+test("a sitting across midnight doesn't ask a card again minutes later; a clock change doesn't shorten a day", async () => {
+  const { grade, readyAt } = await import("../src/scheduler.js");
+  const late = new Date(2026, 9, 14, 23, 53).getTime();
+  const card = grade(null, true, late);
+  assert.ok(readyAt(card) >= late + 12 * 3_600_000, "half a day at least");
+  const night = new Date(2026, 9, 25, 0, 30).getTime(); // the night clocks go back in Europe
+  const learned = grade(null, true, night);
+  assert.equal(new Date(learned.due).getDate(), 26, "one calendar day later");
+});

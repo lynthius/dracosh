@@ -312,7 +312,8 @@
         "one": "{count} nouvelle carte attend demain (jusqu’à {max} nouvelles par jour).",
         "many": "{count} nouvelles cartes attendent demain (jusqu’à {max} nouvelles par jour).",
         "other": "{count} nouvelles cartes attendent demain (jusqu’à {max} nouvelles par jour)."
-      }
+      },
+      "dayDoneHeldNext": "Tes cartes reviennent {when}."
     },
     "previewNoAdd": "L'aperçu ne peut pas ajouter de cartes ; lance dracosh pour ça.",
     "previewNoDecks": "L'aperçu n'a qu'un paquet de démo ; lance dracosh pour les tiens.",
@@ -335,8 +336,15 @@
     "escAgain": "Échap encore une fois pour quitter.",
     "correctConfirm": "Compter « {answer} » comme juste et l'accepter désormais ?",
     "almost": {
-      "article": "Presque : attention à l’article. La carte reste à son niveau.",
-      "umlaut": "Presque : attention à l’umlaut (ä, ö, ü). La carte reste à son niveau."
+      "article": "Presque : attention à l’article.",
+      "umlaut": "Presque : attention au tréma (ä, ö, ü) ; ae, oe, ue marchent aussi.",
+      "article-umlaut": "Presque : attention à l’article et au tréma ; ae, oe, ue marchent aussi.",
+      "held": "La carte revient {now}, pas {would}.",
+      "days": {
+        "one": "demain",
+        "many": "dans {count} jours",
+        "other": "dans {count} jours"
+      }
     }
   },
   "dragon": {

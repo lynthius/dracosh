@@ -124,3 +124,10 @@ test("languages edited into the file by hand are tidied or guessed again, never 
   assert.deepEqual(read({ front: "EN", back: "pt-BR" }), { front: "en", back: "pt" });
   assert.equal(read({ front: "english", back: "pl" }), null);
 });
+
+test("languages that aren't a pair at all are guessed again, never a damaged library", async () => {
+  const { upgradeLibrary } = await import("../src/library.js");
+  for (const languages of [{ front: "pl", back: 5 }, { front: "pl" }, { front: "pl", back: "" }, "pl-de"]) {
+    assert.equal(upgradeLibrary({ version: 2, decks: [{ id: "d1", name: "X", languages }], cards: [] }).decks[0].languages, null);
+  }
+});

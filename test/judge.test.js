@@ -98,7 +98,7 @@ test("articles don't decide an answer in that language: left out or added it cou
   assert.equal(judge("die Hund", ["der Hund"], { lang: "de" }), "article");
   assert.equal(judge("der Hund", ["Hund"], { lang: "de" }), "accent", "an article added is fine");
   assert.equal(judge("Baer", ["der Bär"], { lang: "de" }), "article", "with a spelled-out umlaut too");
-  assert.equal(judge("eau", ["l'eau"], { lang: "fr" }), "article");
+  assert.equal(judge("eau", ["l'eau"], { lang: "fr" }), "accent", "an elided l' shows no gender");
   assert.equal(judge("l’eau", ["eau"], { lang: "fr" }), "accent");
   assert.equal(judge("la maison", ["la maison"], { lang: "fr" }), "exact");
   assert.equal(judge("gato", ["el gato"], { lang: "es" }), "article");
@@ -152,4 +152,27 @@ test("edge cases from testing: mixed scripts, long å runs, doubled articles, no
   assert.equal(judge("the the", ["cat"], { lang: "en" }), "wrong");
   assert.equal(judge("animal", ["猫 (animal)"]), "wrong", "a note in brackets isn't an answer");
   assert.equal(judge("猫", ["猫 (animal)"]), "exact");
+});
+
+test("an added article doesn't excuse a plain umlaut; an infinitive marker carries no gender", () => {
+  assert.equal(judge("die Bar", ["Bär"], { lang: "de" }), "umlaut");
+  assert.equal(judge("der Bär", ["Bär"], { lang: "de" }), "accent");
+  assert.equal(judge("springa", ["att springa"], { lang: "sv" }), "accent");
+  assert.equal(judge("lope", ["å løpe"], { lang: "no" }), "accent");
+});
+
+test("almost is for a language you're learning, finds a reversed card's articles, and names both slips", () => {
+  assert.equal(judge("chien", ["le chien"], { lang: "fr", native: "fr" }), "accent", "your own language: you know the article");
+  assert.equal(judge("chien", ["le chien"], { lang: "fr", native: "pl" }), "article");
+  assert.equal(judge("chats", ["les chats"], { lang: "fr" }), "accent", "a plural les shows no gender");
+  assert.equal(judge("gato", ["el gato"], { lang: "fr", otherLang: "es" }), "article", "a card written the other way round");
+  assert.equal(judge("Apfel", ["die Äpfel"], { lang: "de" }), "article-umlaut");
+  assert.equal(judge("Fruhstuck", ["das Frühstück"], { lang: "de" }), "article-umlaut");
+});
+
+test("the other side's articles never excuse a wrong answer, and almost leaves your own language alone", () => {
+  assert.equal(judge("tak", ["i tak"], { lang: "pl", otherLang: "it", native: "pl" }), "wrong");
+  assert.equal(judge("Bar", ["Bär"], { lang: "de", native: "de" }), "accent");
+  assert.equal(judge("Hundes", ["des Hundes"], { lang: "de" }), "article", "German des shows the gender");
+  assert.equal(judge("perros", ["los perros"], { lang: "es" }), "article", "Spanish los shows it too");
 });

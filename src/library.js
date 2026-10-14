@@ -37,8 +37,7 @@ function cleanList(values) {
 
 const isText = (value) => typeof value === "string";
 const filled = (value) => isText(value) && value.trim() !== "";
-const validLanguages = (languages) => languages == null || (typeof languages === "object" && filled(languages.front) && filled(languages.back));
-const validDeck = (deck) => deck && isText(deck.id) && filled(deck.name) && validLanguages(deck.languages);
+const validDeck = (deck) => deck && isText(deck.id) && filled(deck.name); // odd languages are tidied below
 // a cloze card's answers are its gaps, so its back (shown as a hint) may be empty
 const validCard = (card) =>
   card && isText(card.id) && isText(card.deckId) && filled(card.front) && Array.isArray(card.back) && (card.cloze ? gapsOf(card.front).length > 0 : card.back.length > 0) && card.back.every(filled);
@@ -62,7 +61,8 @@ export function upgradeLibrary(raw) {
   // languages edited by hand ("EN", "pt-BR", "english") are tidied, or left to be guessed again
   const tidy = (languages) => {
     try {
-      return cleanLanguages(languages && { front: String(languages.front).split(/[-_]/)[0], back: String(languages.back).split(/[-_]/)[0] });
+      if (!languages || typeof languages !== "object") return null;
+      return cleanLanguages({ front: String(languages.front).split(/[-_]/)[0], back: String(languages.back).split(/[-_]/)[0] });
     } catch {
       return null;
     }
