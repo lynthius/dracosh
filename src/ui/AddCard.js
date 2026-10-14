@@ -3,6 +3,8 @@ import { Box, useInput } from "ink";
 import { MAX_DECK_NAME, typedSides } from "../library.js";
 import { blankGap, formatLine, gapsOf, parseBack, parseLine, plainFront } from "../cardline.js";
 import { normalize } from "../judge.js";
+import { isKnown } from "../language.js";
+import { LanguagePicker, pairText } from "./Languages.js";
 import { AnswerInput } from "./AnswerInput.js";
 import { Choice, choiceHints } from "./Choice.js";
 import { t } from "../i18n.js";
@@ -144,6 +146,8 @@ export function AddCard({ current, actions, onDone, startNew = false }) {
     if (deck.isNew && !card.cloze) {
       setDirection(0);
       setSample(card);
+      setLangs(null);
+      actions.languagesOf(deck.name).then(setLangs, () => {});
       picking.current = false;
       typedAhead.current = "";
       return setStep("direction");
@@ -261,6 +265,7 @@ export function AddCard({ current, actions, onDone, startNew = false }) {
   // choice and go into the field, so nothing typed is lost
   // Typing the next card right away keeps option 1: the keys wait in `typedAhead` until the field is back.
   // `picking` stays set for the rest of the step, so a key that lands while the pick saves can't pick again.
+  const [langs, setLangs] = useState(null); // the new deck's languages, as guessed from its first card
   const typedAhead = useRef("");
   const picking = useRef(false);
   const pickedByChoice = useRef(false);
@@ -323,6 +328,7 @@ export function AddCard({ current, actions, onDone, startNew = false }) {
   useInput(
     (input, key) => {
       if (pickedByChoice.current) return void (pickedByChoice.current = false);
+      if (key.rightArrow && langs && !picking.current) return setStep("languages");
       if (picking.current && (key.backspace || key.delete)) return void (typedAhead.current = typedAhead.current.slice(0, -1));
       if (!input || key.ctrl || key.meta || key.tab || key.escape || key.return) return;
       if (!picking.current && /^[1-3]$/.test(input)) return; // Choice's own key
@@ -354,6 +360,17 @@ export function AddCard({ current, actions, onDone, startNew = false }) {
     },
     { isActive: step === "review" }
   );
+
+  async function saveLanguages(languages) {
+    setStep("direction");
+    try {
+      setLangs(await actions.setLanguages(deck.name, languages));
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  if (step === "languages") return html`<${LanguagePicker} deck=${deck.name} sample=${sample} languages=${langs} onDone=${saveLanguages} onCancel=${() => setStep("direction")} />`;
 
   const title =
     step === "pick" ? t("add.titlePick") : step === "deck" ? t(decks.length ? "add.titleNew" : "add.titleFirst") : step === "review" || step === "fix" ? t("add.paste.title", { deck: deck.name }) : t("add.titleCard", { deck: deck?.name ?? "" });
@@ -436,7 +453,8 @@ export function AddCard({ current, actions, onDone, startNew = false }) {
                 }}
               />
             <//>
-            <${Box} marginTop=${1}><${Text} dimColor>${t("add.directionLater")}<//><//>
+            ${langs && (isKnown(langs.front) || isKnown(langs.back)) && html`<${Box} marginTop=${1}><${Text} dimColor>${t("add.languagesLine", { pair: pairText(langs) })}<//><//>`}
+            <${Box} marginTop=${langs && (isKnown(langs.front) || isKnown(langs.back)) ? 0 : 1}><${Text} dimColor>${t("add.directionLater")}<//><//>
           <//>
         `}
         ${(step === "review" || step === "fix") &&

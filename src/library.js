@@ -65,7 +65,7 @@ export function upgradeLibrary(raw) {
 export const findDeck = (library, nameOrId) =>
   library.decks.find((deck) => deck.id === nameOrId) ?? library.decks.find((deck) => sameName(deck.name, nameOrId)) ?? null;
 
-export function createDeck(library, { name, type = "translation", languages = { front: "en", back: "pl" }, directions = "both", tour = false, now = Date.now() }) {
+export function createDeck(library, { name, type = "translation", languages = null, directions = "both", tour = false, now = Date.now() }) {
   const trimmed = String(name ?? "").trim();
   if (!trimmed) throw new Error(t("errors.deckNeedsName"));
   if (Array.from(trimmed).length > MAX_DECK_NAME) throw new Error(t("errors.deckNameTooLong", { max: MAX_DECK_NAME }));
@@ -85,6 +85,16 @@ export function setDirections(library, deckId, directions) {
   const deck = library.decks.find((d) => d.id === deckId);
   if (!deck) throw new Error("That deck doesn't exist.");
   deck.directions = directions;
+  return deck;
+}
+
+// `languages`: { front, back } as ISO 639-1 codes ("und": not one language), or null to go back to guessing
+const LANGUAGE_CODE = /^[a-z]{2,3}$/;
+export function setLanguages(library, deckId, languages) {
+  if (languages && ![languages.front, languages.back].every((code) => LANGUAGE_CODE.test(code ?? ""))) throw new Error(`Unknown language "${languages.front} → ${languages.back}".`);
+  const deck = library.decks.find((d) => d.id === deckId);
+  if (!deck) throw new Error("That deck doesn't exist.");
+  deck.languages = languages ? { front: languages.front, back: languages.back } : null;
   return deck;
 }
 

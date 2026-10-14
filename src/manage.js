@@ -2,7 +2,8 @@ import { t } from "./i18n.js";
 import { backupNow } from "./backup.js";
 import { seedLibrary } from "./starter.js";
 import { gapsOf } from "./cardline.js";
-import { addCard, cardsOf, createDeck, emptyLibrary, findDeck, findDuplicate, removeDeck, setDirections as setLibraryDirections, typedSides, updateCard } from "./library.js";
+import { addCard, cardsOf, createDeck, emptyLibrary, findDeck, findDuplicate, removeDeck, setDirections as setLibraryDirections, setLanguages as setLibraryLanguages, typedSides, updateCard } from "./library.js";
+import { deckLanguages } from "./language.js";
 import { itemKey } from "./scheduler.js";
 import { loadLibrary, saveLibrary } from "./store.js";
 
@@ -38,7 +39,7 @@ export function libraryActions({ load = loadLibrary, save = saveLibrary, backup 
       return library.decks.map((deck) => {
         const cards = cardsOf(library, deck.id);
         const sample = cards.find((card) => !card.cloze); // shows the deck's directions in /decks
-        return { name: deck.name, cards: cards.length, tour: Boolean(deck.tour), directions: deck.directions, sample: sample ? { front: sample.front, back: sample.back } : null };
+        return { name: deck.name, cards: cards.length, tour: Boolean(deck.tour), directions: deck.directions, languages: deckLanguages(deck, cards), sample: sample ? { front: sample.front, back: sample.back } : null };
       });
     },
 
@@ -75,6 +76,21 @@ export function libraryActions({ load = loadLibrary, save = saveLibrary, backup 
       const deck = setLibraryDirections(library, found.id, directions);
       await save(library);
       return { deck, cardIds: cards.map((card) => card.id) };
+    },
+
+    // → { front, back, guessed }: the languages set for the deck, or guessed from its cards
+    async languagesOf(deckName) {
+      const library = await load();
+      const deck = await deckNamed(library, deckName);
+      return deckLanguages(deck, cardsOf(library, deck.id));
+    },
+
+    // { front, back } from /decks; null goes back to guessing from the cards
+    async setLanguages(deckName, languages) {
+      const library = await load();
+      const deck = setLibraryLanguages(library, (await deckNamed(library, deckName)).id, languages);
+      await save(library);
+      return deckLanguages(deck, cardsOf(library, deck.id));
     },
 
     // the deck with this name (ignoring case), if any: /add says so before asking anything else
@@ -162,4 +178,4 @@ export function libraryActions({ load = loadLibrary, save = saveLibrary, backup 
 
 // the app's own: reads and writes ~/.dracosh
 const actions = libraryActions();
-export const { allDecks, ownDecks, startDeck, setDirections, existingDeck, existingCard, addCardTo, addCardsTo, updateCardIn, matchTourLanguage, backupBeforeReset, resetLibrary } = actions;
+export const { allDecks, ownDecks, startDeck, setDirections, languagesOf, setLanguages, existingDeck, existingCard, addCardTo, addCardsTo, updateCardIn, matchTourLanguage, backupBeforeReset, resetLibrary } = actions;

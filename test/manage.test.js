@@ -7,7 +7,7 @@ import { test } from "node:test";
 process.env.DRACOSH_HOME = mkdtempSync(join(tmpdir(), "dracosh-"));
 const { loadLibrary, saveLibrary } = await import("../src/store.js");
 const { seedLibrary, STARTER_DECK } = await import("../src/starter.js");
-const { addCardTo, addCardsTo, allDecks, existingCard, ownDecks, setDirections, startDeck, updateCardIn } = await import("../src/manage.js");
+const { addCardTo, addCardsTo, allDecks, existingCard, languagesOf, ownDecks, setDirections, setLanguages, startDeck, updateCardIn } = await import("../src/manage.js");
 const { listBackups } = await import("../src/backup.js");
 const { loadWords } = await import("../src/words.js");
 const { createSession } = await import("../src/session.js");
@@ -140,4 +140,15 @@ test("a switch that would make a '/' text something to type is refused; otherwis
   await assert.rejects(setDirections("Paths", "backward"), /\/usr/);
   const { cardIds } = await setDirections("Paths", "forward");
   assert.equal(cardIds.length, 1);
+});
+
+test("a deck's languages are guessed from its cards until you set them; null goes back to guessing", async () => {
+  await startDeck({ name: "Niemiecki" });
+  await addCardsTo("Niemiecki", [{ front: "die Katze", back: ["kot"] }, { front: "der Hund", back: ["pies"] }, { front: "die Straße", back: ["ulica"] }]);
+  assert.deepEqual(await languagesOf("Niemiecki"), { front: "de", back: "und", guessed: true });
+  assert.deepEqual(await setLanguages("Niemiecki", { front: "de", back: "pl" }), { front: "de", back: "pl", guessed: false });
+  assert.deepEqual((await allDecks()).find((d) => d.name === "Niemiecki").languages, { front: "de", back: "pl", guessed: false });
+  assert.equal((await loadWords("Niemiecki")).deck.languages.back, "pl", "the quiz sees them too");
+  await assert.rejects(setLanguages("Niemiecki", { front: "German", back: "pl" }));
+  assert.equal((await setLanguages("Niemiecki", null)).guessed, true);
 });

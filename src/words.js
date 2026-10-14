@@ -1,4 +1,5 @@
 import { t } from "./i18n.js";
+import { deckLanguages } from "./language.js";
 import { cardsOf, findDeck, toWords } from "./library.js";
 import { loadLibrary } from "./store.js";
 
@@ -14,7 +15,9 @@ export async function loadWords(deckRef) {
   const library = await loadLibrary();
   const deck = deckRef ? findDeck(library, deckRef) : (library.decks.find((d) => !d.tour) ?? library.decks[0]);
   if (!deck) throw missingDeck(library, deckRef);
-  return { words: toWords(cardsOf(library, deck.id)), deck: { name: deck.name, languages: deck.languages, directions: deck.directions, tour: Boolean(deck.tour) } };
+  const cards = cardsOf(library, deck.id);
+  // the tour is written in the UI's language on both sides: no pair to show or check by
+  return { words: toWords(cards), deck: { name: deck.name, languages: deck.tour ? null : deckLanguages(deck, cards), directions: deck.directions, tour: Boolean(deck.tour) } };
 }
 
 // every deck of yours (not the tour), for "is anything still waiting today?"

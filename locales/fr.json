@@ -71,10 +71,11 @@
     "pasteFix": "entrée valider · échap retour",
     "grading": "1 ou ← je ne savais pas · 2 ou → je savais",
     "sessionWaiting": "entrée carte suivante · / commandes · q quitter",
-    "decks": "→ sens · {choose}",
+    "decks": "→ réglages · {choose}",
     "directionPick": "{choose} · échap ou continuer à taper garde 1",
     "addName": "entrée créer · échap annuler",
-    "confirm": "{yes} oui · {no} non"
+    "confirm": "{yes} oui · {no} non",
+    "languagePick": "tape pour chercher · ↑/↓ choisir · entrée valider · échap retour"
   },
   "settings": {
     "title": "Réglages",
@@ -194,7 +195,9 @@
     "directionSaved": "« {deck} » interroge ainsi dès la prochaine carte.",
     "front": "recto",
     "back": "verso",
-    "progressKept": "La progression de chaque sens est conservée, même si tu le désactives."
+    "progressKept": "La progression de chaque sens est conservée, même si tu le désactives.",
+    "askRow": "Sens des questions",
+    "languagesRow": "Langues"
   },
   "add": {
     "fields": {
@@ -270,7 +273,8 @@
         "many": "{count} lignes ignorées : elles restaient à corriger.",
         "other": "{count} lignes ignorées : elles restaient à corriger."
       }
-    }
+    },
+    "languagesLine": "Langues : {pair}  ·  → modifier"
   },
   "quiz": {
     "youWrote": "ta réponse : ",
@@ -1090,5 +1094,16 @@
         "example": "À toi de jouer : tape `/add` pour créer ton propre paquet. La visite lui fait de la place."
       }
     ]
+  },
+  "languages": {
+    "unknown": "inconnue",
+    "unknownNote": "réponses vérifiées de façon générale",
+    "guessed": "d’après les cartes",
+    "frontQuestion": "En quelle langue sont les rectos de « {deck} » ?",
+    "backQuestion": "En quelle langue sont les versos de « {deck} » ?",
+    "example": "p. ex. {sample}",
+    "search": "recherche :",
+    "noMatch": "Aucune langue ne correspond à « {query} ».",
+    "saved": "« {deck} » : {pair}."
   }
 }

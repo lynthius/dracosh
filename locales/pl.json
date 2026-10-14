@@ -71,10 +71,11 @@
     "pasteFix": "enter gotowe · esc wstecz",
     "grading": "1 lub ← nie pamiętam · 2 lub → pamiętam",
     "sessionWaiting": "enter następna karta · / komendy · q wyjdź",
-    "decks": "→ kierunek · {choose}",
+    "decks": "→ ustawienia · {choose}",
     "directionPick": "{choose} · esc lub pisanie dalej zostawia 1",
     "addName": "enter utwórz · esc anuluj",
-    "confirm": "{yes} tak · {no} nie"
+    "confirm": "{yes} tak · {no} nie",
+    "languagePick": "pisz, by szukać · ↑/↓ wybierz · enter potwierdź · esc wstecz"
   },
   "settings": {
     "title": "Ustawienia",
@@ -198,7 +199,9 @@
     "directionSaved": "Od następnej karty talia „{deck}” pyta w nowy sposób.",
     "front": "przód",
     "back": "tył",
-    "progressKept": "Postęp każdego kierunku zostaje, nawet gdy go wyłączysz."
+    "progressKept": "Postęp każdego kierunku zostaje, nawet gdy go wyłączysz.",
+    "askRow": "Jak pyta",
+    "languagesRow": "Języki"
   },
   "add": {
     "fields": {
@@ -278,7 +281,8 @@
         "many": "Pominięto {count} linii: wymagały poprawki.",
         "other": "Pominięto {count} linii: wymagały poprawki."
       }
-    }
+    },
+    "languagesLine": "Języki: {pair}  ·  → zmień"
   },
   "quiz": {
     "youWrote": "twoja odpowiedź: ",
@@ -1113,5 +1117,16 @@
         "example": "Teraz twoja kolej: wpisz `/add` i stwórz własną talię. Samouczek zrobi jej miejsce."
       }
     ]
+  },
+  "languages": {
+    "unknown": "nieznany",
+    "unknownNote": "odpowiedzi sprawdzane ogólnie",
+    "guessed": "zgadnięto po kartach",
+    "frontQuestion": "W jakim języku jest przód kart w talii „{deck}”?",
+    "backQuestion": "W jakim języku jest tył kart w talii „{deck}”?",
+    "example": "np. {sample}",
+    "search": "szukaj:",
+    "noMatch": "Żaden język nie pasuje do „{query}”.",
+    "saved": "„{deck}”: {pair}."
   }
 }

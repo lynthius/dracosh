@@ -71,10 +71,11 @@
     "pasteFix": "enter fertig · esc zurück",
     "grading": "1 oder ← wusste ich nicht · 2 oder → wusste ich",
     "sessionWaiting": "enter nächste Karte · / Befehle · q beenden",
-    "decks": "→ Richtung · {choose}",
+    "decks": "→ Einstellungen · {choose}",
     "directionPick": "{choose} · esc oder weitertippen behält 1",
     "addName": "enter anlegen · esc abbrechen",
-    "confirm": "{yes} ja · {no} nein"
+    "confirm": "{yes} ja · {no} nein",
+    "languagePick": "tippen zum Suchen · ↑/↓ wählen · enter bestätigen · esc zurück"
   },
   "settings": {
     "title": "Einstellungen",
@@ -190,7 +191,9 @@
     "directionSaved": "„{deck}“ fragt ab der nächsten Karte in der neuen Richtung.",
     "front": "Vorderseite",
     "back": "Rückseite",
-    "progressKept": "Der Fortschritt bleibt für jede Richtung erhalten, auch für eine ausgeschaltete."
+    "progressKept": "Der Fortschritt bleibt für jede Richtung erhalten, auch für eine ausgeschaltete.",
+    "askRow": "Abfragerichtung",
+    "languagesRow": "Sprachen"
   },
   "add": {
     "fields": {
@@ -262,7 +265,8 @@
         "one": "1 Zeile übersprungen: Sie musste noch korrigiert werden.",
         "other": "{count} Zeilen übersprungen: Sie mussten noch korrigiert werden."
       }
-    }
+    },
+    "languagesLine": "Sprachen: {pair}  ·  → ändern"
   },
   "quiz": {
     "youWrote": "deine Antwort: ",
@@ -1042,5 +1046,16 @@
         "example": "Jetzt bist du dran: Tippe `/add`, um deinen eigenen Stapel anzulegen. Die Tour macht ihm Platz."
       }
     ]
+  },
+  "languages": {
+    "unknown": "unbekannt",
+    "unknownNote": "Antworten allgemein geprüft",
+    "guessed": "aus den Karten erraten",
+    "frontQuestion": "In welcher Sprache sind die Vorderseiten von „{deck}“?",
+    "backQuestion": "In welcher Sprache sind die Rückseiten von „{deck}“?",
+    "example": "z. B. {sample}",
+    "search": "Suche:",
+    "noMatch": "Keine Sprache passt zu „{query}“.",
+    "saved": "„{deck}“: {pair}."
   }
 }

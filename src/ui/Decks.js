@@ -2,19 +2,22 @@ import { Fragment, useEffect, useState } from "react";
 import { Box, useInput } from "ink";
 import { t } from "../i18n.js";
 import { Choice, choiceHints } from "./Choice.js";
+import { LanguagePicker, pairText } from "./Languages.js";
 import { cutToWidth, html, KeyHints, Text, theme, usePanelWidth } from "./kit.js";
 
 const DIRECTIONS = ["forward", "backward", "both"];
 
 // /decks: your decks with their card counts; Enter quizzes the chosen one from now on, and
-// "+ New deck" starts one (`onNew`). → on a deck of yours: which way it's asked. Renaming and deleting
-// decks come later.
+// "+ New deck" starts one (`onNew`). → on a deck of yours: which way it's asked and its languages.
+// Renaming and deleting decks come later.
 export function Decks({ current, actions, onPick, onNew, onClose, onDirections }) {
   const panel = usePanelWidth();
   const [decks, setDecks] = useState(null);
   const [picked, setPicked] = useState(0);
   const [error, setError] = useState("");
+  const [menu, setMenu] = useState(null); // { deck, selected }: a deck's settings
   const [setting, setSetting] = useState(null); // { deck, selected }: the direction being picked
+  const [naming, setNaming] = useState(null); // the deck whose languages are being picked
   const [message, setMessage] = useState("");
 
   useEffect(() => {
@@ -30,9 +33,9 @@ export function Decks({ current, actions, onPick, onNew, onClose, onDirections }
   useInput((input, key) => {
     if (!decks?.length && (key.escape || input === "q")) onClose();
     const deck = decks?.[picked];
-    if (key.rightArrow && !setting && deck && !deck.tour) {
+    if (key.rightArrow && !menu && !setting && !naming && deck && !deck.tour) {
       setMessage("");
-      setSetting({ deck, selected: Math.max(0, DIRECTIONS.indexOf(deck.directions)) });
+      setMenu({ deck, selected: 0 });
     }
   });
 
@@ -50,6 +53,25 @@ export function Decks({ current, actions, onPick, onNew, onClose, onDirections }
     }
   }
 
+  function openSetting(index) {
+    const { deck } = menu;
+    setMenu(null);
+    if (index === 0) return setSetting({ deck, selected: Math.max(0, DIRECTIONS.indexOf(deck.directions)) });
+    setNaming(deck);
+  }
+
+  async function setLanguages(languages) {
+    const deck = naming;
+    setNaming(null);
+    try {
+      const saved = await actions.setLanguages(deck.name, languages);
+      setDecks((all) => all.map((d) => (d.name === deck.name ? { ...d, languages: saved } : d)));
+      setMessage(t("languages.saved", { deck: deck.name, pair: pairText(saved) }));
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
   const short = (text) => cutToWidth(text, Math.max(12, Math.floor(panel / 2) - 8));
   const directionOptions = (deck) => {
     const [front, back] = deck.sample ? [short(deck.sample.front), short(deck.sample.back.join(" / "))] : [t("decks.front"), t("decks.back")];
@@ -59,6 +81,33 @@ export function Decks({ current, actions, onPick, onNew, onClose, onDirections }
       { label: t("add.bothWays"), note: deck.directions === "both" ? t("decks.now") : "" }
     ];
   };
+
+  if (naming) return html`<${LanguagePicker} deck=${naming.name} sample=${naming.sample} languages=${naming.languages} onDone=${setLanguages} onCancel=${() => setNaming(null)} />`;
+
+  if (menu) {
+    const { deck } = menu;
+    const how = directionOptions(deck)[Math.max(0, DIRECTIONS.indexOf(deck.directions))].label;
+    return html`
+      <${Fragment}>
+        <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.accent} paddingX=${2} width=${panel}>
+          <${Text} bold color=${theme.accent}>${deck.name}<//>
+          <${Box} marginTop=${1}>
+            <${Choice}
+              options=${[
+                { label: t("decks.askRow"), note: deck.directions === "both" ? t("add.bothWays") : how },
+                { label: t("decks.languagesRow"), note: pairText(deck.languages) + (deck.languages.guessed ? ` · ${t("languages.guessed")}` : "") }
+              ]}
+              selected=${menu.selected}
+              onMove=${(selected) => setMenu((m) => ({ ...m, selected }))}
+              onPick=${openSetting}
+              onCancel=${() => setMenu(null)}
+            />
+          <//>
+        <//>
+        <${Box} paddingX=${1}><${KeyHints} text=${choiceHints()} /><//>
+      <//>
+    `;
+  }
 
   if (setting)
     return html`
