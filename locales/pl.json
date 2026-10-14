@@ -75,7 +75,8 @@
     "directionPick": "{choose} · → języki · esc lub pisanie dalej zostawia 1",
     "addName": "enter utwórz · esc anuluj",
     "confirm": "{yes} tak · {no} nie",
-    "languagePick": "pisz, by szukać · ↑/↓ wybierz · enter potwierdź · esc wstecz"
+    "languagePick": "pisz, by szukać · ↑/↓ wybierz · enter potwierdź · ← wstecz",
+    "choiceLeft": "{choose} · ← wstecz"
   },
   "settings": {
     "title": "Ustawienia",

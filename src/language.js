@@ -282,7 +282,8 @@ export function deckLanguages(deck, cards = [], ui = language()) {
     const [front, back] = turned > asIs ? [b, a] : [a, b];
     if (fits(front, "front") && fits(back, "back")) Object.assign(found, { front, back });
   }
-  for (const side of ["front", "back"]) {
+  // twice round: a side filled in on the way may be what the other one needed ("English" with a Polish back)
+  for (const side of ["front", "back", "front"]) {
     if (!open(side)) continue;
     const taken = found[other(side)];
     // the deck's language goes where the cards lean to it, or opposite a side known to be another one

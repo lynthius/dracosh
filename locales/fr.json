@@ -75,7 +75,8 @@
     "directionPick": "{choose} · → langues · échap ou continuer à taper garde 1",
     "addName": "entrée créer · échap annuler",
     "confirm": "{yes} oui · {no} non",
-    "languagePick": "tape pour chercher · ↑/↓ choisir · entrée valider · échap retour"
+    "languagePick": "tape pour chercher · ↑/↓ choisir · entrée valider · ← retour",
+    "choiceLeft": "{choose} · ← retour"
   },
   "settings": {
     "title": "Réglages",

@@ -75,7 +75,8 @@
     "directionPick": "{choose} · → мови · esc або набір далі залишає 1",
     "addName": "enter створити · esc скасувати",
     "confirm": "{yes} так · {no} ні",
-    "languagePick": "пиши, щоб шукати · ↑/↓ вибрати · enter підтвердити · esc назад"
+    "languagePick": "пиши, щоб шукати · ↑/↓ вибрати · enter підтвердити · ← назад",
+    "choiceLeft": "{choose} · ← назад"
   },
   "settings": {
     "title": "Налаштування",

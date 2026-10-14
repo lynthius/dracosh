@@ -76,6 +76,7 @@ test("a side the cards don't tell comes from the deck's name, or from your langu
   assert.equal(deckLanguages({ name: "Biology" }, biology, "pl").front === "pl", false, "a deck in one language isn't given yours");
   assert.deepEqual(deckLanguages({ name: "Polski" }, [card("kot", "zwierzę domowe")], "uk"), { front: UNKNOWN, back: "pl", guessed: true }, "Latin letters are never Ukrainian");
   assert.deepEqual(deckLanguages({ name: "Empty" }, [], "pl"), { front: UNKNOWN, back: UNKNOWN, guessed: true });
+  assert.deepEqual(deckLanguages({ name: "English" }, [card("kot", "cat"), card("dog", "pies"), card("lizard", "jaszczurka")], "pl"), { front: "en", back: "pl", guessed: true }, "the back found first still helps the front");
 });
 
 test("Cyrillic and other close languages: unknown rather than mixed up", () => {

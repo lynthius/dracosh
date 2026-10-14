@@ -81,7 +81,7 @@ export function LanguagePicker({ deck, sample, languages, onDone, onCancel }) {
   }
 
   useInput((input, key) => {
-    if (key.escape) {
+    if (key.escape || key.leftArrow) {
       if (query) return search("");
       return side === "back" ? turnTo("front") : onCancel();
     }

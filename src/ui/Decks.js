@@ -34,6 +34,11 @@ export function Decks({ current, actions, onPick, onNew, onClose, onDirections }
   useInput((input, key) => {
     if (!decks?.length && (key.escape || input === "q")) onClose();
     const deck = decks?.[picked];
+    // → into a deck's settings, ← back out of them (Esc works too)
+    if (key.leftArrow && !naming) {
+      if (setting) return setSetting(null);
+      if (menu) return setMenu(null);
+    }
     if (key.rightArrow && !menu && !setting && !naming && deck && !deck.tour) {
       setMessage("");
       setMenu({ deck, selected: 0 });
@@ -111,7 +116,7 @@ export function Decks({ current, actions, onPick, onNew, onClose, onDirections }
             />
           <//>
         <//>
-        <${Box} paddingX=${1}><${KeyHints} text=${choiceHints()} /><//>
+        <${Box} paddingX=${1}><${KeyHints} text=${t("keyHints.choiceLeft", { choose: t("choice.keys") })} /><//>
       <//>
     `;
   }
@@ -126,7 +131,7 @@ export function Decks({ current, actions, onPick, onNew, onClose, onDirections }
           <//>
           <${Box} marginTop=${1}><${Text} dimColor>${t("decks.progressKept")}<//><//>
         <//>
-        <${Box} paddingX=${1}><${KeyHints} text=${choiceHints()} /><//>
+        <${Box} paddingX=${1}><${KeyHints} text=${t("keyHints.choiceLeft", { choose: t("choice.keys") })} /><//>
       <//>
     `;
   }

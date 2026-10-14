@@ -75,7 +75,8 @@
     "directionPick": "{choose} · → languages · esc or typing on keeps 1",
     "addName": "enter create · esc cancel",
     "confirm": "{yes} yes · {no} no",
-    "languagePick": "type to search · ↑/↓ choose · enter confirm · esc back"
+    "languagePick": "type to search · ↑/↓ choose · enter confirm · ← back",
+    "choiceLeft": "{choose} · ← back"
   },
   "settings": {
     "title": "Settings",

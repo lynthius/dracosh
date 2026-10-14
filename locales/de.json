@@ -75,7 +75,8 @@
     "directionPick": "{choose} · → Sprachen · esc oder weitertippen behält 1",
     "addName": "enter anlegen · esc abbrechen",
     "confirm": "{yes} ja · {no} nein",
-    "languagePick": "tippen zum Suchen · ↑/↓ wählen · enter bestätigen · esc zurück"
+    "languagePick": "tippen zum Suchen · ↑/↓ wählen · enter bestätigen · ← zurück",
+    "choiceLeft": "{choose} · ← zurück"
   },
   "settings": {
     "title": "Einstellungen",
