@@ -91,6 +91,35 @@ function spellings(candidate, lang) {
   return forms;
 }
 
+// Articles (and the infinitive's "to", "att", "å") in front of a word. An answer in that language may
+// leave them out or add them, and still counts: "cat" for "the cat", "Hund" for "der Hund". A
+// different one counts too, but shows as close, not quite right: "die Hund" for "der Hund".
+const ARTICLES = {
+  en: ["the", "a", "an", "to"],
+  de: ["der", "die", "das", "den", "dem", "des", "ein", "eine", "einen", "einem", "einer", "eines"],
+  fr: ["le", "la", "les", "un", "une", "des", "du", "de la", "de l'", "l'"],
+  es: ["el", "la", "los", "las", "un", "una", "unos", "unas"],
+  it: ["il", "lo", "la", "i", "gli", "le", "un", "uno", "una", "l'", "un'"],
+  pt: ["o", "a", "os", "as", "um", "uma", "uns", "umas"],
+  ca: ["el", "la", "els", "les", "un", "una", "l'"],
+  nl: ["de", "het", "een", "'t"],
+  sv: ["en", "ett", "att"],
+  da: ["en", "et", "at"],
+  no: ["en", "ei", "et", "å"]
+};
+// "the cat" → { article: "the", word: "cat" }; an answer that is only an article stays itself
+function splitArticle(text, lang) {
+  const lower = text.normalize("NFC").toLowerCase().trim().replace(/’/g, "'");
+  for (const article of [...(ARTICLES[lang] ?? [])].sort((a, b) => b.length - a.length)) {
+    const glued = article.endsWith("'");
+    if (lower.startsWith(glued ? article : `${article} `)) {
+      const word = lower.slice(article.length).trim();
+      if (word) return { article, word };
+    }
+  }
+  return { article: "", word: lower };
+}
+
 // Chinese, Japanese and Korean: one character is a whole word, so nothing is folded or forgiven
 const ONE_CHARACTER_WORDS = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/u;
 const exactly = (s) => plain(s).normalize("NFKC").replace(/\s/g, ""); // full-width "ＡＢＣ" is "abc"; spaces don't count
@@ -98,7 +127,8 @@ const exactly = (s) => plain(s).normalize("NFKC").replace(/\s/g, ""); // full-wi
 // → "exact" | "accent" | "typo" | "wrong"; accepts any one of the candidate answers. Missing or wrong
 // diacritics ("zolw" for "żółw") are "accent": right, quietly (not everyone has the letters on their
 // keyboard), with the missing letters marked in the verdict. `lang` is the answer's language, when the
-// deck's languages are known: it adds that language's own spellings ("Baer" for "Bär"). One more typo
+// deck's languages are known: it adds that language's own spellings ("Baer" for "Bär") and lets an
+// article be left out ("cat" for "the cat", also "accent") or swapped ("die Hund": "typo"). One more typo
 // is forgiven on longer answers, but never in numbers: "123457" isn't "123456".
 export function judge(answer, candidates, { lang = null } = {}) {
   if (!answer.trim()) return "wrong";
@@ -107,6 +137,13 @@ export function judge(answer, candidates, { lang = null } = {}) {
   const given = normalize(answer);
   const targets = candidates.flatMap((c) => spellings(c, lang));
   if (targets.includes(given)) return "accent";
+  if (ARTICLES[lang]) {
+    const mine = splitArticle(answer, lang);
+    const same = candidates.map((c) => splitArticle(c, lang)).filter((c) => spellings(c.word, lang).includes(normalize(mine.word)));
+    // English articles carry no gender: "a cat" for "the cat" is as good
+    if (same.some((c) => !c.article || !mine.article || c.article === mine.article || lang === "en")) return "accent";
+    if (same.length) return "typo";
+  }
   // "email" for "e-mail", "icecream" for "ice cream": right, but shown with the spelling
   const compact = (s) => s.replace(/\s/g, ""); // hyphens between letters are spaces by now
   if (targets.some((t) => compact(t) === compact(given))) return "typo";

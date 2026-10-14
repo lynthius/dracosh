@@ -87,3 +87,23 @@ test("Chinese, Japanese and Korean answers are checked exactly: one character is
   assert.equal(judge("고양이", ["고양이"]), "exact");
   assert.equal(judge("고양", ["고양이"]), "wrong");
 });
+
+test("articles don't decide an answer in that language: left out or added it counts, a different one is close", () => {
+  assert.equal(judge("cat", ["the cat"], { lang: "en" }), "accent");
+  assert.equal(judge("the cat", ["cat"], { lang: "en" }), "accent");
+  assert.equal(judge("go", ["to go"], { lang: "en" }), "accent");
+  assert.equal(judge("a cat", ["the cat"], { lang: "en" }), "accent", "a/the: either is fine");
+  assert.equal(judge("Hund", ["der Hund"], { lang: "de" }), "accent");
+  assert.equal(judge("die Hund", ["der Hund"], { lang: "de" }), "typo", "the wrong gender shows");
+  assert.equal(judge("Baer", ["der Bär"], { lang: "de" }), "accent", "with a spelled-out umlaut too");
+  assert.equal(judge("eau", ["l'eau"], { lang: "fr" }), "accent");
+  assert.equal(judge("l’eau", ["eau"], { lang: "fr" }), "accent");
+  assert.equal(judge("la maison", ["la maison"], { lang: "fr" }), "exact");
+  assert.equal(judge("gato", ["el gato"], { lang: "es" }), "accent");
+  assert.equal(judge("la gato", ["el gato"], { lang: "es" }), "typo");
+  assert.equal(judge("huis", ["het huis"], { lang: "nl" }), "accent");
+  assert.equal(judge("cat", ["the cat"]), "wrong", "a deck's language unknown: articles count");
+  assert.equal(judge("the", ["the"], { lang: "en" }), "exact", "an answer that is only an article stays itself");
+  assert.equal(judge("dog", ["the cat"], { lang: "en" }), "wrong");
+  assert.equal(judge("die Katze", ["the cat"], { lang: "en" }), "wrong", "another language's articles aren't stripped");
+});
