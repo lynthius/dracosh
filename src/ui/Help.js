@@ -30,9 +30,21 @@ const outside = () => [
   ["dracosh --help", t("help.outside.help")]
 ];
 
-// the left column fits its longest entry, whatever the language
+// the left column fits its longest entry, whatever the language; in a narrow pane each text goes
+// under its key instead of into a thin column
+const NARROW_TEXT = 24;
 function Rows({ rows }) {
+  const panel = usePanelWidth();
   const width = Math.max(...rows.map(([left]) => cellWidth(left))) + 2;
+  if (panel - 6 - width < NARROW_TEXT)
+    return rows.map(
+      ([left, right]) => html`
+        <${Box} key=${left} flexDirection="column">
+          <${Text} color=${theme.accent}>${left}<//>
+          <${Box} marginLeft=${2}><${Text}>${right}<//><//>
+        <//>
+      `
+    );
   return rows.map(
     ([left, right]) => html`
       <${Box} key=${left}>

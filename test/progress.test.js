@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { addDays, daysBetween, dayKey, weekStart } from "../src/dates.js";
-import { addVacation, applyAnswer, BADGES, freezesNow, calendarMonth, currentStreak, ELEMENTS, ensureProgress, missedOn, recordMiss, snapshot, stageFor, undoMiss } from "../src/progress.js";
+import { addVacation, applyAnswer, applyCaughtUp, BADGES, freezesNow, calendarMonth, currentStreak, ELEMENTS, ensureProgress, missedOn, recordMiss, snapshot, stageFor, undoMiss } from "../src/progress.js";
 
 const at = (day, hour = 10) => new Date(`${day}T${String(hour).padStart(2, "0")}:00:00`).getTime();
 const freshState = (now) => {
@@ -347,4 +347,13 @@ test("Welcome back needs 5 full days away, and a wrong first answer back doesn't
   answer(back, at("2026-10-05"), { goal: 99 });
   answer(back, at("2026-10-11"), { goal: 99, result: "wrong" });
   assert.ok(welcomed(answer(back, at("2026-10-11", 10), { goal: 99 }).cheers), "5 days away, the first answer back was wrong");
+});
+
+test("days with nothing to practise don't break the streak or make a comeback, opened or not", () => {
+  const state = freshState(at("2026-10-05"));
+  answer(state, at("2026-10-05"), { goal: 1 });
+  applyCaughtUp(state, { goal: 1, now: at("2026-10-05"), nextDue: at("2026-10-12") });
+  const back = answer(state, at("2026-10-12"), { goal: 1 });
+  assert.ok(!badgeIds(back.cheers).some((t) => /Welcome back/.test(t)), "nothing was due in between");
+  assert.equal(snapshot(state, { goal: 1, now: at("2026-10-12") }).streak.days, 2);
 });

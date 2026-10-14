@@ -116,3 +116,11 @@ test("the library round-trips through disk", async () => {
   await saveLibrary(library);
   assert.deepEqual(await loadLibrary(), library);
 });
+
+test("languages edited into the file by hand are tidied or guessed again, never a damaged library", async () => {
+  const { upgradeLibrary } = await import("../src/library.js");
+  const deck = (languages) => ({ id: "d1", name: "X", languages });
+  const read = (languages) => upgradeLibrary({ version: 2, decks: [deck(languages)], cards: [] }).decks[0].languages;
+  assert.deepEqual(read({ front: "EN", back: "pt-BR" }), { front: "en", back: "pt" });
+  assert.equal(read({ front: "english", back: "pl" }), null);
+});

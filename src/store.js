@@ -82,7 +82,8 @@ export const saveState = (state) => writeJson(STATE_FILE, state);
 // `countNew: false` keeps a card out of the daily cap on new cards (the tour's don't use it up)
 export function recordAnswer(state, noteId, direction, entry, now = Date.now(), { countNew = true } = {}) {
   const key = itemKey(noteId, direction);
-  const isNew = countNew && !state.items[key];
+  // a new card counts once towards the daily limit, whichever way it's asked first
+  const isNew = countNew && !state.items[key] && !Object.keys(state.items).some((k) => k.startsWith(`${noteId}:`));
   const date = dayKey(now);
   state.items[key] = entry;
   if (isNew) state.newToday = { date, count: newToday(state, now) + 1 };

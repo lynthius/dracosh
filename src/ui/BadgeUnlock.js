@@ -40,7 +40,7 @@ export function BadgeUnlock({ id, name, desc, delay = 0, sound = badgeSound(0), 
   const sparks = frame < SPARKS_UNTIL ? `  ${Array.from({ length: 3 }, (_, i) => SPARKS[(frame + i) % SPARKS.length]).join(" ")}` : "";
 
   return html`
-    <${Box}>
+    <${Text}>
       <${Text} color=${color}>✦ <//>
       <${Text} color=${theme.warn}>${t("badgeUnlock.label")}<//>
       <${Text} bold color=${color}>${name}<//>

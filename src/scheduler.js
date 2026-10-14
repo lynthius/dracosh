@@ -15,6 +15,15 @@ export function newToday(state, now) {
   return state.newToday?.date === dayKey(now) ? state.newToday.count : 0;
 }
 
+// A review is waiting for the whole day it falls due, from midnight: a card answered at 17:00 yesterday
+// can be done this morning. A card just missed (streak 0) comes back at its minute, as it's meant to.
+export function readyAt(entry) {
+  if (!entry.streak) return entry.due;
+  const day = new Date(entry.due);
+  day.setHours(0, 0, 0, 0);
+  return day.getTime();
+}
+
 const NEW_RATIO = 0.3; // when both due and unseen items exist, this share of questions introduces a new one
 const MAX_OVERDUE_WEIGHT_DAYS = 3;
 
@@ -42,7 +51,9 @@ export function pickNext({ words, state, now = Date.now(), lastNoteId = null, di
   if (tour) return candidates.find((c) => !c.entry) ?? null;
 
   const canIntroduce = newToday(state, now) < NEW_PER_DAY;
-  const waiting = candidates.filter((c) => (c.entry ? c.entry.due <= now : canIntroduce));
+  // the other way round of a card already started is no new card: the daily limit counts cards
+  const started = new Set(candidates.filter((c) => c.entry).map((c) => c.word.noteId));
+  const waiting = candidates.filter((c) => (c.entry ? readyAt(c.entry) <= now : canIntroduce || started.has(c.word.noteId)));
   if (!waiting.length) return null;
   const pool = waiting.some((c) => c.word.noteId !== lastNoteId) ? waiting.filter((c) => c.word.noteId !== lastNoteId) : waiting;
 
@@ -59,7 +70,7 @@ export function nextDueAt({ words, state, now = Date.now(), directions = DIRECTI
   for (const word of words) {
     for (const direction of word.directions ?? directions) {
       const entry = state.items[itemKey(word.noteId, direction)];
-      const at = entry ? entry.due : startOfTomorrow(now);
+      const at = entry ? readyAt(entry) : startOfTomorrow(now);
       if (next === null || at < next) next = at;
     }
   }

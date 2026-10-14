@@ -56,3 +56,11 @@ test("a spelled-out letter isn't the mistake: the diff goes against the spelled-
   assert.equal(closestCandidate("Maedchn", ["Mädchen"], { lang: "de" }), "Maedchen");
   assert.equal(closestCandidate("Madchn", ["Mädchen"], { lang: "de" }), "Mädchen");
 });
+
+test("with gaps, a letter left out shows where it belongs", () => {
+  const shown = (given, target) => diffChars(given, target, { gaps: true }).map((p) => (p.missing ? "_" : p.ok ? p.ch : `[${p.ch}]`)).join("");
+  assert.match(shown("tomorow", "tomorrow"), /^tomo_?r_?ow$/, "one of the two r's");
+  assert.equal(shown("cat", "cart"), "ca_t");
+  assert.equal(shown("ありがと", "ありがとう"), "ありがと_");
+  assert.equal(shown("kot", "kot"), "kot");
+});

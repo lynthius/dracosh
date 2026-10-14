@@ -107,3 +107,31 @@ test("a correct answer given with a hint counts but does not climb a box", () =>
   assert.equal(hinted.box, 3);
   assert.equal(hinted.due, NOW + BOX_INTERVALS_DAYS[2] * DAY);
 });
+
+test("a review waits for the whole day it falls due; a card just missed keeps its minute", async () => {
+  const { pickNext, readyAt } = await import("../src/scheduler.js");
+  const evening = new Date(2026, 9, 14, 17, 0).getTime();
+  const morning = new Date(2026, 9, 15, 7, 30).getTime();
+  const reviewed = { box: 1, streak: 1, due: evening + 24 * 3_600_000 };
+  assert.equal(readyAt(reviewed), new Date(2026, 9, 15).getTime());
+  const missed = { box: 1, streak: 0, due: morning + 10 * 60_000 };
+  assert.equal(readyAt(missed), missed.due);
+  const words = [{ noteId: "a", word: "kot", translations: ["cat"] }];
+  const state = { items: { "a:en-pl": reviewed }, newToday: { date: "", count: 0 } };
+  assert.ok(pickNext({ words, state, now: morning, directions: ["en-pl"] }), "yesterday's 17:00 card is ready at 7:30");
+});
+
+test("the daily limit counts new cards, not each way they're asked", async () => {
+  const { pickNext, NEW_PER_DAY } = await import("../src/scheduler.js");
+  const { recordAnswer } = await import("../src/store.js");
+  const now = new Date(2026, 9, 15, 9).getTime();
+  const words = [{ noteId: "a", word: "kot", translations: ["cat"] }];
+  const state = { items: {}, newToday: { date: "", count: 0 } };
+  recordAnswer(state, "a", "en-pl", { box: 1, streak: 1, due: now + 86_400_000 }, now);
+  assert.equal(state.newToday.count, 1);
+  recordAnswer(state, "a", "pl-en", { box: 1, streak: 1, due: now + 86_400_000 }, now);
+  assert.equal(state.newToday.count, 1, "the other way round of the same card isn't a new card");
+  state.newToday.count = NEW_PER_DAY;
+  delete state.items["a:pl-en"];
+  assert.ok(pickNext({ words, state, now, directions: ["en-pl", "pl-en"] }), "a started card's other way still comes at the limit");
+});

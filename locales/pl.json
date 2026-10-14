@@ -315,7 +315,13 @@
       "dayDoneTitle": "Na dziś to wszystko.",
       "dayDoneNext": "Karty wrócą {when}. Chcesz więcej dzisiaj? /add i dodaj nowe.",
       "laterTitle": "Na razie nie ma czego ćwiczyć.",
-      "laterNext": "Następna karta: {when}. Przyjdzie sama."
+      "laterNext": "Następna karta: {when}. Przyjdzie sama.",
+      "newTomorrow": {
+        "one": "{count} nowa karta czeka na jutro (do {max} nowych dziennie).",
+        "few": "{count} nowe karty czekają na jutro (do {max} nowych dziennie).",
+        "many": "{count} nowych kart czeka na jutro (do {max} nowych dziennie).",
+        "other": "{count} nowej karty czeka na jutro (do {max} nowych dziennie)."
+      }
     },
     "previewNoAdd": "Podgląd nie dodaje kart; do tego uruchom dracosh.",
     "previewNoDecks": "Podgląd ma jedną talię demo; po swoje uruchom dracosh.",
@@ -337,7 +343,11 @@
     },
     "sessionProgress": "{done} z {count} w tej sesji",
     "escAgain": "Esc jeszcze raz, żeby wyjść.",
-    "correctConfirm": "Uznać „{answer}” za dobrą odpowiedź i przyjmować ją od teraz?"
+    "correctConfirm": "Uznać „{answer}” za dobrą odpowiedź i przyjmować ją od teraz?",
+    "almost": {
+      "article": "Prawie: zwróć uwagę na rodzajnik. Karta zostaje na swoim poziomie.",
+      "umlaut": "Prawie: zwróć uwagę na umlaut (ä, ö, ü). Karta zostaje na swoim poziomie."
+    }
   },
   "dragon": {
     "stages": {
@@ -599,7 +609,7 @@
     "weekends": "weekendy",
     "noWeekends": "bez weekendów",
     "daysOff": " · wolne dni {ranges}",
-    "month": "Cel osiągnięty w {goalDays} z {days} dni · poprawne odpowiedzi: {correct}",
+    "month": "Dni z osiągniętym celem: {goalDays}/{days} · poprawne odpowiedzi: {correct}",
     "weekdays": "P W Ś C P S N",
     "badgesLine": "Odznaki: {unlocked}/{total} · /badges pokazuje wszystkie"
   },
@@ -1126,7 +1136,7 @@
     "notYet": "jeszcze nie wiadomo",
     "mixed": "inny lub mieszany",
     "mixedNote": "bez reguł jednego języka",
-    "current": "teraz",
+    "current": "obecny",
     "guessed": "rozpoznane po kartach",
     "frontQuestion": "W jakim języku jest przód kart w talii „{deck}”?",
     "backQuestion": "W jakim języku jest tył kart w talii „{deck}”?",

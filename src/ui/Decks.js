@@ -106,7 +106,7 @@ export function Decks({ current, actions, onPick, onNew, onClose, onDirections }
 
   if (menu) {
     const { deck } = menu;
-    const guessedNote = deck.languages.guessed && deck.cards > 0 ? ` · ${t("languages.guessed")}` : "";
+    const guessedNote = deck.languages.guessed && deck.cards > 0 && (isKnown(deck.languages.front) || isKnown(deck.languages.back)) ? ` · ${t("languages.guessed")}` : "";
     const how = directionOptions(deck)[Math.max(0, DIRECTIONS.indexOf(deck.directions))].label;
     return html`
       <${Fragment}>

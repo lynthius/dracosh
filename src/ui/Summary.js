@@ -17,7 +17,7 @@ export function Summary({ stats, totals, bestCombo, onDone }) {
   return html`
     <${Fragment}>
       <${Box} borderStyle="round" borderColor=${theme.accent} paddingX=${2} paddingY=${1} width=${panel}>
-        <${Box} flexDirection="column" width=${MASCOT_WIDTH + 3}>
+        <${Box} flexDirection="column" width=${MASCOT_WIDTH + 3} flexShrink=${0}>
           <${Mascot} face=${face} stage=${companion.index} element=${companion.element} />
         <//>
         <${Box} flexDirection="column" justifyContent="center">

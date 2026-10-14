@@ -31,13 +31,15 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
   async function settleDay() {
     const decks = loadAllWords ? await loadAllWords() : [current].filter((d) => !d.deck?.tour);
     const t = now();
+    let nextDue = null;
     for (const { words, deck } of decks) {
       const directions = directionsOf(deck);
       if (pickNext({ words, state, now: t, directions })) return { done: false, cheers: [] };
       const due = nextDueAt({ words, state, now: t, directions });
       if (due !== null && due < startOfTomorrow(t)) return { done: false, cheers: [] };
+      if (due !== null && (nextDue === null || due < nextDue)) nextDue = due;
     }
-    const { cheers } = applyCaughtUp(state, { goal: getSettings().dailyGoal, rules: rules(), now: t });
+    const { cheers } = applyCaughtUp(state, { goal: getSettings().dailyGoal, rules: rules(), now: t, nextDue });
     await save(state);
     return { done: true, cheers };
   }
@@ -57,7 +59,9 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
     // nothing to ask is a normal state, not an error: the UI shows a way on (a finished tour, a new
     // deck) or when the next card is due. Done with everything for today counts as the daily goal.
     if (!item) {
-      const empty = { empty: true, tour: Boolean(deck?.tour), count: words.length, nextDue: null, cheers: [], dayDone: false };
+      // new cards held back by the daily limit, so "all done" doesn't hide them
+      const heldNew = deck?.tour ? 0 : words.filter((word) => !(word.directions ?? directionsOf(deck)).some((d) => state.items[itemKey(word.noteId, d)])).length;
+      const empty = { empty: true, tour: Boolean(deck?.tour), count: words.length, nextDue: null, cheers: [], dayDone: false, heldNew };
       if (!deck?.tour && words.length) {
         empty.nextDue = nextDueAt({ words, state, now: now(), directions: directionsOf(deck) });
         const day = await settleDay();
@@ -123,7 +127,8 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
     const t = now();
     const before = state.items[key];
     const comboBefore = totals.combo;
-    const entry = grade(before, correct, t, { hinted });
+    // almost right (an article left out, an umlaut left plain) counts, but the card doesn't move up, like with a hint
+    const entry = grade(before, correct, t, { hinted: hinted || result === "article" || result === "umlaut" });
     recordAnswer(state, question.word.noteId, question.direction, entry, t, { countNew: !question.tour });
 
     totals.asked += 1;

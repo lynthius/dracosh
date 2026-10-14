@@ -307,7 +307,12 @@
       "dayDoneTitle": "Tout est fait pour aujourd'hui.",
       "dayDoneNext": "Tes cartes reviennent {when}. Envie d'en faire plus ? Ajoute-en avec /add.",
       "laterTitle": "Rien à réviser pour l'instant.",
-      "laterNext": "La prochaine carte arrive {when}. Elle viendra toute seule."
+      "laterNext": "La prochaine carte arrive {when}. Elle viendra toute seule.",
+      "newTomorrow": {
+        "one": "{count} nouvelle carte attend demain (jusqu’à {max} nouvelles par jour).",
+        "many": "{count} nouvelles cartes attendent demain (jusqu’à {max} nouvelles par jour).",
+        "other": "{count} nouvelles cartes attendent demain (jusqu’à {max} nouvelles par jour)."
+      }
     },
     "previewNoAdd": "L'aperçu ne peut pas ajouter de cartes ; lance dracosh pour ça.",
     "previewNoDecks": "L'aperçu n'a qu'un paquet de démo ; lance dracosh pour les tiens.",
@@ -328,7 +333,11 @@
     },
     "sessionProgress": "{done} sur {count} dans cette session",
     "escAgain": "Échap encore une fois pour quitter.",
-    "correctConfirm": "Compter « {answer} » comme juste et l'accepter désormais ?"
+    "correctConfirm": "Compter « {answer} » comme juste et l'accepter désormais ?",
+    "almost": {
+      "article": "Presque : attention à l’article. La carte reste à son niveau.",
+      "umlaut": "Presque : attention à l’umlaut (ä, ö, ü). La carte reste à son niveau."
+    }
   },
   "dragon": {
     "stages": {
@@ -583,7 +592,7 @@
     "weekends": "week-ends",
     "noWeekends": "pas de week-ends",
     "daysOff": " · jours off {ranges}",
-    "month": "Jours avec objectif atteint : {goalDays}/{days} · {correct} bonnes réponses",
+    "month": "Jours avec objectif atteint : {goalDays}/{days} · bonnes réponses : {correct}",
     "weekdays": "L M M J V S D",
     "badgesLine": "{unlocked}/{total} badges · /badges les montre tous"
   },

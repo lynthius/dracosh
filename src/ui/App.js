@@ -8,7 +8,7 @@ import { setLanguage, t } from "../i18n.js";
 import { Bar, cellWidth, cutToWidth, html, KeyHints, Marked, Text, theme, Typewriter, usePanelWidth } from "./kit.js";
 import { hintTarget, makeHint } from "../hint.js";
 import { formatClock, inQuietHours, quietEnd } from "../quiet.js";
-import { startOfTomorrow } from "../scheduler.js";
+import { NEW_PER_DAY, startOfTomorrow } from "../scheduler.js";
 import { formatDay } from "../vacation.js";
 import { dayKey } from "../dates.js";
 import { shouldShowTip } from "../tips.js";
@@ -49,12 +49,12 @@ function clock(ms) {
 
 // your answer with every letter judged: green lined up with the expected word, underlined didn't
 function AnswerDiff({ given, closest }) {
-  const parts = diffChars(given, closest);
-  if (parts.every((p) => p.ok)) return null; // only letters left out, nothing of yours to mark
+  const parts = diffChars(given, closest, { gaps: true });
+  if (parts.every((p) => p.ok)) return null; // the same letters after all: nothing to mark
   return html`
     <${Text}>
       <${Text} dimColor>${t("quiz.youWrote")}<//>
-      ${parts.map((p, i) => html`<${Text} key=${i} color=${p.ok ? theme.good : theme.text} underline=${!p.ok}>${p.ch}<//>`)}
+      ${parts.map((p, i) => html`<${Text} key=${i} color=${p.missing ? theme.bad : p.ok ? theme.good : theme.text} underline=${!p.ok && !p.missing}>${p.ch}<//>`)}
     <//>
   `;
 }
@@ -76,7 +76,8 @@ function Verdict({ outcome, question }) {
   const showDiff = outcome.closest && outcome.given && !outcome.overruled && (wrong || outcome.result === "typo");
   return html`
     <${Box} flexDirection="column">
-      <${Text} color=${wrong ? theme.bad : theme.good} bold>${wrong ? "✗" : "✓"} ${outcome.result === "accent" ? html`<${AccentedAnswers} expected=${question.expected} given=${outcome.given} closest=${outcome.closest} />` : question.expected.join(" / ")}${outcome.result === "typo" ? t("quiz.closeEnough") : ""}<//>
+      <${Text} color=${wrong ? theme.bad : theme.good} bold>${wrong ? "✗" : "✓"} ${outcome.result === "accent" || outcome.result === "umlaut" ? html`<${AccentedAnswers} expected=${question.expected} given=${outcome.given} closest=${outcome.closest} />` : question.expected.join(" / ")}${outcome.result === "typo" ? t("quiz.closeEnough") : ""}<//>
+      ${(outcome.result === "article" || outcome.result === "umlaut") && html`<${Text} color=${theme.warn}>${t(`quiz.almost.${outcome.result}`)}<//>`}
       ${showDiff && html`<${AnswerDiff} given=${outcome.given} closest=${outcome.closest} />`}
       ${question.word.example && html`<${Box} marginTop=${1}>${question.tour ? html`<${Marked} dimColor text=${question.word.example} />` : html`<${Text} dimColor italic>“${question.word.example}”<//>`}<//>`}
       ${(outcome.hinted || outcome.overruled) &&
@@ -144,7 +145,7 @@ function whenDue(at, now) {
 }
 
 // what the quiz shows when the deck has nothing to ask: no countdown, just the way on
-function EmptyDeck({ deck, tour, count, nextDue, dayDone, now, width }) {
+function EmptyDeck({ deck, tour, count, nextDue, dayDone, heldNew = 0, now, width }) {
   const [title, next] = tour
     ? [t("quiz.empty.tourTitle"), t("quiz.empty.tourNext")]
     : !count
@@ -160,6 +161,7 @@ function EmptyDeck({ deck, tour, count, nextDue, dayDone, now, width }) {
       <${Box} flexDirection="column" borderStyle="round" borderTop=${false} borderColor=${theme.accent} paddingX=${2} paddingY=${1}>
         <${Text} bold>${title}<//>
         <${Text}>${next}<//>
+        ${!tour && heldNew > 0 && html`<${Box} marginTop=${1}><${Text} dimColor>${t("quiz.empty.newTomorrow", { count: heldNew, max: NEW_PER_DAY })}<//><//>`}
       <//>
     <//>
   `;
@@ -260,7 +262,7 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
         return waitForNext();
       }
       setQuestion(null);
-      setEmpty({ tour: err.tour, count: err.count, nextDue: err.nextDue, dayDone: err.dayDone });
+      setEmpty({ tour: err.tour, count: err.count, nextDue: err.nextDue, dayDone: err.dayDone, heldNew: err.heldNew });
       setOutcome(err.cheers.length ? { result: "done", cheers: err.cheers } : null);
       if (err.cheers.length) celebrate({ result: "exact", cheers: err.cheers, combo: session.totals.combo });
       setPhase("empty");
@@ -397,7 +399,7 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
           if (snooze === "off") setSnoozeUntil(0);
           if (typeof snooze === "number") {
             setSnoozeUntil(Date.now() + snooze);
-            return phase === "asking" ? setNotice(t("quiz.pausedUntilNotice", { time: formatClock(Date.now() + snooze) })) : undefined; // while waiting, the status line says it
+            return phase !== "waiting" ? setNotice(t("quiz.pausedUntilNotice", { time: formatClock(Date.now() + snooze) })) : undefined; // while waiting, the status line says it
           }
           const paused = list && snoozeRef.current > Date.now() ? t("quiz.pausedUntilList", { time: formatClock(snoozeRef.current) }) : "";
           setNotice(paused + message);

@@ -70,7 +70,8 @@ test("an answer in German may spell ä, ö, ü out; Danish and Norwegian æ, ø,
   assert.equal(judge("Baer", ["Bär"], { lang: "de" }), "accent");
   assert.equal(judge("schoen", ["schön"], { lang: "de" }), "accent");
   assert.equal(judge("Muenchen", ["München"], { lang: "de" }), "accent");
-  assert.equal(judge("Bar", ["Bär"], { lang: "de" }), "accent", "a missing accent still counts");
+  assert.equal(judge("Bar", ["Bär"], { lang: "de" }), "umlaut", "a German umlaut left plain counts, as almost");
+  assert.equal(judge("pa", ["på"], { lang: "no" }), "accent", "elsewhere a missing accent counts in full");
   assert.equal(judge("aeble", ["æble"], { lang: "da" }), "accent");
   assert.equal(judge("paa", ["på"], { lang: "no" }), "accent");
   assert.equal(judge("Baer", ["Bär"]), "wrong", "a deck's language unknown: no German spellings");
@@ -93,15 +94,16 @@ test("articles don't decide an answer in that language: left out or added it cou
   assert.equal(judge("the cat", ["cat"], { lang: "en" }), "accent");
   assert.equal(judge("go", ["to go"], { lang: "en" }), "accent");
   assert.equal(judge("a cat", ["the cat"], { lang: "en" }), "accent", "a/the: either is fine");
-  assert.equal(judge("Hund", ["der Hund"], { lang: "de" }), "accent");
-  assert.equal(judge("die Hund", ["der Hund"], { lang: "de" }), "typo", "the wrong gender shows");
-  assert.equal(judge("Baer", ["der Bär"], { lang: "de" }), "accent", "with a spelled-out umlaut too");
-  assert.equal(judge("eau", ["l'eau"], { lang: "fr" }), "accent");
+  assert.equal(judge("Hund", ["der Hund"], { lang: "de" }), "article", "where the article carries the gender: almost");
+  assert.equal(judge("die Hund", ["der Hund"], { lang: "de" }), "article");
+  assert.equal(judge("der Hund", ["Hund"], { lang: "de" }), "accent", "an article added is fine");
+  assert.equal(judge("Baer", ["der Bär"], { lang: "de" }), "article", "with a spelled-out umlaut too");
+  assert.equal(judge("eau", ["l'eau"], { lang: "fr" }), "article");
   assert.equal(judge("l’eau", ["eau"], { lang: "fr" }), "accent");
   assert.equal(judge("la maison", ["la maison"], { lang: "fr" }), "exact");
-  assert.equal(judge("gato", ["el gato"], { lang: "es" }), "accent");
-  assert.equal(judge("la gato", ["el gato"], { lang: "es" }), "typo");
-  assert.equal(judge("huis", ["het huis"], { lang: "nl" }), "accent");
+  assert.equal(judge("gato", ["el gato"], { lang: "es" }), "article");
+  assert.equal(judge("la gato", ["el gato"], { lang: "es" }), "article");
+  assert.equal(judge("huis", ["het huis"], { lang: "nl" }), "article");
   assert.equal(judge("cat", ["the cat"]), "wrong", "a deck's language unknown: articles count");
   assert.equal(judge("the", ["the"], { lang: "en" }), "exact", "an answer that is only an article stays itself");
   assert.equal(judge("dog", ["the cat"], { lang: "en" }), "wrong");
@@ -128,7 +130,8 @@ test("CJK punctuation and full-width signs read like ours; a reading in brackets
 
 test("spelled-out letters may be mixed with kept or plain ones in one answer", () => {
   assert.equal(judge("Gruesse aus Köln", ["Grüße aus Köln"], { lang: "de" }), "accent");
-  assert.equal(judge("Baer und Madchen", ["Bär und Mädchen"], { lang: "de" }), "accent");
+  assert.equal(judge("Baer und Mädchen", ["Bär und Mädchen"], { lang: "de" }), "accent");
+  assert.equal(judge("Baer und Madchen", ["Bär und Mädchen"], { lang: "de" }), "umlaut", "one umlaut left plain");
   assert.equal(judge("Baer", ["Bär"], { lang: "nb" }), "wrong", "Norwegian Bokmål has no ä");
   assert.equal(judge("paa", ["på"], { lang: "nb" }), "accent");
 });
@@ -138,4 +141,15 @@ test("Ukrainian: both apostrophes, and Latin letters that look Cyrillic, are the
   assert.equal(judge("сімʼя", ["сім'я"]), "exact");
   assert.equal(judge("вiкно", ["вікно"]), "accent", "a Latin i typed for і");
   assert.equal(judge("kot", ["кот"]), "wrong", "an answer all in Latin letters isn't read as Cyrillic");
+});
+
+test("edge cases from testing: mixed scripts, long å runs, doubled articles, notes in brackets", () => {
+  assert.equal(judge("Excel файлл", ["Excel файл"]), "typo", "a Latin word next to a Cyrillic one stays Latin");
+  const started = Date.now();
+  assert.notEqual(judge(`${"a".repeat(79)}b`, ["å".repeat(40)], { lang: "no" }), "accent");
+  assert.ok(Date.now() - started < 200, "a long run of å stays quick");
+  assert.equal(judge("the the", ["the"], { lang: "en" }), "wrong", "a doubled article isn't the article");
+  assert.equal(judge("the the", ["cat"], { lang: "en" }), "wrong");
+  assert.equal(judge("animal", ["猫 (animal)"]), "wrong", "a note in brackets isn't an answer");
+  assert.equal(judge("猫", ["猫 (animal)"]), "exact");
 });

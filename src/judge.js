@@ -97,15 +97,30 @@ const spelledOut = (candidate, lang) => {
 // the candidate's forms after folding: as written, and spelled out
 const spellings = (candidate, lang) => [...new Set([normalize(candidate), normalize(spelledOut(candidate, lang))])];
 
-// Does the answer write the candidate with each such letter spelled out, kept or left plain, as it
-// comes: "Gruesse aus Köln" and "Baer und Madchen" both write "Grüße…", "Bär und Mädchen"
+// Does the answer write the candidate with each such letter kept, spelled out or left plain, as it comes:
+// "Gruesse aus Köln" and "Baer und Madchen" both write "Grüße aus Köln", "Bär und Mädchen". → "spelled"
+// (every such letter kept or spelled out), "plain" (some left as a plain a, o, u…) or false.
 function spelledAnyWay(answer, candidate, lang) {
   const letters = SPELLED_OUT[lang];
   if (!letters) return false;
-  const escape = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const pattern = [...plain(candidate)].map((ch) => (letters[ch] ? `(?:${letters[ch]}|${escape(fold(ch))})` : escape(fold(ch)))).join("");
-  return new RegExp(`^${pattern}$`).test(normalize(answer));
+  // letter by letter, keeping every place the answer could have got to and whether a letter was left
+  // plain on the way there: no regex, so a long run of å can't make it slow
+  const given = plain(cyrillicLookalikes(answer));
+  let at = new Map([[0, false]]);
+  for (const ch of plain(candidate)) {
+    const ways = letters[ch] ? [[ch, false], [letters[ch], false], [fold(ch), true]] : [[ch, false], [fold(ch), false]];
+    const next = new Map();
+    for (const [from, leftPlain] of at)
+      for (const [way, plainHere] of ways) if (given.startsWith(way, from)) next.set(from + way.length, (next.get(from + way.length) ?? true) && (leftPlain || plainHere));
+    if (!next.size) return false;
+    at = next;
+  }
+  return at.has(given.length) ? (at.get(given.length) ? "plain" : "spelled") : false;
 }
+
+// German umlauts and articles are what a learner has to get right: an answer without them still counts,
+// but as "almost" (the card doesn't move up)
+const GENDERED = new Set(["de", "fr", "es", "it", "pt", "ca", "nl", "sv", "da", "no", "nb", "nn"]);
 
 // Articles (and the infinitive's "to", "att", "å") in front of a word. An answer in that language may
 // leave them out or add them, and still counts: "cat" for "the cat", "Hund" for "der Hund". A
@@ -131,7 +146,7 @@ function splitArticle(text, lang) {
     const glued = article.endsWith("'");
     if (lower.startsWith(glued ? article : `${article} `)) {
       const word = lower.slice(article.length).trim();
-      if (word) return { article, word };
+      if (word && !ARTICLES[lang].includes(word)) return { article, word }; // "the the" isn't "the"
     }
   }
   return { article: "", word: lower };
@@ -140,7 +155,8 @@ function splitArticle(text, lang) {
 // A Cyrillic answer with a Latin letter that looks the same ("вiкно" typed on a keyboard without і):
 // the letters are read as the Cyrillic ones they look like
 const LOOKALIKES = { a: "а", c: "с", e: "е", i: "і", o: "о", p: "р", x: "х", y: "у" };
-const cyrillicLookalikes = (answer) => (/\p{Script=Cyrillic}/u.test(answer) ? answer.replace(/[aceiopxy]/gi, (ch) => LOOKALIKES[ch.toLowerCase()]) : answer);
+const cyrillicLookalikes = (answer) =>
+  answer.replace(/\S+/g, (word) => (/\p{Script=Cyrillic}/u.test(word) ? word.replace(/[aceiopxy]/gi, (ch) => LOOKALIKES[ch.toLowerCase()]) : word)); // "Excel" next to "файл" stays Latin
 
 // Chinese, Japanese and Korean: one character is a whole word, so nothing is folded or forgiven. A
 // reading in brackets is an answer too: "猫 (ねこ)" takes 猫, ねこ or both.
@@ -148,14 +164,18 @@ const ONE_CHARACTER_WORDS = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakan
 const exactly = (s) => plain(s.normalize("NFKC")).replace(/\s/g, ""); // full-width "ＡＢＣ" is "abc"; spaces don't count
 const readings = (candidate) => {
   const bracket = candidate.normalize("NFKC").match(/^(.+?)\s*\((.+)\)\s*$/);
-  return bracket ? [candidate, bracket[1], bracket[2]] : [candidate];
+  if (!bracket) return [candidate];
+  // a reading in kana or hangul counts on its own; a note in brackets ("猫 (animal)") doesn't
+  return ONE_CHARACTER_WORDS.test(bracket[2]) ? [candidate, bracket[1], bracket[2]] : [candidate, bracket[1]];
 };
 
-// → "exact" | "accent" | "typo" | "wrong"; accepts any one of the candidate answers. Missing or wrong
+// → "exact" | "accent" | "article" | "umlaut" | "typo" | "wrong"; accepts any one of the candidate answers. Missing or wrong
 // diacritics ("zolw" for "żółw") are "accent": right, quietly (not everyone has the letters on their
 // keyboard), with the missing letters marked in the verdict. `lang` is the answer's language, when the
-// deck's languages are known: it adds that language's own spellings ("Baer" for "Bär") and lets an
-// article be left out ("cat" for "the cat", also "accent") or swapped ("die Hund": "typo"). One more typo
+// deck's languages are known: it adds that language's own spellings ("Baer" for "Bär"), and lets an
+// article be left out ("cat" for "the cat": "accent"). Where the article carries the gender, one left
+// out or swapped ("Hund", "die Hund" for "der Hund") is "article", and a German umlaut left plain
+// ("Bar" for "Bär") is "umlaut": right, but not quite, so the card stays where it was. One more typo
 // is forgiven on longer answers, but never in numbers: "123457" isn't "123456".
 export function judge(answer, candidates, { lang = null } = {}) {
   if (!answer.trim()) return "wrong";
@@ -167,13 +187,17 @@ export function judge(answer, candidates, { lang = null } = {}) {
   if (!candidates.length) return "wrong";
   const given = normalize(cyrillicLookalikes(answer));
   const targets = candidates.flatMap((c) => spellings(c, lang));
-  if (targets.includes(given) || candidates.some((c) => spelledAnyWay(answer, c, lang))) return "accent";
+  const ways = candidates.map((c) => spelledAnyWay(answer, c, lang));
+  if (ways.includes("spelled")) return "accent";
+  if (ways.includes("plain")) return lang === "de" ? "umlaut" : "accent";
+  if (targets.includes(given)) return "accent";
   if (ARTICLES[lang]) {
     const mine = splitArticle(answer, lang);
     const same = candidates.map((c) => splitArticle(c, lang)).filter((c) => spellings(c.word, lang).includes(normalize(mine.word)));
-    // English articles carry no gender: "a cat" for "the cat" is as good
-    if (same.some((c) => !c.article || !mine.article || c.article === mine.article || lang === "en")) return "accent";
-    if (same.length) return "typo";
+    // an article added, or any article in English (no gender there): as good; one left out or
+    // swapped where it carries the gender: almost
+    if (same.some((c) => !c.article || c.article === mine.article || lang === "en" || (!mine.article && !GENDERED.has(lang)))) return "accent";
+    if (same.length) return "article";
   }
   // "email" for "e-mail", "icecream" for "ice cream": right, but shown with the spelling
   const compact = (s) => s.replace(/\s/g, ""); // hyphens between letters are spaces by now

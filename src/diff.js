@@ -7,7 +7,8 @@ const foldChar = (ch) => fold(ch.toLowerCase());
 // → [{ ch, ok }] for every character of `given`: ok = this character lines up with `target`.
 // Alignment comes from a Levenshtein backtrace, so a single missing or extra letter doesn't
 // mark the whole rest of the word wrong.
-export function diffChars(given, target) {
+// `gaps`: also a { ch: "_", missing: true } where letters of `target` were left out ("tomor_ow")
+export function diffChars(given, target, { gaps = false } = {}) {
   const a = [...given].map(foldChar);
   const b = [...target].map(foldChar);
   const rows = a.length + 1;
@@ -24,6 +25,7 @@ export function diffChars(given, target) {
 
   // walk back, preferring matches; deletions in `target` don't produce a character of `given`
   const marks = new Array(a.length).fill(false);
+  const missedBefore = new Array(a.length + 1).fill(false);
   let i = a.length;
   let j = b.length;
   while (i > 0 || j > 0) {
@@ -35,10 +37,12 @@ export function diffChars(given, target) {
       marks[i - 1] = false; // extra character you typed
       i -= 1;
     } else {
-      j -= 1; // character you missed: nothing of yours to mark
+      missedBefore[i] = true; // character you missed: nothing of yours to mark, a gap at most
+      j -= 1;
     }
   }
-  return [...given].map((ch, k) => ({ ch, ok: marks[k] }));
+  const parts = [...given].flatMap((ch, k) => [...(gaps && missedBefore[k] ? [{ ch: "_", ok: false, missing: true }] : []), { ch, ok: marks[k] }]);
+  return gaps && missedBefore[a.length] ? [...parts, { ch: "_", ok: false, missing: true }] : parts;
 }
 
 // → [{ ch, ok }] for every character of `target`, after an answer right but for its accents ("jablko"

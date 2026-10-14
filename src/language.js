@@ -16,10 +16,12 @@ export const DECK_LANGUAGES = [
 
 // "es" → "Spanish" (in the UI's language: "hiszpański"; languageName("es", "es") is "español"); an
 // unknown side → null
+const namers = new Map(); // one Intl.DisplayNames per UI language: making one is slow
 export function languageName(code, ui = language()) {
   if (!code || code === UNKNOWN) return null;
   try {
-    return new Intl.DisplayNames([ui], { type: "language" }).of(code) ?? code;
+    if (!namers.has(ui)) namers.set(ui, new Intl.DisplayNames([ui], { type: "language" }));
+    return namers.get(ui).of(code) ?? code;
   } catch {
     return code;
   }
@@ -217,11 +219,12 @@ const WRITTEN_IN = {
   Cyrillic: ["ru", "uk", "be", "bg", "sr", "mk"], Greek: ["el"], Han: ["zh", "ja"], Hiragana: ["ja"], Katakana: ["ja"], Hangul: ["ko"],
   Arabic: ["ar", "fa"], Hebrew: ["he"], Devanagari: ["hi"], Thai: ["th"], Georgian: ["ka"], Armenian: ["hy"]
 };
+const SCRIPT_TESTS = Object.keys(WRITTEN_IN).map((name) => [name, new RegExp(`\\p{Script=${name}}`, "u")]);
 function scriptOf(texts) {
   const letters = [...texts.join(" ")].filter((ch) => /\p{L}/u.test(ch));
   const counts = new Map();
   for (const ch of letters) {
-    const script = Object.keys(WRITTEN_IN).find((name) => new RegExp(`\\p{Script=${name}}`, "u").test(ch)) ?? (/\p{Script=Latin}/u.test(ch) ? "Latin" : null);
+    const script = SCRIPT_TESTS.find(([, test]) => test.test(ch))?.[0] ?? (/\p{Script=Latin}/u.test(ch) ? "Latin" : null);
     if (script) counts.set(script, (counts.get(script) ?? 0) + 1);
   }
   return [...counts].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;

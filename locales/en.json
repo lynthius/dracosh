@@ -296,7 +296,11 @@
       "dayDoneTitle": "All done for today.",
       "dayDoneNext": "Your cards come back {when}. Want more today? /add some new ones.",
       "laterTitle": "Nothing to practise right now.",
-      "laterNext": "The next card is due {when}. It will come by itself."
+      "laterNext": "The next card is due {when}. It will come by itself.",
+      "newTomorrow": {
+        "one": "{count} new card waits for tomorrow (up to {max} new ones a day).",
+        "other": "{count} new cards wait for tomorrow (up to {max} new ones a day)."
+      }
     },
     "previewNoAdd": "The preview can't add cards; run dracosh for that.",
     "previewNoDecks": "The preview has one demo deck; run dracosh for yours.",
@@ -316,7 +320,11 @@
     },
     "sessionProgress": "{done} of {count} in this session",
     "escAgain": "Esc again to quit.",
-    "correctConfirm": "Count \"{answer}\" as right, and accept it from now on?"
+    "correctConfirm": "Count \"{answer}\" as right, and accept it from now on?",
+    "almost": {
+      "article": "Almost: mind the article. The card stays at its level.",
+      "umlaut": "Almost: mind the umlaut (ä, ö, ü). The card stays at its level."
+    }
   },
   "dragon": {
     "stages": {
@@ -549,7 +557,7 @@
     "weekends": "weekends",
     "noWeekends": "no weekends",
     "daysOff": " · days off {ranges}",
-    "month": "Goal reached on {goalDays} of {days} days · {correct} correct answers",
+    "month": "Days with the goal reached: {goalDays}/{days} · correct answers: {correct}",
     "weekdays": "M T W T F S S",
     "badgesLine": "{unlocked}/{total} badges · /badges lists them all"
   },

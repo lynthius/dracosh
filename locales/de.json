@@ -299,7 +299,11 @@
       "dayDoneTitle": "Für heute alles erledigt.",
       "dayDoneNext": "Deine Karten kommen {when} wieder. Heute noch mehr? Füge mit /add neue hinzu.",
       "laterTitle": "Gerade gibt es nichts zu üben.",
-      "laterNext": "Die nächste Karte ist {when} fällig. Sie kommt von selbst."
+      "laterNext": "Die nächste Karte ist {when} fällig. Sie kommt von selbst.",
+      "newTomorrow": {
+        "one": "{count} neue Karte wartet auf morgen (bis zu {max} neue pro Tag).",
+        "other": "{count} neue Karten warten auf morgen (bis zu {max} neue pro Tag)."
+      }
     },
     "previewNoAdd": "Die Vorschau kann keine Karten hinzufügen; starte dafür dracosh.",
     "previewNoDecks": "Die Vorschau hat einen Demo-Stapel; für deine starte dracosh.",
@@ -319,7 +323,11 @@
     },
     "sessionProgress": "{done} von {count} in dieser Sitzung",
     "escAgain": "Noch einmal Esc zum Beenden.",
-    "correctConfirm": "„{answer}“ als richtig zählen und ab jetzt annehmen?"
+    "correctConfirm": "„{answer}“ als richtig zählen und ab jetzt annehmen?",
+    "almost": {
+      "article": "Fast: achte auf den Artikel. Die Karte bleibt auf ihrer Stufe.",
+      "umlaut": "Fast: achte auf den Umlaut (ä, ö, ü). Die Karte bleibt auf ihrer Stufe."
+    }
   },
   "dragon": {
     "stages": {
@@ -552,7 +560,7 @@
     "weekends": "Wochenenden",
     "noWeekends": "keine Wochenenden",
     "daysOff": " · frei {ranges}",
-    "month": "Ziel erreicht an {goalDays} von {days} Tagen · {correct} richtige Antworten",
+    "month": "Tage mit erreichtem Ziel: {goalDays}/{days} · richtige Antworten: {correct}",
     "weekdays": "M D M D F S S",
     "badgesLine": "{unlocked}/{total} Abzeichen · /badges zeigt alle"
   },
