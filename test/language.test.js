@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { deckLanguages, guessLanguage, languageInName, languageName, languagesInName, UNKNOWN } from "../src/language.js";
+import { deckLanguages, guessLanguage, learningSide, languageInName, languageName, languagesInName, UNKNOWN } from "../src/language.js";
 
 test("a deck's cards tell their language: letters, common words, spellings", () => {
   assert.equal(guessLanguage(["kot", "pies", "jabłko", "żółw", "dziękuję", "szkoła"]), "pl");
@@ -95,4 +95,31 @@ test("a deck of kanji named after Japanese doesn't break the guess", () => {
   const cards = [{ front: "猫", back: ["Katze"] }, { front: "犬", back: ["Hund"] }];
   assert.doesNotThrow(() => deckLanguages({ name: "Japanisch" }, cards, "de"));
   assert.doesNotThrow(() => deckLanguages({ name: "Chinese" }, [{ front: "貓", back: ["cat"] }], "en"));
+});
+
+test("the language you're learning: yours to pick, else the deck's name, your own language elsewhere, else the back", () => {
+  const pair = (front, back) => ({ front, back });
+  const at = (side, lang, sure = true) => ({ side, lang, sure });
+  // the owner's cases: an English UI, learning Chinese from Polish, or Chinese from English as a Pole
+  assert.deepEqual(learningSide(pair("pl", "zh"), { name: "Chiński" }, ["en"]), at("back", "zh"), "a Polish name with an English UI");
+  assert.deepEqual(learningSide(pair("pl", "zh"), { name: "Words" }, ["en"]), at("back", "zh", false), "no hint: the back, as a guess");
+  assert.deepEqual(learningSide(pair("en", "zh"), { name: "HSK 1" }, ["pl"]), at("back", "zh", false));
+  assert.deepEqual(learningSide(pair("en", "zh"), { name: "HSK 1" }, ["en"]), at("back", "zh"));
+  assert.deepEqual(learningSide(pair("pl", "de"), { name: "Polish to German" }, ["en"]), at("back", "de"), "X to Y: Y");
+  assert.deepEqual(learningSide(pair("pl", "en"), { name: "Słówka" }, ["pl", "en"]), at("back", "en"), "your own language comes first");
+  assert.deepEqual(learningSide(pair("pl", "en"), { name: "Słówka", learning: "pl" }, ["pl"]), at("front", "pl"), "your choice wins");
+  assert.deepEqual(learningSide(pair("de", "und"), { name: "German" }, ["en"]), at("front", "de", false), "one side known, not yours: a guess");
+  assert.equal(learningSide(pair("pl", "und"), { name: "Słówka" }, ["pl"]), null, "one side known, and it's yours");
+  assert.equal(learningSide(pair("pl", "pl"), { name: "Definicje" }, ["pl"]), null, "one language: not a language deck");
+});
+
+test("your own language: what your other decks share, then the system's, then the UI's", async () => {
+  const { homeLanguages } = await import("../src/language.js");
+  const others = [pair("pl", "en"), pair("pl", "de"), pair("es", "pl")];
+  function pair(front, back) {
+    return { front, back };
+  }
+  assert.deepEqual(homeLanguages({ others, ui: "en", system: "en" }), [{ code: "pl", sure: true }, { code: "en", sure: false }]);
+  assert.deepEqual(homeLanguages({ others: [], ui: "pl", system: "en" }), [{ code: "pl", sure: false }, { code: "en", sure: false }], "the UI's before the system's, both only hints");
+  assert.deepEqual(learningSide({ front: "pl", back: "en" }, { name: "Words" }, homeLanguages({ ui: "en", system: "en" })), { side: "front", lang: "pl", sure: false }, "a Pole with everything in English: a guess, and asked");
 });

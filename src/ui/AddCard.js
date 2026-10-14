@@ -3,7 +3,7 @@ import { Box, useInput } from "ink";
 import { MAX_DECK_NAME, typedSides } from "../library.js";
 import { blankGap, formatLine, gapsOf, parseBack, parseLine, plainFront } from "../cardline.js";
 import { normalize } from "../judge.js";
-import { isKnown } from "../language.js";
+import { isKnown, languageName } from "../language.js";
 import { LanguagePicker, pairText } from "./Languages.js";
 import { AnswerInput } from "./AnswerInput.js";
 import { Choice, choiceHints } from "./Choice.js";
@@ -393,7 +393,7 @@ export function AddCard({ current, actions, onDone, startNew = false }) {
     }
   }
 
-  if (step === "languages") return html`<${LanguagePicker} deck=${deck.name} sample=${sample} languages=${langs} onDone=${saveLanguages} onCancel=${() => setStep("direction")} />`;
+  if (step === "languages") return html`<${LanguagePicker} deck=${deck.name} sample=${sample} languages=${langs} learning=${langs.learning} home=${langs.home} onDone=${saveLanguages} onCancel=${() => setStep("direction")} />`;
 
   const title =
     step === "pick" ? t("add.titlePick") : step === "deck" ? t(decks.length ? "add.titleNew" : "add.titleFirst") : step === "review" || step === "fix" ? t("add.paste.title", { deck: deck.name }) : t("add.titleCard", { deck: deck?.name ?? "" });
@@ -478,6 +478,8 @@ export function AddCard({ current, actions, onDone, startNew = false }) {
               />
             <//>
             ${langs && html`<${Box} marginTop=${1}><${Text} dimColor>${isKnown(langs.front) || isKnown(langs.back) ? t("add.languagesLine", { pair: pairText(langs) }) : t("add.languagesSoon")}<//><//>`}
+            ${langs?.learning && html`<${Text} color=${langs.learning.sure ? undefined : theme.warn} dimColor=${langs.learning.sure}>${t("add.learningLine", { language: languageName(langs.learning.lang) })}<//>`}
+            ${langs?.learning && !langs.learning.sure && html`<${Text} color=${theme.warn}>${t("add.learningGuess")}<//>`}
             <${Box} marginTop=${langs ? 0 : 1}><${Text} dimColor>${t("add.directionLater")}<//><//>
           <//>
         `}

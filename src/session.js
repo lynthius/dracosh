@@ -1,6 +1,5 @@
-import { language, t as say } from "./i18n.js"; // `t` and `text` are taken here (the clock, an answer)
+import { t as say } from "./i18n.js"; // `t` and `text` are taken here (the clock, an answer)
 import { blankGap, plainFront } from "./cardline.js";
-import { isKnown } from "./language.js";
 import { ALMOST, closestCandidate, judge } from "./judge.js";
 import { addVacation, applyAnswer, applyCaughtUp, markWorkWaiting, applyOverrule, calendarMonth, cancelVacations, ensureProgress, markBadgesSeen, missedOn, recordMiss, snapshot, undoMiss, unseenBadges, vacationInfo } from "./progress.js";
 import { BOX_INTERVALS_DAYS, describeDue, grade, itemKey, nextDueAt, pickNext, startOfTomorrow } from "./scheduler.js";
@@ -18,17 +17,17 @@ function labelOf(deck, direction) {
 }
 const COMBO_CHEER_EVERY = 5;
 
-// What pronunciation reads aloud: the side in the language you're learning, the answer when it's in
-// another language than Dracosh's (a cloze card: its whole sentence), else the question → { text, lang } or null
-// `answer`: the right answer you gave (one of several), read instead of the first one
-export function toSpeak(question, ui, answer = null) {
-  if (question.tour) return null;
-  const foreign = (lang) => isKnown(lang) && lang !== ui;
+// Pronunciation reads the side in the language you're learning in this deck (learningSide), whichever way
+// the card asks: the answer (a cloze card: its whole sentence), or the question. Nothing in a deck that
+// isn't for a language. `answer`: the right answer you gave (one of several), read instead of the first.
+export function toSpeak(question, answer = null) {
+  const lang = question.learningLanguage;
+  if (question.tour || !lang) return null;
   const cloze = question.direction.startsWith("c");
   const given = answer && question.expected.includes(answer) ? answer : question.expected[0];
-  if (foreign(question.answerLanguage)) return { text: cloze ? plainFront(question.word.word) : given, lang: question.answerLanguage };
+  if (question.answerLanguage === lang) return { text: cloze ? plainFront(question.word.word) : given, lang };
   // a cloze card's prompt is its sentence with a gap: nothing to read there
-  if (!cloze && foreign(question.promptLanguage)) return { text: question.prompt.split(" / ")[0], lang: question.promptLanguage };
+  if (!cloze && question.promptLanguage === lang) return { text: question.prompt.split(" / ")[0], lang };
   return null;
 }
 
@@ -112,6 +111,7 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
       // what the answer is written in, when the deck's languages are known: its own spellings count
       answerLanguage: (forward ? deck?.languages?.back : deck?.languages?.front) ?? null,
       promptLanguage: (forward ? deck?.languages?.front : deck?.languages?.back) ?? null,
+      learningLanguage: deck?.learning?.lang ?? null,
       wordCount: words.length,
       tour: Boolean(deck?.tour) // the tour marks what to type with `backticks`
     };
@@ -128,7 +128,7 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
   async function answer(question, text, { hinted = false } = {}) {
     const key = itemKey(question.word.noteId, question.direction);
     // answers you once declared right (/correct) count for this card from now on
-    const result = judge(text, [...question.expected, ...(state.accepted?.[key] ?? [])], { lang: question.answerLanguage, otherLang: question.promptLanguage, native: language() });
+    const result = judge(text, [...question.expected, ...(state.accepted?.[key] ?? [])], { lang: question.answerLanguage, otherLang: question.promptLanguage, learning: question.learningLanguage ?? null });
     return record(question, { result, text, hinted });
   }
 

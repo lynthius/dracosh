@@ -2,7 +2,7 @@ import { Fragment, useState } from "react";
 import { Box, useInput } from "ink";
 import { language, t } from "../i18n.js";
 import { fold } from "../judge.js";
-import { DECK_LANGUAGES, isKnown, languageName, UNKNOWN } from "../language.js";
+import { DECK_LANGUAGES, GENDERED_LANGUAGES, isKnown, languageName, learningSide, UNKNOWN } from "../language.js";
 import { cutToWidth, html, KeyHints, Text, theme, usePanelWidth } from "./kit.js";
 
 const SHOWN = 7; // rows of the list at a time
@@ -42,11 +42,13 @@ function matching(query, first) {
 }
 
 // Which language the front and the back are in, one side after the other: type to search, ↑/↓ and Enter.
-// `languages` holds what's set or guessed now (`guessed` marks a guess); → onDone({ front, back }).
-// Esc clears the search, then goes back a side, then leaves (onCancel).
-export function LanguagePicker({ deck, sample, languages, onDone, onCancel }) {
+// `languages` holds what's set or guessed now (`guessed` marks a guess). With two different languages a
+// third question follows: which one you're learning (`learning`: { lang } now, see learningSide).
+// `start: "learning"` asks only that. → onDone({ front, back, learning }), `learning` a language code,
+// null for a deck in one language. Esc clears the search, then goes back a step, then leaves (onCancel).
+export function LanguagePicker({ deck, sample, languages, learning = null, home, start = "front", onDone, onCancel }) {
   const panel = usePanelWidth();
-  const [side, setSide] = useState("front");
+  const [side, setSide] = useState(start);
   const [chosen, setChosen] = useState({ front: languages.front, back: languages.back });
   const [query, setQuery] = useState("");
   const listFor = (text, which = side) => matching(text, [chosen[which], languages[which]]);
@@ -54,7 +56,13 @@ export function LanguagePicker({ deck, sample, languages, onDone, onCancel }) {
   // the language chosen so far stays selected until you search; then the best match is; never
   // "other or mixed" by itself
   const selectedIn = (list, which = side, text = query) => (text ? 0 : Math.max(0, isKnown(chosen[which]) ? list.indexOf(chosen[which]) : 0));
-  const [selected, setSelected] = useState(() => selectedIn(options));
+  // the language you're learning stays selected; for a pair just picked, the guess for it
+  const learningIndex = (pair) => {
+    if (learning?.lang === pair.front) return 0;
+    if (learning?.lang === pair.back) return 1;
+    return learningSide(pair, { name: deck }, home)?.side === "front" ? 0 : 1;
+  };
+  const [selected, setSelected] = useState(() => (start === "learning" ? learningIndex(chosen) : selectedIn(options)));
 
   function search(text, which = side) {
     setQuery(text);
@@ -77,10 +85,21 @@ export function LanguagePicker({ deck, sample, languages, onDone, onCancel }) {
       const list = matching("", [next.back, languages.back]);
       return setSelected(Math.max(0, isKnown(next.back) ? list.indexOf(next.back) : 0));
     }
-    onDone(next);
+    if (isKnown(next.front) && isKnown(next.back) && next.front !== next.back) {
+      setSide("learning");
+      return setSelected(learningIndex(next));
+    }
+    onDone({ ...next, learning: null });
   }
 
   useInput((input, key) => {
+    if (side === "learning") {
+      if (key.escape || key.leftArrow) return start === "learning" ? onCancel() : turnTo("back");
+      if (key.upArrow || key.downArrow) return setSelected((i) => 1 - i);
+      if (input === "1" || input === "2") return onDone({ ...chosen, learning: input === "1" ? chosen.front : chosen.back });
+      if (key.return) return onDone({ ...chosen, learning: selected === 1 ? chosen.back : chosen.front });
+      return;
+    }
     if (key.escape || key.leftArrow) {
       if (query) return search("");
       return side === "back" ? turnTo("front") : onCancel();
@@ -93,6 +112,20 @@ export function LanguagePicker({ deck, sample, languages, onDone, onCancel }) {
     const text = input.replace(/[\u0000-\u001f\u007f]/g, ""); // a paste's line breaks and tabs aren't a name
     if (text && !key.ctrl && !key.meta) search(query + text);
   });
+
+  if (side === "learning")
+    return html`
+      <${Fragment}>
+        <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.accent} paddingX=${2} width=${panel}>
+          <${Text} bold color=${theme.accent}>${t("languages.learningQuestion", { deck })}<//>
+          <${Text} dimColor>${t("languages.learningNote")}${[chosen.front, chosen.back].some((code) => GENDERED_LANGUAGES.includes(code)) ? ` ${t("languages.learningArticles")}` : ""}${[chosen.front, chosen.back].includes("de") ? ` ${t("languages.learningUmlauts")}` : ""}<//>
+          <${Box} marginTop=${1} flexDirection="column">
+            ${["front", "back"].map((which, i) => html`<${Text} key=${which} color=${i === selected ? theme.accent : undefined} bold=${i === selected}>${i === selected ? "❯" : " "} ${i + 1}. ${languageName(chosen[which])}<//>`)}
+          <//>
+        <//>
+        <${Box} paddingX=${1}><${KeyHints} text=${t("keyHints.choiceLeft", { choose: t("choice.keys") })} /><//>
+      <//>
+    `;
 
   const example = sample ? cutToWidth(side === "front" ? sample.front : sample.back.join(" / "), 24) : "";
   const top = Math.max(0, Math.min(selected - Math.floor(SHOWN / 2), options.length - SHOWN));

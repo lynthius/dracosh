@@ -99,7 +99,7 @@
       },
       "speak": {
         "label": "Read aloud",
-        "hint": "reads the word aloud in the deck's language, once the answer is out (macOS voices)"
+        "hint": "reads the word aloud in the language you're learning, once the answer is out (macOS voices)"
       },
       "volume": {
         "label": "Volume",
@@ -196,7 +196,9 @@
     "progressKept": "Progress stays for every direction, even one you turn off.",
     "askRow": "How it asks",
     "languagesRow": "Languages",
-    "detectRow": "Detect from the cards"
+    "detectRow": "Detect from the cards",
+    "learningRow": "Learning",
+    "learningShort": "learning {language}"
   },
   "add": {
     "fields": {
@@ -244,7 +246,7 @@
     "youType": "you type {answer}",
     "bothWays": "Both ways",
     "bothWaysNote": "every card asked both ways",
-    "directionLater": "You can change both later: /decks, then →.",
+    "directionLater": "You can change all of this later: /decks, then →.",
     "directionSet": "Got it: {how}  ·  next card:",
     "paste": {
       "title": "Pasted cards · {deck}",
@@ -271,7 +273,9 @@
     },
     "languagesLine": "Languages: {pair}",
     "languagesNow": "Looks like {pair}. If not, fix it in /decks →.",
-    "languagesSoon": "Languages: I'll tell after a few cards"
+    "languagesSoon": "Languages: I'll tell after a few cards",
+    "learningLine": "Learning: {language}",
+    "learningGuess": "that is a guess: → to change it"
   },
   "quiz": {
     "youWrote": "you wrote ",
@@ -1065,6 +1069,13 @@
     "search": "search:",
     "noMatch": "No language matches \"{query}\".",
     "saved": "Languages of \"{deck}\": {pair}.",
-    "detecting": "\"{deck}\" detects its languages from the cards again."
+    "detecting": "\"{deck}\" detects its languages from the cards again.",
+    "learningQuestion": "Which language are you learning in \"{deck}\"?",
+    "learningNote": "Words in this language are read aloud, if Read aloud is on in /settings.",
+    "learningSaved": "\"{deck}\": now learning {language}.",
+    "guessShort": "a guess",
+    "learningArticles": "A missing or wrong article in it counts as \"almost\".",
+    "savedWithLearning": "Languages of \"{deck}\": {pair}, learning {language}.",
+    "learningUmlauts": "In German, so does an umlaut left plain."
   }
 }

@@ -3,7 +3,7 @@ import { backupNow } from "./backup.js";
 import { seedLibrary } from "./starter.js";
 import { gapsOf } from "./cardline.js";
 import { addCard, cardsOf, createDeck, emptyLibrary, findDeck, findDuplicate, removeDeck, setDirections as setLibraryDirections, setLanguages as setLibraryLanguages, typedSides, updateCard } from "./library.js";
-import { deckLanguages } from "./language.js";
+import { deckLanguages, homeLanguages, learningSide } from "./language.js";
 import { itemKey } from "./scheduler.js";
 import { loadLibrary, saveLibrary } from "./store.js";
 
@@ -25,6 +25,23 @@ function checkSlashes(deck, fields) {
 // Library changes made from inside the app (/add, /decks). Each one reads the library fresh, so nothing
 // written meanwhile by another Dracosh window is lost. `load`, `save` and `backup` are the store's; the
 // preview gallery passes its own, so nothing it does is saved.
+// your own language, as your other decks with languages set suggest (see homeLanguages)
+const homeOf = (library, deck) => homeLanguages({ others: library.decks.filter((d) => d !== deck && d.languages).map((d) => d.languages) });
+const learningOf = (library, deck, languages = deckLanguages(deck, cardsOf(library, deck.id))) => learningSide(languages, deck, homeOf(library, deck));
+const withLearning = (library, deck) => {
+  const languages = deckLanguages(deck, cardsOf(library, deck.id));
+  return { ...languages, learning: learningOf(library, deck, languages), home: homeOf(library, deck) };
+};
+
+// A language picked as the one you're learning is kept, unless it's what a sure guess says anyway: then
+// the guess goes on following the deck (its name, your other decks)
+function chooseLearning(library, deck, lang) {
+  const languages = deckLanguages(deck, cardsOf(library, deck.id));
+  if (lang && lang !== languages.front && lang !== languages.back) return; // only a language the deck has
+  const guess = learningOf(library, { ...deck, learning: undefined });
+  deck.learning = !lang || (guess?.sure && guess.lang === lang) ? undefined : lang;
+}
+
 export function libraryActions({ load = loadLibrary, save = saveLibrary, backup = backupNow } = {}) {
   async function deckNamed(library, deckName) {
     const deck = findDeck(library, deckName);
@@ -39,7 +56,8 @@ export function libraryActions({ load = loadLibrary, save = saveLibrary, backup 
       return library.decks.map((deck) => {
         const cards = cardsOf(library, deck.id);
         const sample = cards.find((card) => !card.cloze); // shows the deck's directions in /decks
-        return { name: deck.name, cards: cards.length, tour: Boolean(deck.tour), directions: deck.directions, languages: deckLanguages(deck, cards), sample: sample ? { front: sample.front, back: sample.back } : null };
+        const languages = deckLanguages(deck, cards);
+        return { name: deck.name, cards: cards.length, tour: Boolean(deck.tour), directions: deck.directions, languages, learning: learningOf(library, deck, languages), home: homeOf(library, deck), sample: sample ? { front: sample.front, back: sample.back } : null };
       });
     },
 
@@ -79,18 +97,29 @@ export function libraryActions({ load = loadLibrary, save = saveLibrary, backup 
     },
 
     // → { front, back, guessed }: the languages set for the deck, or guessed from its cards
+    // (with `learning`: the language you're learning, see learningSide; null for a deck in one language)
     async languagesOf(deckName) {
       const library = await load();
-      const deck = await deckNamed(library, deckName);
-      return deckLanguages(deck, cardsOf(library, deck.id));
+      return withLearning(library, await deckNamed(library, deckName));
     },
 
-    // { front, back } from /decks; null goes back to guessing from the cards
+    // { front, back, learning? } from /decks or /add (`learning`: a language code); null goes back to
+    // guessing from the cards
     async setLanguages(deckName, languages) {
       const library = await load();
       const deck = setLibraryLanguages(library, (await deckNamed(library, deckName)).id, languages);
+      if (languages?.learning !== undefined) chooseLearning(library, deck, languages.learning);
       await save(library);
-      return deckLanguages(deck, cardsOf(library, deck.id));
+      return withLearning(library, deck);
+    },
+
+    // the language you're learning in a deck (a code), from /decks → Learning → as it now stands
+    async setLearning(deckName, lang) {
+      const library = await load();
+      const deck = await deckNamed(library, deckName);
+      chooseLearning(library, deck, lang);
+      await save(library);
+      return learningOf(library, deck);
     },
 
     // the deck with this name (ignoring case), if any: /add says so before asking anything else
@@ -178,4 +207,4 @@ export function libraryActions({ load = loadLibrary, save = saveLibrary, backup 
 
 // the app's own: reads and writes ~/.dracosh
 const actions = libraryActions();
-export const { allDecks, ownDecks, startDeck, setDirections, languagesOf, setLanguages, existingDeck, existingCard, addCardTo, addCardsTo, updateCardIn, matchTourLanguage, backupBeforeReset, resetLibrary } = actions;
+export const { allDecks, ownDecks, startDeck, setDirections, languagesOf, setLanguages, setLearning, existingDeck, existingCard, addCardTo, addCardsTo, updateCardIn, matchTourLanguage, backupBeforeReset, resetLibrary } = actions;

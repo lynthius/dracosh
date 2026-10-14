@@ -489,7 +489,7 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
 
   // pronunciation (/settings), once the answer is out
   function say(q, answer) {
-    const spoken = toSpeak(q, settingsRef.current.language, answer);
+    const spoken = toSpeak(q, answer);
     if (spoken) alerts.speak(spoken.text, spoken.lang);
   }
 
@@ -607,7 +607,7 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
           await session.setDirections(cardIds, directions);
           await session.workAdded();
           if (phase === "asking" && question && cardIds.includes(question.word.noteId)) ask(); // the open card follows the new way at once
-        }} onPick=${switchDeck} onNew=${() => (setAddNew(true), setScreen("add"))} onClose=${() => setScreen("quiz")} />`}
+        }} onLanguages=${(name) => name === deck && phase === "asking" && ask()} onPick=${switchDeck} onNew=${() => (setAddNew(true), setScreen("add"))} onClose=${() => setScreen("quiz")} />`}
         ${!["settings", "reset", "add", "decks"].includes(screen) &&
           html`
               <${Fragment}>

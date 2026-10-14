@@ -99,7 +99,7 @@
       },
       "speak": {
         "label": "Aussprache",
-        "hint": "liest das Wort in der Sprache des Stapels vor, sobald die Antwort steht (macOS-Stimmen)"
+        "hint": "liest das Wort in der Sprache vor, die du lernst, sobald die Antwort steht (macOS-Stimmen)"
       },
       "volume": {
         "label": "Lautstärke",
@@ -199,7 +199,9 @@
     "progressKept": "Der Fortschritt bleibt für jede Richtung erhalten, auch für eine ausgeschaltete.",
     "askRow": "Abfragerichtung",
     "languagesRow": "Sprachen",
-    "detectRow": "Aus den Karten erkennen"
+    "detectRow": "Aus den Karten erkennen",
+    "learningRow": "Lernsprache",
+    "learningShort": "Lernsprache: {language}"
   },
   "add": {
     "fields": {
@@ -247,7 +249,7 @@
     "youType": "du tippst {answer}",
     "bothWays": "In beide Richtungen",
     "bothWaysNote": "jede Karte in beide Richtungen",
-    "directionLater": "Beides später änderbar: /decks, dann →.",
+    "directionLater": "Alles später änderbar: /decks, dann →.",
     "directionSet": "Alles klar: {how}  ·  nächste Karte:",
     "paste": {
       "title": "Eingefügte Karten · {deck}",
@@ -274,7 +276,9 @@
     },
     "languagesLine": "Sprachen: {pair}",
     "languagesNow": "Sieht nach {pair} aus. Falls nicht, in /decks → korrigieren.",
-    "languagesSoon": "Sprachen: erkenne ich nach ein paar Karten"
+    "languagesSoon": "Sprachen: erkenne ich nach ein paar Karten",
+    "learningLine": "Lernsprache: {language}",
+    "learningGuess": "nur geraten: → ändern"
   },
   "quiz": {
     "youWrote": "deine Antwort: ",
@@ -1082,6 +1086,13 @@
     "search": "Suche:",
     "noMatch": "Keine Sprache passt zu „{query}“.",
     "saved": "Sprachen von „{deck}“: {pair}.",
-    "detecting": "„{deck}“ erkennt die Sprachen wieder aus den Karten."
+    "detecting": "„{deck}“ erkennt die Sprachen wieder aus den Karten.",
+    "learningQuestion": "Welche Sprache lernst du mit „{deck}“?",
+    "learningNote": "Wörter in dieser Sprache werden vorgelesen, wenn die Aussprache in /settings an ist.",
+    "learningSaved": "Lernsprache von „{deck}“: {language}.",
+    "guessShort": "geraten",
+    "learningArticles": "Ein fehlender oder falscher Artikel darin zählt als „fast“.",
+    "savedWithLearning": "Sprachen von „{deck}“: {pair}, Lernsprache: {language}.",
+    "learningUmlauts": "Im Deutschen auch ein weggelassener Umlaut."
   }
 }

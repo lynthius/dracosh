@@ -99,7 +99,7 @@
       },
       "speak": {
         "label": "Wymowa",
-        "hint": "czyta słowo na głos w języku talii, gdy odpowiedź jest już widoczna (głosy macOS)"
+        "hint": "czyta na głos słowo w języku, którego się uczysz, gdy odpowiedź jest już widoczna (głosy macOS)"
       },
       "volume": {
         "label": "Głośność",
@@ -207,7 +207,9 @@
     "progressKept": "Postęp każdego kierunku zostaje, nawet gdy go wyłączysz.",
     "askRow": "Jak pytać",
     "languagesRow": "Języki",
-    "detectRow": "Wróć do rozpoznawania z kart"
+    "detectRow": "Wróć do rozpoznawania z kart",
+    "learningRow": "Język nauki",
+    "learningShort": "nauka: {language}"
   },
   "add": {
     "fields": {
@@ -259,7 +261,7 @@
     "youType": "wpisujesz {answer}",
     "bothWays": "W obie strony",
     "bothWaysNote": "każda karta pytana w obie strony",
-    "directionLater": "Oba zmienisz później: /decks, potem →.",
+    "directionLater": "Wszystko zmienisz później: /decks, potem →.",
     "directionSet": "Jasne: {how}  ·  następna karta:",
     "paste": {
       "title": "Wklejone karty · {deck}",
@@ -290,7 +292,9 @@
     },
     "languagesLine": "Języki: {pair}",
     "languagesNow": "Wygląda na: {pair}. Jeśli nie, popraw w /decks →.",
-    "languagesSoon": "Języki: rozpoznam po kilku kartach"
+    "languagesSoon": "Języki: rozpoznam po kilku kartach",
+    "learningLine": "Język nauki: {language}",
+    "learningGuess": "to tylko domysł: → zmień"
   },
   "quiz": {
     "youWrote": "twoja odpowiedź: ",
@@ -1157,6 +1161,13 @@
     "search": "szukaj:",
     "noMatch": "Żaden język nie pasuje do „{query}”.",
     "saved": "Języki talii „{deck}”: {pair}.",
-    "detecting": "Talia „{deck}” znów rozpoznaje języki z kart."
+    "detecting": "Talia „{deck}” znów rozpoznaje języki z kart.",
+    "learningQuestion": "Którego języka uczysz się w talii „{deck}”?",
+    "learningNote": "Słowa w tym języku są czytane na głos, jeśli włączysz wymowę w /settings.",
+    "learningSaved": "Język nauki w talii „{deck}”: {language}.",
+    "guessShort": "zgaduję",
+    "learningArticles": "Brak albo zły rodzajnik w tym języku to „prawie”.",
+    "savedWithLearning": "Języki talii „{deck}”: {pair}, język nauki: {language}.",
+    "learningUmlauts": "W niemieckim także pominięty umlaut."
   }
 }

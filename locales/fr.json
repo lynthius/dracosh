@@ -99,7 +99,7 @@
       },
       "speak": {
         "label": "Prononciation",
-        "hint": "lit le mot à voix haute dans la langue du paquet, une fois la réponse affichée (voix de macOS)"
+        "hint": "lit à voix haute le mot dans la langue que tu apprends, une fois la réponse affichée (voix de macOS)"
       },
       "volume": {
         "label": "Volume",
@@ -203,7 +203,9 @@
     "progressKept": "La progression de chaque sens est conservée, même si tu le désactives.",
     "askRow": "Sens des questions",
     "languagesRow": "Langues",
-    "detectRow": "Détecter d’après les cartes"
+    "detectRow": "Détecter d’après les cartes",
+    "learningRow": "Langue apprise",
+    "learningShort": "langue apprise : {language}"
   },
   "add": {
     "fields": {
@@ -253,7 +255,7 @@
     "youType": "tu tapes {answer}",
     "bothWays": "Dans les deux sens",
     "bothWaysNote": "chaque carte dans les deux sens",
-    "directionLater": "Les deux se modifient plus tard : /decks, puis →.",
+    "directionLater": "Tout se modifie plus tard : /decks, puis →.",
     "directionSet": "C'est noté : {how}  ·  carte suivante :",
     "paste": {
       "title": "Cartes collées · {deck}",
@@ -282,7 +284,9 @@
     },
     "languagesLine": "Langues : {pair}",
     "languagesNow": "On dirait : {pair}. Sinon, corrige dans /decks →.",
-    "languagesSoon": "Langues : je les reconnaîtrai après quelques cartes"
+    "languagesSoon": "Langues : je les reconnaîtrai après quelques cartes",
+    "learningLine": "Langue apprise : {language}",
+    "learningGuess": "ce n’est qu’une supposition : → modifier"
   },
   "quiz": {
     "youWrote": "ta réponse : ",
@@ -1132,6 +1136,13 @@
     "search": "recherche :",
     "noMatch": "Aucune langue ne correspond à « {query} ».",
     "saved": "Langues de « {deck} » : {pair}.",
-    "detecting": "« {deck} » détecte à nouveau ses langues d’après les cartes."
+    "detecting": "« {deck} » détecte à nouveau ses langues d’après les cartes.",
+    "learningQuestion": "Quelle langue apprends-tu avec « {deck} » ?",
+    "learningNote": "Les mots de cette langue sont lus à voix haute si la prononciation est activée dans /settings.",
+    "learningSaved": "Langue apprise dans « {deck} » : {language}.",
+    "guessShort": "supposée",
+    "learningArticles": "Un article manquant ou faux y compte comme « presque ».",
+    "savedWithLearning": "Langues de « {deck} » : {pair}, langue apprise : {language}.",
+    "learningUmlauts": "En allemand, un tréma oublié aussi."
   }
 }

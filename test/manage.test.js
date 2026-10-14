@@ -142,15 +142,19 @@ test("a switch that would make a '/' text something to type is refused; otherwis
   assert.equal(cardIds.length, 1);
 });
 
+const noHome = ({ home, ...rest }) => rest; // (your own language, from other decks: tested in language.test.js)
+
 test("a deck's languages are guessed from its cards until you set them; null goes back to guessing", async () => {
   await startDeck({ name: "Niemiecki" });
   await addCardsTo("Niemiecki", [{ front: "die Katze", back: ["kot"] }, { front: "der Hund", back: ["pies"] }, { front: "die Straße", back: ["ulica"] }]);
-  assert.deepEqual(await languagesOf("Niemiecki"), { front: "de", back: "und", guessed: true }, "the backs show no sign of a language yet");
-  assert.deepEqual(await setLanguages("Niemiecki", { front: "de", back: "pl" }), { front: "de", back: "pl", guessed: false });
-  assert.deepEqual((await allDecks()).find((d) => d.name === "Niemiecki").languages, { front: "de", back: "pl", guessed: false });
+  assert.deepEqual(noHome(await languagesOf("Niemiecki")), { front: "de", back: "und", guessed: true, learning: { side: "front", lang: "de", sure: false } }, "the backs show no sign of a language yet");
+  assert.deepEqual(noHome(await setLanguages("Niemiecki", { front: "de", back: "pl" })), { front: "de", back: "pl", guessed: false, learning: { side: "front", lang: "de", sure: true } }, "named after German: you're learning German");
+  assert.equal((await setLanguages("Niemiecki", { front: "de", back: "pl", learning: "pl" })).learning.lang, "pl", "unless you say otherwise");
+  const listed = (await allDecks()).find((d) => d.name === "Niemiecki");
+  assert.deepEqual([listed.languages, listed.learning.lang], [{ front: "de", back: "pl", guessed: false }, "pl"]);
   assert.equal((await loadWords("Niemiecki")).deck.languages.back, "pl", "the quiz sees them too");
   await assert.rejects(setLanguages("Niemiecki", { front: "German", back: "pl" }));
   await assert.rejects(setLanguages("Niemiecki", { front: ["de"], back: "pl" }), "only a code, never something that reads like one");
-  assert.deepEqual(await setLanguages("Niemiecki", { front: "DE", back: " pl " }), { front: "de", back: "pl", guessed: false });
+  assert.deepEqual(noHome(await setLanguages("Niemiecki", { front: "DE", back: " pl " })), { front: "de", back: "pl", guessed: false, learning: { side: "back", lang: "pl", sure: true } });
   assert.equal((await setLanguages("Niemiecki", null)).guessed, true);
 });

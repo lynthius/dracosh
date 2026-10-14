@@ -2,9 +2,11 @@
 // cards until you set them in /decks; a side that can't be told stays unknown and gets the general
 // answer checking. "und" (undetermined) is a side you said isn't any one language.
 
-import { language } from "./i18n.js";
+import { language, LANGUAGES as UI_LANGUAGES } from "./i18n.js";
 
 export const UNKNOWN = "und";
+// languages whose articles show the gender: where "almost" checks them
+export const GENDERED_LANGUAGES = ["de", "fr", "es", "it", "pt", "ca", "nl", "sv", "da", "no", "nb", "nn"];
 export const isKnown = (code) => Boolean(code) && code !== UNKNOWN;
 
 // the languages offered in /decks, most learned first; any other ISO 639-1 code still works if typed
@@ -237,18 +239,21 @@ function writtenIn(lang, texts) {
   return script === "Latin" ? scripts.length === 0 || lang === "sr" : scripts.includes(script);
 }
 
+// other words people name a language deck with
+const NAME_ALIASES = { mandarin: "zh", mandaryński: "zh", mandarynski: "zh", farsi: "fa", cantonese: "zh", flemish: "nl", bokmal: "no", nynorsk: "no" };
+
 const fold = (text) => text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ł/g, "l").toLowerCase();
 
 // The languages a deck is named after, in the order the name gives them: "Hiszpański" → ["es"],
-// "Polish to German" → ["pl", "de"], "Español", "Німецька A1". Names are read in the UI's language,
-// in English and in the language itself.
+// "Polish to German" → ["pl", "de"], "Español", "Німецька A1". Names are read in every language
+// Dracosh speaks, whatever the UI's, and in the language itself.
 export function languagesInName(name, ui = language()) {
   const words = fold(String(name ?? "")).split(/[^\p{L}]+/u).filter(Boolean);
   const found = [];
   words.forEach((word, at) => {
     for (const code of DECK_LANGUAGES) {
-      const names = [languageName(code, ui), languageName(code, "en"), languageName(code, code)];
-      if (names.some((one) => one && fold(one) === word) && !found.some((f) => f.code === code)) found.push({ code, at });
+      const names = [...new Set([ui, ...Object.keys(UI_LANGUAGES), code])].map((name) => languageName(code, name));
+      if ((names.some((one) => one && fold(one) === word) || NAME_ALIASES[word] === code) && !found.some((f) => f.code === code)) found.push({ code, at });
     }
   });
   return found.sort((a, b) => a.at - b.at).map((f) => f.code);
@@ -257,6 +262,48 @@ export const languageInName = (name, ui = language()) => languagesInName(name, u
 
 const SAMPLE_CARDS = 200; // enough to tell, and cheap to read before every question
 const SAMPLE_LENGTH = 300; // characters of each side of a card: long answers say no more
+
+// What a person's own language seems to be, from outside the deck → [{ code, sure }], likeliest first: the
+// one most of their other language decks share (sure), then Dracosh's language and the system's, which
+// are only hints (plenty of people run both in English and speak something else)
+export function homeLanguages({ others = [], ui = language(), system = systemLocale() } = {}) {
+  const counts = new Map();
+  for (const pair of others) for (const code of new Set([pair.front, pair.back].filter(isKnown))) counts.set(code, (counts.get(code) ?? 0) + 1);
+  const shared = [...counts].filter(([, n]) => n >= 2 && n > others.length / 2).sort((a, b) => b[1] - a[1]).map(([code]) => code);
+  const hints = [ui, system].filter((code) => code && !shared.includes(code));
+  return [...shared.map((code) => ({ code, sure: true })), ...[...new Set(hints)].map((code) => ({ code, sure: false }))];
+}
+const systemLocale = () => {
+  const set = [process.env.LC_ALL, process.env.LC_MESSAGES, process.env.LANG].find((v) => v && !/^(C|POSIX)\b/i.test(v));
+  return (set ?? Intl.DateTimeFormat().resolvedOptions().locale).slice(0, 2).toLowerCase();
+};
+
+// The language you're learning in a deck → { side: "front" | "back", lang, sure }, or null for a deck
+// that isn't for a language (one language on both sides, like definitions, or none known). Your own
+// choice (deck.learning, a language code) wins; else, in turn: the language the deck is named after
+// ("Chiński", "Polish to German": the second); the side that isn't your own language (homeLanguages);
+// a lone known side that isn't yours; and last the back, as cards usually go "word you know = new
+// word", though that's only a guess (`sure: false`), so the app asks. Pronunciation reads that
+// language and "almost" applies to it.
+export function learningSide(languages, deck, home = homeLanguages()) {
+  const { front, back } = languages ?? {};
+  const known = [front, back].filter(isKnown);
+  if (!known.length || front === back) return null;
+  const pick = (side, sure = true) => ({ side, lang: side === "front" ? front : back, sure });
+  if (deck?.learning && deck.learning === front) return pick("front");
+  if (deck?.learning && deck.learning === back) return pick("back");
+  const mine = home.map((h) => (typeof h === "string" ? { code: h, sure: true } : h)); // (a plain code is sure)
+  if (known.length === 2) {
+    const named = languagesInName(deck?.name).filter((code) => code === front || code === back);
+    if (named.length) return pick(named.at(-1) === front ? "front" : "back"); // "X to Y": Y
+    const own = mine.find((h) => h.code === front || h.code === back);
+    if (own) return pick(own.code === front ? "back" : "front", own.sure);
+    return pick("back", false);
+  }
+  // one side known (the other couldn't be told yet): learn it, unless it's yours; a guess either way
+  const own = mine.find((h) => h.code === known[0]);
+  return own?.sure ? null : own ? null : pick(isKnown(front) ? "front" : "back", false);
+}
 
 // → { front, back, guessed }: the languages you set, else the ones the cards suggest. A side the cards
 // don't tell may come from the deck's name ("Hiszpański", "Polish to German") or, when its cards

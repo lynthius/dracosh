@@ -1,3 +1,4 @@
+import { GENDERED_LANGUAGES } from "./language.js";
 // Typos are forgiven only on longer answers: on short words one edit often makes a different word
 const TYPO_MIN_LENGTH = 6;
 
@@ -123,7 +124,7 @@ function spelledAnyWay(answer, candidate, lang) {
 const NO_GENDER = new Set(["to", "att", "at", "å"]); // infinitive markers
 // elided or plural articles that don't show the gender, per language
 const NO_GENDER_SHOWN = { fr: new Set(["l'", "les", "des", "de l'"]), it: new Set(["l'"]), ca: new Set(["l'"]) };
-const GENDERED = new Set(["de", "fr", "es", "it", "pt", "ca", "nl", "sv", "da", "no", "nb", "nn"]);
+const GENDERED = new Set(GENDERED_LANGUAGES);
 
 // Articles (and the infinitive's "to", "att", "å") in front of a word. An answer in that language may
 // leave them out or add them, and still counts: "cat" for "the cat", "Hund" for "der Hund". A
@@ -180,10 +181,11 @@ const readings = (candidate) => {
 // out or swapped ("Hund", "die Hund" for "der Hund") is "article", and a German umlaut left plain
 // ("Bar" for "Bär") is "umlaut": right, but not quite, so the card stays where it was. One more typo
 // is forgiven on longer answers, but never in numbers: "123457" isn't "123456".
-// `otherLang`: the other side's language (a card may be written the other way round); `native`: the
-// language you use Dracosh in, where a left-out article is no slip
+// `otherLang`: the other side's language (a card may be written the other way round); `learning`: the
+// language you're learning in this deck (null: none), the only one where "almost" applies; not given,
+// the answer's own language
 export const ALMOST = ["article", "umlaut", "article-umlaut"];
-export function judge(answer, candidates, { lang = null, otherLang = null, native = null } = {}) {
+export function judge(answer, candidates, { lang = null, otherLang = null, learning = lang } = {}) {
   if (!answer.trim()) return "wrong";
   if (candidates.some((c) => plain(c) === plain(answer))) return "exact";
   // each candidate on its own: a card with "猫" and "cat" still forgives a typo in "cat"
@@ -195,7 +197,7 @@ export function judge(answer, candidates, { lang = null, otherLang = null, nativ
   const targets = candidates.flatMap((c) => spellings(c, lang));
   const ways = candidates.map((c) => spelledAnyWay(answer, c, lang));
   if (ways.includes("spelled")) return "accent";
-  if (ways.includes("plain")) return lang === "de" && native !== "de" ? "umlaut" : "accent";
+  if (ways.includes("plain")) return lang === "de" && learning === "de" ? "umlaut" : "accent";
   if (targets.includes(given)) return "accent";
   // the answer's language first, then the other side's, for a card written the other way round
   // (only when the answer's own language has articles too, and for an article of two letters or more:
@@ -207,14 +209,14 @@ export function judge(answer, candidates, { lang = null, otherLang = null, nativ
       .map((c) => splitArticle(c, one))
       .filter((c) => (!other || c.article.length >= 2) && spellings(c.word, one).includes(normalize(mine.word)));
     if (!same.length) continue;
-    // Strict only in a language you're learning (your own you know), and only where the article
+    // Strict only in the language you're learning (your own you know), and only where the article
     // shows the gender: an article added, English "the", an infinitive's "to", an elided "l'" or a
     // plural "les" is as good as none
-    const learning = GENDERED.has(one) && one !== native;
-    const genderless = (c) => !learning || !c.article || c.article === mine.article || NO_GENDER.has(c.article) || NO_GENDER.has(mine.article) || Boolean(NO_GENDER_SHOWN[one]?.has(c.article));
+    const strict = GENDERED.has(one) && one === learning;
+    const genderless = (c) => !strict || !c.article || c.article === mine.article || NO_GENDER.has(c.article) || NO_GENDER.has(mine.article) || Boolean(NO_GENDER_SHOWN[one]?.has(c.article));
     const fine = same.filter(genderless);
     // a German word still needs its umlauts after an added article ("die Bar" for "Bär")
-    const plainUmlaut = (list) => one === "de" && learning && list.every((c) => spelledAnyWay(mine.word, c.word, one) === "plain");
+    const plainUmlaut = (list) => one === "de" && strict && list.every((c) => spelledAnyWay(mine.word, c.word, one) === "plain");
     if (fine.length) return plainUmlaut(fine) ? "umlaut" : "accent";
     return plainUmlaut(same) ? "article-umlaut" : "article";
   }

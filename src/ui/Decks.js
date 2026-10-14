@@ -3,7 +3,7 @@ import { Box, useInput } from "ink";
 import { t } from "../i18n.js";
 import { Choice, choiceHints } from "./Choice.js";
 import { LanguagePicker, pairText } from "./Languages.js";
-import { isKnown } from "../language.js";
+import { isKnown, languageName } from "../language.js";
 import { cutToWidth, html, KeyHints, Text, theme, usePanelWidth } from "./kit.js";
 
 const DIRECTIONS = ["forward", "backward", "both"];
@@ -11,7 +11,7 @@ const DIRECTIONS = ["forward", "backward", "both"];
 // /decks: your decks with their card counts; Enter quizzes the chosen one from now on, and
 // "+ New deck" starts one (`onNew`). → on a deck of yours: which way it's asked and its languages.
 // Renaming and deleting decks come later.
-export function Decks({ current, actions, onPick, onNew, onClose, onDirections }) {
+export function Decks({ current, actions, onPick, onNew, onClose, onDirections, onLanguages }) {
   const panel = usePanelWidth();
   const [decks, setDecks] = useState(null);
   const [picked, setPicked] = useState(0);
@@ -70,9 +70,28 @@ export function Decks({ current, actions, onPick, onNew, onClose, onDirections }
   function openSetting(index) {
     const { deck } = menu;
     setMenu((m) => ({ ...m, selected: index })); // coming back, the cursor is on the row you opened
-    if (index === 0) return setSetting({ deck, selected: Math.max(0, DIRECTIONS.indexOf(deck.directions)) });
-    if (index === 1) return setNaming(deck);
+    const rows = ["ask", "languages", ...(deck.learning ? ["learning"] : []), ...(deck.languages.guessed ? [] : ["detect"])];
+    if (rows[index] === "ask") return setSetting({ deck, selected: Math.max(0, DIRECTIONS.indexOf(deck.directions)) });
+    if (rows[index] === "languages") return setNaming(deck);
+    if (rows[index] === "learning") return setNaming({ ...deck, only: "learning" });
     setLanguages(null, deck); // detect them from the cards again
+  }
+
+  // the language you're learning in the deck (pronunciation reads it, "almost" applies to it)
+  async function saveLearning(deck, lang) {
+    setNaming(null);
+    setMenu(null);
+    saving.current = true;
+    try {
+      const learning = await actions.setLearning(deck.name, lang);
+      setDecks((all) => all.map((d) => (d.name === deck.name ? { ...d, learning } : d)));
+      setMessage(t("languages.learningSaved", { deck: deck.name, language: languageName(learning?.lang) }));
+      onLanguages?.(deck.name);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      saving.current = false;
+    }
   }
 
   async function setLanguages(languages, deck = naming) {
@@ -81,8 +100,11 @@ export function Decks({ current, actions, onPick, onNew, onClose, onDirections }
     saving.current = true;
     try {
       const saved = await actions.setLanguages(deck.name, languages);
-      setDecks((all) => all.map((d) => (d.name === deck.name ? { ...d, languages: saved } : d)));
-      setMessage(languages ? t("languages.saved", { deck: deck.name, pair: pairText(saved) }) : t("languages.detecting", { deck: deck.name }));
+      setDecks((all) => all.map((d) => (d.name === deck.name ? { ...d, languages: saved, learning: saved.learning } : d)));
+      setMessage(
+        !languages ? t("languages.detecting", { deck: deck.name }) : saved.learning ? t("languages.savedWithLearning", { deck: deck.name, pair: pairText(saved), language: languageName(saved.learning.lang) }) : t("languages.saved", { deck: deck.name, pair: pairText(saved) })
+      );
+      onLanguages?.(deck.name);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -100,7 +122,17 @@ export function Decks({ current, actions, onPick, onNew, onClose, onDirections }
     ];
   };
 
-  if (naming) return html`<${LanguagePicker} deck=${naming.name} sample=${naming.sample} languages=${naming.languages} onDone=${setLanguages} onCancel=${() => setNaming(null)} />`;
+  if (naming)
+    return html`<${LanguagePicker}
+      deck=${naming.name}
+      sample=${naming.sample}
+      languages=${naming.languages}
+      learning=${naming.learning}
+      home=${naming.home}
+      start=${naming.only ?? "front"}
+      onDone=${(picked) => (naming.only ? saveLearning(naming, picked.learning) : setLanguages(picked))}
+      onCancel=${() => setNaming(null)}
+    />`;
 
   if (setting) return directionPicker();
 
@@ -117,6 +149,7 @@ export function Decks({ current, actions, onPick, onNew, onClose, onDirections }
               options=${[
                 { label: t("decks.askRow"), note: deck.directions === "both" ? t("add.bothWays") : how },
                 { label: t("decks.languagesRow"), note: pairText(deck.languages) + guessedNote },
+                ...(deck.learning ? [{ label: t("decks.learningRow"), note: languageName(deck.learning.lang) + (deck.learning.sure ? "" : ` · ${t("languages.guessShort")}`) }] : []),
                 ...(deck.languages.guessed ? [] : [{ label: t("decks.detectRow") }])
               ]}
               selected=${menu.selected}
@@ -147,7 +180,7 @@ export function Decks({ current, actions, onPick, onNew, onClose, onDirections }
   }
 
   // a deck's languages show in the list once the cards tell at least one
-  const languagesNote = (d) => (!d.tour && d.cards > 0 && isKnown(d.languages.front) && isKnown(d.languages.back) ? pairText(d.languages) : "");
+  const languagesNote = (d) => (d.tour || !d.cards ? "" : d.learning ? t("decks.learningShort", { language: languageName(d.learning.lang) }) : isKnown(d.languages.front) && isKnown(d.languages.back) ? pairText(d.languages) : "");
 
   return html`
     <${Fragment}>

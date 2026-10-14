@@ -162,17 +162,18 @@ test("an added article doesn't excuse a plain umlaut; an infinitive marker carri
 });
 
 test("almost is for a language you're learning, finds a reversed card's articles, and names both slips", () => {
-  assert.equal(judge("chien", ["le chien"], { lang: "fr", native: "fr" }), "accent", "your own language: you know the article");
-  assert.equal(judge("chien", ["le chien"], { lang: "fr", native: "pl" }), "article");
+  assert.equal(judge("chien", ["le chien"], { lang: "fr", learning: "es" }), "accent", "not the language you're learning: you know the article");
+  assert.equal(judge("chien", ["le chien"], { lang: "fr", learning: "fr" }), "article");
   assert.equal(judge("chats", ["les chats"], { lang: "fr" }), "accent", "a plural les shows no gender");
-  assert.equal(judge("gato", ["el gato"], { lang: "fr", otherLang: "es" }), "article", "a card written the other way round");
+  assert.equal(judge("gato", ["el gato"], { lang: "fr", otherLang: "es", learning: "es" }), "article", "a card written the other way round");
   assert.equal(judge("Apfel", ["die Äpfel"], { lang: "de" }), "article-umlaut");
   assert.equal(judge("Fruhstuck", ["das Frühstück"], { lang: "de" }), "article-umlaut");
 });
 
 test("the other side's articles never excuse a wrong answer, and almost leaves your own language alone", () => {
-  assert.equal(judge("tak", ["i tak"], { lang: "pl", otherLang: "it", native: "pl" }), "wrong");
-  assert.equal(judge("Bar", ["Bär"], { lang: "de", native: "de" }), "accent");
+  assert.equal(judge("tak", ["i tak"], { lang: "pl", otherLang: "it", learning: "it" }), "wrong");
+  assert.equal(judge("Bar", ["Bär"], { lang: "de", learning: "en" }), "accent");
+  assert.equal(judge("Hund", ["der Hund"], { lang: "de", learning: null }), "accent", "a deck that isn't for a language: no almost");
   assert.equal(judge("Hundes", ["des Hundes"], { lang: "de" }), "article", "German des shows the gender");
   assert.equal(judge("perros", ["los perros"], { lang: "es" }), "article", "Spanish los shows it too");
 });
