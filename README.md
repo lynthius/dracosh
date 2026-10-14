@@ -19,7 +19,7 @@ It's made for people who live in a terminal or spend most of the day at a comput
 - One line is a card: `kot = cat; kitty // Mój kot śpi.` (`;` separates right answers, `//` adds an example). Paste a whole list and check it before it's saved
 - Each deck is asked the way you pick after its first card: front → back, back → front, or both ways; change it any time in `/decks`
 - Pronunciation, if you turn it on in `/settings`: once the answer is out, the word in the language you're learning in that deck is read aloud with a macOS voice (other systems later); decks in one language, like definitions, stay quiet
-- Dracosh works out which languages a deck is in from its cards, its name and the language you use it in (Spanish → Polish, say), and tells you when it has a guess; when it can't tell or guesses wrong, set them in `/decks`, along with which of the two you're learning
+- Dracosh works out which languages a deck is in (Polish → Chinese, say) and which of the two you're learning, from the cards, the deck's name and your other decks, whatever language you use Dracosh in, and says when it's only a guess; set either in `/decks` when it can't tell or guesses wrong
 - Type the answer, or press Enter with nothing typed to see it and say whether you knew it (`1` or `2`): handy for whole sentences, and it counts just the same
 - Cloze cards for sentences: `I {{look forward}} to it` asks one gap at a time
 - Forgiving answer checks: case and punctuation don't matter, a missing accent or special letter (ż, ł, é, ø…, and ß written as ss) still counts and the right spelling is shown with it marked, German "Baer" for "Bär" and Danish "aa" for "å" count too, an article can be left out in English ("cat" for "the cat"), while a missing or wrong article where it carries the gender ("Hund" for "der Hund") or a German umlaut left plain ("Bar" for "Bär") counts as almost: right, but the card stays at its level, one typo is fine on longer words, and after a miss you see letter by letter where you went wrong. Chinese, Japanese and Korean answers are checked exactly
@@ -95,13 +95,12 @@ The other languages live next to it in `locales/`, the tour included. `npm test`
 
 ## What's next
 
-Dracosh now keeps its own card library, with a short tour and `/add` to start your own deck. Coming next, roughly in this order:
+Coming next, roughly in this order:
 
-- More languages for your decks: answer checking that forgives a missing accent in European languages and Cyrillic (other scripts are checked exactly).
 - Import and export: Anki (plain-text exports and `.apkg` decks from AnkiWeb), CSV, JSON and pasted lists, and export back to Anki.
 - Decks and cards in the app: browse, edit and delete with undo, plus a welcome flow for new users.
 - Optional AI help for writing cards, with your own API key or a local model.
-- Linux and Windows.
+- Linux and Windows, pronunciation there included.
 
 ## License
 

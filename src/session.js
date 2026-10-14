@@ -9,11 +9,10 @@ import { dayKey } from "./dates.js";
 import { parsePause } from "./pause.js";
 import { formatRange } from "./vacation.js";
 
-const LABELS = { "en-pl": "EN → PL", "pl-en": "PL → EN" };
 
 // the tag on the card's border: the deck's name (language codes like "DE → UK" read as countries)
-function labelOf(deck, direction) {
-  return deck ? deck.name : (LABELS[direction] ?? "");
+function labelOf(deck) {
+  return deck?.name ?? "";
 }
 const COMBO_CHEER_EVERY = 5;
 
@@ -103,7 +102,7 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
     return {
       word: item.word,
       direction: item.direction,
-      label: labelOf(deck, item.direction),
+      label: labelOf(deck),
       prompt,
       expected,
       // a cloze card's back is a hint under the sentence ("Cieszę się na to")
