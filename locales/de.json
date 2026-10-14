@@ -72,7 +72,7 @@
     "grading": "1 oder ← wusste ich nicht · 2 oder → wusste ich",
     "sessionWaiting": "enter nächste Karte · / Befehle · q beenden",
     "decks": "→ Richtung · {choose}",
-    "directionPick": "{choose} · esc 1 behalten",
+    "directionPick": "{choose} · esc oder weitertippen behält 1",
     "addName": "enter anlegen · esc abbrechen",
     "confirm": "{yes} ja · {no} nein"
   },

@@ -72,7 +72,7 @@
     "grading": "1 lub ← nie pamiętam · 2 lub → pamiętam",
     "sessionWaiting": "enter następna karta · / komendy · q wyjdź",
     "decks": "→ kierunek · {choose}",
-    "directionPick": "{choose} · esc zostaw 1",
+    "directionPick": "{choose} · esc lub pisanie dalej zostawia 1",
     "addName": "enter utwórz · esc anuluj",
     "confirm": "{yes} tak · {no} nie"
   },

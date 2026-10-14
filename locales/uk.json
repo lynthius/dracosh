@@ -72,7 +72,7 @@
     "grading": "1 або ← не пам'ятаю · 2 або → пам'ятаю",
     "sessionWaiting": "enter наступна картка · / команди · q вийти",
     "decks": "→ напрям · {choose}",
-    "directionPick": "{choose} · esc залишити 1",
+    "directionPick": "{choose} · esc або набір далі залишає 1",
     "addName": "enter створити · esc скасувати",
     "confirm": "{yes} так · {no} ні"
   },

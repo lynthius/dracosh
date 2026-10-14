@@ -144,6 +144,8 @@ export function AddCard({ current, actions, onDone, startNew = false }) {
     if (deck.isNew && !card.cloze) {
       setDirection(0);
       setSample(card);
+      picking.current = false;
+      typedAhead.current = "";
       return setStep("direction");
     }
     setStep("line");
@@ -257,8 +259,12 @@ export function AddCard({ current, actions, onDone, startNew = false }) {
 
   // Keys that aren't an answer to the question (the next card, typed straight away) keep the first
   // choice and go into the field, so nothing typed is lost
+  // Typing the next card right away keeps option 1: the keys wait in `typedAhead` until the field is back.
+  // `picking` stays set for the rest of the step, so a key that lands while the pick saves can't pick again.
   const typedAhead = useRef("");
   const picking = useRef(false);
+  const pickedByChoice = useRef(false);
+  const shownAhead = useRef(""); // the typedAhead the field was drawn with // the key Choice just took (1-3, Enter, Esc) isn't the next card's text
   async function pickDirection(index) {
     if (picking.current) return;
     picking.current = true;
@@ -270,11 +276,20 @@ export function AddCard({ current, actions, onDone, startNew = false }) {
     } catch (err) {
       setError(err.message);
     }
-    clearField(typedAhead.current);
-    typedAhead.current = "";
-    picking.current = false;
+    const lines = typedAhead.current.split(/\r\n|\r|\n/).filter((line) => line.trim());
+    if (lines.length > 1) return void openPaste(lines); // a list pasted in: the review, as on the field
+    // `ahead`: the field starts with typedAhead as it is when the field is drawn
+    setField((f) => ({ key: f.key + 1, initial: "", ahead: true }));
+    setDuplicate(null);
     setStep("line");
   }
+
+  // a key can still land in typedAhead after the field was drawn and before it listens: draw it again
+  useEffect(() => {
+    if (!field.ahead) return;
+    if (typedAhead.current !== shownAhead.current) return setField((f) => ({ ...f, key: f.key + 1 }));
+    setTyped(typedAhead.current);
+  }, [field]);
 
   // a pasted list: each line checked against the deck before anything is saved
   async function openPaste(lines) {
@@ -307,10 +322,12 @@ export function AddCard({ current, actions, onDone, startNew = false }) {
 
   useInput(
     (input, key) => {
-      if (picking.current ? input && !key.return : input && !/^[1-3]$/.test(input) && !key.ctrl && !key.meta && !key.return && !key.escape && !key.tab) {
-        typedAhead.current += input;
-        pickDirection(0);
-      }
+      if (pickedByChoice.current) return void (pickedByChoice.current = false);
+      if (picking.current && (key.backspace || key.delete)) return void (typedAhead.current = typedAhead.current.slice(0, -1));
+      if (!input || key.ctrl || key.meta || key.tab || key.escape || key.return) return;
+      if (!picking.current && /^[1-3]$/.test(input)) return; // Choice's own key
+      typedAhead.current += input;
+      pickDirection(0);
     },
     { isActive: step === "direction" }
   );
@@ -371,7 +388,7 @@ export function AddCard({ current, actions, onDone, startNew = false }) {
               <${AnswerInput}
                 key=${`${fieldLabel}-${field.key}`}
                 plain
-                initial=${field.initial}
+                initial=${field.ahead ? (shownAhead.current = typedAhead.current) : field.initial}
                 onSubmit=${submit}
                 onExit=${back}
                 onChange=${onType}
@@ -409,8 +426,14 @@ export function AddCard({ current, actions, onDone, startNew = false }) {
                 ]}
                 selected=${direction}
                 onMove=${setDirection}
-                onPick=${pickDirection}
-                onCancel=${() => pickDirection(0)}
+                onPick=${(index) => {
+                  if (!picking.current) pickedByChoice.current = true;
+                  pickDirection(index);
+                }}
+                onCancel=${() => {
+                  if (!picking.current) pickedByChoice.current = true;
+                  pickDirection(0);
+                }}
               />
             <//>
             <${Box} marginTop=${1}><${Text} dimColor>${t("add.directionLater")}<//><//>

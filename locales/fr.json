@@ -72,7 +72,7 @@
     "grading": "1 ou ← je ne savais pas · 2 ou → je savais",
     "sessionWaiting": "entrée carte suivante · / commandes · q quitter",
     "decks": "→ sens · {choose}",
-    "directionPick": "{choose} · échap garder 1",
+    "directionPick": "{choose} · échap ou continuer à taper garde 1",
     "addName": "entrée créer · échap annuler",
     "confirm": "{yes} oui · {no} non"
   },

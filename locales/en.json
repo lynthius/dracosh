@@ -72,7 +72,7 @@
     "grading": "1 or ← didn't know · 2 or → knew it",
     "sessionWaiting": "enter next card · / commands · q quit",
     "decks": "→ direction · {choose}",
-    "directionPick": "{choose} · esc keep 1",
+    "directionPick": "{choose} · esc or typing on keeps 1",
     "addName": "enter create · esc cancel",
     "confirm": "{yes} yes · {no} no"
   },
