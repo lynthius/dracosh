@@ -201,9 +201,9 @@
     "front": "przód",
     "back": "tył",
     "progressKept": "Postęp każdego kierunku zostaje, nawet gdy go wyłączysz.",
-    "askRow": "Jak pyta",
+    "askRow": "Jak pytać",
     "languagesRow": "Języki",
-    "detectRow": "Rozpoznaj z kart"
+    "detectRow": "Wróć do rozpoznawania z kart"
   },
   "add": {
     "fields": {
@@ -285,7 +285,8 @@
       }
     },
     "languagesLine": "Języki: {pair}",
-    "languagesNow": "Wygląda na: {pair}. Jeśli nie, popraw w /decks →."
+    "languagesNow": "Wygląda na: {pair}. Jeśli nie, popraw w /decks →.",
+    "languagesSoon": "Języki: rozpoznam po kilku kartach"
   },
   "quiz": {
     "youWrote": "twoja odpowiedź: ",
@@ -1125,7 +1126,7 @@
     "notYet": "jeszcze nie wiadomo",
     "mixed": "inny lub mieszany",
     "mixedNote": "bez reguł jednego języka",
-    "current": "obecny",
+    "current": "teraz",
     "guessed": "rozpoznane po kartach",
     "frontQuestion": "W jakim języku jest przód kart w talii „{deck}”?",
     "backQuestion": "W jakim języku jest tył kart w talii „{deck}”?",

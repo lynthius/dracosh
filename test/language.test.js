@@ -90,3 +90,9 @@ test("Cyrillic and other close languages: unknown rather than mixed up", () => {
   assert.notEqual(guessLanguage(["to jest kot", "to dom", "to moja mama"]), "en");
   assert.equal(guessLanguage(["gato", "casa", "perro", "hola", "agua", "mesa"]), null, "plain words ending in vowels aren't English");
 });
+
+test("a deck of kanji named after Japanese doesn't break the guess", () => {
+  const cards = [{ front: "猫", back: ["Katze"] }, { front: "犬", back: ["Hund"] }];
+  assert.doesNotThrow(() => deckLanguages({ name: "Japanisch" }, cards, "de"));
+  assert.doesNotThrow(() => deckLanguages({ name: "Chinese" }, [{ front: "貓", back: ["cat"] }], "en"));
+});

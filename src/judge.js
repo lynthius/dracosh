@@ -3,7 +3,9 @@ const TYPO_MIN_LENGTH = 6;
 
 // Sentence punctuation that never changes what an answer means ("Hello, world!" = "hello world").
 // Everything else stays: "3.14" isn't "31.4", "-5" isn't "5", "C#" isn't "C", and 🐉 is an answer too.
-const LOOSE = /[;!?¡¿"“”„«»()[\]'’`]/g;
+const LOOSE = /[;!?¡¿"“”„«»()[\]'’ʼʹ`「」『』【】・]/g; // ʼ: the Ukrainian apostrophe (сімʼя)
+// full-width letters and signs, as a Japanese or Chinese keyboard types them: "ｎｅｋｏ" is "neko"
+const halfWidth = (s) => s.replace(/[\uff01-\uff5e]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0xfee0)).replace(/\u3000/g, " ");
 
 // lowercase, loose punctuation dropped, a trailing full stop dropped, hyphens between letters as spaces.
 // Commas and colons count between digits only: "3,14" is "3.14" (a decimal comma), "10:30" stays.
@@ -11,6 +13,9 @@ function plain(s) {
   const text = s
     .normalize("NFC") // "café" typed or pasted with a separate accent mark is the same word
     .toLowerCase()
+    .replace(/[\uff01-\uff5e\u3000]/g, halfWidth)
+    .replace(/。/g, ".") // the CJK full stop and comma read like ours
+    .replace(/、/g, ",")
     .replace(/(?<=\d),(?=\d)/g, ".")
     .replace(/,/g, " ")
     .replace(/(?<!\d):|:(?!\d)/g, "")
@@ -62,12 +67,13 @@ export function editDistance(a, b) {
   return d[rows - 1][cols - 1];
 }
 
-// The candidate the answer came closest to (fewest edits after normalizing): what a miss is diffed against
-export function closestCandidate(answer, candidates) {
+// The candidate the answer came closest to (fewest edits after normalizing): what a miss is diffed against.
+// In German "Maedchn" is diffed against "Maedchen", so the spelled-out ä isn't taken for the mistake.
+export function closestCandidate(answer, candidates, { lang = null } = {}) {
   const given = normalize(answer);
   let best = candidates[0];
   let bestDistance = Infinity;
-  for (const candidate of candidates) {
+  for (const candidate of candidates.flatMap((c) => [c, spelledOut(c, lang)])) {
     const distance = editDistance(given, normalize(candidate));
     if (distance < bestDistance) {
       bestDistance = distance;
@@ -79,16 +85,26 @@ export function closestCandidate(answer, candidates) {
 
 // The way a language writes its own letters without them: German "Baer" for "Bär", Danish "aa" for "å".
 // Only for answers in that language: in Finnish or Swedish "ae" isn't "ä".
-const SPELLED_OUT = {
-  de: { ä: "ae", ö: "oe", ü: "ue" },
-  da: { æ: "ae", ø: "oe", å: "aa" },
-  no: { æ: "ae", ø: "oe", å: "aa" }
-};
-function spellings(candidate, lang) {
-  const forms = [normalize(candidate)];
+const NORWEGIAN = { æ: "ae", ø: "oe", å: "aa" };
+const SPELLED_OUT = { de: { ä: "ae", ö: "oe", ü: "ue" }, da: NORWEGIAN, no: NORWEGIAN, nb: NORWEGIAN, nn: NORWEGIAN };
+const spelledOut = (candidate, lang) => {
   const letters = SPELLED_OUT[lang];
-  if (letters) forms.push(normalize(plain(candidate).replace(/[äöüæøå]/g, (ch) => letters[ch] ?? ch)));
-  return forms;
+  return letters ? candidate.normalize("NFC").replace(/[äöüæøåÄÖÜÆØÅ]/g, (ch) => {
+    const out = letters[ch.toLowerCase()];
+    return !out ? ch : ch === ch.toLowerCase() ? out : out[0].toUpperCase() + out.slice(1);
+  }) : candidate;
+};
+// the candidate's forms after folding: as written, and spelled out
+const spellings = (candidate, lang) => [...new Set([normalize(candidate), normalize(spelledOut(candidate, lang))])];
+
+// Does the answer write the candidate with each such letter spelled out, kept or left plain, as it
+// comes: "Gruesse aus Köln" and "Baer und Madchen" both write "Grüße…", "Bär und Mädchen"
+function spelledAnyWay(answer, candidate, lang) {
+  const letters = SPELLED_OUT[lang];
+  if (!letters) return false;
+  const escape = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const pattern = [...plain(candidate)].map((ch) => (letters[ch] ? `(?:${letters[ch]}|${escape(fold(ch))})` : escape(fold(ch)))).join("");
+  return new RegExp(`^${pattern}$`).test(normalize(answer));
 }
 
 // Articles (and the infinitive's "to", "att", "å") in front of a word. An answer in that language may
@@ -107,6 +123,7 @@ const ARTICLES = {
   da: ["en", "et", "at"],
   no: ["en", "ei", "et", "å"]
 };
+ARTICLES.nb = ARTICLES.nn = ARTICLES.no;
 // "the cat" → { article: "the", word: "cat" }; an answer that is only an article stays itself
 function splitArticle(text, lang) {
   const lower = text.normalize("NFC").toLowerCase().trim().replace(/’/g, "'");
@@ -120,9 +137,19 @@ function splitArticle(text, lang) {
   return { article: "", word: lower };
 }
 
-// Chinese, Japanese and Korean: one character is a whole word, so nothing is folded or forgiven
+// A Cyrillic answer with a Latin letter that looks the same ("вiкно" typed on a keyboard without і):
+// the letters are read as the Cyrillic ones they look like
+const LOOKALIKES = { a: "а", c: "с", e: "е", i: "і", o: "о", p: "р", x: "х", y: "у" };
+const cyrillicLookalikes = (answer) => (/\p{Script=Cyrillic}/u.test(answer) ? answer.replace(/[aceiopxy]/gi, (ch) => LOOKALIKES[ch.toLowerCase()]) : answer);
+
+// Chinese, Japanese and Korean: one character is a whole word, so nothing is folded or forgiven. A
+// reading in brackets is an answer too: "猫 (ねこ)" takes 猫, ねこ or both.
 const ONE_CHARACTER_WORDS = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/u;
-const exactly = (s) => plain(s).normalize("NFKC").replace(/\s/g, ""); // full-width "ＡＢＣ" is "abc"; spaces don't count
+const exactly = (s) => plain(s.normalize("NFKC")).replace(/\s/g, ""); // full-width "ＡＢＣ" is "abc"; spaces don't count
+const readings = (candidate) => {
+  const bracket = candidate.normalize("NFKC").match(/^(.+?)\s*\((.+)\)\s*$/);
+  return bracket ? [candidate, bracket[1], bracket[2]] : [candidate];
+};
 
 // → "exact" | "accent" | "typo" | "wrong"; accepts any one of the candidate answers. Missing or wrong
 // diacritics ("zolw" for "żółw") are "accent": right, quietly (not everyone has the letters on their
@@ -133,10 +160,14 @@ const exactly = (s) => plain(s).normalize("NFKC").replace(/\s/g, ""); // full-wi
 export function judge(answer, candidates, { lang = null } = {}) {
   if (!answer.trim()) return "wrong";
   if (candidates.some((c) => plain(c) === plain(answer))) return "exact";
-  if (candidates.some((c) => ONE_CHARACTER_WORDS.test(c))) return candidates.some((c) => exactly(c) === exactly(answer)) ? "exact" : "wrong";
-  const given = normalize(answer);
+  // each candidate on its own: a card with "猫" and "cat" still forgives a typo in "cat"
+  const words = candidates.filter((c) => ONE_CHARACTER_WORDS.test(c));
+  if (words.some((c) => readings(c).some((one) => exactly(one) === exactly(answer)))) return "exact";
+  candidates = candidates.filter((c) => !ONE_CHARACTER_WORDS.test(c));
+  if (!candidates.length) return "wrong";
+  const given = normalize(cyrillicLookalikes(answer));
   const targets = candidates.flatMap((c) => spellings(c, lang));
-  if (targets.includes(given)) return "accent";
+  if (targets.includes(given) || candidates.some((c) => spelledAnyWay(answer, c, lang))) return "accent";
   if (ARTICLES[lang]) {
     const mine = splitArticle(answer, lang);
     const same = candidates.map((c) => splitArticle(c, lang)).filter((c) => spellings(c.word, lang).includes(normalize(mine.word)));

@@ -277,7 +277,8 @@
       }
     },
     "languagesLine": "Langues : {pair}",
-    "languagesNow": "On dirait : {pair}. Sinon, corrige dans /decks →."
+    "languagesNow": "On dirait : {pair}. Sinon, corrige dans /decks →.",
+    "languagesSoon": "Langues : je les reconnaîtrai après quelques cartes"
   },
   "quiz": {
     "youWrote": "ta réponse : ",

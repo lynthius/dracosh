@@ -266,7 +266,8 @@
       }
     },
     "languagesLine": "Languages: {pair}",
-    "languagesNow": "Looks like {pair}. If not, fix it in /decks →."
+    "languagesNow": "Looks like {pair}. If not, fix it in /decks →.",
+    "languagesSoon": "Languages: I'll tell after a few cards"
   },
   "quiz": {
     "youWrote": "you wrote ",

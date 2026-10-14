@@ -50,6 +50,7 @@ function clock(ms) {
 // your answer with every letter judged: green lined up with the expected word, underlined didn't
 function AnswerDiff({ given, closest }) {
   const parts = diffChars(given, closest);
+  if (parts.every((p) => p.ok)) return null; // only letters left out, nothing of yours to mark
   return html`
     <${Text}>
       <${Text} dimColor>${t("quiz.youWrote")}<//>

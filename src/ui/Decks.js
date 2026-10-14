@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { Box, useInput } from "ink";
 import { t } from "../i18n.js";
 import { Choice, choiceHints } from "./Choice.js";
@@ -19,6 +19,7 @@ export function Decks({ current, actions, onPick, onNew, onClose, onDirections }
   const [menu, setMenu] = useState(null); // { deck, selected }: a deck's settings
   const [setting, setSetting] = useState(null); // { deck, selected }: the direction being picked
   const [naming, setNaming] = useState(null); // the deck whose languages are being picked
+  const saving = useRef(false);
   const [message, setMessage] = useState("");
 
   useEffect(() => {
@@ -39,7 +40,8 @@ export function Decks({ current, actions, onPick, onNew, onClose, onDirections }
       if (setting) return setSetting(null);
       if (menu) return setMenu(null);
     }
-    if (key.rightArrow && !menu && !setting && !naming && deck && !deck.tour) {
+    // not while a change is still being saved: the menu would show the deck as it was
+    if (key.rightArrow && !menu && !setting && !naming && !saving.current && deck && !deck.tour) {
       setMessage("");
       setMenu({ deck, selected: 0 });
     }
@@ -50,6 +52,8 @@ export function Decks({ current, actions, onPick, onNew, onClose, onDirections }
     const { deck } = setting;
     setSetting(null);
     setMenu(null);
+    if (DIRECTIONS[index] === deck.directions) return; // nothing changed, nothing to say
+    saving.current = true;
     try {
       const { cardIds } = await actions.setDirections(deck.name, DIRECTIONS[index]);
       await onDirections?.(cardIds, DIRECTIONS[index]);
@@ -57,12 +61,15 @@ export function Decks({ current, actions, onPick, onNew, onClose, onDirections }
       setMessage(t("decks.directionSaved", { deck: deck.name }));
     } catch (err) {
       setError(err.message);
+    } finally {
+      saving.current = false;
     }
   }
 
   // the menu stays underneath: Esc in the direction or language picker comes back to it
   function openSetting(index) {
     const { deck } = menu;
+    setMenu((m) => ({ ...m, selected: index })); // coming back, the cursor is on the row you opened
     if (index === 0) return setSetting({ deck, selected: Math.max(0, DIRECTIONS.indexOf(deck.directions)) });
     if (index === 1) return setNaming(deck);
     setLanguages(null, deck); // detect them from the cards again
@@ -71,12 +78,15 @@ export function Decks({ current, actions, onPick, onNew, onClose, onDirections }
   async function setLanguages(languages, deck = naming) {
     setNaming(null);
     setMenu(null);
+    saving.current = true;
     try {
       const saved = await actions.setLanguages(deck.name, languages);
       setDecks((all) => all.map((d) => (d.name === deck.name ? { ...d, languages: saved } : d)));
       setMessage(languages ? t("languages.saved", { deck: deck.name, pair: pairText(saved) }) : t("languages.detecting", { deck: deck.name }));
     } catch (err) {
       setError(err.message);
+    } finally {
+      saving.current = false;
     }
   }
 
@@ -84,9 +94,9 @@ export function Decks({ current, actions, onPick, onNew, onClose, onDirections }
   const directionOptions = (deck) => {
     const [front, back] = deck.sample ? [short(deck.sample.front), short(deck.sample.back.join(" / "))] : [t("decks.front"), t("decks.back")];
     return [
-      { label: `${front} → ?`, note: deck.directions === "forward" ? t("decks.now") : "" },
-      { label: `${back} → ?`, note: deck.directions === "backward" ? t("decks.now") : "" },
-      { label: t("add.bothWays"), note: deck.directions === "both" ? t("decks.now") : "" }
+      { label: `${front} → ?`, note: deck.directions === "forward" ? t("languages.current") : "" },
+      { label: `${back} → ?`, note: deck.directions === "backward" ? t("languages.current") : "" },
+      { label: t("add.bothWays"), note: deck.directions === "both" ? t("languages.current") : "" }
     ];
   };
 
@@ -137,7 +147,7 @@ export function Decks({ current, actions, onPick, onNew, onClose, onDirections }
   }
 
   // a deck's languages show in the list once the cards tell at least one
-  const languagesNote = (d) => (!d.tour && d.cards > 0 && (isKnown(d.languages.front) || isKnown(d.languages.back)) ? pairText(d.languages) : "");
+  const languagesNote = (d) => (!d.tour && d.cards > 0 && isKnown(d.languages.front) && isKnown(d.languages.back) ? pairText(d.languages) : "");
 
   return html`
     <${Fragment}>

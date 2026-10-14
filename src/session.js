@@ -142,7 +142,7 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
     // the last card of the day settles it right away, so quitting now doesn't lose the goal
     if (!question.tour) cheers.push(...(await settleDay()).cheers);
     // given/closest feed the per-letter diff the UI shows after a miss or a forgiven typo
-    const closest = result === "exact" || !text ? null : closestCandidate(text, [...question.expected, ...(state.accepted?.[key] ?? [])]);
+    const closest = result === "exact" || !text ? null : closestCandidate(text, [...question.expected, ...(state.accepted?.[key] ?? [])], { lang: question.answerLanguage });
     return { result, hinted: hinted && correct, dueIn: describeDue(entry, t), combo: totals.combo, cheers, given: text, closest, nextDue: upNext() };
   }
 

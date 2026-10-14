@@ -107,3 +107,35 @@ test("articles don't decide an answer in that language: left out or added it cou
   assert.equal(judge("dog", ["the cat"], { lang: "en" }), "wrong");
   assert.equal(judge("die Katze", ["the cat"], { lang: "en" }), "wrong", "another language's articles aren't stripped");
 });
+
+test("each candidate is judged its own way: a CJK one doesn't make the Latin ones strict", () => {
+  assert.equal(judge("cafe", ["café", "猫"]), "accent");
+  assert.equal(judge("doggi", ["doggie", "猫"]), "typo");
+  assert.equal(judge("Baer", ["Bär", "熊"], { lang: "de" }), "accent");
+  assert.equal(judge("犬", ["cat", "猫"]), "wrong");
+});
+
+test("CJK punctuation and full-width signs read like ours; a reading in brackets is an answer too", () => {
+  assert.equal(judge("ありがとう！", ["ありがとう"]), "exact");
+  assert.equal(judge("ありがとう。", ["ありがとう"]), "exact");
+  assert.equal(judge("はい、そうです。", ["はい、そうです"]), "exact");
+  assert.equal(judge("本当？", ["本当"]), "exact");
+  assert.equal(judge("猫（ねこ）", ["猫 (ねこ)"]), "exact");
+  assert.equal(judge("猫", ["猫 (ねこ)"]), "exact");
+  assert.equal(judge("ねこ", ["猫 (ねこ)"]), "exact");
+  assert.equal(judge("ｎｅｋｏ", ["neko"]), "exact", "full-width letters from a Japanese keyboard");
+});
+
+test("spelled-out letters may be mixed with kept or plain ones in one answer", () => {
+  assert.equal(judge("Gruesse aus Köln", ["Grüße aus Köln"], { lang: "de" }), "accent");
+  assert.equal(judge("Baer und Madchen", ["Bär und Mädchen"], { lang: "de" }), "accent");
+  assert.equal(judge("Baer", ["Bär"], { lang: "nb" }), "wrong", "Norwegian Bokmål has no ä");
+  assert.equal(judge("paa", ["på"], { lang: "nb" }), "accent");
+});
+
+test("Ukrainian: both apostrophes, and Latin letters that look Cyrillic, are the same answer", () => {
+  assert.equal(judge("сім'я", ["сімʼя"]), "exact");
+  assert.equal(judge("сімʼя", ["сім'я"]), "exact");
+  assert.equal(judge("вiкно", ["вікно"]), "accent", "a Latin i typed for і");
+  assert.equal(judge("kot", ["кот"]), "wrong", "an answer all in Latin letters isn't read as Cyrillic");
+});

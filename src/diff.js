@@ -45,7 +45,7 @@ export function diffChars(given, target) {
 // for "jabłko"): ok = you wrote this very letter, so only ł is marked. null when the two don't line
 // up letter for letter ("strasse" for "straße").
 export function accentMarks(given, target) {
-  const mine = [...given.trim().normalize("NFC").toLowerCase()];
+  const mine = [...given.trim().normalize("NFKC").toLowerCase()]; // "ｎｅｋｏ" typed full-width is "neko"
   const letters = [...target.normalize("NFC")];
   if (mine.length !== letters.length) return null;
   return letters.map((ch, i) => ({ ch, ok: ch.toLowerCase() === mine[i] }));

@@ -269,7 +269,8 @@
       }
     },
     "languagesLine": "Sprachen: {pair}",
-    "languagesNow": "Sieht nach {pair} aus. Falls nicht, in /decks → korrigieren."
+    "languagesNow": "Sieht nach {pair} aus. Falls nicht, in /decks → korrigieren.",
+    "languagesSoon": "Sprachen: erkenne ich nach ein paar Karten"
   },
   "quiz": {
     "youWrote": "deine Antwort: ",

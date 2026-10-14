@@ -50,3 +50,9 @@ test("an answer right but for its accents marks only the letters written plain",
   assert.equal(marked("ZOLW", "żółw"), "xxx=");
   assert.equal(marked("strasse", "straße"), undefined, "letters that don't line up mark nothing");
 });
+
+test("a spelled-out letter isn't the mistake: the diff goes against the spelled-out form", async () => {
+  const { closestCandidate } = await import("../src/judge.js");
+  assert.equal(closestCandidate("Maedchn", ["Mädchen"], { lang: "de" }), "Maedchen");
+  assert.equal(closestCandidate("Madchn", ["Mädchen"], { lang: "de" }), "Mädchen");
+});

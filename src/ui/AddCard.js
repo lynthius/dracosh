@@ -477,7 +477,7 @@ export function AddCard({ current, actions, onDone, startNew = false }) {
                 }}
               />
             <//>
-            ${langs && html`<${Box} marginTop=${1}><${Text} dimColor>${t("add.languagesLine", { pair: pairText(langs) })}<//><//>`}
+            ${langs && html`<${Box} marginTop=${1}><${Text} dimColor>${isKnown(langs.front) || isKnown(langs.back) ? t("add.languagesLine", { pair: pairText(langs) }) : t("add.languagesSoon")}<//><//>`}
             <${Box} marginTop=${langs ? 0 : 1}><${Text} dimColor>${t("add.directionLater")}<//><//>
           <//>
         `}

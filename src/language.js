@@ -208,7 +208,7 @@ function pointsFor(texts, lang) {
 // the most points any language gets from these texts
 function strongest(texts) {
   const { script, scores } = scoresOf(texts);
-  if (script) return 10;
+  if (script !== undefined) return script ? 10 : 0; // kanji alone: a script, but no one language yet
   return Math.max(0, ...[...scores.values()].map((score) => score.points));
 }
 
@@ -262,6 +262,14 @@ const SAMPLE_LENGTH = 300; // characters of each side of a card: long answers sa
 // front is a sentence in the front language; its back is only a hint, so it isn't guessed from.
 export function deckLanguages(deck, cards = [], ui = language()) {
   if (deck?.languages) return { front: deck.languages.front, back: deck.languages.back, guessed: false };
+  try {
+    return guessDeck(deck, cards, ui);
+  } catch {
+    return { front: UNKNOWN, back: UNKNOWN, guessed: true }; // a guess is never worth a crash
+  }
+}
+
+function guessDeck(deck, cards, ui) {
   const some = cards.slice(0, SAMPLE_CARDS);
   const text = (value) => String(value ?? "").slice(0, SAMPLE_LENGTH);
   const fronts = some.map((card) => text(card.front).replace(/\{\{|\}\}/g, ""));
