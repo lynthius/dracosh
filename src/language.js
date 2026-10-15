@@ -351,5 +351,11 @@ function guessDeck(deck, cards, ui) {
     // your own language, where the cards show some sign of it
     else if (ui !== taken && fits(ui, side) && pointsFor(sides[side], ui) > 0) found[side] = ui;
   }
+  // both sides read as one language, while the name says another: the name wins on the side it fits
+  // ("Spanish verbs": "hablar", "comer" look like plain English letters, but the deck says Spanish)
+  if (found.front && found.front === found.back) {
+    const side = ["front", "back"].find((side) => named.some((lang) => lang !== found[side] && fits(lang, side)));
+    if (side) found[side] = named.find((lang) => lang !== found[side] && fits(lang, side));
+  }
   return { front: found.front ?? UNKNOWN, back: found.back ?? UNKNOWN, guessed: true };
 }
