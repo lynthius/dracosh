@@ -104,3 +104,28 @@ test("a bulleted list loses its bullets", () => {
   assert.deepEqual(cards("- dom - house\n- kot - cat"), [["dom", "house", ""], ["kot", "cat", ""]]);
   assert.deepEqual(cards("• dom = house\n• kot = cat"), [["dom", "house", ""], ["kot", "cat", ""]]);
 });
+
+test("Anki's editor HTML: an opening <div> starts a new line too", () => {
+  assert.deepEqual(cards("#separator:tab\n#html:true\nquerer\tto want; to love<div>Te quiero.</div>"), [["querer", "to want|to love", "Te quiero."]]);
+});
+
+test("in an Anki file only {{c1::…}} is a gap: other braces stay text", () => {
+  const [card] = readCardList("#separator:tab\n#html:true\nplain {{x}} braces\ty").items;
+  assert.deepEqual([card.fields.front, card.fields.cloze], ["plain {{x}} braces", false]);
+});
+
+test("#direction belongs to its deck, and one that isn't a direction is said", () => {
+  const list = readCardList("#deck:A\n#direction:backward\na = b\n#deck:B\nc = d\n#direction: both ways\ne = f");
+  assert.deepEqual(list.items.map((item) => [item.deck, item.direction]), [["A", "backward"], ["B", null], ["B", null]]);
+  assert.deepEqual(list.unknown, [{ line: 6, text: "#direction:both ways" }]);
+});
+
+test("a numbered list loses its numbers", () => {
+  assert.deepEqual(cards("1. hablar = to speak\n2) comer = to eat"), [["hablar", "to speak", ""], ["comer", "to eat", ""]]);
+});
+
+test("a cell that only starts with a quote is plain text, not a quoted cell", () => {
+  assert.deepEqual(cards("\"Quote me' she said\tcytat\nkot\tkotek\npies\tdog"), [["\"Quote me' she said", "cytat", ""], ["kot", "kotek", ""], ["pies", "dog", ""]]);
+  assert.deepEqual(cards("\"to be\" or not\tbyć\nkot\tkotek"), [["\"to be\" or not", "być", ""], ["kot", "kotek", ""]]);
+  assert.deepEqual(cards('"a, b",c\n"d ""e""",f', { csv: true }), [["a, b", "c", ""], ['d "e"', "f", ""]]);
+});

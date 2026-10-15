@@ -61,8 +61,9 @@ export function planImport(library, text, { deck: only = null, deckName = null, 
   const fronts = new Map(); // deck id → its frontIndex
   const splittable = [];
 
+  for (const { line, text: source } of list.unknown) problems.push({ line, issue: "badDirection", text: source });
   for (const item of list.items) {
-    const name = (only ?? item.deck ?? deckName ?? "").trim();
+    const name = fitName((only ?? item.deck ?? deckName ?? "").trim());
     let { fields } = item;
     const problem = (issue, extra = {}) => problems.push({ line: item.line, issue, text: item.source, ...extra });
     if (!fields.front) {
@@ -70,10 +71,11 @@ export function planImport(library, text, { deck: only = null, deckName = null, 
       continue;
     }
     if (!fields.cloze && !fields.back.length) {
-      problem(fields.hasBack ? "noBack" : list.format === "lines" ? "noSeparator" : "noBack");
+      problem(list.format === "lines" && !item.source.includes("=") ? "noSeparator" : "noBack");
       continue;
     }
-    const listed = list.format === "table" && !fields.cloze && fields.back.length === 1 && listedAnswers(fields.back[0]);
+    // a phrase ("Hello, world") is translated by a phrase, not a list
+    const listed = list.format === "table" && !fields.cloze && fields.back.length === 1 && !fields.front.includes(",") && listedAnswers(fields.back[0]);
     if (listed) {
       splittable.push(fields.back[0]);
       if (split) fields = { ...fields, back: listed };
@@ -121,9 +123,13 @@ export function planImport(library, text, { deck: only = null, deckName = null, 
   return {
     decks: [...decks.values()].filter((deck) => deck.items.length),
     problems,
-    read: { format: list.format, separator: list.separator, columns: list.columns, ignored: list.ignored, count: list.items.length, splittable: splittable.length, splitExample: splittable[0] ?? null }
+    read: { anki: list.anki, html: list.html, format: list.format, separator: list.separator, columns: list.columns, ignored: list.ignored, count: list.items.length, splittable: splittable.length, splitExample: splittable[0] ?? null }
   };
 }
+
+// Anki's nested decks ("Languages::Spanish::Verbs for travel") are long: one that doesn't fit keeps its
+// last part, the deck the cards are really in
+const fitName = (name) => (Array.from(name).length > MAX_DECK_NAME && name.includes("::") ? name.split("::").at(-1).trim() : name);
 
 // "cat, kitty" or "cat / kitty": answers listed the way Anki and Quizlet decks often do → ["cat", "kitty"];
 // null for a sentence ("Yes, I do.") or a single answer

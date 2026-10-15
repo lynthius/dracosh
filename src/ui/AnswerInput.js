@@ -48,7 +48,7 @@ export function AnswerInput({ onSubmit, onCommand, onExit, onEdit, onCancel, onC
   const paste = (text) => {
     const lines = /[\r\n]/.test(text) ? text.split(/\r\n|\r|\n/).filter((line) => line.trim()) : [text];
     if (onPaste && lines.length > 1) return onPaste(text);
-    const typed = lines.join(" ");
+    const typed = lines.join(" ").replace(/\t/g, " ");
     edit(value.slice(0, cursor) + typed + value.slice(cursor), cursor + typed.length);
   };
   usePaste(paste);

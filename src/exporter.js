@@ -47,23 +47,24 @@ const joinAnswers = (back) => back.map((answer) => answer.replace(/;/g, "\\;")).
 
 const escapeHtml = (text) => String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-// Anki's "Basic" note has two fields, so the example goes under the answers, on a line of its own.
-// A cloze card becomes Anki's "Cloze" note ("{{c1::…}}"), its back the "Back Extra" field.
-export function toAnki(library, decks) {
-  const cards = decks.flatMap((deck) => cardsOf(library, deck.id).map((card) => ({ deck, card })));
-  const cloze = cards.some(({ card }) => card.cloze);
-  const several = decks.length > 1;
-  const header = ["#separator:tab", "#html:true"];
-  if (cloze) header.push("#notetype column:1");
-  else header.push("#notetype:Basic");
-  if (several) header.push(`#deck column:${cloze ? 2 : 1}`);
-  else header.push(`#deck:${decks[0]?.name ?? ""}`);
+// For Anki, one kind of card per file (`cloze`: the cloze cards, otherwise the others). Anki names its
+// note types in the language it was set up in ("Basic" is "Podstawowy", "Einfach"…) and finds them by
+// name, so a file mixing both kinds would import nothing there; one kind per file lets Anki fall back
+// to the note type picked in its import dialog. Anki's "Basic" note has two fields, so the example
+// goes under the answers, on a line of its own; a cloze card becomes a "Cloze" note ("{{c1::…}}"),
+// its back the "Back Extra" field.
+export function toAnki(library, decks, { cloze = false } = {}) {
+  const cards = decks.flatMap((deck) => cardsOf(library, deck.id).filter((card) => Boolean(card.cloze) === cloze).map((card) => ({ deck, card })));
+  const several = new Set(cards.map(({ deck }) => deck.id)).size > 1;
+  const header = ["#separator:tab", "#html:true", `#notetype:${cloze ? "Cloze" : "Basic"}`];
+  if (several) header.push("#deck column:1");
+  else header.push(`#deck:${cards[0]?.deck.name ?? decks[0]?.name ?? ""}`);
   const lines = cards.map(({ deck, card }) => {
     let gap = 0;
     // the same gaps as the quiz asks (GAP); braces kept as text ("\{{") are plain text in Anki too
     const front = card.cloze ? escapeHtml(card.front.replace(GAP, (_, text) => `{{c${++gap}::${text}}}`).replace(/\\\{\{/g, "{{")) : escapeHtml(card.front);
     const back = [escapeHtml(joinAnswers(card.back)), card.example ? escapeHtml(card.example) : ""].filter(Boolean).join("<br>");
-    return row([...(cloze ? [card.cloze ? "Cloze" : "Basic"] : []), ...(several ? [deck.name] : []), front, back], "\t");
+    return row([...(several ? [deck.name] : []), front, back], "\t");
   });
   return `${[...header, ...lines].join("\n")}\n`;
 }

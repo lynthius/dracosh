@@ -105,13 +105,15 @@ test("exports read back as the same cards: .txt exactly, .csv and Anki's .tsv by
   const read = (text, options) => readCardList(text, options).items.map(({ fields }) => [fields.front, fields.back, fields.example, fields.cloze]);
   assert.deepEqual(read(toDracoshText(lib, [deck])), original);
   assert.deepEqual(read(toCsv(lib, [deck]), { csv: true }), original);
-  const anki = toAnki(lib, [deck]);
+  // one note type per file: Anki names them in its own language, and a mixed file would import nothing
+  const basic = toAnki(lib, [deck]);
+  const cloze = toAnki(lib, [deck], { cloze: true });
+  assert.match(basic, /^#separator:tab\n#html:true\n#notetype:Basic\n#deck:Spanish\nel gato\t/);
+  assert.match(cloze, /^#separator:tab\n#html:true\n#notetype:Cloze\n#deck:Spanish\nI \{\{c1::look\}\} at \{\{c2::it\}\}\ta hint\n/);
   // Anki has no "{{ }}" that isn't a gap, so it comes back as "\{{ }}": the same card, written another way
-  const asked = (cards) => cards.map(([front, ...rest]) => [plainFront(front), gapsOf(front), ...rest]);
-  assert.deepEqual(asked(read(anki)), asked(original));
-  assert.match(anki, /^#separator:tab\n#html:true\n#notetype column:1\n#deck:Spanish\n/);
-  assert.match(anki, /Cloze\tI \{\{c1::look\}\} at \{\{c2::it\}\}\ta hint/);
-  assert.deepEqual(read(anki)[0], ["el gato", ["the cat"], "Mi gato duerme.", false]);
+  const asked = (cards) => cards.map(([front, ...rest]) => [plainFront(front), gapsOf(front), ...rest]).sort((a, b) => a[0].localeCompare(b[0]));
+  assert.deepEqual(asked([...read(basic), ...read(cloze)]), asked(original));
+  assert.deepEqual(read(basic)[0], ["el gato", ["the cat"], "Mi gato duerme.", false]);
 });
 
 const CLI = new URL("../src/cli.js", import.meta.url).pathname;
@@ -222,4 +224,22 @@ test("damaged progress stops an import before anything is written; a bad --separ
   assert.equal(readFileSync(join(home, "library.json"), "utf8"), before);
   const bad = run(home, ["import", "-", "--deck", "D", "--separator", "abc"], "c = d\n");
   assert.match(bad.stderr, /Unknown separator "abc"/);
+});
+
+test("a long nested Anki deck name keeps its last part; an empty answer isn't a missing \" = \"", () => {
+  const plan = planImport(emptyLibrary(), "#deck:Languages::Spanish::Verbs and Expressions For Travel\nir = to go\ndormir =\n");
+  assert.deepEqual(plan.decks.map((d) => d.name), ["Verbs and Expressions For Travel"]);
+  assert.deepEqual(plan.problems.map((p) => p.issue), ["noBack"]);
+});
+
+test("a folder, a picture or a phrase: each is said for what it is", () => {
+  const home = mkdtempSync(join(tmpdir(), "dracosh-"));
+  const files = mkdtempSync(join(tmpdir(), "dracosh-files-"));
+  assert.match(run(home, ["import", files]).stderr, /is a folder/);
+  const png = join(files, "x.png");
+  writeFileSync(png, Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0x0d]));
+  assert.match(run(home, ["import", png]).stderr, /isn't a text file/);
+  assert.match(run(home, ["import", "a.txt", "b.txt"]).stderr, /one file at a time/);
+  assert.match(run(home, ["--bogus"]).stderr, /Unknown option --bogus/);
+  assert.equal(planImport(emptyLibrary(), "Hello, world\tCześć, świecie", { deckName: "D" }).read.splittable, 0);
 });

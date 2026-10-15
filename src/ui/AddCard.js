@@ -221,6 +221,7 @@ export function AddCard({ current, actions, onDone, startNew = false }) {
       return save({ ...draft, back, example: example || draft.example });
     }
     if (step === "fix") {
+      if (!value) return setStep("review"); // nothing typed: the line stays as it was
       const fields = parseLine(value);
       return actions
         .existingCard(deck.name, fields.front)

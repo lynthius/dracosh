@@ -40,7 +40,7 @@ export function htmlLines(html) {
   return decodeEntities(
     String(html)
       .replace(/\[sound:[^\]]*\]/g, "")
-      .replace(/<br\s*\/?>|<\/(div|p|li)>/gi, "\n")
+      .replace(/<br\s*\/?>|<\/?(div|p|li)\b[^>]*>/gi, "\n")
       .replace(/<[^>]*>/g, "")
   )
     .split("\n")
@@ -51,8 +51,9 @@ export function htmlLines(html) {
 // Anki's cloze "{{c1::look forward::hint}}" is a Dracosh gap "{{look forward}}"; other braces in an
 // Anki cloze note are plain text there, so they stay text ("\{{")
 const ANKI_GAP = /\{\{c\d+::(.*?)(?:::[^{}]*?)?\}\}/g;
-const fromAnkiCloze = (text) => {
-  if (!new RegExp(ANKI_GAP.source).test(text)) return text;
+// `anki`: the text comes from an Anki file, where only "{{c1::…}}" is a gap
+const fromAnkiCloze = (text, anki = false) => {
+  if (!new RegExp(ANKI_GAP.source).test(text)) return anki ? text.replace(/(?<!\\)\{\{/g, "\\{{") : text;
   return text.replace(/\{\{(?!c\d+::)/g, "\\{{").replace(ANKI_GAP, "{{$1}}");
 };
 
@@ -66,6 +67,21 @@ function readHeader(lines) {
     header[match[1].trim().toLowerCase()] = match[2].trim();
   }
   return { header, body: at };
+}
+
+// A cell opening with a quote is a quoted one only when its closing quote ends the cell: '"to be" or
+// not' and an unmatched '"Quote me' are plain text that happens to start with a quote
+function closesCell(text, open, separator) {
+  for (let i = open + 1; i < text.length; i++) {
+    if (text[i] !== '"') continue;
+    if (text[i + 1] === '"') {
+      i++;
+      continue;
+    }
+    const next = text.slice(i + 1).match(/^[ ]*(.|\n|$)/)[1];
+    return next === separator || next === "\n" || next === "";
+  }
+  return false;
 }
 
 // Rows split on a one-character separator, the way spreadsheets write them: a cell in double quotes
@@ -112,7 +128,7 @@ export function splitRows(lines, separator, firstLine = 1, { comments = true } =
         continue;
       }
     }
-    if (ch === '"' && cellStart && cell.trim() === "") {
+    if (ch === '"' && cellStart && cell.trim() === "" && closesCell(text, i, separator)) {
       quoted = true;
       cell = "";
       cellStart = false;
@@ -204,13 +220,13 @@ const splitAnswers = (text) => text.split(/(?<!\\);/).map((part) => part.replace
 
 // One table row → card fields. A line break in the back starts the example (Anki notes are often
 // "answer<br>example sentence"); answers are separated by ";" as in /add.
-function rowFields(cells, roles, html) {
+function rowFields(cells, roles, html, anki = false) {
   const cell = (i) => (i === null || i === undefined ? "" : cells[i] ?? "");
   const lines = (text) => (html || looksLikeHtml(text) ? htmlLines(text) : text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean));
   // in an Anki note that isn't a cloze one, braces are plain text
   const plainNote = roles.notetype !== null && roles.notetype !== undefined && !/cloze/i.test(cell(roles.notetype));
   const written = lines(cell(roles.front)).join(" ");
-  const front = plainNote ? written.replace(/(?<!\\)\{\{/g, "\\{{") : fromAnkiCloze(written);
+  const front = plainNote ? written.replace(/(?<!\\)\{\{/g, "\\{{") : fromAnkiCloze(written, anki);
   const [answers = "", ...more] = lines(cell(roles.back));
   const example = [...more, ...lines(cell(roles.example))].join(" ");
   const cloze = gapsOf(front).length > 0;
@@ -246,7 +262,9 @@ function detectFormat(lines, { csv = false, comments = true } = {}) {
   return csv ? { format: "table", separator: "," } : { format: "lines" };
 }
 
-// → { format, separator, header, items: [{ line, deck, direction, source, fields }], columns, ignored }
+// → { format, separator, header, items: [{ line, deck, direction, source, fields }], columns, ignored,
+// unknown, anki, html }: `unknown` lists "#direction:" lines that name no direction, `anki` says the
+// file has Anki's header lines, `html` that its fields are HTML
 // `line`: where the card starts in the text (1-based); `source`: its text as written (for a fix);
 // `deck` and `direction`: from the "#deck:" and "#direction:" lines above it, if any;
 // `ignored`: the lines with text in a column that isn't read (shown, never dropped silently).
@@ -256,16 +274,24 @@ export function readCardList(text, { separator: forced = null, csv = false, comm
   const all = String(text ?? "").replace(/^\uFEFF/, "").split(/\r\n|\r|\n/);
   const { header, body } = comments ? readHeader(all) : { header: {}, body: 0 };
   // a bulleted list ("- dom - house", "• dom = house") loses its bullets
-  const BULLET = /^\s*[-*•]\s+/;
+  const BULLET = /^\s*(?:[-*•]|\d+[.)])\s+/;
   const filled = all.slice(body).filter((line) => line.trim());
   const bulleted = filled.length > 0 && filled.filter((line) => BULLET.test(line)).length * 2 >= filled.length;
   const lines = all.slice(body).map((line) => (bulleted ? line.replace(BULLET, "") : line));
   const html = /^true$/i.test(header.html ?? "");
+  const anki = ["separator", "html", "notetype", "notetype column", "guid column"].some((key) => key in header);
   const fromHeader = separatorNamed(forced ?? header.separator);
   const detected = fromHeader ? { format: "table", separator: fromHeader } : detectFormat(lines, { csv, comments });
   const direction = (value) => DIRECTION_HEADERS[String(value ?? "").trim().toLowerCase()] ?? null;
   let deck = header.deck || null;
-  let deckDirection = direction(header.direction);
+  // a "#direction:" that isn't one is said, not ignored
+  const unknown = [];
+  const readDirection = (value, line) => {
+    const read = direction(value);
+    if (!read && String(value).trim()) unknown.push({ line, text: `#direction:${String(value).trim()}` });
+    return read;
+  };
+  let deckDirection = header.direction === undefined ? null : readDirection(header.direction, body);
   const items = [];
   const ignored = []; // the lines with text in a column that isn't read
   let columns = null;
@@ -288,14 +314,14 @@ export function readCardList(text, { separator: forced = null, csv = false, comm
     for (const row of rows) {
       if (row === firstCard) continue;
       if (row.marker) {
-        if (/^#deck:/i.test(row.marker)) deck = row.marker.slice(6).trim() || null;
-        else if (/^#direction:/i.test(row.marker)) deckDirection = direction(row.marker.slice(11));
+        if (/^#deck:/i.test(row.marker)) [deck, deckDirection] = [row.marker.slice(6).trim() || null, null];
+        else if (/^#direction:/i.test(row.marker)) deckDirection = readDirection(row.marker.slice(11), row.line);
         continue;
       }
       const used = new Set([roles.front, roles.back, roles.example, roles.deck, ...roles.skip]);
       if (row.cells.some((cell, i) => !used.has(i) && cell.trim())) ignored.push(row.line);
       // a row without the separator: maybe a Dracosh line among the rows
-      const fields = row.cells.length === 1 && row.cells[0].includes(" = ") ? parseLine(row.cells[0]) : rowFields(row.cells, roles, html);
+      const fields = row.cells.length === 1 && row.cells[0].includes(" = ") ? parseLine(row.cells[0]) : rowFields(row.cells, roles, html, anki);
       const rowDeck = roles.deck !== null && row.cells[roles.deck]?.trim() ? row.cells[roles.deck].trim() : deck;
       items.push({ line: row.line, deck: rowDeck, direction: deckDirection, source: row.cells.join(detected.separator === "\t" ? "\t" : detected.separator), fields });
     }
@@ -303,8 +329,8 @@ export function readCardList(text, { separator: forced = null, csv = false, comm
     lines.forEach((raw, i) => {
       const line = raw.trim();
       if (!line) return;
-      if (comments && /^#deck:/i.test(line)) return void (deck = line.slice(6).trim() || null);
-      if (comments && /^#direction:/i.test(line)) return void (deckDirection = direction(line.slice(11)));
+      if (comments && /^#deck:/i.test(line)) return void ([deck, deckDirection] = [line.slice(6).trim() || null, null]);
+      if (comments && /^#direction:/i.test(line)) return void (deckDirection = readDirection(line.slice(11), body + i + 1));
       if (comments && line.startsWith("#")) return; // a comment ("\#" starts a card with "#")
       // a line with a tab is a row copied from a table: front, back, example
       const card = comments && line.startsWith("\\#") ? line.slice(1) : line;
@@ -312,5 +338,5 @@ export function readCardList(text, { separator: forced = null, csv = false, comm
       items.push({ line: body + i + 1, deck, direction: deckDirection, source: line, fields });
     });
   }
-  return { format: detected.format, separator: detected.separator ?? null, header, items, columns, ignored };
+  return { format: detected.format, separator: detected.separator ?? null, header, items, columns, ignored, unknown, anki, html };
 }

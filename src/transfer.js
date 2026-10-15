@@ -1,6 +1,6 @@
 import { t } from "./i18n.js";
 import { existsSync, realpathSync } from "node:fs";
-import { readFile, writeFile } from "node:fs/promises";
+import { readFile, stat, writeFile } from "node:fs/promises";
 import { basename, dirname, extname, relative, resolve } from "node:path";
 import { createInterface } from "node:readline/promises";
 import { backupData, backupNow, restoreBackup } from "./backup.js";
@@ -19,17 +19,39 @@ import { missingDeck } from "./words.js";
 // terminal; elsewhere --yes says go), takes a backup before writing, and says how to undo it.
 
 const SHOWN = 8; // problems or changed cards listed before "… and N more"
+const MAX_FILE = 20e6; // a deck of a few hundred thousand cards; anything bigger is likely not one
+
+// UTF-16 without a BOM: every other byte is zero
+const looksUtf16 = (bytes) => {
+  const sample = bytes.subarray(0, 4000);
+  const zeros = (offset) => sample.filter((byte, i) => i % 2 === offset && byte === 0).length;
+  return sample.length >= 4 && Math.max(zeros(0), zeros(1)) > sample.length * 0.3 && Math.min(zeros(0), zeros(1)) === 0;
+};
 const out = (text = "") => console.log(text);
 
+// Ctrl+C or Ctrl+D at a question stops here, before anything is written
 async function ask(question) {
   const rl = createInterface({ input: process.stdin, output: process.stdout });
   try {
     return (await rl.question(question)).trim();
+  } catch {
+    out();
+    throw new Error(t("cli.restore.nothingChanged"));
   } finally {
     rl.close();
   }
 }
-const yes = (answer) => t("cli.restore.yes").split("|").includes(answer.toLowerCase());
+
+// A yes or no question: Enter takes the default, anything that's neither is asked again
+async function confirm(question, byDefault) {
+  const words = (key) => t(key).split("|");
+  for (;;) {
+    const answer = (await ask(`${question} ${byDefault ? t("import.askSuffix") : t("cli.restore.askSuffix")} `)).toLowerCase();
+    if (!answer) return byDefault;
+    if (words("cli.restore.yes").includes(answer)) return true;
+    if (words("import.no").includes(answer)) return false;
+  }
+}
 const answers = (back) => back.join("; ");
 // a cloze card keeps its {{gaps}} in the preview, so you see what will be asked
 const cardText = (fields) => (fields.back.length ? `${fields.front} = ${answers(fields.back)}` : fields.front);
@@ -63,10 +85,15 @@ async function readInput(file, encoding) {
   }
   let bytes;
   try {
+    if ((await stat(file)).size > MAX_FILE) throw Object.assign(new Error(), { code: "TOO_BIG" });
     bytes = await readFile(file);
   } catch (err) {
-    throw new Error(err.code === "ENOENT" ? t("import.noFile", { file }) : t("errors.cantRead", { file, error: err.message }));
+    const why = { ENOENT: "import.noFile", EISDIR: "import.isFolder", EACCES: "import.noPermission", EPERM: "import.noPermission", TOO_BIG: "import.tooBig" }[err.code];
+    throw new Error(why ? t(why, { file, max: MAX_FILE / 1e6 }) : t("errors.cantRead", { file, error: err.message }));
   }
+  // a picture or a zip has zero bytes where text never does (UTF-16 is read before this)
+  const bom16 = (bytes[0] === 0xff && bytes[1] === 0xfe) || (bytes[0] === 0xfe && bytes[1] === 0xff);
+  if (!bom16 && !looksUtf16(bytes) && bytes.subarray(0, 8000).includes(0)) throw new Error(t("import.notText", { file }));
   try {
     return decodeText(bytes, encoding);
   } catch (err) {
@@ -95,11 +122,13 @@ async function importBackup(file, { yes: sure }) {
   if (state !== undefined) checkState(state, file);
   if (settings !== undefined && (settings === null || typeof settings !== "object" || Array.isArray(settings))) throw damaged(file, t("errors.why.notLibrary"));
   out(t("import.backupFile", { file }));
+  const now = await loadLibrary().catch(() => null);
+  if (now?.decks.some((deck) => !deck.tour)) out(t("import.backupReplaces", { decks: t("count.decks", { count: now.decks.filter((d) => !d.tour).length }), cards: t("count.cards", { count: now.cards.length }) }));
   out(`  ${t("cli.restore.row", { decks: t("count.decks", { count: library?.decks?.length ?? 0 }), cards: t("count.cards", { count: library?.cards?.length ?? 0 }), practised: Object.keys(state?.items ?? {}).length })}`);
   if (Object.values(DATA_FILES).some((data) => existsSync(data))) out(t("cli.restore.undo"));
   if (!sure) {
-    if (!process.stdin.isTTY) throw new Error(t("cli.restore.needsYes"));
-    if (!yes(await ask(`${t("import.backupAsk")} ${t("cli.restore.askSuffix")} `))) return out(t("cli.restore.nothingChanged"));
+    if (!process.stdin.isTTY) return out(t("cli.restore.needsYes"));
+    if (!(await confirm(t("import.backupAsk"), false))) return out(t("cli.restore.nothingChanged"));
   }
   await restoreBackup(file);
   out(t("cli.restore.done"));
@@ -121,6 +150,8 @@ export async function runImport(file, options) {
   out(t("import.reading", { file: file === "-" ? t("import.stdin") : file, what: describeRead(plan.read) }) + (encoding === "utf-8" ? "" : t("import.encoding", { encoding: encoding.toUpperCase() })));
   if (!plan.read.count) throw new Error(t("import.empty"));
   if (plan.read.ignored.length) out(t("import.ignored", { count: plan.read.ignored.length, lines: lineList(plan.read.ignored) }));
+  // Anki's export without HTML runs an answer and its example together
+  if (plan.read.anki && !plan.read.html) out(t("import.ankiNoHtml"));
 
   // the deck for cards the file doesn't put in one: --deck, or asked once the cards are on screen,
   // or named after the file
@@ -151,7 +182,7 @@ export async function runImport(file, options) {
     out();
     out(t("import.listed", { count: plan.read.splittable, example: cut(plan.read.splitExample, 40) }));
     if (interactive && !options.yes) {
-      choices.split = yes((await ask(`${t("import.splitAsk")} ${t("import.askSuffix")} `)) || t("cli.restore.yes").split("|")[0]);
+      choices.split = await confirm(t("import.splitAsk"), true);
       if (choices.split) plan = read(library);
     } else out(t("import.splitHint"));
   }
@@ -163,6 +194,12 @@ export async function runImport(file, options) {
       out(target.deck ? t("import.intoDeck", { deck: target.name, cards: t("count.cards", { count: cardsOf(library, target.deck.id).length }) }) : t("import.intoNewDeck", { deck: target.name }));
       for (const item of added.slice(0, 3)) out(`  + ${cut(cardText(item.fields))}${item.fields.example ? `  // ${cut(item.fields.example, 30)}` : ""}`);
       more(added.length - 3);
+      // a new deck's languages, as they'll be guessed: seen before saving, and fixed in /decks
+      if (!target.deck) {
+        const languages = deckLanguages({ name: target.name }, target.items.map((item) => item.fields));
+        const sure = isKnown(languages.front) && isKnown(languages.back) && languages.front !== languages.back;
+        out(`  ${sure ? t("import.languagesGuess", { front: languageName(languages.front), back: languageName(languages.back) }) : t("import.languagesUnsure")}`);
+      }
     }
     const counts = planCounts(plan);
     out();
@@ -185,7 +222,7 @@ export async function runImport(file, options) {
       out(`  ${cut(plainFront(item.card.front), 30)}:  ${cut(before, 30)}  →  ${cut(after, 30)}${example}`);
     }
     more(changed.length - SHOWN);
-    if (!options.update && interactive && !options.yes) update = yes(await ask(`${t("import.updateAsk", { count: changed.length })} ${t("cli.restore.askSuffix")} `)) && new Set(changed.map((item) => item.card.id));
+    if (!options.update && interactive && !options.yes) update = (await confirm(t("import.updateAsk", { count: changed.length }), false)) && new Set(changed.map((item) => item.card.id));
     else if (!options.update) out(t("import.changedLeft"));
   }
 
@@ -228,8 +265,7 @@ export async function runImport(file, options) {
       : !counts.new
         ? t("import.confirmUpdate", { count: willUpdate })
         : t("import.confirmBoth", { cards: t("count.cards", { count: counts.new }), count: willUpdate });
-    const answer = await ask(`${question} ${t("import.askSuffix")} `);
-    if (answer && !yes(answer)) return out(t("cli.restore.nothingChanged"));
+    if (!(await confirm(question, true))) return out(t("cli.restore.nothingChanged"));
   }
 
   // the backup first, then read, change and save in one go: a quiz running meanwhile may have added cards
@@ -253,12 +289,7 @@ export async function runImport(file, options) {
     else if (!deck.added) out(t("import.doneOnlyUpdated", { deck: deck.name, count: deck.updated }));
     else out(t("import.done", { deck: deck.name, count: deck.added }) + (deck.updated ? t("import.doneUpdated", { count: deck.updated }) : ""));
   }
-  for (const left of result.slash) out(`  ${t("import.line", { line: left.line })}  ${t("import.issues.slash")}: ${cut(left.text, 50)}`);
-  for (const deck of result.decks.filter((d) => d.isNew)) {
-    const created = findDeck(fresh, deck.name);
-    const languages = deckLanguages(created, cardsOf(fresh, created.id));
-    if (isKnown(languages.front) && isKnown(languages.back) && languages.front !== languages.back) out(t("import.languages", { deck: deck.name, front: languageName(languages.front), back: languageName(languages.back) }));
-  }
+  for (const left of result.slash) out(`  ${t("import.problemLine", { line: left.line, issue: t("import.issues.slash"), text: cut(left.text, 50) })}`);
   if (result.removedTour.length) out(t("import.tourGone"));
   if (backup) out(t("import.undo"));
   const first = result.decks.find((d) => d.isNew) ?? result.decks[0];
@@ -273,7 +304,7 @@ const lineList = (lines) => lines.slice(0, 5).join(", ") + (lines.length > 5 ? "
 function showProblems(problems) {
   if (!problems.length) return;
   out(t("import.problems", { count: problems.length }));
-  for (const problem of problems.slice(0, SHOWN)) out(`  ${t("import.line", { line: problem.line })}  ${issueText(problem)}: ${cut(problem.text.replace(/\t/g, "  "), 50)}`);
+  for (const problem of problems.slice(0, SHOWN)) out(`  ${t("import.problemLine", { line: problem.line, issue: issueText(problem), text: cut(problem.text.replace(/\t/g, "  "), 50) })}`);
   more(problems.length - SHOWN);
 }
 
@@ -313,18 +344,39 @@ export async function runExport(file, options) {
   if (file !== "-" && insideData(file)) throw new Error(t("export.inData", { home: HOME }));
   if (file !== "-" && existsSync(file) && !options.yes) {
     if (!process.stdin.isTTY) throw new Error(t("export.existsNeedsYes", { file }));
-    if (!yes(await ask(`${t("export.exists", { file })} ${t("cli.restore.askSuffix")} `))) return out(t("cli.restore.nothingChanged"));
+    if (!(await confirm(t("export.exists", { file }), false))) return out(t("cli.restore.nothingChanged"));
+  }
+
+  const write = async (path, text) => {
+    try {
+      await writeFile(path, format === "csv" ? `\uFEFF${text}` : text); // the BOM tells Excel it's UTF-8
+    } catch (err) {
+      throw new Error(t("export.cantWrite", { file: path, error: err.code === "ENOENT" ? t("export.noFolder") : err.message }));
+    }
+  };
+  const count = (cloze) => decks.reduce((sum, deck) => sum + cardsOf(library, deck.id).filter((card) => cloze === undefined || Boolean(card.cloze) === cloze).length, 0);
+
+  // for Anki, cloze cards go into a file of their own, next to the others ("spanish-cloze.tsv")
+  if (format === "tsv" && count(true)) {
+    const clozeFile = count(false) ? file.replace(/\.tsv$/i, "-cloze.tsv") : file;
+    if (clozeFile !== file && !options.yes && existsSync(clozeFile)) {
+      if (!process.stdin.isTTY) throw new Error(t("export.existsNeedsYes", { file: clozeFile }));
+      if (!(await confirm(t("export.exists", { file: clozeFile }), false))) return out(t("cli.restore.nothingChanged"));
+    }
+    if (count(false)) {
+      await write(file, toAnki(library, decks));
+      out(t("export.wrote", { count: count(false), file }));
+      out(t("export.next.tsv", { file }));
+    }
+    await write(clozeFile, toAnki(library, decks, { cloze: true }));
+    out(t("export.wroteCloze", { count: count(true), file: clozeFile }));
+    return out(t("export.nextCloze", { file: clozeFile }));
   }
 
   const text =
     format === "json" ? `${JSON.stringify(await backupData("export"), null, 2)}\n` : format === "csv" ? toCsv(library, decks) : format === "tsv" ? toAnki(library, decks) : toDracoshText(library, decks);
   if (file === "-") return process.stdout.write(text);
-  try {
-    await writeFile(file, format === "csv" ? `\uFEFF${text}` : text); // the BOM tells Excel it's UTF-8
-  } catch (err) {
-    throw new Error(t("export.cantWrite", { file, error: err.code === "ENOENT" ? t("export.noFolder") : err.message }));
-  }
-  const cards = decks.reduce((sum, deck) => sum + cardsOf(library, deck.id).length, 0);
-  out(format === "json" ? t("export.wroteAll", { file }) : t("export.wrote", { count: cards, file }));
+  await write(file, text);
+  out(format === "json" ? t("export.wroteAll", { file }) : t("export.wrote", { count: count(), file }));
   out(t(`export.next.${format}`, { file }));
 }

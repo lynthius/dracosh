@@ -758,7 +758,7 @@
     "slashSwitch": "Il faudrait taper « {text} », et dans le quiz / ouvre les commandes. Modifie d'abord cette carte."
   },
   "cli": {
-    "help": "Dracosh : un entraîneur de vocabulaire et de quiz pour ton terminal\n\nUsage : dracosh [options]\n        dracosh import <fichier|-> ajouter des cartes depuis un fichier (.txt, .csv, .tsv, exports Anki ou Quizlet, une sauvegarde .json), ou « - » pour l'entrée standard\n        dracosh export <fichier>  écrire tes paquets en .txt, .tsv (pour Anki), .csv ou .json (tout)\n        dracosh restore [numéro]  liste tes sauvegardes, ou en restaure une\n\n  --deck <nom>     réviser ce paquet, pour cette fois seulement (sinon celui choisi dans /decks)\n                   avec import ou export : le paquet à remplir ou à écrire\n  --every <durée>  pause entre les questions : 30s, 10m, 1h (par défaut : {interval})\n  --no-sound       couper les sons\n  --volume <0-1>   volume du son (par défaut : {volume})\n  --stats          afficher la progression et quitter\n  --data           montrer où sont gardées tes cartes, ta progression et tes sauvegardes\n  --preview        parcourir toutes les animations et tous les écrans sur des données inventées (rien n'est enregistré)\n  --update         import : les cartes déjà là prennent les réponses du fichier (sinon on te demande)\n  --split          import : une réponse qui en liste plusieurs (« cat, kitty ») devient une réponse par mot\n  --separator <s>  import : ce qui sépare les colonnes : tab, comma, semicolon, pipe ou un caractère\n  --encoding <e>   import : un fichier qui n'est pas en UTF-8, p. ex. windows-1252\n  -y, --yes        importer, exporter ou restaurer sans demander\n  -h, --help       afficher cette aide\n\nLes options remplacent tes réglages enregistrés pour ce lancement seulement. Change-les pour de bon dans /settings.\n\nPendant l'utilisation : Entrée valide (à vide, elle montre la réponse, puis 1 ou 2), « / » ouvre le menu des commandes (/add, /decks, /settings, /stats, /help…),\nÉchap quitte (efface d'abord ce que tu as tapé). Ctrl+C marche aussi.\nEntre deux cartes : Entrée demande la suivante tout de suite, q quitte. /help explique le reste.",
+    "help": "Dracosh : un entraîneur de vocabulaire et de quiz pour ton terminal\n\nUsage : dracosh [options]\n        dracosh import <fichier|-> ajouter des cartes depuis un fichier (.txt, .csv, .tsv, exports Anki ou Quizlet, une sauvegarde .json), ou « - » pour l'entrée standard\n        dracosh export <fichier>  écrire tes paquets en .txt, .tsv (pour Anki), .csv ou .json (tout)\n        dracosh restore [numéro]  liste tes sauvegardes, ou en restaure une\n\n  --deck <nom>     réviser ce paquet, pour cette fois seulement (sinon celui choisi dans /decks)\n                   avec import ou export : le paquet à remplir ou à écrire\n  --every <durée>  pause entre les questions : 30s, 10m, 1h (par défaut : {interval})\n  --no-sound       couper les sons\n  --volume <0-1>   volume du son (par défaut : {volume})\n  --stats          afficher la progression et quitter\n  --data           montrer où sont gardées tes cartes, ta progression et tes sauvegardes\n  --preview        parcourir toutes les animations et tous les écrans sur des données inventées (rien n'est enregistré)\n  --update         import : les cartes déjà là prennent les réponses du fichier (sinon on te demande)\n  --split          import : une réponse qui en liste plusieurs (« cat, kitty ») devient une réponse par mot\n  --separator <s>  import : ce qui sépare les colonnes : tab, comma, semicolon, pipe, colon, space ou un caractère\n  --encoding <e>   import : un fichier qui n'est pas en UTF-8, p. ex. windows-1252\n  -y, --yes        importer, exporter ou restaurer sans demander\n  -h, --help       afficher cette aide\n\nLes options remplacent tes réglages enregistrés pour ce lancement seulement. Change-les pour de bon dans /settings.\n\nPendant l'utilisation : Entrée valide (à vide, elle montre la réponse, puis 1 ou 2), « / » ouvre le menu des commandes (/add, /decks, /settings, /stats, /help…),\nÉchap quitte (efface d'abord ce que tu as tapé). Ctrl+C marche aussi.\nEntre deux cartes : Entrée demande la suivante tout de suite, q quitte. /help explique le reste.",
     "badEvery": "--every « {value} » invalide. Utilise par ex. 30s, 10m, 1h.",
     "badVolume": "--volume « {value} » invalide. Utilise un nombre de 0 à 1.",
     "unknownCommand": "Commande inconnue « {command} ». Voir dracosh --help.",
@@ -822,7 +822,9 @@
       "one": "{count} sauvegarde",
       "many": "{count} sauvegardes",
       "other": "{count} sauvegardes"
-    }
+    },
+    "unknownOption": "Option inconnue {option}. Voir dracosh --help.",
+    "oneFile": "dracosh {command} prend un fichier à la fois."
   },
   "tips": {
     "keys-enter": {
@@ -1199,9 +1201,9 @@
         "other": "{count} déjà là"
       },
       "changed": {
-        "one": "1 déjà là, avec d'autres réponses",
-        "many": "{count} déjà là, avec d'autres réponses",
-        "other": "{count} déjà là, avec d'autres réponses"
+        "one": "1 déjà là, différente dans le fichier",
+        "many": "{count} déjà là, différentes dans le fichier",
+        "other": "{count} déjà là, différentes dans le fichier"
       }
     },
     "problems": {
@@ -1209,7 +1211,6 @@
       "many": "{count} lignes ne peuvent pas être ajoutées :",
       "other": "{count} lignes ne peuvent pas être ajoutées :"
     },
-    "line": "ligne {line}",
     "issues": {
       "noFront": "pas de recto",
       "noBack": "pas de réponse",
@@ -1218,7 +1219,8 @@
       "slash": "une réponse commence par /",
       "tooLong": "le nom de paquet « {deck} » dépasse {max} caractères : choisis-en un avec --deck",
       "tour": "« {deck} » est le paquet de découverte : choisis un autre nom",
-      "noSeparator": "pas de « = » entre le recto et la réponse"
+      "noSeparator": "pas de « = » entre le recto et la réponse",
+      "badDirection": "pas un sens : utilise forward, backward ou both"
     },
     "ignored": {
       "one": "1 ligne a du texte dans une colonne qui n'est pas lue (ligne {lines}) : seuls le recto, la réponse et l'exemple le sont.",
@@ -1226,9 +1228,9 @@
       "other": "{count} lignes ont du texte dans des colonnes qui ne sont pas lues (lignes {lines}) : seuls le recto, la réponse et l'exemple le sont."
     },
     "changedTitle": {
-      "one": "1 carte est déjà là, avec d'autres réponses (maintenant → dans le fichier) :",
-      "many": "{count} cartes sont déjà là, avec d'autres réponses (maintenant → dans le fichier) :",
-      "other": "{count} cartes sont déjà là, avec d'autres réponses (maintenant → dans le fichier) :"
+      "one": "1 carte est déjà là et le fichier l'a autrement (maintenant → dans le fichier) :",
+      "many": "{count} cartes sont déjà là et le fichier les a autrement (maintenant → dans le fichier) :",
+      "other": "{count} cartes sont déjà là et le fichier les a autrement (maintenant → dans le fichier) :"
     },
     "updateAsk": {
       "one": "La mettre à jour avec la version du fichier ? Sa progression reste.",
@@ -1260,7 +1262,6 @@
       "many": "{count} cartes mises à jour dans {deck}.",
       "other": "{count} cartes mises à jour dans {deck}."
     },
-    "languages": "{deck} : {front} → {back} (une supposition; à changer dans /decks).",
     "undo": "Pour annuler : « dracosh restore 1 » (la sauvegarde faite à l'instant).",
     "start": "Pour réviser : dracosh --deck {deck}",
     "inDecks": "Dracosh est ouvert : les nouvelles cartes sont dans /decks.",
@@ -1292,7 +1293,17 @@
       "other": "Ajouter {cards} et en mettre {count} à jour ?"
     },
     "tourGone": "Le paquet de découverte a laissé la place au tien.",
-    "badSeparator": "Séparateur inconnu « {value} » : utilise tab, comma, semicolon, pipe, colon, space ou un caractère."
+    "badSeparator": "Séparateur inconnu « {value} » : utilise tab, comma, semicolon, pipe, colon, space ou un caractère.",
+    "languagesGuess": "Langues : {front} → {back} (une supposition ; à changer dans /decks)",
+    "languagesUnsure": "Langues : pas encore sûr (à régler dans /decks)",
+    "ankiNoHtml": "Cet export Anki n'a pas de HTML, la réponse et son exemple se mélangent : exporte de nouveau avec l'option HTML activée.",
+    "no": "n|non|no",
+    "isFolder": "{file} est un dossier : indique un fichier dedans.",
+    "noPermission": "Dracosh n'a pas le droit de lire {file}.",
+    "tooBig": "{file} dépasse {max} Mo : ce n'est pas un paquet. Découpe-le, ou vérifie que c'est le bon fichier.",
+    "notText": "{file} n'est pas un fichier texte. Dracosh importe du texte : lignes Dracosh, CSV, TSV, ou exports d'Anki et de Quizlet.",
+    "problemLine": "ligne {line}  {issue} : {text}",
+    "backupReplaces": "Elle remplace ce que tu as maintenant ({decks} · {cards})."
   },
   "export": {
     "needFile": "Où ? dracosh export <fichier> : .txt (Dracosh), .tsv (Anki), .csv ou .json (tout)",
@@ -1309,7 +1320,7 @@
     "wroteAll": "Cartes, progression et réglages écrits dans {file}.",
     "next": {
       "txt": "Pour le relire : dracosh import {file}",
-      "tsv": "Dans Anki : Fichier → Importer, puis choisis {file}.",
+      "tsv": "Dans Anki : Fichier → Importer, choisis {file} et vérifie que le type de note est Basique.",
       "csv": "S'ouvre dans n'importe quel tableur ; dracosh import {file} le relit.",
       "json": "dracosh import {file} restaure tout, sur cet ordinateur ou un autre."
     },
@@ -1317,6 +1328,12 @@
     "fileHowTo": "Pour les relire : dracosh import <ce fichier>",
     "inData": "C'est le dossier de Dracosh ({home}) : exporte ailleurs, pour que rien n'y soit écrasé.",
     "cantWrite": "Impossible d'écrire {file} : {error}",
-    "noFolder": "ce dossier n'existe pas"
+    "noFolder": "ce dossier n'existe pas",
+    "wroteCloze": {
+      "one": "1 carte à trous écrite dans {file}.",
+      "many": "{count} cartes à trous écrites dans {file}.",
+      "other": "{count} cartes à trous écrites dans {file}."
+    },
+    "nextCloze": "Importe-le dans Anki de la même façon, avec le type de note Texte à trous : Anki garde les deux sortes à part."
   }
 }

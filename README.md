@@ -86,14 +86,14 @@ dracosh import vocabulary.csv       # a spreadsheet (Excel's semicolons work too
 dracosh import words.csv --deck "Spanish"
 ```
 
-An import reads the file, then shows what it found before anything is saved: how it split the columns, which deck the cards go into, the new cards, the ones already there, and every line it can't use, with its line number. Cards already in the deck with other answers are listed as they are now and as the file has them, and you decide whether they're updated (their progress stays). Answers listed the way Anki and Quizlet decks often have them ("cat, kitty") can be taken as separate answers. A new deck asks which way to quiz, as in `/add`, and the last question says exactly what will be added and updated. A backup is taken first, so `dracosh restore 1` undoes an import. Outside a terminal nothing is written without `--yes`: the preview ends with the command that imports for real. For scripts, `--update` takes the file's version of cards already there and `--split` splits listed answers.
+An import reads the file, then shows what it found before anything is saved: how it split the columns, which deck the cards go into, the new cards, the ones already there, and every line it can't use, with its line number. Cards already in the deck with other answers are listed as they are now and as the file has them, and you decide whether they're updated (their progress stays). Answers listed the way Anki and Quizlet decks often have them ("cat, kitty") can be taken as separate answers. A new deck asks which way to quiz, as in `/add`, and the last question says exactly what will be added and updated. When you already have cards, a backup is taken first, so `dracosh restore 1` undoes an import. Outside a terminal nothing is written without `--yes`: the preview ends with the command that imports for real. For scripts, `--update` takes the file's version of cards already there and `--split` splits listed answers.
 
 A header row (`front,back,example`, `term;definition`) is used to pick the columns, in any order. A file that isn't UTF-8 is never guessed at: Dracosh shows its first line read each likely way and asks for `--encoding`.
 
 | Export | What you get |
 | --- | --- |
 | `dracosh export spanish.txt` | Dracosh lines: easy to read and edit, and `dracosh import` reads them back unchanged |
-| `dracosh export spanish.tsv` | for Anki: File → Import takes it as it is |
+| `dracosh export spanish.tsv` | for Anki: File → Import; cloze cards go into `spanish-cloze.tsv` next to it, as Anki keeps the two note types apart |
 | `dracosh export spanish.csv` | for a spreadsheet: front, back, example (and deck) |
 | `dracosh export everything.json` | all your cards, progress and settings; `dracosh import everything.json` brings them back, on another computer too |
 
@@ -112,7 +112,7 @@ la casa = the house
 Me {{gusta}} el café. = I like coffee
 ```
 
-`;` separates right answers, `//` starts an example, and `{{ }}` makes a gap to fill in. `#deck:` puts the cards below it into that deck (it can come again for the next one), and `#direction:` says how a new deck asks: `forward`, `backward` or `both`. To use one of these characters as plain text, put a backslash before it: `\=`, `\;`, `\//`, `\{{`, and `\#` at the start of a line.
+`;` separates right answers, `//` starts an example, and `{{ }}` makes a gap to fill in; a card with gaps needs nothing after `=`, and what's there is a hint shown with the gap. `#deck:` puts the cards below it into that deck (it can come again for the next one), and `#direction:` under it says how a new deck asks: `forward`, `backward` or `both`. To use one of these characters as plain text, put a backslash before it: `\=`, `\;`, `\//`, `\{{`, and `\#` at the start of a line.
 
 ### Write a deck with your AI assistant
 
@@ -122,8 +122,12 @@ An AI coding assistant (Claude Code, Codex and the like) can write such a file f
 Make a Dracosh deck from <your notes, a topic, a list of words>.
 Write it to cards.txt in this format, one card per line:
   front = answer; another accepted answer // an example sentence
-Start the file with #deck:<deck name> and #direction:forward.
-For a sentence, put {{ }} around the part to fill in: Me {{gusta}} el café. = I like coffee
+Start the file with #deck:<deck name, with the language in it> and #direction:both.
+Put the language I'm learning before =, nouns with their article: der Löffel = the spoon
+Keep answers short: no notes in brackets, no plurals; extra information goes after //.
+For a sentence, put {{ }} around one part to fill in; after = comes a hint, not answers:
+  Me {{gusta}} el café. = I like coffee
+Plain text only: no markdown, numbering or bullets.
 Then run `dracosh import cards.txt`: it changes nothing yet, it shows how it read the file.
 Fix the lines it lists, and tell me the command to import it for real.
 ```
