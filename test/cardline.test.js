@@ -78,3 +78,11 @@ test("any card turns into a line that reads back as the same card", () => {
     assert.deepEqual(parseLine(formatLine(once)), { ...once, hasBack: parseLine(formatLine(once)).hasBack }, formatLine(once));
   }
 });
+
+test("a cloze card: its example may follow the front, and its hint keeps its semicolons", () => {
+  assert.deepEqual(parseLine("Ella {{come}} pan. // She eats bread."), { front: "Ella {{come}} pan.", back: [], example: "She eats bread.", cloze: true, hasBack: false });
+  const hint = parseLine("I {{get on with}} my boss. = Dogaduję się; jest miły.");
+  assert.deepEqual(hint.back, ["Dogaduję się; jest miły."]);
+  assert.deepEqual(parseLine(formatLine(hint)), hint);
+  assert.equal(formatLine(parseLine("Ella {{come}} pan. // She eats bread.")), "Ella {{come}} pan. // She eats bread.");
+});

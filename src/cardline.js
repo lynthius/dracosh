@@ -40,6 +40,9 @@ export function parseLine(line, { separator = " = " } = {}) {
   let hidden = hide(String(line ?? "").trim());
   // "kot =" is a front still waiting for its back
   if (separator === " = " && !hidden.includes(separator) && hidden.endsWith(" =")) hidden = hidden.slice(0, -2).trimEnd();
+  // without a back, " // " still starts the example: "Ella {{come}} pan. // She eats bread."
+  const lone = separator === " = " && !hidden.includes(separator) ? hidden.indexOf(" // ") : -1;
+  if (lone !== -1) hidden = `${hidden.slice(0, lone)} = ${hidden.slice(lone + 1)}`;
   const at = hidden.indexOf(separator);
   const frontPart = at === -1 ? hidden : hidden.slice(0, at);
   const rest = at === -1 ? "" : ` ${hidden.slice(at + separator.length)}`; // the space lets the back start with "// "
@@ -49,7 +52,9 @@ export function parseLine(line, { separator = " = " } = {}) {
   // braces escaped with \{{ are plain text, so only the visible ones make gaps
   const cloze = hasGap(frontPart.replace(/\u0004/g, ""));
   const front = show(frontPart, cloze ? { "\u0004": "\\{{" } : {}).trim();
-  return { front, back: splitAnswers(backPart), example, cloze, hasBack: at !== -1 };
+  // a cloze card's back is a hint, not answers: its ";" is part of it
+  const back = cloze ? [show(backPart).trim()].filter(Boolean) : splitAnswers(backPart);
+  return { front, back, example, cloze, hasBack: at !== -1 && lone === -1 };
 }
 
 // What goes into a second step's field: the back of a card, maybe with its example ("cat; kitty // …")
@@ -62,10 +67,13 @@ export function parseBack(text) {
 // otherwise read as an escape (before = ; // {{ \ or at the end of a piece).
 const backslashes = (text, { cloze = false } = {}) => text.replace(cloze ? /\\(?=[=;\\]|\/\/|$)/g : /\\(?=[=;\\]|\/\/|\{\{|$)/g, "\\\\");
 export function formatLine({ front, back = [], example = "", cloze = false }) {
-  let line = backslashes(front, { cloze }).replace(/ =/g, " \\=");
+  // " //" in the front is escaped too: without a back it would start the example
+  let line = backslashes(front, { cloze }).replace(/ =/g, " \\=").replace(/(^|\s)\/\//g, "$1\\//");
   if (!cloze) line = line.replace(/\{\{/g, "\\{{");
   const backText = back.map((answer) => backslashes(answer).replace(/;/g, "\\;").replace(/(^|\s)\/\//g, "$1\\//")).join("; ");
-  if (backText || example) line += ` = ${backText}`;
+  // a cloze card needs no back, so its example can follow right after the front (unless an "=" in it
+  // could read as the separator)
+  if (backText || (example && (!cloze || example.includes("=")))) line += ` = ${backText}`;
   if (example) line += ` // ${backslashes(example)}`;
   return line;
 }
