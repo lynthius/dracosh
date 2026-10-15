@@ -1,6 +1,6 @@
 import { t } from "./i18n.js";
 import { randomBytes } from "node:crypto";
-import { normalize } from "./judge.js";
+import { frontKey } from "./judge.js";
 import { gapsOf } from "./cardline.js";
 
 // The card library: decks and their cards. Pure functions over a plain object; saving is the caller's job.
@@ -124,15 +124,19 @@ export function removeDeck(library, deckId) {
 
 export const cardsOf = (library, deckId) => library.cards.filter((card) => card.deckId === deckId);
 
-// a card with the same front (ignoring case, accents and punctuation) in the same deck
-export const findDuplicate = (library, deckId, front) => {
-  const key = normalize(front);
-  return library.cards.find((card) => card.deckId === deckId && normalize(card.front) === key) ?? null;
+// a card with the same front (ignoring case and punctuation: see frontKey) in the same deck. `index`,
+// a Map of frontKey → card for the deck, saves reading every card again (an import adds thousands)
+export const findDuplicate = (library, deckId, front, index = null) => {
+  const key = frontKey(front);
+  if (index) return index.get(key) ?? null;
+  return library.cards.find((card) => card.deckId === deckId && frontKey(card.front) === key) ?? null;
 };
+export const frontIndex = (library, deckId) => new Map(cardsOf(library, deckId).map((card) => [frontKey(card.front), card]));
 
 // → { card, duplicate }: `duplicate` is the existing card when the front is already in the deck (nothing is added then)
 // `cloze`: the front has {{gaps}}, each asked as a card of its own; the back is then only a hint
-export function addCard(library, deckId, { front, back, example = "", tags = [], cloze = false, id, now = Date.now() }) {
+// `index`: the deck's frontIndex, kept up to date here (see findDuplicate)
+export function addCard(library, deckId, { front, back, example = "", tags = [], cloze = false, id, now = Date.now() }, index = null) {
   if (!library.decks.some((deck) => deck.id === deckId)) throw new Error("That deck doesn't exist.");
   const cleanFront = String(front ?? "").trim();
   const cleanBack = cleanList(back);
@@ -140,12 +144,13 @@ export function addCard(library, deckId, { front, back, example = "", tags = [],
   if (!cleanFront) throw new Error(t("errors.cardNeedsFront"));
   if (!cleanBack.length && !isCloze) throw new Error(t("errors.cardNeedsBack"));
 
-  const duplicate = findDuplicate(library, deckId, cleanFront);
+  const duplicate = findDuplicate(library, deckId, cleanFront, index);
   if (duplicate) return { card: null, duplicate };
 
   const card = { id: id ? String(id) : newId("c"), deckId, front: cleanFront, back: cleanBack, example: String(example).trim(), tags: cleanList(tags), ...(isCloze && { cloze: true }), created: now, updated: now };
-  if (library.cards.some((c) => c.id === card.id)) throw new Error(`A card with id ${card.id} already exists.`);
+  if (id && library.cards.some((c) => c.id === card.id)) throw new Error(`A card with id ${card.id} already exists.`);
   library.cards.push(card);
+  index?.set(frontKey(cleanFront), card);
   return { card, duplicate: null };
 }
 

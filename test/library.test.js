@@ -66,9 +66,11 @@ test("cards are trimmed, answers deduplicated, and need a front and a back", () 
 test("a duplicate front in the same deck is reported, not added", () => {
   const { library, deck } = withDeck();
   addCard(library, deck.id, { front: "Árbol", back: ["tree"] });
-  const again = addCard(library, deck.id, { front: "arbol!", back: ["tree"] });
-  assert.equal(again.card, null);
+  const again = addCard(library, deck.id, { front: "árbol!", back: ["tree"] });
+  assert.equal(again.card, null, "letter case and punctuation don't make another word");
   assert.equal(again.duplicate.front, "Árbol");
+  addCard(library, deck.id, { front: "el", back: ["the"] });
+  assert.ok(addCard(library, deck.id, { front: "él", back: ["he"] }).card, "an accent does: él isn't el");
   const other = createDeck(library, { name: "Spanish 2" });
   assert.ok(addCard(library, other.id, { front: "árbol", back: ["tree"] }).card, "another deck may have the same word");
 });

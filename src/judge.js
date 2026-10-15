@@ -45,6 +45,10 @@ export function fold(s) {
     .replace(/[\ue000-\ue002]/g, (ch) => OWN_BACK[ch]);
 }
 
+// One card's front, as duplicates are found: letter case and punctuation don't count, accents do
+// ("el" and "él", "kat" and "kąt" are different words)
+export const frontKey = (s) => plain(String(s ?? ""));
+
 // plain(), and diacritics folded too
 export function normalize(s) {
   return fold(plain(s));
