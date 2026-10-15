@@ -1,5 +1,5 @@
 // Fills a throwaway DRACOSH_HOME with the demo used for docs/demo.gif: a Spanish deck a few weeks in,
-// a 34-day streak (the dragon is a whelp by now) and a study session. Run by docs/demo/demo.tape.
+// a 12-day streak (the dragon is an imp by now) and a study session. Run by docs/demo/demo.tape.
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -33,9 +33,9 @@ const weekStart = (t) => {
 };
 // every card waiting, in the order the demo answers them
 const items = Object.fromEntries(ids.map((id, i) => [`${id}:en-pl`, { box: 2, seen: 4, correct: 3, wrong: 1, streak: 1, due: now - 60_000 * (ids.length - i), last: now - 2 * day }]));
-const days = Object.fromEntries(Array.from({ length: 34 }, (_, i) => [key(now - (i + 1) * day), { asked: 22, correct: 20, goalMet: true }]));
-// what a month of practice has earned already, so no badge pops up mid-demo
-const EARNED = ["hello", "first-steps", "century", "on-a-roll", "week", "fortnight", "month", "hot-streak", "weekend", "perfect-week", "regular", "machine"];
+const days = Object.fromEntries(Array.from({ length: 12 }, (_, i) => [key(now - (i + 1) * day), { asked: 22, correct: 20, goalMet: true }]));
+// what twelve days of practice have earned already, so no badge pops up mid-demo
+const EARNED = ["hello", "first-steps", "century", "on-a-roll", "week", "hot-streak", "weekend", "perfect-week"];
 const state = {
   version: 1,
   items,
@@ -43,7 +43,7 @@ const state = {
   hatched: true,
   progress: {
     days,
-    streak: { count: 34, best: 34, lastGoalDay: key(now - day), freezes: 2, freezeWeek: weekStart(now), freezesUsed: 0 },
+    streak: { count: 12, best: 12, lastGoalDay: key(now - day), freezes: 2, freezeWeek: weekStart(now), freezesUsed: 0 },
     badges: Object.fromEntries(EARNED.map((id) => [id, key(now - 5 * day)])),
     seenBadges: EARNED,
     bestCombo: 12,
