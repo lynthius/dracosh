@@ -781,7 +781,7 @@
     "slashSwitch": "Trzeba by wpisać „{text}”, a w quizie / otwiera komendy. Najpierw popraw tę kartę."
   },
   "cli": {
-    "help": "Dracosh: trener słówek i quizów w terminalu\n\nUżycie: dracosh [opcje]\n        dracosh restore [numer]   lista kopii zapasowych albo przywrócenie jednej z nich\n\n  --deck <nazwa>   quiz z tej talii, tylko tym razem (inaczej ta wybrana w /decks)\n  --every <czas>   odstęp między pytaniami: 30s, 10m, 1h (domyślnie: {interval})\n  --no-sound       wyłącz dźwięki\n  --volume <0-1>   głośność (domyślnie: {volume})\n  --stats          wypisz postępy i zakończ\n  --data           pokaż, gdzie są karty, postępy i kopie zapasowe\n  --preview        obejrzyj wszystkie animacje i ekrany na zmyślonych danych (nic się nie zapisuje)\n  -y, --yes        przywróć bez pytania\n  -h, --help       pokaż tę pomoc\n\nOpcje zmieniają zapisane ustawienia tylko na to uruchomienie. Zapisane zmienisz w /settings.\n\nW trakcie: Enter wysyła (pusty pokazuje odpowiedź, potem 1 albo 2), „/” otwiera menu komend (/add, /decks, /settings, /stats, /help…),\nEsc wychodzi (najpierw czyści wpisany tekst). Ctrl+C też działa.\nMiędzy kartami: Enter od razu zadaje następną, q wychodzi. Resztę wyjaśnia /help.",
+    "help": "Dracosh: trener słówek i quizów w terminalu\n\nUżycie: dracosh [opcje]\n        dracosh import <plik|->   dodaj karty z pliku (.txt, .csv, .tsv, eksporty z Anki i Quizletu, kopia .json) albo „-” ze standardowego wejścia\n        dracosh export <plik>     zapisz talie do .txt, .tsv (dla Anki), .csv albo .json (wszystko)\n        dracosh restore [numer]   lista kopii zapasowych albo przywrócenie jednej z nich\n\n  --deck <nazwa>   quiz z tej talii, tylko tym razem (inaczej ta wybrana w /decks)\n                   przy import i export: talia do uzupełnienia albo zapisania\n  --every <czas>   odstęp między pytaniami: 30s, 10m, 1h (domyślnie: {interval})\n  --no-sound       wyłącz dźwięki\n  --volume <0-1>   głośność (domyślnie: {volume})\n  --stats          wypisz postępy i zakończ\n  --data           pokaż, gdzie są karty, postępy i kopie zapasowe\n  --preview        obejrzyj wszystkie animacje i ekrany na zmyślonych danych (nic się nie zapisuje)\n  --update         import: karty, które już są, dostają odpowiedzi z pliku (inaczej pytanie)\n  --split          import: odpowiedź z kilkoma wariantami („cat, kitty”) staje się kilkoma odpowiedziami\n  --separator <s>  import: co dzieli kolumny: tab, comma, semicolon, pipe albo znak\n  --encoding <e>   import: plik, który nie jest w UTF-8, np. windows-1250\n  -y, --yes        import, eksport albo przywrócenie bez pytania\n  -h, --help       pokaż tę pomoc\n\nOpcje zmieniają zapisane ustawienia tylko na to uruchomienie. Zapisane zmienisz w /settings.\n\nW trakcie: Enter wysyła (pusty pokazuje odpowiedź, potem 1 albo 2), „/” otwiera menu komend (/add, /decks, /settings, /stats, /help…),\nEsc wychodzi (najpierw czyści wpisany tekst). Ctrl+C też działa.\nMiędzy kartami: Enter od razu zadaje następną, q wychodzi. Resztę wyjaśnia /help.",
     "badEvery": "Niepoprawne --every „{value}”. Użyj np. 30s, 10m, 1h.",
     "badVolume": "Niepoprawne --volume „{value}”. Podaj liczbę od 0 do 1.",
     "unknownCommand": "Nieznana komenda „{command}”. Zobacz dracosh --help.",
@@ -839,7 +839,8 @@
         "daily": "codzienna",
         "before-reset": "przed resetem",
         "before-delete": "przed usunięciem",
-        "before-restore": "przed przywróceniem"
+        "before-restore": "przed przywróceniem",
+        "before-import": "przed importem"
       }
     },
     "backups": {
@@ -1169,5 +1170,195 @@
     "learningArticles": "Brak albo zły rodzajnik w tym języku to „prawie”.",
     "savedWithLearning": "Języki talii „{deck}”: {pair}, język nauki: {language}.",
     "learningUmlauts": "W niemieckim także pominięty umlaut."
+  },
+  "import": {
+    "needFile": "Który plik? dracosh import <plik> (albo -, żeby czytać karty ze standardowego wejścia)",
+    "noFile": "Nie ma pliku {file}.",
+    "unknownEncoding": "Nieznane kodowanie „{encoding}”. Spróbuj utf-8, utf-16, windows-1250 albo windows-1252.",
+    "notUtf8": "{file} nie jest zapisany w UTF-8. Oto jego pierwsza linia ze znakami specjalnymi, odczytana w każdym z prawdopodobnych kodowań:",
+    "notUtf8Hint": "Uruchom import jeszcze raz z tym, które czyta się dobrze, albo zapisz plik w UTF-8 (w Excelu: CSV UTF-8).",
+    "stdin": "standardowe wejście",
+    "reading": "Czytam {file}: {what}",
+    "encoding": " (odczytane jako {encoding})",
+    "formats": {
+      "lines": "linie Dracosh (przód = odpowiedź; inna odpowiedź // przykład)",
+      "dashes": "lista z myślnikami (przód - odpowiedź)",
+      "table": "tabela dzielona przez {separator}; kolumny: {columns}"
+    },
+    "separators": {
+      "tab": "tabulatory",
+      "comma": "przecinki",
+      "semicolon": "średniki",
+      "pipe": "„|”",
+      "colon": "dwukropki",
+      "space": "spacje"
+    },
+    "column": "{number} {role}",
+    "roles": {
+      "front": "przód",
+      "back": "odpowiedź",
+      "example": "przykład",
+      "deck": "talia"
+    },
+    "empty": "Nie ma w nim kart.",
+    "yourDecks": "Twoje talie: {decks}",
+    "askDeck": "Do której talii? Enter tworzy nową talię „{deck}”, albo wpisz nazwę: ",
+    "askDeckEmpty": "Do której talii? Wpisz nazwę: ",
+    "needDeck": "Podaj talię dla kart: dracosh import - --deck <nazwa>",
+    "intoDeck": "Do talii {deck} (teraz {cards}):",
+    "intoNewDeck": "Do nowej talii {deck}:",
+    "more": {
+      "one": "… i jeszcze 1",
+      "few": "… i jeszcze {count}",
+      "many": "… i jeszcze {count}",
+      "other": "… i jeszcze {count}"
+    },
+    "counts": {
+      "new": {
+        "one": "1 nowa karta",
+        "few": "{count} nowe karty",
+        "many": "{count} nowych kart",
+        "other": "{count} nowej karty"
+      },
+      "same": {
+        "one": "1 już jest",
+        "few": "{count} już są",
+        "many": "{count} już jest",
+        "other": "{count} już jest"
+      },
+      "changed": {
+        "one": "1 już jest, z innymi odpowiedziami",
+        "few": "{count} już są, z innymi odpowiedziami",
+        "many": "{count} już jest, z innymi odpowiedziami",
+        "other": "{count} już jest, z innymi odpowiedziami"
+      }
+    },
+    "problems": {
+      "one": "1 linii nie da się dodać:",
+      "few": "{count} linii nie da się dodać:",
+      "many": "{count} linii nie da się dodać:",
+      "other": "{count} linii nie da się dodać:"
+    },
+    "line": "linia {line}",
+    "issues": {
+      "noFront": "brak przodu",
+      "noBack": "brak odpowiedzi",
+      "noDeck": "brak talii",
+      "twice": "jest też w linii {line}",
+      "slash": "odpowiedź zaczyna się od /",
+      "tooLong": "nazwa talii „{deck}” ma więcej niż {max} znaków: wybierz inną przez --deck",
+      "tour": "„{deck}” to talia z samouczkiem: wybierz inną nazwę",
+      "noSeparator": "brak „ = ” między przodem a odpowiedzią"
+    },
+    "ignored": {
+      "one": "1 wiersz ma tekst w kolumnie, która nie jest czytana (linia {lines}): tylko przód, odpowiedź i przykład.",
+      "few": "{count} wiersze mają tekst w kolumnach, które nie są czytane (linie {lines}): tylko przód, odpowiedź i przykład.",
+      "many": "{count} wierszy ma tekst w kolumnach, które nie są czytane (linie {lines}): tylko przód, odpowiedź i przykład.",
+      "other": "{count} wiersza ma tekst w kolumnach, które nie są czytane (linie {lines}): tylko przód, odpowiedź i przykład."
+    },
+    "changedTitle": {
+      "one": "1 karta już jest, z innymi odpowiedziami (teraz → w pliku):",
+      "few": "{count} karty już są, z innymi odpowiedziami (teraz → w pliku):",
+      "many": "{count} kart już jest, z innymi odpowiedziami (teraz → w pliku):",
+      "other": "{count} karty już jest, z innymi odpowiedziami (teraz → w pliku):"
+    },
+    "updateAsk": {
+      "one": "Zaktualizować ją do wersji z pliku? Postępy zostają.",
+      "few": "Zaktualizować te {count} do wersji z pliku? Postępy zostają.",
+      "many": "Zaktualizować te {count} do wersji z pliku? Postępy zostają.",
+      "other": "Zaktualizować te {count} do wersji z pliku? Postępy zostają."
+    },
+    "changedLeft": "Zostają bez zmian (--update bierze wersję z pliku).",
+    "nothing": "Nic do dodania: karty już są albo nie da się ich dodać w tej postaci.",
+    "directionTitle": "Jak ma pytać talia {deck}?",
+    "directionAsk": "Wybierz 1, 2 albo 3 (Enter: 1): ",
+    "askSuffix": "[T/n]",
+    "doneNew": {
+      "one": "Utworzono talię {deck} z 1 kartą.",
+      "few": "Utworzono talię {deck} z {count} kartami.",
+      "many": "Utworzono talię {deck} z {count} kartami.",
+      "other": "Utworzono talię {deck} z {count} karty."
+    },
+    "done": {
+      "one": "Dodano 1 kartę do talii {deck}.",
+      "few": "Dodano {count} karty do talii {deck}.",
+      "many": "Dodano {count} kart do talii {deck}.",
+      "other": "Dodano {count} karty do talii {deck}."
+    },
+    "doneUpdated": {
+      "one": " Zaktualizowano 1.",
+      "few": " Zaktualizowano {count}.",
+      "many": " Zaktualizowano {count}.",
+      "other": " Zaktualizowano {count}."
+    },
+    "doneOnlyUpdated": {
+      "one": "Zaktualizowano 1 kartę w talii {deck}.",
+      "few": "Zaktualizowano {count} karty w talii {deck}.",
+      "many": "Zaktualizowano {count} kart w talii {deck}.",
+      "other": "Zaktualizowano {count} karty w talii {deck}."
+    },
+    "languages": "{deck}: {front} → {back} (to zgadywanie; zmienisz w /decks).",
+    "undo": "Cofniesz to przez „dracosh restore 1” (kopia zrobiona przed chwilą).",
+    "start": "Ćwicz z: dracosh --deck {deck}",
+    "inDecks": "Dracosh jest uruchomiony: nowe karty są w /decks.",
+    "backupFile": "{file} to pełna kopia Dracosh: przywraca karty, postępy i ustawienia, które w niej są.",
+    "backupAsk": "Przywrócić?",
+    "askDeckYours": "Do której talii? Enter: {deck} (twoja, {cards}), albo wpisz nazwę: ",
+    "listed": {
+      "one": "1 odpowiedź wymienia kilka wariantów, np. „{example}”.",
+      "few": "{count} odpowiedzi wymieniają kilka wariantów, np. „{example}”.",
+      "many": "{count} odpowiedzi wymienia kilka wariantów, np. „{example}”.",
+      "other": "{count} odpowiedzi wymienia kilka wariantów, np. „{example}”."
+    },
+    "splitAsk": "Traktować każdy wariant jako osobną odpowiedź?",
+    "splitHint": "Każda zostaje jedną odpowiedzią, tak jak jest zapisana (--split rozdziela warianty).",
+    "directionTitleMany": "Jak mają pytać nowe talie ({count})?",
+    "previewOnly": "To tylko podgląd, nic nie zapisano. Import: {command}",
+    "confirmAdd": {
+      "one": "Dodać 1 kartę?",
+      "few": "Dodać {count} karty?",
+      "many": "Dodać {count} kart?",
+      "other": "Dodać {count} karty?"
+    },
+    "confirmUpdate": {
+      "one": "Zaktualizować 1 kartę?",
+      "few": "Zaktualizować {count} karty?",
+      "many": "Zaktualizować {count} kart?",
+      "other": "Zaktualizować {count} karty?"
+    },
+    "confirmBoth": {
+      "one": "Dodać: {cards}, i zaktualizować 1?",
+      "few": "Dodać: {cards}, i zaktualizować {count}?",
+      "many": "Dodać: {cards}, i zaktualizować {count}?",
+      "other": "Dodać: {cards}, i zaktualizować {count}?"
+    },
+    "tourGone": "Talia z samouczkiem zrobiła miejsce dla twojej własnej.",
+    "badSeparator": "Nieznany separator „{value}”: użyj tab, comma, semicolon, pipe, colon, space albo jednego znaku."
+  },
+  "export": {
+    "needFile": "Dokąd? dracosh export <plik>: .txt (Dracosh), .tsv (Anki), .csv albo .json (wszystko)",
+    "unknownFormat": "{file}: format wybiera końcówka pliku: .txt (Dracosh), .tsv (Anki), .csv albo .json (wszystko).",
+    "jsonAll": "Eksport .json zawiera wszystko (wszystkie talie, postępy i ustawienia): pomiń --deck.",
+    "noDecks": "Nie ma jeszcze własnych talii do eksportu.",
+    "exists": "{file} już istnieje. Nadpisać?",
+    "existsNeedsYes": "{file} już istnieje: dodaj --yes, żeby go nadpisać.",
+    "wrote": {
+      "one": "Zapisano 1 kartę do {file}.",
+      "few": "Zapisano {count} karty do {file}.",
+      "many": "Zapisano {count} kart do {file}.",
+      "other": "Zapisano {count} karty do {file}."
+    },
+    "wroteAll": "Zapisano karty, postępy i ustawienia do {file}.",
+    "next": {
+      "txt": "Wczytasz go z powrotem przez: dracosh import {file}",
+      "tsv": "W Anki: Plik → Importuj, potem wybierz {file}.",
+      "csv": "Otworzy się w każdym arkuszu; dracosh import {file} wczyta go z powrotem.",
+      "json": "dracosh import {file} przywraca wszystko, na tym albo innym komputerze."
+    },
+    "fileHeader": "Karty Dracosh, {date}. Jedna karta w linii: przód = odpowiedź; inna odpowiedź // przykład",
+    "fileHowTo": "Wczytasz je z powrotem przez: dracosh import <ten plik>",
+    "inData": "To folder samego Dracosh ({home}): wybierz inne miejsce, żeby nic tam nie zostało nadpisane.",
+    "cantWrite": "Nie da się zapisać {file}: {error}",
+    "noFolder": "nie ma takiego folderu"
   }
 }

@@ -6,13 +6,24 @@ import { DATA_FILES, HOME, readJson, writeJson } from "./store.js";
 
 // A backup is one JSON file in ~/.dracosh/backups holding the library, progress and settings as they
 // were. One is taken on the first start of each day, and right before anything that changes a lot at
-// once (a restore now; imports, deletions and resets later).
+// once (a restore, an import, a deletion or a reset).
 export const BACKUP_DIR = join(HOME, "backups");
 const BACKUP_FORMAT = 1;
 export const KEEP = 7; // per kind: the last 7 daily ones, and the last 7 taken before an operation
 
 // "2026-10-09T21:15:03.120Z" → "2026-10-09_21-15-03", so file names sort by time
 const stamp = (now) => new Date(now).toISOString().slice(0, 19).replace("T", "_").replaceAll(":", "-");
+
+// What a backup holds, as an object: the library, progress and settings now. `dracosh export x.json`
+// writes it, and `dracosh import x.json` (or a restore) brings it back. A damaged file is left out.
+export async function backupData(reason, now = Date.now()) {
+  const files = {};
+  for (const [name, file] of Object.entries(DATA_FILES)) {
+    const data = await readJson(file, null).catch(() => null);
+    if (data) files[name] = data;
+  }
+  return { format: BACKUP_FORMAT, created: now, reason, files };
+}
 
 // → the file it wrote, or null when there is nothing to back up (or, with `skipDamaged`, when a data file
 // is too damaged to read: a backup missing the library would push the good ones out). Otherwise a damaged

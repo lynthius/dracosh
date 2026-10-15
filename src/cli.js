@@ -19,6 +19,7 @@ import { ALREADY_RUNNING, acquireLock, runningPid } from "./lock.js";
 import * as manage from "./manage.js";
 import { findDeck } from "./library.js";
 import { loadAllWords, loadWords, missingDeck } from "./words.js";
+import { runExport, runImport } from "./transfer.js";
 
 const help = () => t("cli.help", { interval: formatInterval(DEFAULTS.everyMs), volume: DEFAULTS.volume });
 
@@ -114,6 +115,10 @@ async function main() {
     allowPositionals: true,
     options: {
       deck: { type: "string" },
+      separator: { type: "string" },
+      encoding: { type: "string" },
+      update: { type: "boolean", default: false },
+      split: { type: "boolean", default: false },
       every: { type: "string" },
       volume: { type: "string" },
       "no-sound": { type: "boolean", default: false },
@@ -127,6 +132,8 @@ async function main() {
   if (values.help) return console.log(help());
   const [command, ...args] = positionals;
   if (command === "restore") return restore(args[0], values);
+  if (command === "import") return runImport(args[0], values);
+  if (command === "export") return runExport(args[0], values);
   if (command) throw new Error(t("cli.unknownCommand", { command }));
   if (values.data) return printData();
 

@@ -714,7 +714,7 @@
     "slashSwitch": "„{text}“ müsste getippt werden, und im Quiz öffnet / die Befehle. Ändere zuerst diese Karte."
   },
   "cli": {
-    "help": "Dracosh: ein Vokabel- und Quiztrainer für dein Terminal\n\nAufruf: dracosh [Optionen]\n        dracosh restore [Nummer]  deine Sicherungen auflisten oder eine zurückholen\n\n  --deck <Name>    diesen Stapel abfragen, nur dieses Mal (sonst den in /decks gewählten)\n  --every <Zeit>   Abstand zwischen Fragen: 30s, 10m, 1h (Standard: {interval})\n  --no-sound       Töne ausschalten\n  --volume <0-1>   Lautstärke (Standard: {volume})\n  --stats          Fortschritt ausgeben und beenden\n  --data           zeigen, wo Karten, Fortschritt und Sicherungen liegen\n  --preview        alle Animationen und Bildschirme mit erfundenen Daten ansehen (nichts wird gespeichert)\n  -y, --yes        ohne Nachfrage zurückholen\n  -h, --help       diese Hilfe zeigen\n\nOptionen ändern deine gespeicherten Einstellungen nur für diesen Start. Die gespeicherten änderst du in /settings.\n\nWährenddessen: Enter schickt ab (leer zeigt es die Antwort, dann 1 oder 2), „/“ öffnet das Befehlsmenü (/add, /decks, /settings, /stats, /help…),\nEsc beendet (löscht vorher die Eingabe). Strg+C geht auch.\nZwischen Karten: Enter fragt sofort die nächste, q beendet. /help erklärt den Rest.",
+    "help": "Dracosh: ein Vokabel- und Quiztrainer für dein Terminal\n\nAufruf: dracosh [Optionen]\n        dracosh import <Datei|->  Karten aus einer Datei hinzufügen (.txt, .csv, .tsv, Exporte aus Anki oder Quizlet, eine .json-Sicherung), oder „-“ für die Standardeingabe\n        dracosh export <Datei>    deine Stapel als .txt, .tsv (für Anki), .csv oder .json (alles) speichern\n        dracosh restore [Nummer]  deine Sicherungen auflisten oder eine zurückholen\n\n  --deck <Name>    diesen Stapel abfragen, nur dieses Mal (sonst den in /decks gewählten)\n                   bei import und export: der Stapel zum Füllen oder Speichern\n  --every <Zeit>   Abstand zwischen Fragen: 30s, 10m, 1h (Standard: {interval})\n  --no-sound       Töne ausschalten\n  --volume <0-1>   Lautstärke (Standard: {volume})\n  --stats          Fortschritt ausgeben und beenden\n  --data           zeigen, wo Karten, Fortschritt und Sicherungen liegen\n  --preview        alle Animationen und Bildschirme mit erfundenen Daten ansehen (nichts wird gespeichert)\n  --update         import: vorhandene Karten übernehmen die Antworten aus der Datei (sonst wird gefragt)\n  --split          import: eine Antwort mit mehreren („cat, kitty“) wird zu einzelnen Antworten\n  --separator <s>  import: was die Spalten trennt: tab, comma, semicolon, pipe oder ein Zeichen\n  --encoding <e>   import: eine Datei, die nicht UTF-8 ist, z. B. windows-1252\n  -y, --yes        Import, Export oder Wiederherstellen ohne Nachfrage\n  -h, --help       diese Hilfe zeigen\n\nOptionen ändern deine gespeicherten Einstellungen nur für diesen Start. Die gespeicherten änderst du in /settings.\n\nWährenddessen: Enter schickt ab (leer zeigt es die Antwort, dann 1 oder 2), „/“ öffnet das Befehlsmenü (/add, /decks, /settings, /stats, /help…),\nEsc beendet (löscht vorher die Eingabe). Strg+C geht auch.\nZwischen Karten: Enter fragt sofort die nächste, q beendet. /help erklärt den Rest.",
     "badEvery": "Ungültiges --every „{value}“. Nutze z. B. 30s, 10m, 1h.",
     "badVolume": "Ungültiges --volume „{value}“. Nutze eine Zahl von 0 bis 1.",
     "unknownCommand": "Unbekannter Befehl „{command}“. Siehe dracosh --help.",
@@ -768,7 +768,8 @@
         "daily": "täglich",
         "before-reset": "vor Reset",
         "before-delete": "vor Löschen",
-        "before-restore": "vor Wiederherstellen"
+        "before-restore": "vor Wiederherstellen",
+        "before-import": "vor Import"
       }
     },
     "backups": {
@@ -1094,5 +1095,161 @@
     "learningArticles": "Ein fehlender oder falscher Artikel darin zählt als „fast“.",
     "savedWithLearning": "Sprachen von „{deck}“: {pair}, Lernsprache: {language}.",
     "learningUmlauts": "Im Deutschen auch ein weggelassener Umlaut."
+  },
+  "import": {
+    "needFile": "Welche Datei? dracosh import <Datei> (oder -, um die Karten von der Standardeingabe zu lesen)",
+    "noFile": "Die Datei {file} gibt es nicht.",
+    "unknownEncoding": "Unbekannte Kodierung „{encoding}“. Versuch utf-8, utf-16, windows-1250 oder windows-1252.",
+    "notUtf8": "{file} ist nicht als UTF-8 gespeichert. Hier ist die erste Zeile mit Sonderzeichen, in jeder wahrscheinlichen Kodierung gelesen:",
+    "notUtf8Hint": "Starte den Import noch einmal mit der, die richtig aussieht, oder speichere die Datei als UTF-8 (in Excel: CSV UTF-8).",
+    "stdin": "Standardeingabe",
+    "reading": "Lese {file}: {what}",
+    "encoding": " (gelesen als {encoding})",
+    "formats": {
+      "lines": "Dracosh-Zeilen (Vorderseite = Antwort; andere Antwort // Beispiel)",
+      "dashes": "eine Liste mit Bindestrichen (Vorderseite - Antwort)",
+      "table": "eine Tabelle, getrennt durch {separator}; Spalten: {columns}"
+    },
+    "separators": {
+      "tab": "Tabs",
+      "comma": "Kommas",
+      "semicolon": "Semikolons",
+      "pipe": "„|“",
+      "colon": "Doppelpunkte",
+      "space": "Leerzeichen"
+    },
+    "column": "{number} {role}",
+    "roles": {
+      "front": "Vorderseite",
+      "back": "Antwort",
+      "example": "Beispiel",
+      "deck": "Stapel"
+    },
+    "empty": "Darin sind keine Karten.",
+    "yourDecks": "Deine Stapel: {decks}",
+    "askDeck": "In welchen Stapel? Enter legt einen neuen Stapel „{deck}“ an, oder tippe einen Namen: ",
+    "askDeckEmpty": "In welchen Stapel? Tippe einen Namen: ",
+    "needDeck": "Sag, in welchen Stapel die Karten kommen: dracosh import - --deck <Name>",
+    "intoDeck": "In {deck} (jetzt {cards}):",
+    "intoNewDeck": "In einen neuen Stapel, {deck}:",
+    "more": {
+      "one": "… und 1 weitere",
+      "other": "… und {count} weitere"
+    },
+    "counts": {
+      "new": {
+        "one": "1 neue Karte",
+        "other": "{count} neue Karten"
+      },
+      "same": {
+        "one": "1 schon vorhanden",
+        "other": "{count} schon vorhanden"
+      },
+      "changed": {
+        "one": "1 schon vorhanden, mit anderen Antworten",
+        "other": "{count} schon vorhanden, mit anderen Antworten"
+      }
+    },
+    "problems": {
+      "one": "1 Zeile kann nicht hinzugefügt werden:",
+      "other": "{count} Zeilen können nicht hinzugefügt werden:"
+    },
+    "line": "Zeile {line}",
+    "issues": {
+      "noFront": "keine Vorderseite",
+      "noBack": "keine Antwort",
+      "noDeck": "kein Stapel",
+      "twice": "auch in Zeile {line}",
+      "slash": "eine Antwort beginnt mit /",
+      "tooLong": "der Stapelname „{deck}“ ist länger als {max} Zeichen: Wähle einen mit --deck",
+      "tour": "„{deck}“ ist der Einführungsstapel: nimm einen anderen Namen",
+      "noSeparator": "kein „ = “ zwischen Vorderseite und Antwort"
+    },
+    "ignored": {
+      "one": "1 Zeile hat Text in einer Spalte, die nicht gelesen wird (Zeile {lines}): nur Vorderseite, Antwort und Beispiel.",
+      "other": "{count} Zeilen haben Text in Spalten, die nicht gelesen werden (Zeilen {lines}): nur Vorderseite, Antwort und Beispiel."
+    },
+    "changedTitle": {
+      "one": "1 Karte ist schon da, mit anderen Antworten (jetzt → in der Datei):",
+      "other": "{count} Karten sind schon da, mit anderen Antworten (jetzt → in der Datei):"
+    },
+    "updateAsk": {
+      "one": "Auf die Version aus der Datei bringen? Der Fortschritt bleibt.",
+      "other": "Diese {count} auf die Version aus der Datei bringen? Der Fortschritt bleibt."
+    },
+    "changedLeft": "Sie bleiben, wie sie sind (--update übernimmt die Version aus der Datei).",
+    "nothing": "Nichts hinzuzufügen: Die Karten sind schon da oder können so nicht hinzugefügt werden.",
+    "directionTitle": "Wie soll {deck} abfragen?",
+    "directionAsk": "Wähle 1, 2 oder 3 (Enter: 1): ",
+    "askSuffix": "[J/n]",
+    "doneNew": {
+      "one": "Stapel {deck} mit 1 Karte angelegt.",
+      "other": "Stapel {deck} mit {count} Karten angelegt."
+    },
+    "done": {
+      "one": "1 Karte zu {deck} hinzugefügt.",
+      "other": "{count} Karten zu {deck} hinzugefügt."
+    },
+    "doneUpdated": {
+      "one": " 1 aktualisiert.",
+      "other": " {count} aktualisiert."
+    },
+    "doneOnlyUpdated": {
+      "one": "1 Karte in {deck} aktualisiert.",
+      "other": "{count} Karten in {deck} aktualisiert."
+    },
+    "languages": "{deck}: {front} → {back} (geraten; änderbar in /decks).",
+    "undo": "Rückgängig mit „dracosh restore 1“ (die eben angelegte Sicherung).",
+    "start": "Üben mit: dracosh --deck {deck}",
+    "inDecks": "Dracosh läuft: Die neuen Karten sind in /decks.",
+    "backupFile": "{file} ist eine vollständige Dracosh-Sicherung: Sie holt die Karten, den Fortschritt und die Einstellungen darin zurück.",
+    "backupAsk": "Zurückholen?",
+    "askDeckYours": "In welchen Stapel? Enter: {deck} (deiner, {cards}), oder tippe einen Namen: ",
+    "listed": {
+      "one": "1 Antwort nennt mehrere, z. B. „{example}“.",
+      "other": "{count} Antworten nennen mehrere, z. B. „{example}“."
+    },
+    "splitAsk": "Jede als eigene Antwort nehmen?",
+    "splitHint": "Sie bleiben je eine Antwort, wie geschrieben (--split trennt sie).",
+    "directionTitleMany": "Wie sollen die {count} neuen Stapel abfragen?",
+    "previewOnly": "Nur eine Vorschau, nichts gespeichert. Zum Importieren: {command}",
+    "confirmAdd": {
+      "one": "1 Karte hinzufügen?",
+      "other": "{count} Karten hinzufügen?"
+    },
+    "confirmUpdate": {
+      "one": "1 Karte aktualisieren?",
+      "other": "{count} Karten aktualisieren?"
+    },
+    "confirmBoth": {
+      "one": "{cards} hinzufügen und 1 aktualisieren?",
+      "other": "{cards} hinzufügen und {count} aktualisieren?"
+    },
+    "tourGone": "Die Einführung hat Platz für deinen eigenen Stapel gemacht.",
+    "badSeparator": "Unbekanntes Trennzeichen „{value}“: Nimm tab, comma, semicolon, pipe, colon, space oder ein Zeichen."
+  },
+  "export": {
+    "needFile": "Wohin? dracosh export <Datei>: .txt (Dracosh), .tsv (Anki), .csv oder .json (alles)",
+    "unknownFormat": "{file}: Das Format ergibt sich aus der Dateiendung: .txt (Dracosh), .tsv (Anki), .csv oder .json (alles).",
+    "jsonAll": "Ein .json-Export enthält alles (alle Stapel, Fortschritt und Einstellungen): Lass --deck weg.",
+    "noDecks": "Noch keine eigenen Stapel zum Exportieren.",
+    "exists": "{file} gibt es schon. Überschreiben?",
+    "existsNeedsYes": "{file} gibt es schon: Füge --yes hinzu, um sie zu überschreiben.",
+    "wrote": {
+      "one": "1 Karte in {file} geschrieben.",
+      "other": "{count} Karten in {file} geschrieben."
+    },
+    "wroteAll": "Karten, Fortschritt und Einstellungen in {file} geschrieben.",
+    "next": {
+      "txt": "Zurück einlesen mit: dracosh import {file}",
+      "tsv": "In Anki: Datei → Importieren, dann {file} wählen.",
+      "csv": "Öffnet sich in jeder Tabellenkalkulation; dracosh import {file} liest sie wieder ein.",
+      "json": "dracosh import {file} holt alles zurück, auf diesem oder einem anderen Computer."
+    },
+    "fileHeader": "Dracosh-Karten, {date}. Eine Karte pro Zeile: Vorderseite = Antwort; andere Antwort // Beispiel",
+    "fileHowTo": "Zurück einlesen mit: dracosh import <diese Datei>",
+    "inData": "Das ist Dracoshs eigener Ordner ({home}): Exportiere woandershin, damit dort nichts überschrieben wird.",
+    "cantWrite": "{file} kann nicht geschrieben werden: {error}",
+    "noFolder": "diesen Ordner gibt es nicht"
   }
 }

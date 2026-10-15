@@ -61,8 +61,15 @@ export const saveLibrary = (library) => writeJson(LIBRARY_FILE, library);
 export async function loadState() {
   const state = await readJson(STATE_FILE, undefined);
   if (state === undefined) return emptyState();
-  if (!isObject(state) || !isObject(state.items)) throw damaged(STATE_FILE, t("errors.why.noProgress"));
-  if (!Object.values(state.items).every((entry) => isObject(entry) && Number.isFinite(entry.box) && Number.isFinite(entry.due))) throw damaged(STATE_FILE, t("errors.why.progressEntry"));
+  checkState(state, STATE_FILE);
+  if (!isObject(state.newToday)) state.newToday = { date: "", count: 0 };
+  return state;
+}
+
+// throws when `state` (read from `file`) isn't progress the quiz can use
+export function checkState(state, file = STATE_FILE) {
+  if (!isObject(state) || !isObject(state.items)) throw damaged(file, t("errors.why.noProgress"));
+  if (!Object.values(state.items).every((entry) => isObject(entry) && Number.isFinite(entry.box) && Number.isFinite(entry.due))) throw damaged(file, t("errors.why.progressEntry"));
   const { progress } = state;
   const validProgress =
     isObject(progress) &&
@@ -72,10 +79,8 @@ export async function loadState() {
     ["count", "best", "freezes"].every((key) => Number.isFinite(progress.streak[key])) &&
     isObject(progress.badges) &&
     (progress.vacations === undefined || Array.isArray(progress.vacations));
-  if (progress !== undefined && !validProgress) throw damaged(STATE_FILE, t("errors.why.streak"));
-  if (state.version > STATE_VERSION) throw new Error(t("errors.newerState", { file: STATE_FILE }));
-  if (!isObject(state.newToday)) state.newToday = { date: "", count: 0 };
-  return state;
+  if (progress !== undefined && !validProgress) throw damaged(file, t("errors.why.streak"));
+  if (state.version > STATE_VERSION) throw new Error(t("errors.newerState", { file }));
 }
 export const saveState = (state) => writeJson(STATE_FILE, state);
 
