@@ -52,6 +52,7 @@ export function ensureProgress(state, now = Date.now()) {
     vacations: []
   };
   state.progress.vacations ??= [];
+  delete state.progress.quiet; // a test build's single stretch, before quietDays
   // badges already shown in /badges; ones unlocked before this was tracked count as seen, so they don't all flash at once
   state.progress.seenBadges ??= Object.keys(state.progress.badges);
   return state.progress;
@@ -61,8 +62,35 @@ export function ensureProgress(state, now = Date.now()) {
 
 const NO_RULES = { skipWeekends: false };
 
+// A day with nothing to practise: opened and nothing was waiting, or, after a day done, before the next
+// card came back, whether Dracosh was opened or not. Each such stretch is kept in `quietDays` as
+// { from, until } (the days strictly between); a later one never wipes an earlier one out.
+const KEPT_QUIET = 30;
+function nothingToDo(progress, key) {
+  if (progress.days?.[key]?.nothingDue) return true;
+  return (progress.quietDays ?? []).some((q) => key > q.from && key < q.until);
+}
+
+// The day is done and nothing comes back before `until` (a day key): the days between are rest days.
+// Settling again inside a stretch moves its end, never its start.
+export function markQuiet(progress, today, until) {
+  if (!until || until <= today) return;
+  const list = (progress.quietDays ??= []);
+  const last = list.at(-1);
+  if (last && today >= last.from && today < last.until) last.until = until;
+  else list.push({ from: today, until });
+  progress.quietDays = list.slice(-KEPT_QUIET);
+}
+
+// Something turned up to practise today (cards added, a deck or a direction switched on): the stretch
+// it falls in ends here, so the days ahead aren't rest days any more
+export function markWorkWaiting(progress, today) {
+  const last = progress.quietDays?.at(-1);
+  if (last && today >= last.from && today < last.until) last.until = today > last.from ? today : addDays(today, 1);
+}
+
 export function isRestDay(progress, key, rules = NO_RULES) {
-  if (progress.days?.[key]?.nothingDue) return true; // opened, but no card anywhere was waiting
+  if (nothingToDo(progress, key)) return true;
   if (rules.skipWeekends) {
     const weekday = new Date(`${key}T12:00:00`).getDay();
     if (weekday === 0 || weekday === 6) return true;
@@ -318,7 +346,7 @@ export function applyAnswer(state, { result, goal, rules = NO_RULES, combo = 0, 
   const day = dayOf(progress, today);
   const correct = result !== "wrong";
   // full days away since the last correct answer (a wrong first answer back doesn't end the absence)
-  const daysAway = progress.lastActiveDay ? daysBetween(progress.lastActiveDay, today) - 1 : 0;
+  const daysAway = awayDays(progress, today);
 
   day.asked += 1;
   day.correct += correct ? 1 : 0;
@@ -327,13 +355,22 @@ export function applyAnswer(state, { result, goal, rules = NO_RULES, combo = 0, 
   return { cheers: award(state, progress, day, today, { correct, goal, rules, now, daysAway, random }) };
 }
 
+// full days since the last correct answer, not counting days with nothing to practise: coming back after
+// those isn't a comeback (a vacation still is)
+function awayDays(progress, today) {
+  if (!progress.lastActiveDay) return 0;
+  let away = 0;
+  for (let key = addDays(progress.lastActiveDay, 1); key < today; key = addDays(key, 1)) if (!nothingToDo(progress, key)) away += 1;
+  return away;
+}
+
 // A wrong answer the user then declared right: it was already counted as asked, so only credit the correct one
 export function applyOverrule(state, { goal, rules = NO_RULES, combo = 0, now = Date.now(), random = Math.random }) {
   const progress = ensureProgress(state, now);
   const today = dayKey(now);
   const day = dayOf(progress, today);
 
-  const daysAway = progress.lastActiveDay ? daysBetween(progress.lastActiveDay, today) - 1 : 0;
+  const daysAway = awayDays(progress, today);
   day.correct += 1;
   progress.bestCombo = Math.max(progress.bestCombo ?? 0, combo);
   progress.lastActiveDay = today;
@@ -343,10 +380,12 @@ export function applyOverrule(state, { goal, rules = NO_RULES, combo = 0, now = 
 // Nothing left to practise today in the whole library → cheers. After at least one right answer today
 // that counts as the goal (see award); with nothing answered at all the day only becomes a rest day, so just
 // opening Dracosh never builds a streak. Nothing happens once the goal is met.
-export function applyCaughtUp(state, { goal, rules = NO_RULES, now = Date.now(), random = Math.random }) {
+// `nextDue`: when the next card anywhere comes back (null: none ever), so the days until then count as rest.
+export function applyCaughtUp(state, { goal, rules = NO_RULES, now = Date.now(), nextDue, random = Math.random }) {
   const progress = ensureProgress(state, now);
   const today = dayKey(now);
   const day = dayOf(progress, today);
+  if (nextDue) markQuiet(progress, today, dayKey(nextDue));
   if (day.goalMet) return { cheers: [] };
   if (!day.asked) {
     day.nothingDue = true;

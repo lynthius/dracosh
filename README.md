@@ -2,6 +2,8 @@
 
 A gamified language or definitions trainer for your terminal. It sits in a spare pane, challenges you every few minutes, and a small pixel dragon grows up as you keep your streak going.
 
+![Dracosh in a terminal: a Spanish card answered right without its article, a typo forgiven, a miss with the right answer, a reveal graded by hand, and a new card added in one line](docs/demo.gif)
+
 ## Why Dracosh
 
 Learning a language usually means another hour in the evening, after a full day at the computer. I spent plenty of those evenings myself, and I wanted something that fits into the working day instead.
@@ -16,11 +18,13 @@ It's made for people who live in a terminal or spend most of the day at a comput
 - Add cards, start decks and switch between them right in the app (`/add`, `/decks`)
 - One line is a card: `kot = cat; kitty // Mój kot śpi.` (`;` separates right answers, `//` adds an example). Paste a whole list and check it before it's saved
 - Each deck is asked the way you pick after its first card: front → back, back → front, or both ways; change it any time in `/decks`
+- Pronunciation, if you turn it on in `/settings`: once the answer is out, the word in the language you're learning in that deck is read aloud with a macOS voice (other systems later); decks in one language, like definitions, stay quiet
+- Dracosh works out which languages a deck is in (Polish → Chinese, say) and which of the two you're learning, from the cards, the deck's name and your other decks, whatever language you use Dracosh in, and says when it's only a guess; set either in `/decks` when it can't tell or guesses wrong
 - Type the answer, or press Enter with nothing typed to see it and say whether you knew it (`1` or `2`): handy for whole sentences, and it counts just the same
 - Cloze cards for sentences: `I {{look forward}} to it` asks one gap at a time
-- Forgiving answer checks: case and punctuation don't matter, a missing Polish letter (ż, ó, ł…) still counts and shows the right spelling, one typo is fine on longer words, and after a miss you see letter by letter where you went wrong
-- Leitner boxes, so the cards you know come back less and less often; a card is only asked when it's due
-- Daily goal, streaks (weekends and days off don't break them) and 36 badges (one of them a secret)
+- Forgiving answer checks: case and punctuation don't matter, a missing accent or special letter (ż, ł, é, ø…, and ß written as ss) still counts and the right spelling is shown with it marked, German "Baer" for "Bär" and Danish "aa" for "å" count too, an article can be left out in English ("cat" for "the cat"), while a missing or wrong article where it carries the gender ("Hund" for "der Hund") or a German umlaut left plain ("Bar" for "Bär") counts as almost: right, but the card stays at its level, one typo is fine on longer words, and after a miss you see letter by letter where you went wrong. Chinese, Japanese and Korean answers are checked exactly
+- Leitner boxes, so the cards you know come back less and less often; a card is only asked when it's due, and can be done any time on that day; up to 20 new cards a day, and the rest are said to be waiting for tomorrow
+- Daily goal, streaks (weekends, days off and days with nothing to practise don't break them) and 36 badges (one of them a secret)
 - A pixel dragon that hatches from an egg, evolves over a year of streaks, blinks, and falls asleep if you ignore it
 - 8-bit sound effects, generated from code
 - Now and then, a short tip about Dracosh while you wait for the next card
@@ -55,10 +59,10 @@ Type the answer and press Enter. Not sure, or the answer is a whole sentence? Pr
 | Command | What it does |
 | --- | --- |
 | `/add` | add cards to one of your decks, or start a new deck (one line per card, ↑ fixes the last one) |
-| `/decks` | switch to another deck (Dracosh remembers it), start a new one, or press → to change how a deck is asked |
+| `/decks` | switch to another deck (Dracosh remembers it), start a new one, or press → to change how a deck is asked and which languages it's in |
 | `/hint` | reveal one more letter |
 | `/correct` | your answer was right after all; after a yes it's accepted from now on |
-| `/settings` | language, rhythm (a card every few minutes, or a study session), interval, daily goal, sound, quiet hours, weekends, tips, and a reset |
+| `/settings` | language, rhythm (a card every few minutes, or a study session), interval, daily goal, sound, pronunciation, quiet hours, weekends, tips, and a reset |
 | `/stats` | streak and a calendar of your month |
 | `/badges` | all badges and how to get them |
 | `/companion` | your dragon, its element and the forms ahead |
@@ -87,17 +91,16 @@ npm test
 
 The quiz logic in `src/session.js` and `src/progress.js` does no I/O, which keeps it easy to test. The UI is built with [Ink](https://github.com/vadimdemedes/ink) and lives in `src/ui/`; every text it shows is in `locales/en.json`, read through `t("key")` from `src/i18n.js`.
 
-The other languages live next to it in `locales/`, the tour included. `npm test` checks that each one has every English key, the same `{placeholders}` and all the plural forms its language needs. If you're a native speaker and something reads oddly, a pull request is very welcome. Sound effects are generated by `scripts/make-sounds.js` (`npm run sounds`).
+The other languages live next to it in `locales/`, the tour included. `npm test` checks that each one has every English key, the same `{placeholders}` and all the plural forms its language needs. If you're a native speaker and something reads oddly, a pull request is very welcome. Sound effects are generated by `scripts/make-sounds.js` (`npm run sounds`). The demo at the top is recorded with [VHS](https://github.com/charmbracelet/vhs): `vhs docs/demo/demo.tape` writes `docs/demo.gif` from a throwaway deck in `/tmp`.
 
 ## What's next
 
-Dracosh now keeps its own card library, with a short tour and `/add` to start your own deck. Coming next, roughly in this order:
+Coming next, roughly in this order:
 
-- More languages for your decks: answer checking that forgives a missing accent in European languages and Cyrillic (other scripts are checked exactly).
 - Import and export: Anki (plain-text exports and `.apkg` decks from AnkiWeb), CSV, JSON and pasted lists, and export back to Anki.
 - Decks and cards in the app: browse, edit and delete with undo, plus a welcome flow for new users.
 - Optional AI help for writing cards, with your own API key or a local model.
-- Linux and Windows.
+- Linux and Windows, pronunciation there included.
 
 ## License
 

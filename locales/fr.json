@@ -71,10 +71,12 @@
     "pasteFix": "entrée valider · échap retour",
     "grading": "1 ou ← je ne savais pas · 2 ou → je savais",
     "sessionWaiting": "entrée carte suivante · / commandes · q quitter",
-    "decks": "→ sens · {choose}",
-    "directionPick": "{choose} · échap ou continuer à taper garde 1",
+    "decks": "→ réglages · {choose}",
+    "directionPick": "{choose} · → langues · échap ou continuer à taper garde 1",
     "addName": "entrée créer · échap annuler",
-    "confirm": "{yes} oui · {no} non"
+    "confirm": "{yes} oui · {no} non",
+    "languagePick": "tape pour chercher · ↑/↓ choisir · entrée valider · ← retour",
+    "choiceLeft": "{choose} · ← retour"
   },
   "settings": {
     "title": "Réglages",
@@ -94,6 +96,10 @@
       "sound": {
         "label": "Son",
         "hint": "les sons des réponses et des nouvelles cartes"
+      },
+      "speak": {
+        "label": "Prononciation",
+        "hint": "lit à voix haute le mot dans la langue que tu apprends, une fois la réponse affichée (voix de macOS)"
       },
       "volume": {
         "label": "Volume",
@@ -194,7 +200,12 @@
     "directionSaved": "« {deck} » interroge ainsi dès la prochaine carte.",
     "front": "recto",
     "back": "verso",
-    "progressKept": "La progression de chaque sens est conservée, même si tu le désactives."
+    "progressKept": "La progression de chaque sens est conservée, même si tu le désactives.",
+    "askRow": "Sens des questions",
+    "languagesRow": "Langues",
+    "detectRow": "Détecter d’après les cartes",
+    "learningRow": "Langue apprise",
+    "learningShort": "langue apprise : {language}"
   },
   "add": {
     "fields": {
@@ -244,7 +255,7 @@
     "youType": "tu tapes {answer}",
     "bothWays": "Dans les deux sens",
     "bothWaysNote": "chaque carte dans les deux sens",
-    "directionLater": "Modifiable plus tard : /decks, puis →.",
+    "directionLater": "Tout se modifie plus tard : /decks, puis →.",
     "directionSet": "C'est noté : {how}  ·  carte suivante :",
     "paste": {
       "title": "Cartes collées · {deck}",
@@ -270,7 +281,12 @@
         "many": "{count} lignes ignorées : elles restaient à corriger.",
         "other": "{count} lignes ignorées : elles restaient à corriger."
       }
-    }
+    },
+    "languagesLine": "Langues : {pair}",
+    "languagesNow": "On dirait : {pair}. Sinon, corrige dans /decks →.",
+    "languagesSoon": "Langues : je les reconnaîtrai après quelques cartes",
+    "learningLine": "Langue apprise : {language}",
+    "learningGuess": "ce n’est qu’une supposition : → modifier"
   },
   "quiz": {
     "youWrote": "ta réponse : ",
@@ -299,7 +315,13 @@
       "dayDoneTitle": "Tout est fait pour aujourd'hui.",
       "dayDoneNext": "Tes cartes reviennent {when}. Envie d'en faire plus ? Ajoute-en avec /add.",
       "laterTitle": "Rien à réviser pour l'instant.",
-      "laterNext": "La prochaine carte arrive {when}. Elle viendra toute seule."
+      "laterNext": "La prochaine carte arrive {when}. Elle viendra toute seule.",
+      "newTomorrow": {
+        "one": "{count} nouvelle carte attend demain (jusqu’à {max} nouvelles par jour).",
+        "many": "{count} nouvelles cartes attendent demain (jusqu’à {max} nouvelles par jour).",
+        "other": "{count} nouvelles cartes attendent demain (jusqu’à {max} nouvelles par jour)."
+      },
+      "dayDoneHeldNext": "Tes cartes reviennent {when}."
     },
     "previewNoAdd": "L'aperçu ne peut pas ajouter de cartes ; lance dracosh pour ça.",
     "previewNoDecks": "L'aperçu n'a qu'un paquet de démo ; lance dracosh pour les tiens.",
@@ -320,7 +342,18 @@
     },
     "sessionProgress": "{done} sur {count} dans cette session",
     "escAgain": "Échap encore une fois pour quitter.",
-    "correctConfirm": "Compter « {answer} » comme juste et l'accepter désormais ?"
+    "correctConfirm": "Compter « {answer} » comme juste et l'accepter désormais ?",
+    "almost": {
+      "article": "Presque : attention à l’article.",
+      "umlaut": "Presque : attention au tréma (ä, ö, ü) ; ae, oe, ue marchent aussi.",
+      "article-umlaut": "Presque : attention à l’article et au tréma ; ae, oe, ue marchent aussi.",
+      "held": "La carte revient {now}, pas {would}.",
+      "days": {
+        "one": "demain",
+        "many": "dans {count} jours",
+        "other": "dans {count} jours"
+      }
+    }
   },
   "dragon": {
     "stages": {
@@ -575,7 +608,7 @@
     "weekends": "week-ends",
     "noWeekends": "pas de week-ends",
     "daysOff": " · jours off {ranges}",
-    "month": "Jours avec objectif atteint : {goalDays}/{days} · {correct} bonnes réponses",
+    "month": "Jours avec objectif atteint : {goalDays}/{days} · bonnes réponses : {correct}",
     "weekdays": "L M M J V S D",
     "badgesLine": "{unlocked}/{total} badges · /badges les montre tous"
   },
@@ -1090,5 +1123,26 @@
         "example": "À toi de jouer : tape `/add` pour créer ton propre paquet. La visite lui fait de la place."
       }
     ]
+  },
+  "languages": {
+    "notYet": "à déterminer",
+    "mixed": "autre ou mélangée",
+    "mixedNote": "sans règles d’une langue",
+    "current": "actuelle",
+    "guessed": "d’après tes cartes",
+    "frontQuestion": "Quelle langue au recto des cartes de « {deck} » ?",
+    "backQuestion": "Quelle langue au verso des cartes de « {deck} » ?",
+    "example": "p. ex. {sample}",
+    "search": "recherche :",
+    "noMatch": "Aucune langue ne correspond à « {query} ».",
+    "saved": "Langues de « {deck} » : {pair}.",
+    "detecting": "« {deck} » détecte à nouveau ses langues d’après les cartes.",
+    "learningQuestion": "Quelle langue apprends-tu avec « {deck} » ?",
+    "learningNote": "Les mots de cette langue sont lus à voix haute si la prononciation est activée dans /settings.",
+    "learningSaved": "Langue apprise dans « {deck} » : {language}.",
+    "guessShort": "supposée",
+    "learningArticles": "Un article manquant ou faux y compte comme « presque ».",
+    "savedWithLearning": "Langues de « {deck} » : {pair}, langue apprise : {language}.",
+    "learningUmlauts": "En allemand, un tréma oublié aussi."
   }
 }

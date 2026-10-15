@@ -1,26 +1,34 @@
 import { t as say } from "./i18n.js"; // `t` and `text` are taken here (the clock, an answer)
-import { blankGap } from "./cardline.js";
-import { closestCandidate, judge } from "./judge.js";
-import { addVacation, applyAnswer, applyCaughtUp, applyOverrule, calendarMonth, cancelVacations, ensureProgress, markBadgesSeen, missedOn, recordMiss, snapshot, undoMiss, unseenBadges, vacationInfo } from "./progress.js";
-import { describeDue, grade, itemKey, nextDueAt, pickNext, startOfTomorrow } from "./scheduler.js";
+import { blankGap, plainFront } from "./cardline.js";
+import { ALMOST, closestCandidate, judge } from "./judge.js";
+import { addVacation, applyAnswer, applyCaughtUp, markWorkWaiting, applyOverrule, calendarMonth, cancelVacations, ensureProgress, markBadgesSeen, missedOn, recordMiss, snapshot, undoMiss, unseenBadges, vacationInfo } from "./progress.js";
+import { BOX_INTERVALS_DAYS, describeDue, grade, itemKey, nextDueAt, pickNext, startOfTomorrow } from "./scheduler.js";
 import { recordAnswer, saveState } from "./store.js";
 import { createTipDeck } from "./tips.js";
 import { dayKey } from "./dates.js";
 import { parsePause } from "./pause.js";
 import { formatRange } from "./vacation.js";
 
-const LABELS = { "en-pl": "EN → PL", "pl-en": "PL → EN" };
 
-// the tag on the card's border: the language pair for a language deck, the deck's name otherwise
-function labelOf(deck, direction) {
-  if (!deck) return LABELS[direction] ?? "";
-  if (direction.startsWith("c")) return deck.name; // a cloze gap: no direction to show
-  if (!deck.languages) return deck.name;
-  const { front, back } = deck.languages;
-  const [from, to] = direction === "en-pl" ? [front, back] : [back, front];
-  return `${from.toUpperCase()} → ${to.toUpperCase()}`;
+// the tag on the card's border: the deck's name (language codes like "DE → UK" read as countries)
+function labelOf(deck) {
+  return deck?.name ?? "";
 }
 const COMBO_CHEER_EVERY = 5;
+
+// Pronunciation reads the side in the language you're learning in this deck (learningSide), whichever way
+// the card asks: the answer (a cloze card: its whole sentence), or the question. Nothing in a deck that
+// isn't for a language. `answer`: the right answer you gave (one of several), read instead of the first.
+export function toSpeak(question, answer = null) {
+  const lang = question.learningLanguage;
+  if (question.tour || !lang) return null;
+  const cloze = question.direction.startsWith("c");
+  const given = answer && question.expected.includes(answer) ? answer : question.expected[0];
+  if (question.answerLanguage === lang) return { text: cloze ? plainFront(question.word.word) : given, lang };
+  // a cloze card's prompt is its sentence with a gap: nothing to read there
+  if (!cloze && question.promptLanguage === lang) return { text: question.prompt.split(" / ")[0], lang };
+  return null;
+}
 
 // Quiz logic without any I/O of its own: words, settings and persistence are injected, the UI only renders what this returns.
 // `loadAllWords` → [{ words, deck }] for every deck of yours: "all done for today" means the whole library.
@@ -36,13 +44,18 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
   async function settleDay() {
     const decks = loadAllWords ? await loadAllWords() : [current].filter((d) => !d.deck?.tour);
     const t = now();
+    let nextDue = null;
     for (const { words, deck } of decks) {
       const directions = directionsOf(deck);
-      if (pickNext({ words, state, now: t, directions })) return { done: false, cheers: [] };
+      if (pickNext({ words, state, now: t, directions })) {
+        markWorkWaiting(ensureProgress(state, t), dayKey(t));
+        return { done: false, cheers: [] };
+      }
       const due = nextDueAt({ words, state, now: t, directions });
       if (due !== null && due < startOfTomorrow(t)) return { done: false, cheers: [] };
+      if (due !== null && (nextDue === null || due < nextDue)) nextDue = due;
     }
-    const { cheers } = applyCaughtUp(state, { goal: getSettings().dailyGoal, rules: rules(), now: t });
+    const { cheers } = applyCaughtUp(state, { goal: getSettings().dailyGoal, rules: rules(), now: t, nextDue });
     await save(state);
     return { done: true, cheers };
   }
@@ -59,10 +72,13 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
     current = { words, deck };
     inTour = Boolean(deck?.tour);
     const item = pickNext({ words, state, now: now(), lastNoteId, directions: directionsOf(deck), tour: deck?.tour });
+    if (item && !deck?.tour) markWorkWaiting(ensureProgress(state, now()), dayKey(now())); // not a rest day after all
     // nothing to ask is a normal state, not an error: the UI shows a way on (a finished tour, a new
     // deck) or when the next card is due. Done with everything for today counts as the daily goal.
     if (!item) {
-      const empty = { empty: true, tour: Boolean(deck?.tour), count: words.length, nextDue: null, cheers: [], dayDone: false };
+      // new cards held back by the daily limit, so "all done" doesn't hide them
+      const heldNew = deck?.tour ? 0 : words.filter((word) => !(word.directions ?? directionsOf(deck)).some((d) => state.items[itemKey(word.noteId, d)])).length;
+      const empty = { empty: true, tour: Boolean(deck?.tour), count: words.length, nextDue: null, cheers: [], dayDone: false, heldNew };
       if (!deck?.tour && words.length) {
         empty.nextDue = nextDueAt({ words, state, now: now(), directions: directionsOf(deck) });
         const day = await settleDay();
@@ -86,11 +102,15 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
     return {
       word: item.word,
       direction: item.direction,
-      label: labelOf(deck, item.direction),
+      label: labelOf(deck),
       prompt,
       expected,
       // a cloze card's back is a hint under the sentence ("Cieszę się na to")
       context: gap !== null ? item.word.translations.join(" / ") : "",
+      // what the answer is written in, when the deck's languages are known: its own spellings count
+      answerLanguage: (forward ? deck?.languages?.back : deck?.languages?.front) ?? null,
+      promptLanguage: (forward ? deck?.languages?.front : deck?.languages?.back) ?? null,
+      learningLanguage: deck?.learning?.lang ?? null,
       wordCount: words.length,
       tour: Boolean(deck?.tour) // the tour marks what to type with `backticks`
     };
@@ -107,7 +127,7 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
   async function answer(question, text, { hinted = false } = {}) {
     const key = itemKey(question.word.noteId, question.direction);
     // answers you once declared right (/correct) count for this card from now on
-    const result = judge(text, [...question.expected, ...(state.accepted?.[key] ?? [])]);
+    const result = judge(text, [...question.expected, ...(state.accepted?.[key] ?? [])], { lang: question.answerLanguage, otherLang: question.promptLanguage, learning: question.learningLanguage ?? null });
     return record(question, { result, text, hinted });
   }
 
@@ -126,7 +146,11 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
     const t = now();
     const before = state.items[key];
     const comboBefore = totals.combo;
-    const entry = grade(before, correct, t, { hinted });
+    // almost right (an article left out, an umlaut left plain) counts, but the card doesn't move up, like with a hint
+    const almost = ALMOST.includes(result);
+    const entry = grade(before, correct, t, { hinted: hinted || almost });
+    const would = almost ? grade(before, true, t, { hinted }) : entry; // a hint alone would have held it too
+    const held = would.box > entry.box ? { days: BOX_INTERVALS_DAYS[entry.box - 1], would: BOX_INTERVALS_DAYS[would.box - 1] } : null;
     recordAnswer(state, question.word.noteId, question.direction, entry, t, { countNew: !question.tour });
 
     totals.asked += 1;
@@ -145,8 +169,8 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
     // the last card of the day settles it right away, so quitting now doesn't lose the goal
     if (!question.tour) cheers.push(...(await settleDay()).cheers);
     // given/closest feed the per-letter diff the UI shows after a miss or a forgiven typo
-    const closest = result === "exact" || !text ? null : closestCandidate(text, [...question.expected, ...(state.accepted?.[key] ?? [])]);
-    return { result, hinted: hinted && correct, dueIn: describeDue(entry, t), combo: totals.combo, cheers, given: text, closest, nextDue: upNext() };
+    const closest = result === "exact" || !text ? null : closestCandidate(text, [...question.expected, ...(state.accepted?.[key] ?? [])], { lang: question.answerLanguage });
+    return { result, held, hinted: hinted && correct, dueIn: describeDue(entry, t), combo: totals.combo, cheers, given: text, closest, nextDue: upNext() };
   }
 
   // Re-grade the last wrong answer as correct and remember the answer for this card.
@@ -273,5 +297,13 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
     return fresh;
   }
 
-  return { totals, next, answer, reveal, selfGrade, setDirections, forgetKeys, overrule, canOverrule, wrongAnswer, stats, month, missed, nextTip, pause, isFirstRun, markHatched, openBadges, forget, reset, inTour: () => inTour };
+  // cards added (or a direction switched on): there's work today, whether or not it's asked yet, so a
+  // quiet stretch ends here
+  async function workAdded() {
+    markWorkWaiting(ensureProgress(state, now()), dayKey(now()));
+    await save(state);
+    await settleDay(); // nothing askable after all (a direction switched off): the quiet stretch goes on
+  }
+
+  return { totals, next, answer, workAdded, reveal, selfGrade, setDirections, forgetKeys, overrule, canOverrule, wrongAnswer, stats, month, missed, nextTip, pause, isFirstRun, markHatched, openBadges, forget, reset, inTour: () => inTour };
 }

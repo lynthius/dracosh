@@ -71,10 +71,12 @@
     "pasteFix": "enter fertig · esc zurück",
     "grading": "1 oder ← wusste ich nicht · 2 oder → wusste ich",
     "sessionWaiting": "enter nächste Karte · / Befehle · q beenden",
-    "decks": "→ Richtung · {choose}",
-    "directionPick": "{choose} · esc oder weitertippen behält 1",
+    "decks": "→ Einstellungen · {choose}",
+    "directionPick": "{choose} · → Sprachen · esc oder weitertippen behält 1",
     "addName": "enter anlegen · esc abbrechen",
-    "confirm": "{yes} ja · {no} nein"
+    "confirm": "{yes} ja · {no} nein",
+    "languagePick": "tippen zum Suchen · ↑/↓ wählen · enter bestätigen · ← zurück",
+    "choiceLeft": "{choose} · ← zurück"
   },
   "settings": {
     "title": "Einstellungen",
@@ -94,6 +96,10 @@
       "sound": {
         "label": "Ton",
         "hint": "Töne für Antworten und neue Karten"
+      },
+      "speak": {
+        "label": "Aussprache",
+        "hint": "liest das Wort in der Sprache vor, die du lernst, sobald die Antwort steht (macOS-Stimmen)"
       },
       "volume": {
         "label": "Lautstärke",
@@ -190,7 +196,12 @@
     "directionSaved": "„{deck}“ fragt ab der nächsten Karte in der neuen Richtung.",
     "front": "Vorderseite",
     "back": "Rückseite",
-    "progressKept": "Der Fortschritt bleibt für jede Richtung erhalten, auch für eine ausgeschaltete."
+    "progressKept": "Der Fortschritt bleibt für jede Richtung erhalten, auch für eine ausgeschaltete.",
+    "askRow": "Abfragerichtung",
+    "languagesRow": "Sprachen",
+    "detectRow": "Aus den Karten erkennen",
+    "learningRow": "Lernsprache",
+    "learningShort": "Lernsprache: {language}"
   },
   "add": {
     "fields": {
@@ -238,7 +249,7 @@
     "youType": "du tippst {answer}",
     "bothWays": "In beide Richtungen",
     "bothWaysNote": "jede Karte in beide Richtungen",
-    "directionLater": "Später änderbar: /decks, dann →.",
+    "directionLater": "Alles später änderbar: /decks, dann →.",
     "directionSet": "Alles klar: {how}  ·  nächste Karte:",
     "paste": {
       "title": "Eingefügte Karten · {deck}",
@@ -262,7 +273,12 @@
         "one": "1 Zeile übersprungen: Sie musste noch korrigiert werden.",
         "other": "{count} Zeilen übersprungen: Sie mussten noch korrigiert werden."
       }
-    }
+    },
+    "languagesLine": "Sprachen: {pair}",
+    "languagesNow": "Sieht nach {pair} aus. Falls nicht, in /decks → korrigieren.",
+    "languagesSoon": "Sprachen: erkenne ich nach ein paar Karten",
+    "learningLine": "Lernsprache: {language}",
+    "learningGuess": "nur geraten: → ändern"
   },
   "quiz": {
     "youWrote": "deine Antwort: ",
@@ -291,7 +307,12 @@
       "dayDoneTitle": "Für heute alles erledigt.",
       "dayDoneNext": "Deine Karten kommen {when} wieder. Heute noch mehr? Füge mit /add neue hinzu.",
       "laterTitle": "Gerade gibt es nichts zu üben.",
-      "laterNext": "Die nächste Karte ist {when} fällig. Sie kommt von selbst."
+      "laterNext": "Die nächste Karte ist {when} fällig. Sie kommt von selbst.",
+      "newTomorrow": {
+        "one": "{count} neue Karte wartet auf morgen (bis zu {max} neue pro Tag).",
+        "other": "{count} neue Karten warten auf morgen (bis zu {max} neue pro Tag)."
+      },
+      "dayDoneHeldNext": "Deine Karten kommen {when} wieder."
     },
     "previewNoAdd": "Die Vorschau kann keine Karten hinzufügen; starte dafür dracosh.",
     "previewNoDecks": "Die Vorschau hat einen Demo-Stapel; für deine starte dracosh.",
@@ -311,7 +332,17 @@
     },
     "sessionProgress": "{done} von {count} in dieser Sitzung",
     "escAgain": "Noch einmal Esc zum Beenden.",
-    "correctConfirm": "„{answer}“ als richtig zählen und ab jetzt annehmen?"
+    "correctConfirm": "„{answer}“ als richtig zählen und ab jetzt annehmen?",
+    "almost": {
+      "article": "Fast: achte auf den Artikel.",
+      "umlaut": "Fast: achte auf den Umlaut (ä, ö, ü); ae, oe, ue gehen auch.",
+      "article-umlaut": "Fast: achte auf Artikel und Umlaut; ae, oe, ue gehen auch.",
+      "held": "Die Karte kommt {now} wieder, nicht {would}.",
+      "days": {
+        "one": "morgen",
+        "other": "in {count} Tagen"
+      }
+    }
   },
   "dragon": {
     "stages": {
@@ -544,7 +575,7 @@
     "weekends": "Wochenenden",
     "noWeekends": "keine Wochenenden",
     "daysOff": " · frei {ranges}",
-    "month": "Ziel erreicht an {goalDays} von {days} Tagen · {correct} richtige Antworten",
+    "month": "Tage mit erreichtem Ziel: {goalDays}/{days} · richtige Antworten: {correct}",
     "weekdays": "M D M D F S S",
     "badgesLine": "{unlocked}/{total} Abzeichen · /badges zeigt alle"
   },
@@ -1042,5 +1073,26 @@
         "example": "Jetzt bist du dran: Tippe `/add`, um deinen eigenen Stapel anzulegen. Die Tour macht ihm Platz."
       }
     ]
+  },
+  "languages": {
+    "notYet": "noch unklar",
+    "mixed": "andere oder gemischt",
+    "mixedNote": "ohne Regeln einer Sprache",
+    "current": "aktuell",
+    "guessed": "aus deinen Karten erkannt",
+    "frontQuestion": "Welche Sprache steht vorne auf den Karten von „{deck}“?",
+    "backQuestion": "Welche Sprache steht hinten auf den Karten von „{deck}“?",
+    "example": "z. B. {sample}",
+    "search": "Suche:",
+    "noMatch": "Keine Sprache passt zu „{query}“.",
+    "saved": "Sprachen von „{deck}“: {pair}.",
+    "detecting": "„{deck}“ erkennt die Sprachen wieder aus den Karten.",
+    "learningQuestion": "Welche Sprache lernst du mit „{deck}“?",
+    "learningNote": "Wörter in dieser Sprache werden vorgelesen, wenn die Aussprache in /settings an ist.",
+    "learningSaved": "Lernsprache von „{deck}“: {language}.",
+    "guessShort": "geraten",
+    "learningArticles": "Ein fehlender oder falscher Artikel darin zählt als „fast“.",
+    "savedWithLearning": "Sprachen von „{deck}“: {pair}, Lernsprache: {language}.",
+    "learningUmlauts": "Im Deutschen auch ein weggelassener Umlaut."
   }
 }

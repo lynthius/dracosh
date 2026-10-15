@@ -140,7 +140,7 @@ async function main() {
 
   if (values.preview) {
     if (!process.stdin.isTTY) throw new Error(t("cli.needsTerminal"));
-    const alerts = createAlerts({ sound: settings.sound, volume: settings.volume });
+    const alerts = createAlerts({ sound: settings.sound, volume: settings.volume, speak: settings.speak });
     return render(React.createElement(Preview, { alerts })).waitUntilExit();
   }
 
@@ -163,7 +163,7 @@ async function main() {
   let current = settings; // the session reads settings live, so /settings changes apply immediately
   let active = deck.name; // /add can switch to your first own deck
   const session = createSession({ loadWords: () => loadWords(active), loadAllWords, state, getSettings: () => current });
-  const alerts = createAlerts({ sound: settings.sound, volume: settings.volume });
+  const alerts = createAlerts({ sound: settings.sound, volume: settings.volume, speak: settings.speak });
   const persistSettings = async (patch) => {
     current = { ...current, ...patch };
     await patchSettings(patch);

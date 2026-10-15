@@ -15,6 +15,7 @@ const ALL_ROWS = [
   { key: "rhythm", options: RHYTHMS, format: (v) => t(`settings.rhythms.${v}`) },
   { key: "everyMs", options: INTERVALS, format: formatInterval },
   { key: "sound", options: [true, false], format: (v) => t(v ? "settings.on" : "settings.off"), toggle: true },
+  { key: "speak", options: [false, true], format: (v) => t(v ? "settings.on" : "settings.off"), toggle: true },
   { key: "volume", options: VOLUMES, format: (v) => html`<${VolumeValue} value=${v} />` },
   { key: "dailyGoal", options: GOALS, format: (n) => t("settings.goal", { n }) },
   { key: "tips", options: TIP_MODES, format: (v) => t(`settings.tipModes.${v}`) },

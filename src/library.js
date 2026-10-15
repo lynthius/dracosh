@@ -37,8 +37,7 @@ function cleanList(values) {
 
 const isText = (value) => typeof value === "string";
 const filled = (value) => isText(value) && value.trim() !== "";
-const validLanguages = (languages) => languages == null || (typeof languages === "object" && filled(languages.front) && filled(languages.back));
-const validDeck = (deck) => deck && isText(deck.id) && filled(deck.name) && validLanguages(deck.languages);
+const validDeck = (deck) => deck && isText(deck.id) && filled(deck.name); // odd languages are tidied below
 // a cloze card's answers are its gaps, so its back (shown as a hint) may be empty
 const validCard = (card) =>
   card && isText(card.id) && isText(card.deckId) && filled(card.front) && Array.isArray(card.back) && (card.cloze ? gapsOf(card.front).length > 0 : card.back.length > 0) && card.back.every(filled);
@@ -59,13 +58,22 @@ export function upgradeLibrary(raw) {
   const deckIds = new Set(decks.map((deck) => deck.id));
   if (!cards.every((card) => deckIds.has(card.deckId))) throw broken(t("errors.why.cardDeck"));
   if (new Set(cards.map((card) => card.id)).size !== cards.length) throw broken(t("errors.why.cardIds"));
-  return { version: LIBRARY_VERSION, decks, cards };
+  // languages edited by hand ("EN", "pt-BR", "english") are tidied, or left to be guessed again
+  const tidy = (languages) => {
+    try {
+      if (!languages || typeof languages !== "object") return null;
+      return cleanLanguages({ front: String(languages.front).split(/[-_]/)[0], back: String(languages.back).split(/[-_]/)[0] });
+    } catch {
+      return null;
+    }
+  };
+  return { version: LIBRARY_VERSION, decks: decks.map((deck) => ({ ...deck, languages: tidy(deck.languages) })), cards };
 }
 
 export const findDeck = (library, nameOrId) =>
   library.decks.find((deck) => deck.id === nameOrId) ?? library.decks.find((deck) => sameName(deck.name, nameOrId)) ?? null;
 
-export function createDeck(library, { name, type = "translation", languages = { front: "en", back: "pl" }, directions = "both", tour = false, now = Date.now() }) {
+export function createDeck(library, { name, type = "translation", languages = null, directions = "both", tour = false, now = Date.now() }) {
   const trimmed = String(name ?? "").trim();
   if (!trimmed) throw new Error(t("errors.deckNeedsName"));
   if (Array.from(trimmed).length > MAX_DECK_NAME) throw new Error(t("errors.deckNameTooLong", { max: MAX_DECK_NAME }));
@@ -74,7 +82,7 @@ export function createDeck(library, { name, type = "translation", languages = { 
   if (!CARD_TYPES.includes(type)) throw new Error(`Unknown card type "${type}".`);
   if (!DIRECTIONS.includes(directions)) throw new Error(`Unknown direction "${directions}".`);
 
-  const deck = { id: newId("d"), name: trimmed, type, languages: languages ? { ...languages } : null, directions, tour, created: now };
+  const deck = { id: newId("d"), name: trimmed, type, languages: cleanLanguages(languages), directions, tour, created: now };
   library.decks.push(deck);
   return deck;
 }
@@ -85,6 +93,24 @@ export function setDirections(library, deckId, directions) {
   const deck = library.decks.find((d) => d.id === deckId);
   if (!deck) throw new Error("That deck doesn't exist.");
   deck.directions = directions;
+  return deck;
+}
+
+// `languages`: { front, back } as ISO 639-1 codes ("und": not one language), or null to go back to guessing
+const LANGUAGE_CODE = /^[a-z]{2,3}$/;
+function cleanLanguages(languages) {
+  if (!languages) return null;
+  const code = (value) => (typeof value === "string" ? value.trim().toLowerCase() : "");
+  const [front, back] = [code(languages.front), code(languages.back)];
+  if (!LANGUAGE_CODE.test(front) || !LANGUAGE_CODE.test(back)) throw new Error(`Unknown language "${languages.front} → ${languages.back}".`);
+  return { front, back };
+}
+
+export function setLanguages(library, deckId, languages) {
+  const clean = cleanLanguages(languages);
+  const deck = library.decks.find((d) => d.id === deckId);
+  if (!deck) throw new Error("That deck doesn't exist.");
+  deck.languages = clean;
   return deck;
 }
 

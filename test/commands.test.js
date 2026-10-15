@@ -23,7 +23,7 @@ test("the menu only offers commands that make sense right now", () => {
 
 test("normalizeSettings falls back to defaults for invalid values", () => {
   const settings = normalizeSettings({ everyMs: "soon", sound: "yes", volume: 7, dailyGoal: 0 });
-  assert.deepEqual(settings, { everyMs: 600_000, rhythm: "minutes", sound: true, volume: 0.5, dailyGoal: 20, tips: "sometimes", quiet: null, skipWeekends: true, deck: null, language: systemLanguage() });
+  assert.deepEqual(settings, { everyMs: 600_000, rhythm: "minutes", sound: true, speak: false, volume: 0.5, dailyGoal: 20, tips: "sometimes", quiet: null, skipWeekends: true, deck: null, language: systemLanguage() });
   assert.equal(normalizeSettings({ everyMs: 300_000, sound: false, volume: 0.2, dailyGoal: 20 }).dailyGoal, 20);
   assert.equal(normalizeSettings({ rhythm: "session-10" }).rhythm, "session-10");
   assert.equal(normalizeSettings({ rhythm: "marathon" }).rhythm, "minutes");

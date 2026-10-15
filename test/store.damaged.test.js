@@ -56,7 +56,7 @@ test("more broken shapes are reported, not crashed on", async () => {
   writeFileSync(DATA_FILES.state, progress({}));
   assert.ok(await loadState(), "a good one still loads");
   const deck = { id: "d1", name: "A" };
-  for (const library of [{ decks: [{ ...deck, languages: "x" }], cards: [] }, { decks: [deck], cards: [{ id: "c1", deckId: "d1", front: " ", back: ["y"] }] }, { decks: [deck], cards: [{ id: "c1", deckId: "d1", front: "x", back: ["  "] }] }, { decks: [deck], cards: [{ id: "c1", deckId: "d1", front: "x", back: ["y"] }, { id: "c1", deckId: "d1", front: "z", back: ["y"] }] }]) {
+  for (const library of [{ decks: [deck], cards: [{ id: "c1", deckId: "d1", front: " ", back: ["y"] }] }, { decks: [deck], cards: [{ id: "c1", deckId: "d1", front: "x", back: ["  "] }] }, { decks: [deck], cards: [{ id: "c1", deckId: "d1", front: "x", back: ["y"] }, { id: "c1", deckId: "d1", front: "z", back: ["y"] }] }]) {
     writeFileSync(DATA_FILES.library, JSON.stringify({ version: 1, ...library }));
     await assert.rejects(loadLibrary(), /looks damaged/, JSON.stringify(library));
   }

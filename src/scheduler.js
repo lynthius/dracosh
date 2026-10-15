@@ -15,6 +15,24 @@ export function newToday(state, now) {
   return state.newToday?.date === dayKey(now) ? state.newToday.count : 0;
 }
 
+// A review is waiting for the whole day it falls due, from midnight: a card answered at 17:00 yesterday
+// can be done this morning. But never sooner than half a day after it was answered, so a sitting across
+// midnight doesn't ask it again minutes later. A card just missed (streak 0) comes back at its minute.
+const MIN_GAP = 12 * 60 * MINUTE;
+export function readyAt(entry) {
+  if (!entry.streak) return entry.due;
+  const day = new Date(entry.due);
+  day.setHours(0, 0, 0, 0);
+  return Math.min(entry.due, Math.max(day.getTime(), (entry.last ?? 0) + MIN_GAP));
+}
+
+// the same time of day, `days` calendar days later (a day with a clock change is still one day)
+function daysLater(now, days) {
+  const date = new Date(now);
+  date.setDate(date.getDate() + days);
+  return date.getTime();
+}
+
 const NEW_RATIO = 0.3; // when both due and unseen items exist, this share of questions introduces a new one
 const MAX_OVERDUE_WEIGHT_DAYS = 3;
 
@@ -42,7 +60,9 @@ export function pickNext({ words, state, now = Date.now(), lastNoteId = null, di
   if (tour) return candidates.find((c) => !c.entry) ?? null;
 
   const canIntroduce = newToday(state, now) < NEW_PER_DAY;
-  const waiting = candidates.filter((c) => (c.entry ? c.entry.due <= now : canIntroduce));
+  // the other way round of a card already started is no new card: the daily limit counts cards
+  const started = new Set(candidates.filter((c) => c.entry).map((c) => c.word.noteId));
+  const waiting = candidates.filter((c) => (c.entry ? readyAt(c.entry) <= now : canIntroduce || started.has(c.word.noteId)));
   if (!waiting.length) return null;
   const pool = waiting.some((c) => c.word.noteId !== lastNoteId) ? waiting.filter((c) => c.word.noteId !== lastNoteId) : waiting;
 
@@ -59,7 +79,7 @@ export function nextDueAt({ words, state, now = Date.now(), directions = DIRECTI
   for (const word of words) {
     for (const direction of word.directions ?? directions) {
       const entry = state.items[itemKey(word.noteId, direction)];
-      const at = entry ? entry.due : startOfTomorrow(now);
+      const at = entry ? readyAt(entry) : startOfTomorrow(now);
       if (next === null || at < next) next = at;
     }
   }
@@ -78,7 +98,7 @@ export function grade(entry, correct, now = Date.now(), { hinted = false } = {})
     // right after a miss the card starts over at box 1 (back tomorrow) instead of skipping ahead
     const relearning = prev.seen > 0 && prev.streak === 0;
     const box = hinted || relearning ? Math.max(prev.box, 1) : Math.min(prev.box + 1, BOX_INTERVALS_DAYS.length);
-    return { ...prev, box, due: now + BOX_INTERVALS_DAYS[box - 1] * DAY, seen: prev.seen + 1, correct: prev.correct + 1, streak: prev.streak + 1, last: now };
+    return { ...prev, box, due: daysLater(now, BOX_INTERVALS_DAYS[box - 1]), seen: prev.seen + 1, correct: prev.correct + 1, streak: prev.streak + 1, last: now };
   }
   return { ...prev, box: 1, due: now + RELEARN_DELAY, seen: prev.seen + 1, wrong: prev.wrong + 1, streak: 0, last: now };
 }

@@ -124,11 +124,21 @@ test("the tour is asked once, in order, and every card says what to type", async
   await assert.rejects(session.next(), (err) => err.empty && err.tour, "once through, the tour is done: nothing comes back as a review");
 });
 
-test("a language deck labels the card with its pair, both ways", async () => {
+test("each question knows the language its answer is in, for that language's spellings", async () => {
+  const session = sessionOn("Spanish");
+  const seen = new Map();
+  for (let i = 0; i < 30; i++) {
+    const q = await session.next();
+    seen.set(q.direction, q.answerLanguage);
+  }
+  assert.deepEqual(Object.fromEntries(seen), { "en-pl": "en", "pl-en": "es" });
+});
+
+test("a card is labelled with its deck's name, whichever way it's asked", async () => {
   const session = sessionOn("Spanish");
   const labels = new Set();
   for (let i = 0; i < 30; i++) labels.add((await session.next()).label);
-  assert.deepEqual([...labels].sort(), ["EN → ES", "ES → EN"]);
+  assert.deepEqual([...labels], ["Spanish"]);
 });
 
 test("the tour doesn't use up the daily cap on new cards", async () => {

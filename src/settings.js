@@ -1,6 +1,6 @@
 import { LANGUAGES, systemLanguage, t } from "./i18n.js";
 
-export const DEFAULTS = { everyMs: 600_000, rhythm: "minutes", sound: true, volume: 0.5, dailyGoal: 20, tips: "sometimes", quiet: null, skipWeekends: true, deck: null };
+export const DEFAULTS = { everyMs: 600_000, rhythm: "minutes", sound: true, speak: false, volume: 0.5, dailyGoal: 20, tips: "sometimes", quiet: null, skipWeekends: true, deck: null };
 
 export const INTERVALS = [60_000, 120_000, 300_000, 600_000, 900_000, 1_200_000, 1_800_000, 2_700_000, 3_600_000];
 export const GOALS = [5, 10, 15, 20, 25, 30, 40, 50, 75, 100, 150, 200];
@@ -33,6 +33,7 @@ export function normalizeSettings(raw = {}) {
     everyMs: isNumber(raw.everyMs) && raw.everyMs >= 1000 ? raw.everyMs : DEFAULTS.everyMs,
     rhythm: RHYTHMS.includes(raw.rhythm) ? raw.rhythm : DEFAULTS.rhythm,
     sound: typeof raw.sound === "boolean" ? raw.sound : DEFAULTS.sound,
+    speak: typeof raw.speak === "boolean" ? raw.speak : DEFAULTS.speak,
     volume: isNumber(raw.volume) && raw.volume >= 0 && raw.volume <= 1 ? raw.volume : DEFAULTS.volume,
     dailyGoal: isNumber(raw.dailyGoal) && raw.dailyGoal >= 1 ? Math.round(raw.dailyGoal) : DEFAULTS.dailyGoal,
     tips: normalizeTips(raw.tips),
