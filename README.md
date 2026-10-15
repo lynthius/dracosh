@@ -16,10 +16,10 @@ It's made for people who live in a terminal or spend most of the day at a comput
 
 - Your cards live in Dracosh's own library, organised in decks; no other app needs to be running
 - Add cards, start decks and switch between them right in the app (`/add`, `/decks`)
-- One line is a card: `kot = cat; kitty // Mój kot śpi.` (`;` separates right answers, `//` adds an example). Paste a whole list and check it before it's saved
+- One line is a card: `el gato = the cat; the kitty // Mi gato duerme.` (`;` separates right answers, `//` adds an example). Paste a whole list and check it before it's saved
 - Each deck is asked the way you pick after its first card: front → back, back → front, or both ways; change it any time in `/decks`
 - Pronunciation, if you turn it on in `/settings`: once the answer is out, the word in the language you're learning in that deck is read aloud with a macOS voice (other systems later); decks in one language, like definitions, stay quiet
-- Dracosh works out which languages a deck is in (Polish → Chinese, say) and which of the two you're learning, from the cards, the deck's name and your other decks, whatever language you use Dracosh in, and says when it's only a guess; set either in `/decks` when it can't tell or guesses wrong
+- Dracosh works out which languages a deck is in (Spanish → English, say) and which of the two you're learning, from the cards, the deck's name and your other decks, whatever language you use Dracosh in, and says when it's only a guess; set either in `/decks` when it can't tell or guesses wrong
 - Type the answer, or press Enter with nothing typed to see it and say whether you knew it (`1` or `2`): handy for whole sentences, and it counts just the same
 - Cloze cards for sentences: `I {{look forward}} to it` asks one gap at a time
 - Forgiving answer checks: case and punctuation don't matter, a missing accent or special letter (ż, ł, é, ø…, and ß written as ss) still counts and the right spelling is shown with it marked, German "Baer" for "Bär" and Danish "aa" for "å" count too, an article can be left out in English ("cat" for "the cat"), while a missing or wrong article where it carries the gender ("Hund" for "der Hund") or a German umlaut left plain ("Bar" for "Bär") counts as almost: right, but the card stays at its level, one typo is fine on longer words, and after a miss you see letter by letter where you went wrong. Chinese, Japanese and Korean answers are checked exactly
@@ -45,7 +45,7 @@ Want a look first? `dracosh --preview` shows every screen and animation on made-
 ## Usage
 
 ```bash
-dracosh --deck "Polish"    # quiz this deck, this run only (otherwise the one picked in /decks)
+dracosh --deck "Spanish"   # quiz this deck, this run only (otherwise the one picked in /decks)
 dracosh --every 5m         # a card every 5 minutes instead of 10, this run only
 dracosh --no-sound
 dracosh --stats            # print your progress and exit
