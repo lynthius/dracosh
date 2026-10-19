@@ -81,6 +81,7 @@ They're slash commands because "pause" and "quit" are perfectly good English ans
 ```bash
 dracosh import words.txt            # Dracosh lines, see below
 dracosh import spanish.apkg         # an Anki deck: shared on AnkiWeb, or File → Export → Anki Deck Package
+dracosh import --anki               # straight from a running Anki: pick the decks
 dracosh import anki-export.txt      # Anki: File → Export → Notes in Plain Text
 dracosh import quizlet.txt          # Quizlet: Export, tab between term and definition
 dracosh import vocabulary.csv       # a spreadsheet (Excel's semicolons work too)
@@ -93,9 +94,12 @@ A header row (`front,back,example`, `term;definition`) is used to pick the colum
 
 An Anki package (`.apkg`, or a whole collection's `.colpkg`) goes the same way, whatever language Anki was set up in. Cloze notes become cards with gaps (with a gap's hint), a deck with reverse cards asks both ways, the front is what the note's card asks, and the answer and an example are found by the fields' names (Meaning, English, Sentence…). Tags come along; subdecks become decks of their own. Pictures and sounds stay out, cards that are only a picture or a sound are listed as left out, and progress in Anki isn't brought over.
 
+`--anki` talks to a running Anki through the [AnkiConnect](https://ankiweb.net/shared/info/2055492159) add-on (in Anki: Tools → Add-ons → Get Add-ons…, code 2055492159). `dracosh import --anki` lists your Anki decks to pick from (or name one: `--anki "Spanish"`), and `dracosh export --anki` sends your decks into Anki. Cards that came from Anki aren't sent back: Anki has them already. If AnkiConnect is set to ask for a key, put it in `DRACOSH_ANKI_KEY`.
+
 | Export | What you get |
 | --- | --- |
 | `dracosh export spanish.apkg` | for Anki: open it (double-click, or File → Import) and the decks are there, in an Anki set up in any language. It brings two note types of its own, Dracosh and Dracosh Cloze, with the example in a field of its own and a card for each way the deck asks. Export again after changing cards and Anki updates the same notes instead of adding them twice. Progress isn't carried over: the cards start as new |
+| `dracosh export --anki` | straight into a running Anki, the same as opening an `.apkg` there (it asks first) |
 | `dracosh export spanish.txt` | Dracosh lines: easy to read and edit, and `dracosh import` reads them back unchanged |
 | `dracosh export spanish.tsv` | Anki's plain text, for other apps or when you want Anki's own note types: File → Import; cloze cards go into `spanish-cloze.tsv` next to it, as Anki keeps the two note types apart. If your Anki isn't in English, pick its Basic and Cloze note types in the import dialog |
 | `dracosh export spanish.csv` | for a spreadsheet: front, back, example (and deck) |
@@ -160,7 +164,6 @@ The other languages live next to it in `locales/`, the tour included. `npm test`
 
 Coming next, roughly in this order:
 
-- Anki without files: a copy straight from a running Anki, and back.
 - Decks and cards in the app: browse, edit and delete with undo, plus a welcome flow for new users.
 - Optional AI help for writing cards, with your own API key or a local model.
 - Linux and Windows, pronunciation there included.

@@ -702,7 +702,7 @@
     "slashSwitch": "\"{text}\" would have to be typed, and in the quiz / opens the commands. Change that card first."
   },
   "cli": {
-    "help": "Dracosh: a vocabulary and quiz trainer for your terminal\n\nUsage: dracosh [options]\n       dracosh import <file|->    add cards from a file (.txt, .csv, .tsv, an Anki .apkg or .colpkg, Anki or Quizlet text exports, a .json backup), or \"-\" for standard input\n       dracosh export <file>      write your decks to .apkg (Anki), .txt, .tsv, .csv or .json (everything)\n       dracosh restore [number]   list your backups, or bring one back\n\n  --deck <name>    quiz this deck, this run only (otherwise the one picked in /decks);\n                   with import or export: the deck to fill or write\n  --every <time>   pause between questions: 30s, 10m, 1h (default: {interval})\n  --no-sound       turn sound effects off\n  --volume <0-1>   sound volume (default: {volume})\n  --stats          print progress and exit\n  --data           show where your cards, progress and backups are kept\n  --preview        browse every animation and screen on made-up data (nothing is saved)\n  --update         import: cards already there take the file's answers (otherwise you're asked)\n  --split          import: an answer listing several (\"cat, kitty\") becomes one answer each\n  --separator <s>  import: what splits the columns: tab, comma, semicolon, pipe, colon, space or a character\n  --encoding <e>   import: a file that isn't UTF-8, e.g. windows-1250\n  -y, --yes        import, export or restore without asking first\n  -h, --help       show this help\n\nFlags override your saved settings for this run only. Change the saved ones with /settings.\n\nWhile running: Enter submits (with nothing typed it shows the answer, then 1 or 2), \"/\" opens the command menu (/add, /decks, /settings, /stats, /help…),\nEsc quits (clears the line first if you typed something). Ctrl+C also works.\nBetween cards: Enter asks the next one right away, q quits. /help explains the rest.",
+    "help": "Dracosh: a vocabulary and quiz trainer for your terminal\n\nUsage: dracosh [options]\n       dracosh import <file|->    add cards from a file (.txt, .csv, .tsv, an Anki .apkg or .colpkg, Anki or Quizlet text exports, a .json backup), or \"-\" for standard input\n       dracosh export <file>      write your decks to .apkg (Anki), .txt, .tsv, .csv or .json (everything)\n       dracosh restore [number]   list your backups, or bring one back\n\n  --deck <name>    quiz this deck, this run only (otherwise the one picked in /decks);\n                   with import or export: the deck to fill or write\n  --every <time>   pause between questions: 30s, 10m, 1h (default: {interval})\n  --no-sound       turn sound effects off\n  --volume <0-1>   sound volume (default: {volume})\n  --stats          print progress and exit\n  --data           show where your cards, progress and backups are kept\n  --preview        browse every animation and screen on made-up data (nothing is saved)\n  --update         import: cards already there take the file's answers (otherwise you're asked)\n  --split          import: an answer listing several (\"cat, kitty\") becomes one answer each\n  --separator <s>  import: what splits the columns: tab, comma, semicolon, pipe, colon, space or a character\n  --encoding <e>   import: a file that isn't UTF-8, e.g. windows-1250\n  --anki           import or export: straight from or to a running Anki (AnkiConnect add-on)\n  -y, --yes        import, export or restore without asking first\n  -h, --help       show this help\n\nFlags override your saved settings for this run only. Change the saved ones with /settings.\n\nWhile running: Enter submits (with nothing typed it shows the answer, then 1 or 2), \"/\" opens the command menu (/add, /decks, /settings, /stats, /help…),\nEsc quits (clears the line first if you typed something). Ctrl+C also works.\nBetween cards: Enter asks the next one right away, q quits. /help explains the rest.",
     "badEvery": "Invalid --every \"{value}\". Use e.g. 30s, 10m, 1h.",
     "badVolume": "Invalid --volume \"{value}\". Use a number from 0 to 1.",
     "unknownCommand": "Unknown command \"{command}\". See dracosh --help.",
@@ -1238,7 +1238,15 @@
     "needsNode": "Reading an Anki package needs Node {version} or newer (this is {current}). Update Node, or export the deck from Anki as Notes in Plain Text and import that.",
     "subdecks": "Anki's subdecks become decks of their own here, like \"{deck}\".",
     "hint": "(hint: {hint})",
-    "notForPackage": "--separator and --encoding are for text files: an Anki package doesn't need them."
+    "notForPackage": "--separator and --encoding are for text files: an Anki package doesn't need them.",
+    "anki": {
+      "empty": "There are no cards in Anki to bring over.",
+      "noDeck": "Anki has no deck \"{deck}\" with cards. Its decks: {decks}",
+      "yourDecks": "Your decks in Anki:",
+      "which": "Which ones? Numbers like 1 3, or Enter for all: ",
+      "asking": "Getting {deck} from Anki…",
+      "read": "From Anki: {decks}"
+    }
   },
   "export": {
     "needFile": "Where to? dracosh export <file>: .apkg (Anki), .txt (Dracosh), .tsv (Anki text), .csv or .json (everything)",
@@ -1269,6 +1277,27 @@
       "one": "Wrote 1 cloze card to {file}.",
       "other": "Wrote {count} cloze cards to {file}."
     },
-    "nextCloze": "Import it into Anki the same way, with the note type Cloze: Anki keeps the two kinds apart."
+    "nextCloze": "Import it into Anki the same way, with the note type Cloze: Anki keeps the two kinds apart.",
+    "anki": {
+      "noFile": "--anki sends the cards straight to Anki, without a file: dracosh export --anki, or add --deck <name> for one deck.",
+      "needsYes": "Sending to Anki changes your Anki collection: add --yes to do it without asking.",
+      "ask": "Send to Anki: {cards} ({decks})?",
+      "sent": "Sent to Anki: {cards} ({decks}). Notes it already had from Dracosh are updated.",
+      "fromAnki": {
+        "one": "1 card came from Anki and stays out: Anki has it already.",
+        "other": "{count} cards came from Anki and stay out: Anki has them already."
+      },
+      "nothingNew": "Nothing to send: these cards all came from Anki, which has them already."
+    },
+    "fromAnkiCopies": {
+      "one": "1 card in it came from Anki: imported into that same Anki, it's a second copy.",
+      "other": "{count} cards in it came from Anki: imported into that same Anki, they're a second copy."
+    }
+  },
+  "anki": {
+    "notRunning": "Anki isn't answering. Open Anki with the AnkiConnect add-on (Tools → Add-ons → Get Add-ons..., code 2055492159, then restart Anki) and try again.",
+    "old": "This AnkiConnect is too old for Dracosh: in Anki, Tools → Add-ons → Check for Updates.",
+    "key": "AnkiConnect asks for its API key: run this again with DRACOSH_ANKI_KEY set to it.",
+    "said": "Anki said: {detail}"
   }
 }

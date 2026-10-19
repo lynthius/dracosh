@@ -138,7 +138,9 @@ export const frontIndex = (library, deckId) => new Map(cardsOf(library, deckId).
 // → { card, duplicate }: `duplicate` is the existing card when the front is already in the deck (nothing is added then)
 // `cloze`: the front has {{gaps}}, each asked as a card of its own; the back is then only a hint
 // `index`: the deck's frontIndex, kept up to date here (see findDuplicate)
-export function addCard(library, deckId, { front, back, example = "", tags = [], cloze = false, id, now = Date.now() }, index = null) {
+// `guid`: the note in a Dracosh package it came from, so going back to Anki it's that note again;
+// `fromAnki`: it came from a note of Anki's own (see apkg.js), which Anki still has
+export function addCard(library, deckId, { front, back, example = "", tags = [], cloze = false, id, guid, fromAnki = false, now = Date.now() }, index = null) {
   if (!library.decks.some((deck) => deck.id === deckId)) throw new Error("That deck doesn't exist.");
   const cleanFront = String(front ?? "").trim();
   const cleanBack = cleanList(back);
@@ -149,7 +151,7 @@ export function addCard(library, deckId, { front, back, example = "", tags = [],
   const duplicate = findDuplicate(library, deckId, cleanFront, index);
   if (duplicate) return { card: null, duplicate };
 
-  const card = { id: id ? String(id) : newId("c"), deckId, front: cleanFront, back: cleanBack, example: String(example).trim(), tags: cleanList(tags), ...(isCloze && { cloze: true }), created: now, updated: now };
+  const card = { id: id ? String(id) : newId("c"), deckId, front: cleanFront, back: cleanBack, example: String(example).trim(), tags: cleanList(tags), ...(isCloze && { cloze: true }), ...(guid && { guid: String(guid) }), ...(fromAnki && { fromAnki: true }), created: now, updated: now };
   if (id && library.cards.some((c) => c.id === card.id)) throw new Error(`A card with id ${card.id} already exists.`);
   library.cards.push(card);
   index?.set(frontKey(cleanFront), card);

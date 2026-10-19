@@ -161,15 +161,16 @@ function noteOf(card, deck) {
   return { mid: BASIC_ID, fields, ords: [...(forward ? [0] : []), ...(backward ? [1] : [])] };
 }
 
-// The decks' cards as an .apkg file → Buffer. SQLite is loaded only here, for this.
-export async function toApkg(library, decks, { now = Date.now() } = {}) {
+// The decks' cards as an .apkg file → Buffer. SQLite is loaded only here, for this. `skip`: cards
+// to leave out (what Anki has already, for `export --anki`).
+export async function toApkg(library, decks, { now = Date.now(), skip = () => false } = {}) {
   const { DatabaseSync } = await loadSqlite();
   const folder = mkdtempSync(join(tmpdir(), "dracosh-apkg-"));
   try {
     const path = join(folder, "collection.anki2");
     const db = new DatabaseSync(path);
     try {
-      writeCollection(db, library, decks, now);
+      writeCollection(db, library, decks, now, skip);
     } finally {
       db.close();
     }
@@ -185,7 +186,7 @@ export async function toApkg(library, decks, { now = Date.now() } = {}) {
   }
 }
 
-function writeCollection(db, library, decks, now) {
+function writeCollection(db, library, decks, now, skip) {
   db.exec(SCHEMA);
   const seconds = Math.floor(now / 1000);
   // a package always has Anki's Default deck (id 1); a Dracosh deck called that is that deck, or Anki
@@ -212,10 +213,11 @@ function writeCollection(db, library, decks, now) {
   db.exec("BEGIN");
   for (const deck of decks) {
     for (const card of cardsOf(library, deck.id)) {
+      if (skip(card)) continue;
       const { mid, fields, ords } = noteOf(card, deck);
       const noteId = id++;
       const mod = Math.floor(Math.max(card.updated ?? card.created ?? now, deck.updated ?? 0) / 1000);
-      addNote.run(noteId, guidOf(card.id), mid, mod, tagsOf(card.tags), fields.join("\x1f"), unhtml(fields[0]), checksum(fields[0]));
+      addNote.run(noteId, card.guid ?? guidOf(card.id), mid, mod, tagsOf(card.tags), fields.join("\x1f"), unhtml(fields[0]), checksum(fields[0]));
       position++;
       for (const ord of ords) addCard.run(id++, noteId, deckIds.get(deck.id), ord, seconds, position);
     }
@@ -396,7 +398,7 @@ function readCollection(db) {
   const items = [];
   const asks = new Map(); // deck name → how its notes ask: { forward, backward, both } counts
   let media = 0;
-  db.prepare("SELECT id, mid, flds, tags FROM notes ORDER BY id")
+  db.prepare("SELECT id, guid, mid, flds, tags FROM notes ORDER BY id")
     .all()
     .forEach((note, i) => {
       const type = types.get(note.mid) ?? { name: "", cloze: false, fields: [], question: "", answer: "" };
@@ -442,7 +444,12 @@ function readCollection(db) {
         counts[ask]++;
         asks.set(deck, counts);
       }
-      items.push({ ...item, fields: { ...fields, ...(tags.length && { tags }) } });
+      // A note of Dracosh's own keeps its guid: sent back to Anki, the card updates that note. Anki's
+      // own notes never go back under their guid: the importer AnkiConnect uses would turn them into
+      // Dracosh notes, dropping fields Dracosh doesn't have. They're marked instead (fromAnki).
+      const own = note.mid === BASIC_ID || note.mid === CLOZE_ID;
+      const origin = own ? note.guid && { guid: String(note.guid) } : { fromAnki: true };
+      items.push({ ...item, fields: { ...fields, ...(tags.length && { tags }), ...origin } });
     });
   // a deck asks the way most of its notes do
   for (const item of items) {

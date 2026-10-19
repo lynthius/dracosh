@@ -118,6 +118,7 @@ async function main() {
       separator: { type: "string" },
       encoding: { type: "string" },
       update: { type: "boolean", default: false },
+      anki: { type: "boolean", default: false },
       split: { type: "boolean", default: false },
       every: { type: "string" },
       volume: { type: "string" },

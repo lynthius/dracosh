@@ -781,7 +781,7 @@
     "slashSwitch": "Trzeba by wpisać „{text}”, a w quizie / otwiera komendy. Najpierw popraw tę kartę."
   },
   "cli": {
-    "help": "Dracosh: trener słówek i quizów w terminalu\n\nUżycie: dracosh [opcje]\n        dracosh import <plik|->   dodaj karty z pliku (.txt, .csv, .tsv, pakiet Anki .apkg lub .colpkg, eksporty tekstowe z Anki i Quizletu, kopia .json) albo „-” ze standardowego wejścia\n        dracosh export <plik>     zapisz talie do .apkg (Anki), .txt, .tsv, .csv albo .json (wszystko)\n        dracosh restore [numer]   lista kopii zapasowych albo przywrócenie jednej z nich\n\n  --deck <nazwa>   quiz z tej talii, tylko tym razem (inaczej ta wybrana w /decks)\n                   przy import i export: talia do uzupełnienia albo zapisania\n  --every <czas>   odstęp między pytaniami: 30s, 10m, 1h (domyślnie: {interval})\n  --no-sound       wyłącz dźwięki\n  --volume <0-1>   głośność (domyślnie: {volume})\n  --stats          wypisz postępy i zakończ\n  --data           pokaż, gdzie są karty, postępy i kopie zapasowe\n  --preview        obejrzyj wszystkie animacje i ekrany na zmyślonych danych (nic się nie zapisuje)\n  --update         import: karty, które już są, dostają odpowiedzi z pliku (inaczej pytanie)\n  --split          import: odpowiedź z kilkoma wariantami („cat, kitty”) staje się kilkoma odpowiedziami\n  --separator <s>  import: co dzieli kolumny: tab, comma, semicolon, pipe, colon, space albo znak\n  --encoding <e>   import: plik, który nie jest w UTF-8, np. windows-1250\n  -y, --yes        import, eksport albo przywrócenie bez pytania\n  -h, --help       pokaż tę pomoc\n\nOpcje zmieniają zapisane ustawienia tylko na to uruchomienie. Zapisane zmienisz w /settings.\n\nW trakcie: Enter wysyła (pusty pokazuje odpowiedź, potem 1 albo 2), „/” otwiera menu komend (/add, /decks, /settings, /stats, /help…),\nEsc wychodzi (najpierw czyści wpisany tekst). Ctrl+C też działa.\nMiędzy kartami: Enter od razu zadaje następną, q wychodzi. Resztę wyjaśnia /help.",
+    "help": "Dracosh: trener słówek i quizów w terminalu\n\nUżycie: dracosh [opcje]\n        dracosh import <plik|->   dodaj karty z pliku (.txt, .csv, .tsv, pakiet Anki .apkg lub .colpkg, eksporty tekstowe z Anki i Quizletu, kopia .json) albo „-” ze standardowego wejścia\n        dracosh export <plik>     zapisz talie do .apkg (Anki), .txt, .tsv, .csv albo .json (wszystko)\n        dracosh restore [numer]   lista kopii zapasowych albo przywrócenie jednej z nich\n\n  --deck <nazwa>   quiz z tej talii, tylko tym razem (inaczej ta wybrana w /decks)\n                   przy import i export: talia do uzupełnienia albo zapisania\n  --every <czas>   odstęp między pytaniami: 30s, 10m, 1h (domyślnie: {interval})\n  --no-sound       wyłącz dźwięki\n  --volume <0-1>   głośność (domyślnie: {volume})\n  --stats          wypisz postępy i zakończ\n  --data           pokaż, gdzie są karty, postępy i kopie zapasowe\n  --preview        obejrzyj wszystkie animacje i ekrany na zmyślonych danych (nic się nie zapisuje)\n  --update         import: karty, które już są, dostają odpowiedzi z pliku (inaczej pytanie)\n  --split          import: odpowiedź z kilkoma wariantami („cat, kitty”) staje się kilkoma odpowiedziami\n  --separator <s>  import: co dzieli kolumny: tab, comma, semicolon, pipe, colon, space albo znak\n  --encoding <e>   import: plik, który nie jest w UTF-8, np. windows-1250\n  --anki           import albo eksport: prosto z działającego Anki albo do niego (dodatek AnkiConnect)\n  -y, --yes        import, eksport albo przywrócenie bez pytania\n  -h, --help       pokaż tę pomoc\n\nOpcje zmieniają zapisane ustawienia tylko na to uruchomienie. Zapisane zmienisz w /settings.\n\nW trakcie: Enter wysyła (pusty pokazuje odpowiedź, potem 1 albo 2), „/” otwiera menu komend (/add, /decks, /settings, /stats, /help…),\nEsc wychodzi (najpierw czyści wpisany tekst). Ctrl+C też działa.\nMiędzy kartami: Enter od razu zadaje następną, q wychodzi. Resztę wyjaśnia /help.",
     "badEvery": "Niepoprawne --every „{value}”. Użyj np. 30s, 10m, 1h.",
     "badVolume": "Niepoprawne --volume „{value}”. Podaj liczbę od 0 do 1.",
     "unknownCommand": "Nieznana komenda „{command}”. Zobacz dracosh --help.",
@@ -1366,7 +1366,15 @@
     "needsNode": "Odczyt pakietu Anki wymaga Node {version} lub nowszego (masz {current}). Zaktualizuj Node albo wyeksportuj talię z Anki jako Notatki jako zwykły tekst i zaimportuj ten plik.",
     "subdecks": "Podtalie z Anki stają się tu osobnymi taliami, np. „{deck}”.",
     "hint": "(podpowiedź: {hint})",
-    "notForPackage": "--separator i --encoding są dla plików tekstowych: pakiet Anki ich nie potrzebuje."
+    "notForPackage": "--separator i --encoding są dla plików tekstowych: pakiet Anki ich nie potrzebuje.",
+    "anki": {
+      "empty": "W Anki nie ma kart do przeniesienia.",
+      "noDeck": "W Anki nie ma talii „{deck}” z kartami. Talie w Anki: {decks}",
+      "yourDecks": "Twoje talie w Anki:",
+      "which": "Które? Numery, np. 1 3, albo Enter, żeby wziąć wszystkie: ",
+      "asking": "Pobieram {deck} z Anki…",
+      "read": "Z Anki: {decks}"
+    }
   },
   "export": {
     "needFile": "Dokąd? dracosh export <plik>: .apkg (Anki), .txt (Dracosh), .tsv (tekst dla Anki), .csv albo .json (wszystko)",
@@ -1401,6 +1409,31 @@
       "many": "Zapisano {count} kart z luką do {file}.",
       "other": "Zapisano {count} karty z luką do {file}."
     },
-    "nextCloze": "Zaimportuj go do Anki tak samo, z typem notatki Luka: Anki trzyma te dwa rodzaje osobno."
+    "nextCloze": "Zaimportuj go do Anki tak samo, z typem notatki Luka: Anki trzyma te dwa rodzaje osobno.",
+    "anki": {
+      "noFile": "--anki wysyła karty prosto do Anki, bez pliku: dracosh export --anki, albo dodaj --deck <nazwa> dla jednej talii.",
+      "needsYes": "Wysłanie do Anki zmienia Twoją kolekcję Anki: dodaj --yes, żeby zrobić to bez pytania.",
+      "ask": "Wysłać do Anki: {cards} ({decks})?",
+      "sent": "Wysłano do Anki: {cards} ({decks}). Notatki z Dracosh, które Anki już miało, są zaktualizowane.",
+      "fromAnki": {
+        "one": "1 karta pochodzi z Anki i zostaje pominięta: Anki już ją ma.",
+        "few": "{count} karty pochodzą z Anki i zostają pominięte: Anki już je ma.",
+        "many": "{count} kart pochodzi z Anki i zostaje pominiętych: Anki już je ma.",
+        "other": "{count} karty pochodzą z Anki i zostają pominięte: Anki już je ma."
+      },
+      "nothingNew": "Nie ma czego wysłać: wszystkie te karty pochodzą z Anki, które już je ma."
+    },
+    "fromAnkiCopies": {
+      "one": "1 karta w pliku pochodzi z Anki: zaimportowana do tego samego Anki będzie drugą kopią.",
+      "few": "{count} karty w pliku pochodzą z Anki: zaimportowane do tego samego Anki będą drugą kopią.",
+      "many": "{count} kart w pliku pochodzi z Anki: zaimportowane do tego samego Anki będą drugą kopią.",
+      "other": "{count} karty w pliku pochodzą z Anki: zaimportowane do tego samego Anki będą drugą kopią."
+    }
+  },
+  "anki": {
+    "notRunning": "Anki nie odpowiada. Otwórz Anki z dodatkiem AnkiConnect (Narzędzia → Dodatki → Pobierz dodatki..., kod 2055492159, potem uruchom Anki ponownie) i spróbuj jeszcze raz.",
+    "old": "Ten AnkiConnect jest za stary dla Dracosh: w Anki wybierz Narzędzia → Dodatki → Sprawdź dostępność aktualizacji.",
+    "key": "AnkiConnect wymaga klucza API: uruchom to jeszcze raz z ustawionym DRACOSH_ANKI_KEY.",
+    "said": "Anki odpowiada: {detail}"
   }
 }

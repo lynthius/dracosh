@@ -1,13 +1,15 @@
 import { t } from "./i18n.js";
-import { existsSync, realpathSync } from "node:fs";
+import { existsSync, mkdtempSync, realpathSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { readFile, stat, writeFile } from "node:fs/promises";
-import { basename, dirname, extname, relative, resolve } from "node:path";
+import { basename, dirname, extname, join, relative, resolve } from "node:path";
 import { createInterface } from "node:readline/promises";
 import { backupData, backupNow, restoreBackup } from "./backup.js";
 import { plainFront } from "./cardline.js";
 import { readCardList, separatorNamed } from "./cardlist.js";
 import { applyImport, decodeText, planCounts, planImport } from "./importer.js";
 import { readApkg, toApkg } from "./apkg.js";
+import { ankiDecks, connect, exportDeck, importIntoAnki } from "./ankiconnect.js";
 import { loadSqlite } from "./sqlite.js";
 import { EXPORT_FORMATS, toAnki, toCsv, toDracoshText } from "./exporter.js";
 import { deckLanguages, isKnown, languageName } from "./language.js";
@@ -159,22 +161,81 @@ async function importBackup(file, { yes: sure }) {
   out(t("cli.restore.done"));
 }
 
+// Anki's add-on said no, or nobody answered → what to do about it
+function ankiError(err) {
+  if (err.code === "NEEDS_NODE") return needsNode(err, "import.needsNode");
+  const key = { NO_ANKI: "anki.notRunning", OLD_ANKICONNECT: "anki.old", ANKI_KEY: "anki.key", ANKI_ERROR: "anki.said" }[err.code];
+  return key ? new Error(t(key, { detail: err.detail })) : err;
+}
+
+// `dracosh import --anki ["Deck"]`: decks copied from a running Anki, as packages Anki writes itself
+// and read like an .apkg. Without a deck, a terminal asks which; otherwise it's all of them.
+// → the card list, and which decks it came from
+async function readFromAnki(deckName, { interactive, yes }) {
+  const folder = mkdtempSync(join(tmpdir(), "dracosh-anki-"));
+  try {
+    const anki = connect();
+    const all = await ankiDecks(anki);
+    const decks = all.filter((deck) => deck.notes > 0 && !deck.filtered);
+    if (!decks.length) throw new Error(t("import.anki.empty"));
+    let chosen;
+    if (deckName) {
+      const deck = decks.find((each) => each.name.toLowerCase() === deckName.trim().toLowerCase());
+      if (!deck) throw new Error(t("import.anki.noDeck", { deck: deckName, decks: decks.map((each) => each.name).join(", ") }));
+      chosen = [deck.name];
+    } else if (interactive && !yes) {
+      out(t("import.anki.yourDecks"));
+      decks.forEach((deck, i) => out(`  ${i + 1}. ${deck.name} (${t("count.cards", { count: deck.notes })})`));
+      for (;;) {
+        const answer = await ask(t("import.anki.which"));
+        const numbers = answer.split(/[\s,]+/).filter(Boolean).map(Number);
+        if (!numbers.length) chosen = decks.map((deck) => deck.name);
+        else if (numbers.every((n) => Number.isInteger(n) && n >= 1 && n <= decks.length)) chosen = numbers.map((n) => decks[n - 1].name);
+        if (chosen) break;
+      }
+    } else chosen = decks.map((deck) => deck.name);
+    // a deck comes with its subdecks, so a subdeck of one already chosen isn't asked for again
+    chosen = [...new Set(chosen)].filter((name) => !chosen.some((other) => name.startsWith(`${other}::`)));
+    const list = { format: "apkg", separator: null, header: {}, items: [], columns: null, ignored: [], unknown: [], anki: true, html: true, media: 0 };
+    const inChosen = (deck) => chosen.some((name) => deck === name || deck?.startsWith(`${name}::`));
+    // a deck's export leaves out its cards lent to a filtered deck: those come from the filtered one
+    const lending = all.filter((deck) => deck.filtered && deck.notes > 0).map((deck) => deck.name);
+    for (const [i, name] of [...chosen, ...lending].entries()) {
+      if (i < chosen.length) out(t("import.anki.asking", { deck: name }));
+      const path = join(folder, `${i}.apkg`);
+      await exportDeck(anki, name, path);
+      const part = await readApkg(path);
+      const items = i < chosen.length ? part.items : part.items.filter((item) => inChosen(item.deck));
+      list.items.push(...items.map((item, j) => ({ ...item, line: list.items.length + j + 1 })));
+      if (i < chosen.length) list.media += part.media;
+    }
+    return { list, decks: chosen };
+  } catch (err) {
+    throw ankiError(err);
+  } finally {
+    rmSync(folder, { recursive: true, force: true });
+  }
+}
+
 export async function runImport(file, options) {
-  if (!file) throw new Error(t("import.needFile"));
-  const ending = file === "-" ? "" : extname(file).toLowerCase();
+  const viaAnki = Boolean(options.anki);
+  if (!file && !viaAnki) throw new Error(t("import.needFile"));
+  const ending = viaAnki || file === "-" ? "" : extname(file).toLowerCase();
   if (ending === ".json") return importBackup(file, options);
-  const isPackage = ending === ".apkg" || ending === ".colpkg";
+  const isPackage = viaAnki || ending === ".apkg" || ending === ".colpkg";
   if (isPackage && (options.separator !== undefined || options.encoding !== undefined)) throw new Error(t("import.notForPackage"));
   const interactive = process.stdin.isTTY && file !== "-";
   if (options.separator !== undefined && !separatorNamed(options.separator)) throw new Error(t("import.badSeparator", { value: options.separator }));
-  const { text, encoding, list } = isPackage ? { text: null, encoding: "utf-8", list: await readPackage(file) } : await readInput(file, options.encoding);
+  const anki = viaAnki ? await readFromAnki(file, { interactive, yes: options.yes }) : null;
+  const { text, encoding, list } = anki ? { text: null, encoding: "utf-8", list: anki.list } : isPackage ? { text: null, encoding: "utf-8", list: await readPackage(file) } : await readInput(file, options.encoding);
   const library = await loadLibrary();
   const csv = ending === ".csv";
   const choices = { deck: options.deck ?? null, deckName: null, separator: options.separator, csv, directions: {}, split: Boolean(options.split), list };
   const read = (from) => planImport(from, text, choices);
   let plan = read(library);
 
-  out(t("import.reading", { file: file === "-" ? t("import.stdin") : file, what: describeRead(plan.read) }) + (encoding === "utf-8" ? "" : t("import.encoding", { encoding: encoding.toUpperCase() })));
+  if (anki) out(t("import.anki.read", { decks: anki.decks.join(", ") }));
+  else out(t("import.reading", { file: file === "-" ? t("import.stdin") : file, what: describeRead(plan.read) }) + (encoding === "utf-8" ? "" : t("import.encoding", { encoding: encoding.toUpperCase() })));
   if (!plan.read.count) throw new Error(t("import.empty"));
   if (plan.read.ignored.length) out(t("import.ignored", { count: plan.read.ignored.length, lines: lineList(plan.read.ignored) }));
   if (plan.read.media) out(t("import.mediaLeft", { count: plan.read.media }));
@@ -289,7 +350,8 @@ export async function runImport(file, options) {
     if (!interactive) {
       out();
       const deckFlag = options.deck ? ` --deck "${options.deck}"` : file === "-" ? ` --deck "${choices.deckName}"` : "";
-      return out(t("import.previewOnly", { command: `dracosh import ${file}${deckFlag}${choices.split ? " --split" : ""} --yes` }));
+      const source = anki ? `--anki${file ? ` "${file}"` : ""}` : file;
+      return out(t("import.previewOnly", { command: `dracosh import ${source}${deckFlag}${choices.split ? " --split" : ""} --yes` }));
     }
     out();
     const question = !willUpdate
@@ -359,6 +421,7 @@ function insideData(file) {
 }
 
 export async function runExport(file, options) {
+  if (options.anki) return exportToAnki(file, options);
   if (!file) throw new Error(t("export.needFile"));
   const format = file === "-" ? "txt" : extname(file).slice(1).toLowerCase();
   if (!EXPORT_FORMATS.includes(format)) throw new Error(t("export.unknownFormat", { file }));
@@ -425,4 +488,53 @@ export async function runExport(file, options) {
   await write(file, text);
   out(format === "json" ? t("export.wroteAll", { file }) : t("export.wrote", { count: count(), file }));
   out(t(`export.next.${format}`, { file }));
+  const fromAnki = decks.reduce((sum, deck) => sum + cardsOf(library, deck.id).filter((card) => card.fromAnki).length, 0);
+  if (format === "apkg" && fromAnki) out(t("export.fromAnkiCopies", { count: fromAnki }));
+}
+
+// `dracosh export --anki`: the decks sent straight to a running Anki, as an .apkg its own importer
+// takes (what File → Import does). It changes Anki's collection, so it's asked first.
+async function exportToAnki(file, options) {
+  if (file) throw new Error(t("export.anki.noFile"));
+  try {
+    await loadSqlite();
+  } catch (err) {
+    throw needsNode(err, "export.needsNode");
+  }
+  const library = await loadLibrary();
+  // cards from Anki's own notes are there already: sent again they'd be a second copy
+  const sendable = (deck) => cardsOf(library, deck.id).filter((card) => !card.fromAnki);
+  let decks = library.decks.filter((deck) => !deck.tour);
+  if (options.deck) {
+    const deck = findDeck(library, options.deck);
+    if (!deck) throw missingDeck(library, options.deck);
+    decks = [deck];
+  }
+  const fromAnki = decks.reduce((sum, deck) => sum + cardsOf(library, deck.id).length - sendable(deck).length, 0);
+  decks = decks.filter((deck) => sendable(deck).length);
+  if (fromAnki) out(t("export.anki.fromAnki", { count: fromAnki }));
+  if (!decks.length) throw new Error(t(fromAnki ? "export.anki.nothingNew" : "export.noDecks"));
+  const cards = t("count.cards", { count: decks.reduce((sum, deck) => sum + sendable(deck).length, 0) });
+  const names = decks.map((deck) => deck.name).join(", ");
+  const anki = connect();
+  try {
+    await anki("deckNames"); // Anki is there before anything is asked
+  } catch (err) {
+    throw ankiError(err);
+  }
+  if (!options.yes) {
+    if (!process.stdin.isTTY) throw new Error(t("export.anki.needsYes"));
+    if (!(await confirm(t("export.anki.ask", { cards, decks: names }), true))) return out(t("cli.restore.nothingChanged"));
+  }
+  const folder = mkdtempSync(join(tmpdir(), "dracosh-anki-"));
+  try {
+    const path = join(folder, "dracosh.apkg");
+    await writeFile(path, await toApkg(library, decks, { skip: (card) => card.fromAnki }));
+    await importIntoAnki(anki, path);
+  } catch (err) {
+    throw ankiError(err);
+  } finally {
+    rmSync(folder, { recursive: true, force: true });
+  }
+  out(t("export.anki.sent", { cards, decks: names }));
 }

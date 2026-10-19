@@ -758,7 +758,7 @@
     "slashSwitch": "Il faudrait taper « {text} », et dans le quiz / ouvre les commandes. Modifie d'abord cette carte."
   },
   "cli": {
-    "help": "Dracosh : un entraîneur de vocabulaire et de quiz pour ton terminal\n\nUsage : dracosh [options]\n        dracosh import <fichier|-> ajouter des cartes depuis un fichier (.txt, .csv, .tsv, un paquet Anki .apkg ou .colpkg, exports texte Anki ou Quizlet, une sauvegarde .json), ou « - » pour l'entrée standard\n        dracosh export <fichier>  écrire tes paquets en .apkg (Anki), .txt, .tsv, .csv ou .json (tout)\n        dracosh restore [numéro]  liste tes sauvegardes, ou en restaure une\n\n  --deck <nom>     réviser ce paquet, pour cette fois seulement (sinon celui choisi dans /decks)\n                   avec import ou export : le paquet à remplir ou à écrire\n  --every <durée>  pause entre les questions : 30s, 10m, 1h (par défaut : {interval})\n  --no-sound       couper les sons\n  --volume <0-1>   volume du son (par défaut : {volume})\n  --stats          afficher la progression et quitter\n  --data           montrer où sont gardées tes cartes, ta progression et tes sauvegardes\n  --preview        parcourir toutes les animations et tous les écrans sur des données inventées (rien n'est enregistré)\n  --update         import : les cartes déjà là prennent les réponses du fichier (sinon on te demande)\n  --split          import : une réponse qui en liste plusieurs (« cat, kitty ») devient une réponse par mot\n  --separator <s>  import : ce qui sépare les colonnes : tab, comma, semicolon, pipe, colon, space ou un caractère\n  --encoding <e>   import : un fichier qui n'est pas en UTF-8, p. ex. windows-1252\n  -y, --yes        importer, exporter ou restaurer sans demander\n  -h, --help       afficher cette aide\n\nLes options remplacent tes réglages enregistrés pour ce lancement seulement. Change-les pour de bon dans /settings.\n\nPendant l'utilisation : Entrée valide (à vide, elle montre la réponse, puis 1 ou 2), « / » ouvre le menu des commandes (/add, /decks, /settings, /stats, /help…),\nÉchap quitte (efface d'abord ce que tu as tapé). Ctrl+C marche aussi.\nEntre deux cartes : Entrée demande la suivante tout de suite, q quitte. /help explique le reste.",
+    "help": "Dracosh : un entraîneur de vocabulaire et de quiz pour ton terminal\n\nUsage : dracosh [options]\n        dracosh import <fichier|-> ajouter des cartes depuis un fichier (.txt, .csv, .tsv, un paquet Anki .apkg ou .colpkg, exports texte Anki ou Quizlet, une sauvegarde .json), ou « - » pour l'entrée standard\n        dracosh export <fichier>  écrire tes paquets en .apkg (Anki), .txt, .tsv, .csv ou .json (tout)\n        dracosh restore [numéro]  liste tes sauvegardes, ou en restaure une\n\n  --deck <nom>     réviser ce paquet, pour cette fois seulement (sinon celui choisi dans /decks)\n                   avec import ou export : le paquet à remplir ou à écrire\n  --every <durée>  pause entre les questions : 30s, 10m, 1h (par défaut : {interval})\n  --no-sound       couper les sons\n  --volume <0-1>   volume du son (par défaut : {volume})\n  --stats          afficher la progression et quitter\n  --data           montrer où sont gardées tes cartes, ta progression et tes sauvegardes\n  --preview        parcourir toutes les animations et tous les écrans sur des données inventées (rien n'est enregistré)\n  --update         import : les cartes déjà là prennent les réponses du fichier (sinon on te demande)\n  --split          import : une réponse qui en liste plusieurs (« cat, kitty ») devient une réponse par mot\n  --separator <s>  import : ce qui sépare les colonnes : tab, comma, semicolon, pipe, colon, space ou un caractère\n  --encoding <e>   import : un fichier qui n'est pas en UTF-8, p. ex. windows-1252\n  --anki           import ou export : directement depuis ou vers un Anki ouvert (greffon AnkiConnect)\n  -y, --yes        importer, exporter ou restaurer sans demander\n  -h, --help       afficher cette aide\n\nLes options remplacent tes réglages enregistrés pour ce lancement seulement. Change-les pour de bon dans /settings.\n\nPendant l'utilisation : Entrée valide (à vide, elle montre la réponse, puis 1 ou 2), « / » ouvre le menu des commandes (/add, /decks, /settings, /stats, /help…),\nÉchap quitte (efface d'abord ce que tu as tapé). Ctrl+C marche aussi.\nEntre deux cartes : Entrée demande la suivante tout de suite, q quitte. /help explique le reste.",
     "badEvery": "--every « {value} » invalide. Utilise par ex. 30s, 10m, 1h.",
     "badVolume": "--volume « {value} » invalide. Utilise un nombre de 0 à 1.",
     "unknownCommand": "Commande inconnue « {command} ». Voir dracosh --help.",
@@ -1323,7 +1323,15 @@
     "needsNode": "Lire un paquet Anki demande Node {version} ou plus récent (ici : {current}). Mets Node à jour, ou exporte le paquet depuis Anki en « Notes en texte » et importe ce fichier.",
     "subdecks": "Les sous-paquets d'Anki deviennent ici des paquets à part, comme « {deck} ».",
     "hint": "(indice : {hint})",
-    "notForPackage": "--separator et --encoding servent aux fichiers texte : un paquet Anki n'en a pas besoin."
+    "notForPackage": "--separator et --encoding servent aux fichiers texte : un paquet Anki n'en a pas besoin.",
+    "anki": {
+      "empty": "Il n'y a pas de cartes à reprendre dans Anki.",
+      "noDeck": "Anki n'a pas de paquet « {deck} » avec des cartes. Ses paquets : {decks}",
+      "yourDecks": "Tes paquets dans Anki :",
+      "which": "Lesquels ? Des numéros comme 1 3, ou Entrée pour tous : ",
+      "asking": "Récupération de {deck} depuis Anki…",
+      "read": "Depuis Anki : {decks}"
+    }
   },
   "export": {
     "needFile": "Où ? dracosh export <fichier> : .apkg (Anki), .txt (Dracosh), .tsv (texte pour Anki), .csv ou .json (tout)",
@@ -1356,6 +1364,29 @@
       "many": "{count} cartes à trous écrites dans {file}.",
       "other": "{count} cartes à trous écrites dans {file}."
     },
-    "nextCloze": "Importe-le dans Anki de la même façon, avec le type de note Texte à trous : Anki garde les deux sortes à part."
+    "nextCloze": "Importe-le dans Anki de la même façon, avec le type de note Texte à trous : Anki garde les deux sortes à part.",
+    "anki": {
+      "noFile": "--anki envoie les cartes directement à Anki, sans fichier : dracosh export --anki, ou ajoute --deck <nom> pour un seul paquet.",
+      "needsYes": "L'envoi à Anki modifie ta collection Anki : ajoute --yes pour le faire sans demander.",
+      "ask": "Envoyer à Anki : {cards} ({decks}) ?",
+      "sent": "Envoyé à Anki : {cards} ({decks}). Les notes de Dracosh qu'Anki avait déjà sont mises à jour.",
+      "fromAnki": {
+        "one": "1 carte vient d'Anki et reste de côté : Anki l'a déjà.",
+        "many": "{count} cartes viennent d'Anki et restent de côté : Anki les a déjà.",
+        "other": "{count} cartes viennent d'Anki et restent de côté : Anki les a déjà."
+      },
+      "nothingNew": "Rien à envoyer : toutes ces cartes viennent d'Anki, qui les a déjà."
+    },
+    "fromAnkiCopies": {
+      "one": "1 carte du fichier vient d'Anki : importée dans ce même Anki, ce sera un doublon.",
+      "many": "{count} cartes du fichier viennent d'Anki : importées dans ce même Anki, ce seront des doublons.",
+      "other": "{count} cartes du fichier viennent d'Anki : importées dans ce même Anki, ce seront des doublons."
+    }
+  },
+  "anki": {
+    "notRunning": "Anki ne répond pas. Ouvre Anki avec le greffon AnkiConnect (Outils → Greffons → Acquérir des greffons..., code 2055492159, puis redémarre Anki) et réessaie.",
+    "old": "Cet AnkiConnect est trop ancien pour Dracosh : dans Anki, Outils → Greffons → Vérifier les mises à jour.",
+    "key": "AnkiConnect demande sa clé API : relance avec DRACOSH_ANKI_KEY défini.",
+    "said": "Anki répond : {detail}"
   }
 }

@@ -250,3 +250,19 @@ test("a cut Anki package is said not to be one, never a raw error", async () => 
   await assert.rejects(read(whole.subarray(whole.length - 30000)), { code: "NOT_ANKI" });
   await assert.rejects(read(whole.subarray(0, whole.length - 100)), { code: "NOT_ANKI" });
 });
+
+test("a Dracosh note keeps its guid on another computer; Anki's own notes are marked, never sent back under theirs", async () => {
+  const { library, decks } = sample();
+  const first = await open(await toApkg(library, decks));
+  // read on another computer: new card ids, the same notes in Anki
+  const elsewhere = emptyLibrary();
+  const list = await read(await toApkg(library, decks));
+  for (const name of new Set(list.items.map((item) => item.deck))) {
+    const deck = createDeck(elsewhere, { name });
+    for (const item of list.items.filter((each) => each.deck === name)) addCard(elsewhere, deck.id, item.fields);
+  }
+  const again = await open(await toApkg(elsewhere, elsewhere.decks));
+  assert.deepEqual(again.notes.map((note) => note.guid).sort(), first.notes.map((note) => note.guid).sort());
+  const fromAnki = await readApkg(join(FIXTURES, "anki-modern.apkg"));
+  assert.ok(fromAnki.items.filter((item) => !item.skip).every((item) => item.fields.fromAnki && !item.fields.guid));
+});
