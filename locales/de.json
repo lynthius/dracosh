@@ -714,7 +714,7 @@
     "slashSwitch": "„{text}“ müsste getippt werden, und im Quiz öffnet / die Befehle. Ändere zuerst diese Karte."
   },
   "cli": {
-    "help": "Dracosh: ein Vokabel- und Quiztrainer für dein Terminal\n\nAufruf: dracosh [Optionen]\n        dracosh import <Datei|->  Karten aus einer Datei hinzufügen (.txt, .csv, .tsv, ein Anki-Paket .apkg, Exporte aus Anki oder Quizlet, eine .json-Sicherung), oder „-“ für die Standardeingabe\n        dracosh export <Datei>    deine Stapel als .apkg (Anki), .txt, .tsv, .csv oder .json (alles) speichern\n        dracosh restore [Nummer]  deine Sicherungen auflisten oder eine zurückholen\n\n  --deck <Name>    diesen Stapel abfragen, nur dieses Mal (sonst den in /decks gewählten)\n                   bei import und export: der Stapel zum Füllen oder Speichern\n  --every <Zeit>   Abstand zwischen Fragen: 30s, 10m, 1h (Standard: {interval})\n  --no-sound       Töne ausschalten\n  --volume <0-1>   Lautstärke (Standard: {volume})\n  --stats          Fortschritt ausgeben und beenden\n  --data           zeigen, wo Karten, Fortschritt und Sicherungen liegen\n  --preview        alle Animationen und Bildschirme mit erfundenen Daten ansehen (nichts wird gespeichert)\n  --update         import: vorhandene Karten übernehmen die Antworten aus der Datei (sonst wird gefragt)\n  --split          import: eine Antwort mit mehreren („cat, kitty“) wird zu einzelnen Antworten\n  --separator <s>  import: was die Spalten trennt: tab, comma, semicolon, pipe, colon, space oder ein Zeichen\n  --encoding <e>   import: eine Datei, die nicht UTF-8 ist, z. B. windows-1252\n  -y, --yes        Import, Export oder Wiederherstellen ohne Nachfrage\n  -h, --help       diese Hilfe zeigen\n\nOptionen ändern deine gespeicherten Einstellungen nur für diesen Start. Die gespeicherten änderst du in /settings.\n\nWährenddessen: Enter schickt ab (leer zeigt es die Antwort, dann 1 oder 2), „/“ öffnet das Befehlsmenü (/add, /decks, /settings, /stats, /help…),\nEsc beendet (löscht vorher die Eingabe). Strg+C geht auch.\nZwischen Karten: Enter fragt sofort die nächste, q beendet. /help erklärt den Rest.",
+    "help": "Dracosh: ein Vokabel- und Quiztrainer für dein Terminal\n\nAufruf: dracosh [Optionen]\n        dracosh import <Datei|->  Karten aus einer Datei hinzufügen (.txt, .csv, .tsv, ein Anki-Paket .apkg oder .colpkg, Textexporte aus Anki oder Quizlet, eine .json-Sicherung), oder „-“ für die Standardeingabe\n        dracosh export <Datei>    deine Stapel als .apkg (Anki), .txt, .tsv, .csv oder .json (alles) speichern\n        dracosh restore [Nummer]  deine Sicherungen auflisten oder eine zurückholen\n\n  --deck <Name>    diesen Stapel abfragen, nur dieses Mal (sonst den in /decks gewählten)\n                   bei import und export: der Stapel zum Füllen oder Speichern\n  --every <Zeit>   Abstand zwischen Fragen: 30s, 10m, 1h (Standard: {interval})\n  --no-sound       Töne ausschalten\n  --volume <0-1>   Lautstärke (Standard: {volume})\n  --stats          Fortschritt ausgeben und beenden\n  --data           zeigen, wo Karten, Fortschritt und Sicherungen liegen\n  --preview        alle Animationen und Bildschirme mit erfundenen Daten ansehen (nichts wird gespeichert)\n  --update         import: vorhandene Karten übernehmen die Antworten aus der Datei (sonst wird gefragt)\n  --split          import: eine Antwort mit mehreren („cat, kitty“) wird zu einzelnen Antworten\n  --separator <s>  import: was die Spalten trennt: tab, comma, semicolon, pipe, colon, space oder ein Zeichen\n  --encoding <e>   import: eine Datei, die nicht UTF-8 ist, z. B. windows-1252\n  -y, --yes        Import, Export oder Wiederherstellen ohne Nachfrage\n  -h, --help       diese Hilfe zeigen\n\nOptionen ändern deine gespeicherten Einstellungen nur für diesen Start. Die gespeicherten änderst du in /settings.\n\nWährenddessen: Enter schickt ab (leer zeigt es die Antwort, dann 1 oder 2), „/“ öffnet das Befehlsmenü (/add, /decks, /settings, /stats, /help…),\nEsc beendet (löscht vorher die Eingabe). Strg+C geht auch.\nZwischen Karten: Enter fragt sofort die nächste, q beendet. /help erklärt den Rest.",
     "badEvery": "Ungültiges --every „{value}“. Nutze z. B. 30s, 10m, 1h.",
     "badVolume": "Ungültiges --volume „{value}“. Nutze eine Zahl von 0 bis 1.",
     "unknownCommand": "Unbekannter Befehl „{command}“. Siehe dracosh --help.",
@@ -1167,8 +1167,9 @@
       "tour": "„{deck}“ ist der Einführungsstapel: nimm einen anderen Namen",
       "noSeparator": "kein „ = “ zwischen Vorderseite und Antwort",
       "badDirection": "keine Richtung: Nimm forward, backward oder both",
-      "twiceNote": "auch in Notiz {line}",
-      "picture": "ein Bild mit verdeckten Teilen (Bildverdeckung)"
+      "twiceNote": "zweimal im Paket",
+      "picture": "ein Bild mit verdeckten Teilen (Bildverdeckung)",
+      "mediaOnly": "nur ein Bild oder ein Ton, kein Text zum Abfragen"
     },
     "ignored": {
       "one": "1 Zeile hat Text in einer Spalte, die nicht gelesen wird (Zeile {lines}): nur Vorderseite, Antwort und Beispiel.",
@@ -1238,20 +1239,23 @@
     "isFolder": "{file} ist ein Ordner: Nenne eine Datei darin.",
     "noPermission": "Dracosh darf {file} nicht lesen.",
     "tooBig": "{file} ist größer als {max} MB: Das ist kein Stapel. Teile die Datei, oder prüfe, ob es die richtige ist.",
-    "notText": "{file} ist keine Textdatei. Dracosh importiert Text (Dracosh-Zeilen, CSV, TSV, Exporte aus Anki und Quizlet) und Anki-Pakete (.apkg).",
+    "notText": "{file} ist keine Textdatei. Dracosh importiert Text (Dracosh-Zeilen, CSV, TSV, Textexporte aus Anki und Quizlet) und Anki-Pakete (.apkg, .colpkg).",
     "problemLine": "Zeile {line}  {issue}: {text}",
     "backupReplaces": "Sie ersetzt, was du jetzt hast ({decks} · {cards}).",
     "mediaLeft": {
-      "one": "1 Notiz hat Bilder oder Töne: ihr Text kommt mit, die Bilder und Töne nicht (Dracosh zeigt Text).",
-      "other": "{count} Notizen haben Bilder oder Töne: ihr Text kommt mit, die Bilder und Töne nicht (Dracosh zeigt Text)."
+      "one": "1 Notiz hat Bilder oder Töne; nur ihr Text wird importiert.",
+      "other": "{count} Notizen haben Bilder oder Töne; nur ihr Text wird importiert."
     },
     "problemsNotes": {
       "one": "1 Notiz kann nicht hinzugefügt werden:",
       "other": "{count} Notizen können nicht hinzugefügt werden:"
     },
-    "problemNote": "Notiz {line}  {issue}: {text}",
-    "notAnki": "{file} ist kein Anki-Paket, das Dracosh lesen kann. In Anki erstellt Datei → Exportieren → Anki-Stapelpaket (.apkg) eins.",
-    "needsNode": "Ein Anki-Paket zu lesen braucht Node {version} oder neuer (installiert ist {current}). Aktualisiere Node oder exportiere den Stapel in Anki als „Notizen als einfache Textdatei“ und importiere diese Datei."
+    "problemNote": "{issue}: {text}",
+    "notAnki": "{file} ist kein Anki-Paket, das Dracosh lesen kann. In Anki erstellst du eins über Datei → Exportieren → Anki-Stapelpaket (.apkg).",
+    "needsNode": "Ein Anki-Paket zu lesen braucht Node {version} oder neuer (installiert ist {current}). Aktualisiere Node oder exportiere den Stapel in Anki als „Notizen als einfache Textdatei“ und importiere diese Datei.",
+    "subdecks": "Unterstapel aus Anki werden hier eigene Stapel, z. B. „{deck}“.",
+    "hint": "(Hinweis: {hint})",
+    "notForPackage": "--separator und --encoding gelten für Textdateien: Ein Anki-Paket braucht sie nicht."
   },
   "export": {
     "needFile": "Wohin? dracosh export <Datei>: .apkg (Anki), .txt (Dracosh), .tsv (Anki-Text), .csv oder .json (alles)",
@@ -1268,7 +1272,7 @@
     "wroteAll": "Karten, Fortschritt und Einstellungen in {file} geschrieben.",
     "next": {
       "txt": "Zurück einlesen mit: dracosh import {file}",
-      "apkg": "In Anki: {file} doppelklicken oder Datei → Importieren. Das Paket bringt eigene Notiztypen mit, du musst also nichts auswählen, und ein späterer Export aktualisiert dieselben Notizen.",
+      "apkg": "In Anki: {file} doppelklicken oder Datei → Importieren. Ein späterer Export aktualisiert dieselben Notizen.",
       "tsv": "In Anki: Datei → Importieren, {file} wählen und prüfen, dass der Notiztyp Einfach ist.",
       "csv": "Öffnet sich in jeder Tabellenkalkulation; dracosh import {file} liest sie wieder ein.",
       "json": "dracosh import {file} holt alles zurück, auf diesem oder einem anderen Computer."

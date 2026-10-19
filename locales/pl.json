@@ -781,7 +781,7 @@
     "slashSwitch": "Trzeba by wpisać „{text}”, a w quizie / otwiera komendy. Najpierw popraw tę kartę."
   },
   "cli": {
-    "help": "Dracosh: trener słówek i quizów w terminalu\n\nUżycie: dracosh [opcje]\n        dracosh import <plik|->   dodaj karty z pliku (.txt, .csv, .tsv, paczka Anki .apkg, eksporty z Anki i Quizletu, kopia .json) albo „-” ze standardowego wejścia\n        dracosh export <plik>     zapisz talie do .apkg (Anki), .txt, .tsv, .csv albo .json (wszystko)\n        dracosh restore [numer]   lista kopii zapasowych albo przywrócenie jednej z nich\n\n  --deck <nazwa>   quiz z tej talii, tylko tym razem (inaczej ta wybrana w /decks)\n                   przy import i export: talia do uzupełnienia albo zapisania\n  --every <czas>   odstęp między pytaniami: 30s, 10m, 1h (domyślnie: {interval})\n  --no-sound       wyłącz dźwięki\n  --volume <0-1>   głośność (domyślnie: {volume})\n  --stats          wypisz postępy i zakończ\n  --data           pokaż, gdzie są karty, postępy i kopie zapasowe\n  --preview        obejrzyj wszystkie animacje i ekrany na zmyślonych danych (nic się nie zapisuje)\n  --update         import: karty, które już są, dostają odpowiedzi z pliku (inaczej pytanie)\n  --split          import: odpowiedź z kilkoma wariantami („cat, kitty”) staje się kilkoma odpowiedziami\n  --separator <s>  import: co dzieli kolumny: tab, comma, semicolon, pipe, colon, space albo znak\n  --encoding <e>   import: plik, który nie jest w UTF-8, np. windows-1250\n  -y, --yes        import, eksport albo przywrócenie bez pytania\n  -h, --help       pokaż tę pomoc\n\nOpcje zmieniają zapisane ustawienia tylko na to uruchomienie. Zapisane zmienisz w /settings.\n\nW trakcie: Enter wysyła (pusty pokazuje odpowiedź, potem 1 albo 2), „/” otwiera menu komend (/add, /decks, /settings, /stats, /help…),\nEsc wychodzi (najpierw czyści wpisany tekst). Ctrl+C też działa.\nMiędzy kartami: Enter od razu zadaje następną, q wychodzi. Resztę wyjaśnia /help.",
+    "help": "Dracosh: trener słówek i quizów w terminalu\n\nUżycie: dracosh [opcje]\n        dracosh import <plik|->   dodaj karty z pliku (.txt, .csv, .tsv, pakiet Anki .apkg lub .colpkg, eksporty tekstowe z Anki i Quizletu, kopia .json) albo „-” ze standardowego wejścia\n        dracosh export <plik>     zapisz talie do .apkg (Anki), .txt, .tsv, .csv albo .json (wszystko)\n        dracosh restore [numer]   lista kopii zapasowych albo przywrócenie jednej z nich\n\n  --deck <nazwa>   quiz z tej talii, tylko tym razem (inaczej ta wybrana w /decks)\n                   przy import i export: talia do uzupełnienia albo zapisania\n  --every <czas>   odstęp między pytaniami: 30s, 10m, 1h (domyślnie: {interval})\n  --no-sound       wyłącz dźwięki\n  --volume <0-1>   głośność (domyślnie: {volume})\n  --stats          wypisz postępy i zakończ\n  --data           pokaż, gdzie są karty, postępy i kopie zapasowe\n  --preview        obejrzyj wszystkie animacje i ekrany na zmyślonych danych (nic się nie zapisuje)\n  --update         import: karty, które już są, dostają odpowiedzi z pliku (inaczej pytanie)\n  --split          import: odpowiedź z kilkoma wariantami („cat, kitty”) staje się kilkoma odpowiedziami\n  --separator <s>  import: co dzieli kolumny: tab, comma, semicolon, pipe, colon, space albo znak\n  --encoding <e>   import: plik, który nie jest w UTF-8, np. windows-1250\n  -y, --yes        import, eksport albo przywrócenie bez pytania\n  -h, --help       pokaż tę pomoc\n\nOpcje zmieniają zapisane ustawienia tylko na to uruchomienie. Zapisane zmienisz w /settings.\n\nW trakcie: Enter wysyła (pusty pokazuje odpowiedź, potem 1 albo 2), „/” otwiera menu komend (/add, /decks, /settings, /stats, /help…),\nEsc wychodzi (najpierw czyści wpisany tekst). Ctrl+C też działa.\nMiędzy kartami: Enter od razu zadaje następną, q wychodzi. Resztę wyjaśnia /help.",
     "badEvery": "Niepoprawne --every „{value}”. Użyj np. 30s, 10m, 1h.",
     "badVolume": "Niepoprawne --volume „{value}”. Podaj liczbę od 0 do 1.",
     "unknownCommand": "Nieznana komenda „{command}”. Zobacz dracosh --help.",
@@ -1186,7 +1186,7 @@
       "lines": "linie Dracosh (przód = odpowiedź; inna odpowiedź // przykład)",
       "dashes": "lista z myślnikami (przód - odpowiedź)",
       "table": "tabela dzielona przez {separator}; kolumny: {columns}",
-      "apkg": "paczka Anki"
+      "apkg": "pakiet Anki"
     },
     "separators": {
       "tab": "tabulatory",
@@ -1252,8 +1252,9 @@
       "tour": "„{deck}” to talia z samouczkiem: wybierz inną nazwę",
       "noSeparator": "brak „ = ” między przodem a odpowiedzią",
       "badDirection": "to nie kierunek: użyj forward, backward albo both",
-      "twiceNote": "jest też w notatce {line}",
-      "picture": "obrazek z zakrytymi fragmentami (zakrycie obrazu)"
+      "twiceNote": "dwa razy w pakiecie",
+      "picture": "obrazek z zakrytymi fragmentami (zakrycie obrazu)",
+      "mediaOnly": "tylko obrazek albo dźwięk, nie ma tekstu, o który można zapytać"
     },
     "ignored": {
       "one": "1 wiersz ma tekst w kolumnie, która nie jest czytana (linia {lines}): tylko przód, odpowiedź i przykład.",
@@ -1345,29 +1346,32 @@
     "isFolder": "{file} to folder: podaj plik z niego.",
     "noPermission": "Dracosh nie ma dostępu do {file}.",
     "tooBig": "{file} ma ponad {max} MB: to nie jest talia. Podziel go albo sprawdź, czy to właściwy plik.",
-    "notText": "{file} to nie plik tekstowy. Dracosh importuje tekst (linie Dracosh, CSV, TSV, eksporty z Anki i Quizletu) i paczki Anki (.apkg).",
+    "notText": "{file} to nie plik tekstowy. Dracosh importuje tekst (linie Dracosh, CSV, TSV, eksporty tekstowe z Anki i Quizletu) i pakiety Anki (.apkg, .colpkg).",
     "problemLine": "linia {line}  {issue}: {text}",
     "backupReplaces": "Zastępuje to, co masz teraz ({decks} · {cards}).",
     "mediaLeft": {
-      "one": "1 notatka ma obrazki lub dźwięki: jej tekst przechodzi, one nie (Dracosh pokazuje tekst).",
-      "few": "{count} notatki mają obrazki lub dźwięki: ich tekst przechodzi, obrazki i dźwięki nie (Dracosh pokazuje tekst).",
-      "many": "{count} notatek ma obrazki lub dźwięki: ich tekst przechodzi, obrazki i dźwięki nie (Dracosh pokazuje tekst).",
-      "other": "{count} notatki ma obrazki lub dźwięki: ich tekst przechodzi, obrazki i dźwięki nie (Dracosh pokazuje tekst)."
+      "one": "1 notatka ma obrazki lub dźwięki; importowany jest tylko jej tekst.",
+      "few": "{count} notatki mają obrazki lub dźwięki; importowany jest tylko ich tekst.",
+      "many": "{count} notatek ma obrazki lub dźwięki; importowany jest tylko ich tekst.",
+      "other": "{count} notatki ma obrazki lub dźwięki; importowany jest tylko ich tekst."
     },
     "problemsNotes": {
-      "one": "1 notatki nie da się dodać:",
-      "few": "{count} notatek nie da się dodać:",
-      "many": "{count} notatek nie da się dodać:",
-      "other": "{count} notatki nie da się dodać:"
+      "one": "Nie da się dodać 1 notatki:",
+      "few": "Nie da się dodać {count} notatek:",
+      "many": "Nie da się dodać {count} notatek:",
+      "other": "Nie da się dodać {count} notatki:"
     },
-    "problemNote": "notatka {line}  {issue}: {text}",
-    "notAnki": "{file} to nie paczka Anki, którą Dracosh umie odczytać. W Anki zrobisz ją przez Plik → Eksportuj → Pakiet talii Anki (.apkg).",
-    "needsNode": "Odczyt paczki Anki wymaga Node {version} lub nowszego (masz {current}). Zaktualizuj Node albo wyeksportuj talię z Anki jako Notatki jako zwykły tekst i zaimportuj ten plik."
+    "problemNote": "{issue}: {text}",
+    "notAnki": "{file} to nie pakiet Anki, który Dracosh umie odczytać. W Anki zrobisz go przez Plik → Eksportuj → Pakiet talii Anki (.apkg).",
+    "needsNode": "Odczyt pakietu Anki wymaga Node {version} lub nowszego (masz {current}). Zaktualizuj Node albo wyeksportuj talię z Anki jako Notatki jako zwykły tekst i zaimportuj ten plik.",
+    "subdecks": "Podtalie z Anki stają się tu osobnymi taliami, np. „{deck}”.",
+    "hint": "(podpowiedź: {hint})",
+    "notForPackage": "--separator i --encoding są dla plików tekstowych: pakiet Anki ich nie potrzebuje."
   },
   "export": {
     "needFile": "Dokąd? dracosh export <plik>: .apkg (Anki), .txt (Dracosh), .tsv (tekst dla Anki), .csv albo .json (wszystko)",
     "unknownFormat": "{file}: format wybiera końcówka pliku: .apkg (Anki), .txt (Dracosh), .tsv (tekst dla Anki), .csv albo .json (wszystko).",
-    "needsNode": "Paczka Anki wymaga Node {version} lub nowszego (masz {current}). Zaktualizuj Node albo wyeksportuj do .tsv.",
+    "needsNode": "Pakiet Anki wymaga Node {version} lub nowszego (masz {current}). Zaktualizuj Node albo wyeksportuj do .tsv.",
     "jsonAll": "Eksport .json zawiera wszystko (wszystkie talie, postępy i ustawienia): pomiń --deck.",
     "noDecks": "Nie ma jeszcze własnych talii do eksportu.",
     "exists": "{file} już istnieje. Nadpisać?",
@@ -1381,7 +1385,7 @@
     "wroteAll": "Zapisano karty, postępy i ustawienia do {file}.",
     "next": {
       "txt": "Wczytasz go z powrotem przez: dracosh import {file}",
-      "apkg": "W Anki: kliknij dwa razy {file} albo wybierz Plik → Importuj. Paczka ma własne typy notatek, więc nic nie trzeba wybierać, a kolejny eksport zaktualizuje te same notatki.",
+      "apkg": "W Anki: kliknij dwa razy {file} albo wybierz Plik → Importuj. Kolejny eksport zaktualizuje te same notatki.",
       "tsv": "W Anki: Plik → Importuj, wybierz {file} i sprawdź, czy typ notatki to Podstawowy.",
       "csv": "Otworzy się w każdym arkuszu; dracosh import {file} wczyta go z powrotem.",
       "json": "dracosh import {file} przywraca wszystko, na tym albo innym komputerze."

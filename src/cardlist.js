@@ -1,3 +1,4 @@
+import { decodeEntities } from "./entities.js";
 import { gapsOf, parseLine } from "./cardline.js";
 import { normalize } from "./judge.js";
 
@@ -26,21 +27,17 @@ export function separatorNamed(value) {
   return Array.from(text).length === 1 ? text : null;
 }
 
-const HTML_ENTITIES = { nbsp: " ", amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", "#39": "'" };
-const decodeEntities = (text) => text.replace(/&(nbsp|amp|lt|gt|quot|apos|#39|#\d+|#x[0-9a-f]+);/gi, (match, name) => {
-  const lower = name.toLowerCase();
-  if (HTML_ENTITIES[lower]) return HTML_ENTITIES[lower];
-  const code = lower.startsWith("#x") ? parseInt(lower.slice(2), 16) : parseInt(lower.slice(1), 10);
-  return Number.isFinite(code) && code > 0 && code < 0x110000 ? String.fromCodePoint(code) : match;
-});
 const looksLikeHtml = (text) => /<\/?(br|div|p|span|b|i|u|strong|em|font|ul|ol|li|img|sup|sub|a)\b[^>]*>|&(nbsp|amp|lt|gt|quot);/i.test(text);
 
-// a field from Anki, maybe HTML: its lines, without tags (sounds and images are left out)
+// a field from Anki, maybe HTML: its lines, without tags (sounds and images are left out, and so
+// are styles, scripts and a ruby's reading: <ruby>漢字<rt>かんじ</rt></ruby> is 漢字)
 export function htmlLines(html) {
   return decodeEntities(
     String(html)
       .replace(/\[sound:[^\]]*\]/g, "")
-      .replace(/<br\s*\/?>|<\/?(div|p|li)\b[^>]*>/gi, "\n")
+      .replace(/<(style|script|rt|rp)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, "")
+      .replace(/<br\s*\/?>|<\/?(div|p|li|tr)\b[^>]*>/gi, "\n")
+      .replace(/<\/(td|th)\s*>/gi, " ")
       .replace(/<[^>]*>/g, "")
   )
     .split("\n")
@@ -51,26 +48,45 @@ export function htmlLines(html) {
 // Anki's cloze "{{c1::look forward::hint}}" is a Dracosh gap "{{look forward}}"; other braces in an
 // Anki cloze note are plain text there, so they stay text ("\{{")
 const ANKI_GAP = /\{\{c\d+::(.*?)(?:::[^{}]*?)?\}\}/g;
-// `anki`: the text comes from an Anki file, where only "{{c1::…}}" is a gap
+const INNERMOST_GAP = /\{\{c\d+::([^{}]*?)(?:::[^{}]*?)?\}\}/g;
+const [OPEN, CLOSE, LITERAL] = ["\u000e", "\u000f", "\u0010"];
+// `anki`: the text comes from an Anki file, where only "{{c1::…}}" is a gap. Anki nests gaps
+// ("{{c1::a {{c2::b}} c}}") and Dracosh doesn't: the outer gap stays, the inner ones are its text.
 const fromAnkiCloze = (text, anki = false) => {
   if (!new RegExp(ANKI_GAP.source).test(text)) return anki ? text.replace(/(?<!\\)\{\{/g, "\\{{") : text;
-  return text.replace(/\{\{(?!c\d+::)/g, "\\{{").replace(ANKI_GAP, "{{$1}}");
+  let marked = text.replace(/\{\{(?!c\d+::)/g, LITERAL);
+  for (let before = ""; before !== marked; ) [before, marked] = [marked, marked.replace(INNERMOST_GAP, `${OPEN}$1${CLOSE}`)];
+  let depth = 0;
+  let result = "";
+  for (const char of marked) {
+    if (char === OPEN) result += depth++ ? "" : "{{";
+    else if (char === CLOSE) result += --depth ? "" : "}}";
+    else result += char;
+  }
+  return result.replaceAll(LITERAL, "\\{{");
 };
 // "{{c1::come::verb}}": Anki's hints, shown in place of the gap. Dracosh has one hint per card
 const gapHints = (text) => [...new Set([...text.matchAll(/\{\{c\d+::[^{}]*?::([^{}]*?)\}\}/g)].map((match) => match[1].trim()).filter(Boolean))].join(", ");
+// A package from Dracosh writes braces that aren't a gap as "&#123;{" and "::" in a gap as ":&#58;":
+// the same to see in Anki, never read as cloze. They're kept apart until the gaps are found.
+const [BRACE, COLON] = ["\u0011", "\u0012"];
+const hideEntities = (html) => String(html).replace(/&#123;|&#x7b;|&lbrace;/gi, BRACE).replace(/&#58;|&#x3a;|&colon;/gi, COLON);
+const showEntities = (text) => text.replace(new RegExp(`${BRACE}\\{`, "g"), "\\{{").replaceAll(BRACE, "{").replaceAll(COLON, ":");
 
 // One Anki note (from a package) → card fields, from its fields' HTML by role. `cloze`: the note
-// type is a cloze one. A cloze note's second field is Anki's Extra, shown after the answer, so it's
-// an example; `hint: true` (Dracosh Cloze) says it's a hint shown with the gap instead.
-export function noteFields({ front = "", back = "", example = "", cloze = false, hint = false }) {
+// type is a cloze one (only then is "{{c1::…}}" a gap; elsewhere braces are text). A cloze note's
+// second field is Anki's Extra, shown after the answer, so it's an example; `hint: true` (Dracosh
+// Cloze) says it's a hint shown with the gap instead. `perLine: true` (Dracosh): one answer a line.
+export function noteFields({ front = "", back = "", example = "", cloze = false, hint = false, perLine = false }) {
   const written = htmlLines(front).join(" ");
   const backLines = htmlLines(back);
   const extra = htmlLines(example);
-  const text = cloze ? fromAnkiCloze(written, true) : written;
-  if (gapsOf(text).length) {
+  const text = cloze ? showEntities(fromAnkiCloze(htmlLines(hideEntities(front)).join(" "), true)) : written;
+  if (cloze && gapsOf(text).length) {
     const hintText = hint ? backLines.join(" ") : gapHints(written);
     return { front: text, back: [hintText].filter(Boolean), example: [...(hint ? [] : backLines), ...extra].join(" "), cloze: true, hasBack: true };
   }
+  if (perLine) return { front: written, back: backLines, example: extra.join(" "), cloze: false, hasBack: backLines.length > 0 };
   const [answers = "", ...more] = backLines;
   return { front: written, back: splitAnswers(answers), example: [...more, ...extra].join(" "), cloze: false, hasBack: Boolean(answers) };
 }
@@ -196,7 +212,7 @@ const COLUMN_NAMES = {
   deck: ["deck", "talia", "stapel", "paquet", "колода"],
   skip: ["tags", "tag", "guid", "id", "notetype", "note type", "tagi", "schlagwörter", "étiquettes", "теги"]
 };
-const columnRole = (name) => {
+export const columnRole = (name) => {
   const key = normalize(name);
   return Object.entries(COLUMN_NAMES).find(([, names]) => names.some((n) => normalize(n) === key))?.[0] ?? null;
 };
@@ -208,7 +224,7 @@ const isHeaderRow = (cells) => {
 
 // → { front, back, example, deck, skip: Set } column indexes, from a header row or Anki's headers;
 // without names: front, back, example in that order
-export function columnsFrom(names, header = {}) {
+function columnsFrom(names, header = {}) {
   const roles = { front: null, back: null, example: null, deck: null, notetype: null, skip: new Set() };
   const at = (value) => (/^\d+$/.test(String(value ?? "").trim()) ? Number(value) - 1 : null);
   for (const key of ["guid column", "notetype column", "tags column"]) if (at(header[key]) !== null) roles.skip.add(at(header[key]));

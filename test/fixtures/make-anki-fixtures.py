@@ -49,6 +49,35 @@ note = col.new_note(col.models.by_name("Vocab"))
 note["Word"], note["Meaning"], note["Sentence"], note["Audio"] = "el perro", "the dog", "El perro <b>ladra</b>.", "[sound:perro.mp3]"
 col.add_note(note, spanish)
 
+# a cloze type with its text in the second field, a type laid out like the "Core" decks, a nested
+# cloze, named HTML characters, tags, and a front that is only a picture
+cloze_second = col.models.copy(stock[CLOZE], add=False)
+cloze_second["name"] = "Cloze, text second"
+col.models.add(cloze_second)
+cloze_second = col.models.by_name("Cloze, text second")
+col.models.reposition_field(cloze_second, cloze_second["flds"][1], 0)
+col.models.update_dict(cloze_second)
+note = col.new_note(col.models.by_name("Cloze, text second"))
+note["Back Extra"], note["Text"] = "It's summer.", "El {{c1::sol}} quema."
+col.add_note(note, spanish)
+
+core = col.models.new("Core")
+for name in ["Expression", "Reading", "English"]:
+    col.models.add_field(core, col.models.new_field(name))
+template = col.models.new_template("Recognition")
+template["qfmt"] = "{{Expression}}"
+template["afmt"] = "{{FrontSide}}<hr id=answer>{{Reading}}<br>{{English}}"
+col.models.add_template(core, template)
+col.models.add(core)
+note = col.new_note(col.models.by_name("Core"))
+note["Expression"], note["Reading"], note["English"] = "<ruby>猫<rt>ねこ</rt></ruby>", "ねこ", "cat"
+note.tags = ["animals", "core::n5"]
+col.add_note(note, spanish)
+
+add(CLOZE, spanish, "Un {{c1::gato {{c2::negro}} grande}}.", "")
+add(BASIC, spanish, "caf&eacute; &hellip;", "coffee &mdash; strong")
+add(BASIC, spanish, '<img src="dog.png">', "el perro")
+
 add(IMAGE_OCCLUSION, spanish, "{{c1::image-occlusion:rect:left=.1:top=.1:width=.2:height=.2:oi=1}}", '<img src="map.png">', "Where?", "", "")
 
 # a card moved into a filtered deck for a while

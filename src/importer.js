@@ -64,8 +64,10 @@ export function planImport(library, text, { deck: only = null, deckName = null, 
   const splittable = [];
 
   for (const { line, text: source } of list.unknown) problems.push({ line, issue: "badDirection", text: source });
+  const fittedFrom = new Map(); // a shortened deck name → the long one it came from
   for (const item of list.items) {
-    const name = fitName((only ?? item.deck ?? deckName ?? "").trim());
+    const full = (only ?? item.deck ?? deckName ?? "").trim();
+    const name = fitName(full);
     let { fields } = item;
     const problem = (issue, extra = {}) => problems.push({ line: item.line, issue, text: item.source, ...extra });
     if (item.skip) {
@@ -90,8 +92,11 @@ export function planImport(library, text, { deck: only = null, deckName = null, 
       problem("noDeck");
       continue;
     }
-    if (Array.from(name).length > MAX_DECK_NAME) {
-      problem("tooLong", { deck: name });
+    // two long names that shorten to the same one stay apart: the second one is named instead
+    const before = fittedFrom.get(name.toLowerCase()) ?? full;
+    fittedFrom.set(name.toLowerCase(), before);
+    if (Array.from(name).length > MAX_DECK_NAME || before !== full) {
+      problem("tooLong", { deck: full });
       continue;
     }
     const key = `${name.toLowerCase()}\u0001${frontKey(fields.front)}`;
@@ -135,7 +140,14 @@ export function planImport(library, text, { deck: only = null, deckName = null, 
 
 // Anki's nested decks ("Languages::Spanish::Verbs for travel") are long: one that doesn't fit keeps its
 // last part, the deck the cards are really in
-const fitName = (name) => (Array.from(name).length > MAX_DECK_NAME && name.includes("::") ? name.split("::").at(-1).trim() : name);
+const fitName = (name) => {
+  if (Array.from(name).length <= MAX_DECK_NAME || !name.includes("::")) return name;
+  // as many of the last parts as fit: "Languages::Spanish for my trip::Verbs" → "Spanish for my trip::Verbs"
+  const parts = name.split("::").map((part) => part.trim());
+  let fitted = parts.at(-1);
+  for (let i = parts.length - 2; i >= 0 && Array.from(`${parts[i]}::${fitted}`).length <= MAX_DECK_NAME; i--) fitted = `${parts[i]}::${fitted}`;
+  return fitted;
+};
 
 // "cat, kitty" or "cat / kitty": answers listed the way Anki and Quizlet decks often do → ["cat", "kitty"];
 // null for a sentence ("Yes, I do.") or a single answer

@@ -65,18 +65,26 @@ export function writeZip(entries, { date = new Date() } = {}) {
 
 const STORED = 0;
 const END = 0x06054b50;
+const END64 = 0x06064b50;
+const END64_LOCATOR = 0x07064b50;
 const CENTRAL = 0x02014b50;
+const LOCAL = 0x04034b50;
+const ZIP64_EXTRA = 0x0001;
+const damaged = (why) => Object.assign(new Error(`Damaged zip file: ${why}`), { code: "DAMAGED_ZIP" });
 
-// readZip(file, names) → Map of name → Buffer, for just the files asked for (an Anki package can hold
-// gigabytes of media next to the collection). Stored or deflated files, as Anki writes them.
-export async function readZip(file, names) {
+// readZip(file, names, { first }) → Map of name → Buffer, for just the files asked for (an Anki
+// package can hold gigabytes of media next to the collection); `first`: only the first of `names`
+// there is. Stored or deflated files, zip64 too (what Anki writes past 4 GB).
+export async function readZip(file, names, { first = false } = {}) {
   const handle = await open(file, "r");
   try {
     const { size } = await handle.stat();
     const read = async (position, length) => {
+      if (position < 0 || length < 0 || position + length > size) throw damaged("a part points outside the file");
       const buffer = Buffer.alloc(length);
       const { bytesRead } = await handle.read(buffer, 0, length, position);
-      return buffer.subarray(0, bytesRead);
+      if (bytesRead < length) throw damaged("the file ends early");
+      return buffer;
     };
     // the end record is in the last 22 bytes, or before a comment of up to 64 KB
     const tailStart = Math.max(0, size - 22 - 0xffff);
@@ -84,26 +92,63 @@ export async function readZip(file, names) {
     let endAt = -1;
     for (let i = tail.length - 22; i >= 0 && endAt < 0; i--) if (tail.readUInt32LE(i) === END) endAt = i;
     if (endAt < 0) throw Object.assign(new Error("Not a zip file"), { code: "NOT_ZIP" });
-    const count = tail.readUInt16LE(endAt + 10);
-    const directorySize = tail.readUInt32LE(endAt + 12);
-    const directoryAt = tail.readUInt32LE(endAt + 16);
-    if (directoryAt === 0xffffffff || count === 0xffff) throw Object.assign(new Error("A zip64 file"), { code: "ZIP64" });
+    let count = tail.readUInt16LE(endAt + 10);
+    let directorySize = tail.readUInt32LE(endAt + 12);
+    let directoryAt = tail.readUInt32LE(endAt + 16);
+    // zip64: the real numbers are in a record of their own, which a locator just before this one finds
+    if (count === 0xffff || directorySize === 0xffffffff || directoryAt === 0xffffffff) {
+      const locator = endAt - 20;
+      if (locator < 0 || tail.readUInt32LE(locator) !== END64_LOCATOR) throw damaged("no zip64 end record");
+      const end64 = await read(Number(tail.readBigUInt64LE(locator + 8)), 56);
+      if (end64.readUInt32LE(0) !== END64) throw damaged("no zip64 end record");
+      count = Number(end64.readBigUInt64LE(32));
+      directorySize = Number(end64.readBigUInt64LE(40));
+      directoryAt = Number(end64.readBigUInt64LE(48));
+    }
     const directory = await read(directoryAt, directorySize);
     const found = new Map();
     for (let at = 0, i = 0; i < count; i++) {
-      if (directory.readUInt32LE(at) !== CENTRAL) throw Object.assign(new Error("Damaged zip file"), { code: "DAMAGED_ZIP" });
+      if (at + 46 > directory.length || directory.readUInt32LE(at) !== CENTRAL) throw damaged("a broken directory");
       const nameLength = directory.readUInt16LE(at + 28);
+      const extraLength = directory.readUInt16LE(at + 30);
+      const next = at + 46 + nameLength + extraLength + directory.readUInt16LE(at + 32);
+      if (next > directory.length) throw damaged("a broken directory");
       const name = directory.toString("utf8", at + 46, at + 46 + nameLength);
-      if (names.includes(name)) found.set(name, { method: directory.readUInt16LE(at + 10), size: directory.readUInt32LE(at + 20), local: directory.readUInt32LE(at + 42) });
-      at += 46 + nameLength + directory.readUInt16LE(at + 30) + directory.readUInt16LE(at + 32);
+      if (names.includes(name)) {
+        const entry = { method: directory.readUInt16LE(at + 10), packed: directory.readUInt32LE(at + 20), size: directory.readUInt32LE(at + 24), local: directory.readUInt32LE(at + 42) };
+        // zip64 sizes and offset, in that order, only for the ones that didn't fit
+        let extra = at + 46 + nameLength;
+        const extraEnd = extra + extraLength;
+        while (extra + 4 <= extraEnd) {
+          const [id, length] = [directory.readUInt16LE(extra), directory.readUInt16LE(extra + 2)];
+          if (id === ZIP64_EXTRA) {
+            let field = extra + 4;
+            for (const key of ["size", "packed", "local"]) {
+              if (entry[key] !== 0xffffffff) continue;
+              if (field + 8 > extra + 4 + length) throw damaged("a broken zip64 field");
+              entry[key] = Number(directory.readBigUInt64LE(field));
+              field += 8;
+            }
+          }
+          extra += 4 + length;
+        }
+        found.set(name, entry);
+      }
+      at = next;
     }
+    const wanted = first ? names.filter((name) => found.has(name)).slice(0, 1) : names.filter((name) => found.has(name));
     const files = new Map();
-    for (const [name, { method, size: packedSize, local }] of found) {
+    for (const name of wanted) {
+      const { method, packed: packedSize, size: unpackedSize, local } = found.get(name);
       const header = await read(local, 30);
+      if (header.readUInt32LE(0) !== LOCAL) throw damaged(`no header for ${name}`);
       const packed = await read(local + 30 + header.readUInt16LE(26) + header.readUInt16LE(28), packedSize);
       if (method === STORED) files.set(name, packed);
-      else if (method === DEFLATE) files.set(name, inflateRawSync(packed));
-      else throw Object.assign(new Error(`Unsupported compression in ${name}`), { code: "DAMAGED_ZIP" });
+      else if (method === DEFLATE) {
+        const data = inflateRawSync(packed);
+        if (data.length !== unpackedSize) throw damaged(`${name} unpacks to the wrong size`);
+        files.set(name, data);
+      } else throw damaged(`unsupported compression in ${name}`);
     }
     return files;
   } finally {

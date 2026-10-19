@@ -265,14 +265,30 @@ test("dracosh import x.apkg: Anki's decks with how they ask, a picture card name
   const file = new URL("./fixtures/anki-modern.apkg", import.meta.url).pathname;
   const preview = run(home, ["import", file]);
   assert.equal(preview.status, 0, preview.stderr);
-  assert.match(preview.stdout, /Reading .*anki-modern\.apkg: an Anki package\n2 notes have pictures or sounds/);
-  assert.match(preview.stdout, /1 note can't be added:\n  note 6  a picture with parts to guess \(image occlusion\): Where\?/);
+  assert.match(preview.stdout, /Reading .*anki-modern\.apkg: an Anki package\n1 note has pictures or sounds; only its text is imported\.\nAnki's subdecks become decks of their own here, like "Spanish::Both ways"\./);
+  assert.match(preview.stdout, /\+ Ella \{\{come\}\} \{\{pan\}\}\.  \(hint: verb\)  \/\/ She eats bread\./);
+  assert.match(preview.stdout, /2 notes can't be added:\n  only a picture or a sound, nothing to ask in text: el perro\n  a picture with parts to guess \(image occlusion\): Where\?/);
   assert.equal(preview.stderr, "");
   const result = run(home, ["import", file, "--yes"]);
   assert.equal(result.status, 0, result.stderr);
   const library = JSON.parse(readFileSync(join(home, "library.json"), "utf8"));
   const decks = Object.fromEntries(library.decks.filter((deck) => !deck.tour).map((deck) => [deck.name, deck.directions]));
   assert.deepEqual(decks, { Spanish: "forward", "Spanish::Both ways": "both" });
-  assert.equal(library.cards.filter((card) => card.cloze).length, 1);
-  assert.equal(run(home, ["import", file, "--yes"]).stdout.match(/0 new cards · 6 already there/)?.length, 1, "a second import adds nothing");
+  assert.equal(library.cards.filter((card) => card.cloze).length, 3);
+  assert.deepEqual(library.cards.find((card) => card.front === "猫").tags, ["animals", "core::n5"]);
+  assert.equal(run(home, ["import", file, "--yes"]).stdout.match(/0 new cards · 10 already there/)?.length, 1, "a second import adds nothing");
+});
+
+test("two long Anki deck names that would shorten to the same one stay apart", () => {
+  const long = (name) => `Languages and other things I want to learn::${name} for my trip::Verbs`;
+  const plan = planImport(emptyLibrary(), `#deck:${long("Spanish")}\ncomer = to eat\n#deck:${long("Italian")}\nmangiare = to eat\n`);
+  assert.deepEqual(plan.decks.map((deck) => deck.name), ["Spanish for my trip::Verbs", "Italian for my trip::Verbs"]);
+});
+
+test("a package piped in is said to be no text; --separator and --encoding aren't for packages", () => {
+  const home = mkdtempSync(join(tmpdir(), "dracosh-"));
+  const package_ = new URL("./fixtures/anki-modern.apkg", import.meta.url).pathname;
+  const piped = run(home, ["import", "-"], readFileSync(package_));
+  assert.match(piped.stderr, /standard input isn't a text file/);
+  assert.match(run(home, ["import", package_, "--separator", "tab"]).stderr, /--separator and --encoding are for text files/);
 });

@@ -138,3 +138,9 @@ test("a cell that only starts with a quote is plain text, not a quoted cell", ()
   assert.deepEqual(cards("\"to be\" or not\tbyć\nkot\tkotek"), [["\"to be\" or not", "być", ""], ["kot", "kotek", ""]]);
   assert.deepEqual(cards('"a, b",c\n"d ""e""",f', { csv: true }), [["a, b", "c", ""], ['d "e"', "f", ""]]);
 });
+
+test("Anki's HTML: named characters, a ruby's reading, table cells, styles and nested gaps", () => {
+  assert.deepEqual(cards("#separator:tab\n#html:true\ncaf&eacute; &hellip;\tless &quot;than&quot; &mdash; &eacute;t&eacute;"), [["café …", "less \"than\" — été", ""]]);
+  assert.deepEqual(cards("#separator:tab\n#html:true\n<ruby>猫<rt>ねこ</rt></ruby><style>.x{color:red}</style>\t<table><tr><td>a</td><td>b</td></tr></table>"), [["猫", "a b", ""]]);
+  assert.equal(readCardList("#separator:tab\n#html:true\nUn {{c1::gato {{c2::negro}} grande}}.\t").items[0].fields.front, "Un {{gato negro grande}}.");
+});

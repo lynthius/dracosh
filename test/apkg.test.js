@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
 import { readApkg, toApkg } from "../src/apkg.js";
-import { addCard, createDeck, emptyLibrary } from "../src/library.js";
+import { addCard, createDeck, emptyLibrary, setDirections } from "../src/library.js";
 import { loadSqlite } from "../src/sqlite.js";
 import { readZip, writeZip } from "../src/zip.js";
 
@@ -28,7 +28,7 @@ async function open(buffer) {
       ver: col.ver,
       models: JSON.parse(col.models),
       decks: JSON.parse(col.decks),
-      notes: db.prepare("SELECT id, guid, mid, tags, flds, sfld, csum FROM notes ORDER BY id").all(),
+      notes: db.prepare("SELECT id, guid, mid, mod, tags, flds, sfld, csum FROM notes ORDER BY id").all(),
       cards: db.prepare("SELECT nid, did, ord, due, type, queue FROM cards ORDER BY id").all()
     };
     db.close();
@@ -65,9 +65,9 @@ test("fields are HTML, a card is made for each way its deck asks, and each gap i
   const { notes, cards, decks: ankiDecks } = await open(await toApkg(library, decks));
   const fields = notes.map((note) => note.flds.split("\x1f"));
   assert.deepEqual(fields, [
-    ["el gato", "the cat; a\\; b", "Mi &lt;gato&gt; &amp; yo.", "y", "y"],
+    ["el gato", "the cat<br>a; b", "Mi &lt;gato&gt; &amp; yo.", "y", "y"],
     ["Ella {{c1::come}} y {{c2::bebe}}.", "verbs", "She eats."],
-    ["I {{kept}} {{c1::this}}", "", ""],
+    ["I &#123;{kept}} {{c1::this}}", "", ""],
     ["ion", "a charged atom", "", "", "y"]
   ]);
   const deckName = (did) => ankiDecks[did].name;
@@ -142,6 +142,11 @@ const FROM_ANKI = [
   ["Spanish::Both ways", "both", null, "la mesa", ["the table"], "", false],
   ["Spanish", "forward", null, "Ella {{come}} {{pan}}.", ["verb"], "She eats bread.", true],
   ["Spanish", "forward", null, "el perro", ["the dog"], "El perro ladra.", false],
+  ["Spanish", "forward", null, "El {{sol}} quema.", [], "It's summer.", true],
+  ["Spanish", "forward", null, "猫", ["cat"], "", false],
+  ["Spanish", "forward", null, "Un {{gato negro grande}}.", [], "", true],
+  ["Spanish", "forward", null, "café …", ["coffee — strong"], "", false],
+  ["Spanish", "forward", "mediaOnly", "", ["el perro"], "", false],
   ["Spanish", "forward", "picture", "", [], "", false],
   ["Spanish", "forward", null, "el pájaro", ["the bird"], "", false]
 ];
@@ -149,13 +154,14 @@ const FROM_ANKI = [
 test("Anki's package of today (zstd, schema 18): every kind of note, by its note type's kind", async () => {
   const list = await readApkg(join(FIXTURES, "anki-modern.apkg"));
   assert.deepEqual(shown(list), FROM_ANKI, "a card in a filtered deck goes to the deck it came from");
-  assert.equal(list.media, 2);
+  assert.equal(list.media, 1, "the picture cards are left out, not counted here");
+  assert.deepEqual(list.items[6].fields.tags, ["animals", "core::n5"]);
 });
 
 test("Anki's older package (schema 11) reads the same", async () => {
   const list = await readApkg(join(FIXTURES, "anki-legacy.apkg"));
   // exported without scheduling, Anki itself turned the filtered deck into a plain one
-  assert.deepEqual(shown(list), FROM_ANKI.map((row, i) => (i === 6 ? ["Review", ...row.slice(1)] : row)));
+  assert.deepEqual(shown(list), FROM_ANKI.map((row, i) => (i === FROM_ANKI.length - 1 ? ["Review", ...row.slice(1)] : row)));
 });
 
 test("a file that isn't an Anki package is said so, whatever its name", async () => {
@@ -163,4 +169,84 @@ test("a file that isn't an Anki package is said so, whatever its name", async ()
   await assert.rejects(read(writeZip([{ name: "photo.jpg", data: Buffer.from([1, 2, 3]) }])), { code: "NOT_ANKI" });
   await assert.rejects(read(writeZip([{ name: "collection.anki2", data: Buffer.from("not a database") }])), { code: "NOT_ANKI" });
   await assert.rejects(read(writeZip([{ name: "collection.anki21b", data: Buffer.from("not zstd") }])), { code: "NOT_ANKI" });
+});
+
+test("braces in a card without gaps, \"::\" in a gap and braces kept as text come back as they were", async () => {
+  const library = emptyLibrary();
+  const deck = createDeck(library, { name: "Code" });
+  addCard(library, deck.id, { front: "What does {{ product.title }} print?", back: ["the title"] });
+  addCard(library, deck.id, { front: "Time {{12::30}} and \\{{c1::lit}} kept", back: [], cloze: true });
+  const { notes } = await open(await toApkg(library, [deck]));
+  assert.equal(notes[1].flds.split("\x1f")[0], "Time {{c1::12:&#58;30}} and &#123;{c1::lit}} kept", "nothing Anki would read as another gap or a hint");
+  assert.deepEqual(shown(await read(await toApkg(library, [deck]))), [
+    ["Code", "both", null, "What does {{ product.title }} print?", ["the title"], "", false],
+    ["Code", "both", null, "Time {{12::30}} and \\{{c1::lit}} kept", [], "", true]
+  ]);
+});
+
+test("a deck asked another way makes its notes newer, so Anki updates them instead of leaving blank cards", async () => {
+  const library = emptyLibrary();
+  const deck = createDeck(library, { name: "Spanish", directions: "forward", now: 1_000_000_000_000 });
+  addCard(library, deck.id, { front: "uno", back: ["one"], now: 1_000_000_000_000 });
+  const before = (await open(await toApkg(library, [deck]))).notes[0];
+  setDirections(library, deck.id, "both", 1_000_100_000_000);
+  const after = await open(await toApkg(library, [deck]));
+  assert.ok(after.notes[0].mod > before.mod);
+  assert.deepEqual(after.notes[0].flds.split("\x1f").slice(3), ["y", "y"]);
+});
+
+test("a Dracosh deck called Default is Anki's Default deck, not a second one of that name", async () => {
+  const library = emptyLibrary();
+  const deck = createDeck(library, { name: "Default" });
+  addCard(library, deck.id, { front: "uno", back: ["one"] });
+  const { decks, cards } = await open(await toApkg(library, [deck]));
+  assert.deepEqual(Object.keys(decks), ["1"]);
+  assert.equal(cards[0].did, 1);
+});
+
+// a zip64 end record in front of the plain one, as Anki writes past 65 535 files or 4 GB
+function asZip64(zip) {
+  const endAt = zip.length - 22;
+  const [count, size, at] = [zip.readUInt16LE(endAt + 10), zip.readUInt32LE(endAt + 12), zip.readUInt32LE(endAt + 16)];
+  const end64 = Buffer.alloc(56);
+  end64.writeUInt32LE(0x06064b50, 0);
+  end64.writeBigUInt64LE(44n, 4);
+  end64.writeUInt16LE(45, 12);
+  end64.writeUInt16LE(45, 14);
+  end64.writeBigUInt64LE(BigInt(count), 24);
+  end64.writeBigUInt64LE(BigInt(count), 32);
+  end64.writeBigUInt64LE(BigInt(size), 40);
+  end64.writeBigUInt64LE(BigInt(at), 48);
+  const locator = Buffer.alloc(20);
+  locator.writeUInt32LE(0x07064b50, 0);
+  locator.writeBigUInt64LE(BigInt(endAt), 8);
+  locator.writeUInt32LE(1, 16);
+  const end = Buffer.from(zip.subarray(endAt));
+  end.writeUInt16LE(0xffff, 8);
+  end.writeUInt16LE(0xffff, 10);
+  end.writeUInt32LE(0xffffffff, 12);
+  end.writeUInt32LE(0xffffffff, 16);
+  return Buffer.concat([zip.subarray(0, endAt), end64, locator, end]);
+}
+
+test("readZip reads zip64, and says a cut or broken zip is damaged instead of reading past it", async () => {
+  const folder = scratch();
+  const file = join(folder, "test.zip");
+  const zip = writeZip([{ name: "a", data: Buffer.from("hello") }, { name: "b", data: Buffer.from("world") }]);
+  writeFileSync(file, asZip64(zip));
+  assert.equal((await readZip(file, ["b"])).get("b").toString(), "world");
+  assert.deepEqual([...(await readZip(file, ["b", "a"], { first: true })).keys()], ["b"], "only the first one there");
+  writeFileSync(file, zip.subarray(30));
+  await assert.rejects(readZip(file, ["a"]), { code: "DAMAGED_ZIP" });
+  const pointsOut = Buffer.from(zip);
+  pointsOut.writeUInt32LE(zip.length * 2, zip.length - 6);
+  writeFileSync(file, pointsOut);
+  await assert.rejects(readZip(file, ["a"]), { code: "DAMAGED_ZIP" });
+  rmSync(folder, { recursive: true, force: true });
+});
+
+test("a cut Anki package is said not to be one, never a raw error", async () => {
+  const whole = readFileSync(join(FIXTURES, "anki-modern.apkg"));
+  await assert.rejects(read(whole.subarray(whole.length - 30000)), { code: "NOT_ANKI" });
+  await assert.rejects(read(whole.subarray(0, whole.length - 100)), { code: "NOT_ANKI" });
 });

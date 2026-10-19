@@ -56,7 +56,8 @@ async function confirm(question, byDefault) {
 }
 const answers = (back) => back.join("; ");
 // a cloze card keeps its {{gaps}} in the preview, so you see what will be asked
-const cardText = (fields) => (fields.back.length ? `${fields.front} = ${answers(fields.back)}` : fields.front);
+// a cloze card's back is a hint, not an answer: "Ella {{come}} pan.  (hint: verb)"
+const cardText = (fields) => (!fields.back.length ? fields.front : fields.cloze ? `${fields.front}  ${t("import.hint", { hint: fields.back[0] })}` : `${fields.front} = ${answers(fields.back)}`);
 const cut = (text, max = 60) => (Array.from(text).length > max ? `${Array.from(text).slice(0, max - 1).join("")}…` : text);
 const more = (count) => count > 0 && out(`  ${t("import.more", { count })}`);
 
@@ -101,27 +102,29 @@ async function readPackage(file) {
 }
 
 async function readInput(file, encoding) {
+  let bytes;
   if (file === "-") {
     const chunks = [];
     for await (const chunk of process.stdin) chunks.push(chunk);
-    return decodeText(Buffer.concat(chunks), encoding);
+    bytes = Buffer.concat(chunks);
+  } else {
+    try {
+      if ((await stat(file)).size > MAX_FILE) throw Object.assign(new Error(), { code: "TOO_BIG" });
+      bytes = await readFile(file);
+    } catch (err) {
+      throw readError(err, file);
+    }
   }
-  let bytes;
-  try {
-    if ((await stat(file)).size > MAX_FILE) throw Object.assign(new Error(), { code: "TOO_BIG" });
-    bytes = await readFile(file);
-  } catch (err) {
-    throw readError(err, file);
-  }
+  const name = file === "-" ? t("import.stdin") : file;
   // a picture or a zip has zero bytes where text never does (UTF-16 is read before this)
   const bom16 = (bytes[0] === 0xff && bytes[1] === 0xfe) || (bytes[0] === 0xfe && bytes[1] === 0xff);
-  if (!bom16 && !looksUtf16(bytes) && bytes.subarray(0, 8000).includes(0)) throw new Error(t("import.notText", { file }));
+  if (!bom16 && !looksUtf16(bytes) && bytes.subarray(0, 8000).includes(0)) throw new Error(t("import.notText", { file: name }));
   try {
     return decodeText(bytes, encoding);
   } catch (err) {
     if (!err.samples) throw err;
     const lines = err.samples.map((sample) => `  --encoding ${sample.encoding}   ${sample.line}`);
-    throw new Error([t("import.notUtf8", { file }), ...lines, t("import.notUtf8Hint")].join("\n"));
+    throw new Error([t("import.notUtf8", { file: name }), ...lines, t("import.notUtf8Hint")].join("\n"));
   }
 }
 
@@ -161,6 +164,7 @@ export async function runImport(file, options) {
   const ending = file === "-" ? "" : extname(file).toLowerCase();
   if (ending === ".json") return importBackup(file, options);
   const isPackage = ending === ".apkg" || ending === ".colpkg";
+  if (isPackage && (options.separator !== undefined || options.encoding !== undefined)) throw new Error(t("import.notForPackage"));
   const interactive = process.stdin.isTTY && file !== "-";
   if (options.separator !== undefined && !separatorNamed(options.separator)) throw new Error(t("import.badSeparator", { value: options.separator }));
   const { text, encoding, list } = isPackage ? { text: null, encoding: "utf-8", list: await readPackage(file) } : await readInput(file, options.encoding);
@@ -174,6 +178,9 @@ export async function runImport(file, options) {
   if (!plan.read.count) throw new Error(t("import.empty"));
   if (plan.read.ignored.length) out(t("import.ignored", { count: plan.read.ignored.length, lines: lineList(plan.read.ignored) }));
   if (plan.read.media) out(t("import.mediaLeft", { count: plan.read.media }));
+  // Dracosh's decks don't nest: "Spanish::Verbs" is a deck of its own
+  const nested = plan.decks.find((deck) => !deck.deck && deck.name.includes("::"));
+  if (isPackage && nested) out(t("import.subdecks", { deck: nested.name }));
   // Anki's export without HTML runs an answer and its example together
   if (plan.read.anki && !plan.read.html) out(t("import.ankiNoHtml"));
 
@@ -214,6 +221,7 @@ export async function runImport(file, options) {
   const showPlan = () => {
     for (const target of plan.decks) {
       const added = target.items.filter((item) => item.kind === "new");
+      if (target.deck && !added.length) continue; // what's there already or changed is told below
       out();
       out(target.deck ? t("import.intoDeck", { deck: target.name, cards: t("count.cards", { count: cardsOf(library, target.deck.id).length }) }) : t("import.intoNewDeck", { deck: target.name }));
       for (const item of added.slice(0, 3)) out(`  + ${cut(cardText(item.fields))}${item.fields.example ? `  // ${cut(item.fields.example, 30)}` : ""}`);
@@ -355,7 +363,14 @@ export async function runExport(file, options) {
   const format = file === "-" ? "txt" : extname(file).slice(1).toLowerCase();
   if (!EXPORT_FORMATS.includes(format)) throw new Error(t("export.unknownFormat", { file }));
   if (format === "json" && options.deck) throw new Error(t("export.jsonAll"));
-  if (format === "apkg") await loadSqlite().catch((err) => Promise.reject(needsNode(err, "export.needsNode"))); // said before anything is asked
+  // a Node without what Anki packages need is said before anything is asked
+  if (format === "apkg") {
+    try {
+      await loadSqlite();
+    } catch (err) {
+      throw needsNode(err, "export.needsNode");
+    }
+  }
 
   const library = await loadLibrary();
   let decks = library.decks.filter((deck) => !deck.tour);

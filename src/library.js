@@ -88,10 +88,12 @@ export function createDeck(library, { name, type = "translation", languages = nu
 }
 
 // Progress is kept per direction, so turning one off only stops asking it: its boxes stay for later.
-export function setDirections(library, deckId, directions) {
+// `updated` says when: an Anki package written later makes its notes ask the new way too
+export function setDirections(library, deckId, directions, now = Date.now()) {
   if (!DIRECTIONS.includes(directions)) throw new Error(`Unknown direction "${directions}".`);
   const deck = library.decks.find((d) => d.id === deckId);
   if (!deck) throw new Error("That deck doesn't exist.");
+  if (deck.directions !== directions) deck.updated = now;
   deck.directions = directions;
   return deck;
 }

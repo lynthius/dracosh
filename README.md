@@ -91,7 +91,7 @@ An import reads the file, then shows what it found before anything is saved: how
 
 A header row (`front,back,example`, `term;definition`) is used to pick the columns, in any order. A file that isn't UTF-8 is never guessed at: Dracosh shows its first line read each likely way and asks for `--encoding`.
 
-An Anki package (`.apkg`, or a whole collection's `.colpkg`) goes the same way, whatever language Anki was set up in. Cloze notes become cards with gaps (with a gap's hint), a deck with reverse cards asks both ways, and fields are picked by their names (Word, Meaning, Sentence…). Pictures and sounds stay out, picture cards (image occlusion) are listed as left out, and progress in Anki isn't brought over.
+An Anki package (`.apkg`, or a whole collection's `.colpkg`) goes the same way, whatever language Anki was set up in. Cloze notes become cards with gaps (with a gap's hint), a deck with reverse cards asks both ways, the front is what the note's card asks, and the answer and an example are found by the fields' names (Meaning, English, Sentence…). Tags come along; subdecks become decks of their own. Pictures and sounds stay out, cards that are only a picture or a sound are listed as left out, and progress in Anki isn't brought over.
 
 | Export | What you get |
 | --- | --- |

@@ -702,7 +702,7 @@
     "slashSwitch": "\"{text}\" would have to be typed, and in the quiz / opens the commands. Change that card first."
   },
   "cli": {
-    "help": "Dracosh: a vocabulary and quiz trainer for your terminal\n\nUsage: dracosh [options]\n       dracosh import <file|->    add cards from a file (.txt, .csv, .tsv, an Anki .apkg, Anki or Quizlet exports, a .json backup), or \"-\" for standard input\n       dracosh export <file>      write your decks to .apkg (Anki), .txt, .tsv, .csv or .json (everything)\n       dracosh restore [number]   list your backups, or bring one back\n\n  --deck <name>    quiz this deck, this run only (otherwise the one picked in /decks);\n                   with import or export: the deck to fill or write\n  --every <time>   pause between questions: 30s, 10m, 1h (default: {interval})\n  --no-sound       turn sound effects off\n  --volume <0-1>   sound volume (default: {volume})\n  --stats          print progress and exit\n  --data           show where your cards, progress and backups are kept\n  --preview        browse every animation and screen on made-up data (nothing is saved)\n  --update         import: cards already there take the file's answers (otherwise you're asked)\n  --split          import: an answer listing several (\"cat, kitty\") becomes one answer each\n  --separator <s>  import: what splits the columns: tab, comma, semicolon, pipe, colon, space or a character\n  --encoding <e>   import: a file that isn't UTF-8, e.g. windows-1250\n  -y, --yes        import, export or restore without asking first\n  -h, --help       show this help\n\nFlags override your saved settings for this run only. Change the saved ones with /settings.\n\nWhile running: Enter submits (with nothing typed it shows the answer, then 1 or 2), \"/\" opens the command menu (/add, /decks, /settings, /stats, /help…),\nEsc quits (clears the line first if you typed something). Ctrl+C also works.\nBetween cards: Enter asks the next one right away, q quits. /help explains the rest.",
+    "help": "Dracosh: a vocabulary and quiz trainer for your terminal\n\nUsage: dracosh [options]\n       dracosh import <file|->    add cards from a file (.txt, .csv, .tsv, an Anki .apkg or .colpkg, Anki or Quizlet text exports, a .json backup), or \"-\" for standard input\n       dracosh export <file>      write your decks to .apkg (Anki), .txt, .tsv, .csv or .json (everything)\n       dracosh restore [number]   list your backups, or bring one back\n\n  --deck <name>    quiz this deck, this run only (otherwise the one picked in /decks);\n                   with import or export: the deck to fill or write\n  --every <time>   pause between questions: 30s, 10m, 1h (default: {interval})\n  --no-sound       turn sound effects off\n  --volume <0-1>   sound volume (default: {volume})\n  --stats          print progress and exit\n  --data           show where your cards, progress and backups are kept\n  --preview        browse every animation and screen on made-up data (nothing is saved)\n  --update         import: cards already there take the file's answers (otherwise you're asked)\n  --split          import: an answer listing several (\"cat, kitty\") becomes one answer each\n  --separator <s>  import: what splits the columns: tab, comma, semicolon, pipe, colon, space or a character\n  --encoding <e>   import: a file that isn't UTF-8, e.g. windows-1250\n  -y, --yes        import, export or restore without asking first\n  -h, --help       show this help\n\nFlags override your saved settings for this run only. Change the saved ones with /settings.\n\nWhile running: Enter submits (with nothing typed it shows the answer, then 1 or 2), \"/\" opens the command menu (/add, /decks, /settings, /stats, /help…),\nEsc quits (clears the line first if you typed something). Ctrl+C also works.\nBetween cards: Enter asks the next one right away, q quits. /help explains the rest.",
     "badEvery": "Invalid --every \"{value}\". Use e.g. 30s, 10m, 1h.",
     "badVolume": "Invalid --volume \"{value}\". Use a number from 0 to 1.",
     "unknownCommand": "Unknown command \"{command}\". See dracosh --help.",
@@ -1150,8 +1150,9 @@
       "tour": "\"{deck}\" is the tour deck: pick another name",
       "noSeparator": "no \" = \" between front and answer",
       "badDirection": "not a direction: use forward, backward or both",
-      "twiceNote": "also note {line}",
-      "picture": "a picture with parts to guess (image occlusion)"
+      "twiceNote": "twice in the package",
+      "picture": "a picture with parts to guess (image occlusion)",
+      "mediaOnly": "only a picture or a sound, nothing to ask in text"
     },
     "ignored": {
       "one": "1 row has text in a column that isn't read (line {lines}): only front, answer and example are.",
@@ -1221,20 +1222,23 @@
     "isFolder": "{file} is a folder: name a file in it.",
     "noPermission": "Dracosh may not read {file}.",
     "tooBig": "{file} is over {max} MB: that's not a deck. Split it, or check it's the right file.",
-    "notText": "{file} isn't a text file. Dracosh imports text (Dracosh lines, CSV, TSV, Anki's and Quizlet's exports) and Anki packages (.apkg).",
+    "notText": "{file} isn't a text file. Dracosh imports text (Dracosh lines, CSV, TSV, Anki's and Quizlet's text exports) and Anki packages (.apkg, .colpkg).",
     "problemLine": "line {line}  {issue}: {text}",
     "backupReplaces": "It takes the place of what you have now ({decks} · {cards}).",
     "mediaLeft": {
-      "one": "1 note has pictures or sounds: its text comes along, they don't (Dracosh shows text).",
-      "other": "{count} notes have pictures or sounds: their text comes along, the pictures and sounds don't (Dracosh shows text)."
+      "one": "1 note has pictures or sounds; only its text is imported.",
+      "other": "{count} notes have pictures or sounds; only their text is imported."
     },
     "problemsNotes": {
       "one": "1 note can't be added:",
       "other": "{count} notes can't be added:"
     },
-    "problemNote": "note {line}  {issue}: {text}",
+    "problemNote": "{issue}: {text}",
     "notAnki": "{file} isn't an Anki package Dracosh can read. In Anki, File → Export → Anki Deck Package (.apkg) makes one.",
-    "needsNode": "Reading an Anki package needs Node {version} or newer (this is {current}). Update Node, or export the deck from Anki as Notes in Plain Text and import that."
+    "needsNode": "Reading an Anki package needs Node {version} or newer (this is {current}). Update Node, or export the deck from Anki as Notes in Plain Text and import that.",
+    "subdecks": "Anki's subdecks become decks of their own here, like \"{deck}\".",
+    "hint": "(hint: {hint})",
+    "notForPackage": "--separator and --encoding are for text files: an Anki package doesn't need them."
   },
   "export": {
     "needFile": "Where to? dracosh export <file>: .apkg (Anki), .txt (Dracosh), .tsv (Anki text), .csv or .json (everything)",
@@ -1251,7 +1255,7 @@
     "wroteAll": "Wrote your cards, progress and settings to {file}.",
     "next": {
       "txt": "Read it back with: dracosh import {file}",
-      "apkg": "In Anki: double-click {file}, or File → Import. It brings its own note types, so there's nothing to pick, and exporting again later updates the same notes.",
+      "apkg": "In Anki: double-click {file}, or File → Import. Exporting again later updates the same notes.",
       "tsv": "In Anki: File → Import, pick {file}, and check the note type is Basic (named in your Anki's language).",
       "csv": "Opens in any spreadsheet; dracosh import {file} reads it back.",
       "json": "dracosh import {file} brings it all back, on this computer or another one."
