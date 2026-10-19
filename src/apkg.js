@@ -82,6 +82,10 @@ const NOTE_TYPES = {
   })
 };
 
+// Dracosh's note types → [{ id, name, fields }], to see whether the ones in Anki are still as written
+// here (Anki knows them by id; a name can be changed there)
+export const NOTE_TYPE_FIELDS = Object.values(NOTE_TYPES).map((type) => ({ id: type.id, name: type.name, fields: type.flds.map((field) => field.name) }));
+
 const deckEntry = (id, name, mod) => ({
   id,
   mod,
@@ -210,6 +214,14 @@ function writeCollection(db, library, decks, now, skip) {
   const addCard = db.prepare("INSERT INTO cards VALUES (?, ?, ?, ?, ?, -1, 0, 0, ?, 0, 0, 0, 0, 0, 0, 0, 0, '')");
   let id = now; // note and card ids: unique within the package; Anki gives new ones where they clash
   let position = 0;
+  // a guid is one note: a second card with the same one (the same note imported twice) gets its own
+  const guids = new Set();
+  const guidFor = (card) => {
+    let guid = card.guid && !guids.has(card.guid) ? card.guid : guidOf(card.id);
+    for (let n = 1; guids.has(guid); n++) guid = guidOf(`${card.id} ${n}`);
+    guids.add(guid);
+    return guid;
+  };
   db.exec("BEGIN");
   for (const deck of decks) {
     for (const card of cardsOf(library, deck.id)) {
@@ -217,7 +229,7 @@ function writeCollection(db, library, decks, now, skip) {
       const { mid, fields, ords } = noteOf(card, deck);
       const noteId = id++;
       const mod = Math.floor(Math.max(card.updated ?? card.created ?? now, deck.updated ?? 0) / 1000);
-      addNote.run(noteId, card.guid ?? guidOf(card.id), mid, mod, tagsOf(card.tags), fields.join("\x1f"), unhtml(fields[0]), checksum(fields[0]));
+      addNote.run(noteId, guidFor(card), mid, mod, tagsOf(card.tags), fields.join("\x1f"), unhtml(fields[0]), checksum(fields[0]));
       position++;
       for (const ord of ords) addCard.run(id++, noteId, deckIds.get(deck.id), ord, seconds, position);
     }

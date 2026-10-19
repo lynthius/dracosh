@@ -1375,7 +1375,8 @@
         "many": "{count} cartes viennent d'Anki et restent de côté : Anki les a déjà.",
         "other": "{count} cartes viennent d'Anki et restent de côté : Anki les a déjà."
       },
-      "nothingNew": "Rien à envoyer : toutes ces cartes viennent d'Anki, qui les a déjà."
+      "nothingNew": "Rien à envoyer : toutes ces cartes viennent d'Anki, qui les a déjà.",
+      "changedNoteType": "Le type de note {type} a maintenant d'autres champs dans Anki ({fields}) : mettre ses notes à jour perdrait leur contenu. Rien n'a été envoyé. Pour garder les deux, exporte dans un fichier (dracosh export cartes.apkg) et importe-le dans Anki."
     },
     "fromAnkiCopies": {
       "one": "1 carte du fichier vient d'Anki : importée dans ce même Anki, ce sera un doublon.",
@@ -1387,6 +1388,10 @@
     "notRunning": "Anki ne répond pas. Ouvre Anki avec le greffon AnkiConnect (Outils → Greffons → Acquérir des greffons..., code 2055492159, puis redémarre Anki) et réessaie.",
     "old": "Cet AnkiConnect est trop ancien pour Dracosh : dans Anki, Outils → Greffons → Vérifier les mises à jour.",
     "key": "AnkiConnect demande sa clé API : relance avec DRACOSH_ANKI_KEY défini.",
-    "said": "Anki répond : {detail}"
+    "said": "Anki répond : {detail}",
+    "busy": "Anki a pris l'appel mais ne répond pas : il est peut-être occupé (synchronisation, vérification de la base) ou endormi en arrière-plan. Mets Anki au premier plan et réessaie.",
+    "badUrl": "DRACOSH_ANKI_URL n'est pas une adresse que Dracosh peut utiliser ({detail}) : elle ressemble à http://127.0.0.1:8765.",
+    "noDeck": "Anki n'a plus de paquet « {detail} ».",
+    "notImported": "Anki n'a pas pris les cartes : rien n'a été envoyé."
   }
 }

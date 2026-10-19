@@ -1287,7 +1287,8 @@
         "one": "1 card came from Anki and stays out: Anki has it already.",
         "other": "{count} cards came from Anki and stay out: Anki has them already."
       },
-      "nothingNew": "Nothing to send: these cards all came from Anki, which has them already."
+      "nothingNew": "Nothing to send: these cards all came from Anki, which has them already.",
+      "changedNoteType": "The note type {type} in Anki has other fields now ({fields}): updating its notes would lose what's in them. Nothing was sent. To keep both, export to a file (dracosh export cards.apkg) and import it in Anki."
     },
     "fromAnkiCopies": {
       "one": "1 card in it came from Anki: imported into that same Anki, it's a second copy.",
@@ -1298,6 +1299,10 @@
     "notRunning": "Anki isn't answering. Open Anki with the AnkiConnect add-on (Tools → Add-ons → Get Add-ons..., code 2055492159, then restart Anki) and try again.",
     "old": "This AnkiConnect is too old for Dracosh: in Anki, Tools → Add-ons → Check for Updates.",
     "key": "AnkiConnect asks for its API key: run this again with DRACOSH_ANKI_KEY set to it.",
-    "said": "Anki said: {detail}"
+    "said": "Anki said: {detail}",
+    "busy": "Anki took the call but isn't answering: it may be busy (syncing, checking its database) or asleep in the background. Bring Anki to the front and try again.",
+    "badUrl": "DRACOSH_ANKI_URL isn't an address Dracosh can use ({detail}): it looks like http://127.0.0.1:8765.",
+    "noDeck": "Anki has no deck \"{detail}\" any more.",
+    "notImported": "Anki didn't take the cards: nothing was sent."
   }
 }

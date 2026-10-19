@@ -131,7 +131,7 @@ test("dracosh import: without --yes outside a terminal it only shows the plan", 
   assert.equal(result.status, 0);
   assert.match(result.stdout, /Into a new deck, Spanish:\n  \+ el gato = the cat/);
   assert.match(result.stdout, /line 2  no " = " between front and answer: la mesa/);
-  assert.match(result.stdout, /Preview only, nothing saved\. To import: dracosh import - --deck "Spanish" --yes/);
+  assert.match(result.stdout, /Preview only, nothing saved\. To import: dracosh import - --deck Spanish --yes/);
   assert.equal(existsSync(join(home, "library.json")), false, "nothing written");
 });
 

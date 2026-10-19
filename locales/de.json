@@ -1304,7 +1304,8 @@
         "one": "1 Karte stammt aus Anki und bleibt draußen: Anki hat sie schon.",
         "other": "{count} Karten stammen aus Anki und bleiben draußen: Anki hat sie schon."
       },
-      "nothingNew": "Nichts zu senden: Alle diese Karten stammen aus Anki, das sie schon hat."
+      "nothingNew": "Nichts zu senden: Alle diese Karten stammen aus Anki, das sie schon hat.",
+      "changedNoteType": "Der Notiztyp {type} hat in Anki jetzt andere Felder ({fields}): Seine Notizen zu aktualisieren, würde deren Inhalt verlieren. Nichts wurde gesendet. Um beides zu behalten, exportiere in eine Datei (dracosh export karten.apkg) und importiere sie in Anki."
     },
     "fromAnkiCopies": {
       "one": "1 Karte darin stammt aus Anki: In dasselbe Anki importiert, ist sie eine zweite Kopie.",
@@ -1315,6 +1316,10 @@
     "notRunning": "Anki antwortet nicht. Öffne Anki mit der Erweiterung AnkiConnect (Extras → Erweiterungen → Erweiterungen herunterladen …, Code 2055492159, dann Anki neu starten) und versuche es noch einmal.",
     "old": "Dieses AnkiConnect ist zu alt für Dracosh: in Anki Extras → Erweiterungen → Nach Aktualisierungen suchen.",
     "key": "AnkiConnect verlangt seinen API-Schlüssel: Starte das noch einmal mit gesetztem DRACOSH_ANKI_KEY.",
-    "said": "Anki sagt: {detail}"
+    "said": "Anki sagt: {detail}",
+    "busy": "Anki hat die Verbindung angenommen, antwortet aber nicht: Es ist vielleicht beschäftigt (Synchronisieren, Datenbank prüfen) oder schläft im Hintergrund. Hole Anki nach vorn und versuche es noch einmal.",
+    "badUrl": "DRACOSH_ANKI_URL ist keine Adresse, die Dracosh nutzen kann ({detail}): Sie sieht aus wie http://127.0.0.1:8765.",
+    "noDeck": "Anki hat keinen Stapel „{detail}“ mehr.",
+    "notImported": "Anki hat die Karten nicht angenommen: Nichts wurde gesendet."
   }
 }

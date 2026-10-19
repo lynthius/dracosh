@@ -170,8 +170,20 @@ const slashIn = (fields, directions) => {
 // (forward when not given). → { added, updated, slash: [{ line, text }] (left out: an answer to type
 // starts with "/"), decks: [{ name, isNew, added, updated }], removedTour: the tour's card ids (it goes
 // once you have a deck of your own, as in /add; `keepTour` keeps it) }
+// A card already in a deck that the import found among Anki's own notes is marked as from Anki too
+// (as a new one is), so `export --anki` never sends Anki a second copy of it. → how many were marked
+export function markFromAnki(library, plan) {
+  let marked = 0;
+  for (const item of plan.decks.flatMap((deck) => deck.items)) {
+    const card = item.card && item.fields.fromAnki && library.cards.find((each) => each.id === item.card.id);
+    if (card && !card.fromAnki) [card.fromAnki, marked] = [true, marked + 1];
+  }
+  return marked;
+}
+
 export function applyImport(library, plan, { update = false, directions = {}, keepTour = false, now = Date.now() } = {}) {
   const result = { added: 0, updated: 0, slash: [], decks: [], removedTour: [] };
+  markFromAnki(library, plan);
   for (const target of plan.decks) {
     let deck = target.deck && library.decks.find((d) => d.id === target.deck.id);
     const isNew = !deck;

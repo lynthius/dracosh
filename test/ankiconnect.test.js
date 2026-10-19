@@ -12,7 +12,7 @@ import { readApkg } from "../src/apkg.js";
 const FIXTURE = new URL("./fixtures/anki-modern.apkg", import.meta.url).pathname;
 const servers = [];
 after(() => servers.forEach((server) => server.close()));
-function fakeAnki({ key = null, version = 6, filtered = false } = {}) {
+function fakeAnki({ key = null, version = 6, filtered = false, noteTypes = {} } = {}) {
   const calls = [];
   const imported = [];
   const actions = {
@@ -20,6 +20,8 @@ function fakeAnki({ key = null, version = 6, filtered = false } = {}) {
     deckNames: () => ["Default", "Spanish", "Spanish::Both ways", ...(filtered ? ["Cram"] : [])],
     findNotes: ({ query }) => ({ 'deck:"Default"': [], 'deck:"Spanish"': [1, 2, 3], 'deck:"Spanish::Both ways"': [2], 'deck:"Cram"': [4] })[query] ?? [],
     getDeckConfig: ({ deck }) => ({ id: 1, dyn: deck === "Cram" ? 1 : false }),
+    modelNamesAndIds: () => Object.fromEntries(Object.entries(noteTypes).map(([name, { id }]) => [name, id])),
+    modelFieldNames: ({ modelName }) => noteTypes[modelName].fields,
     multi: ({ actions: list }) => list.map((each) => (assert.equal(each.version, 6), reply(each))),
     exportPackage: ({ deck, path }) => {
       if (!["Spanish", "Spanish::Both ways", "Cram"].includes(deck)) return false;
@@ -72,7 +74,9 @@ test("dracosh import --anki \"Spanish\": the deck as Anki writes it, through the
   const preview = await run(dir, ["import", "--anki", "spanish"], { DRACOSH_ANKI_URL: anki.url });
   assert.equal(preview.status, 0, preview.stderr);
   assert.match(preview.stdout, /Getting Spanish from Anki…\nFrom Anki: Spanish\n/);
-  assert.match(preview.stdout, /To import: dracosh import --anki "spanish" --yes/);
+  assert.match(preview.stdout, /To import: dracosh import --anki spanish --yes/);
+  const odd = await run(dir, ["import", "--anki", "Spanish", "--deck", "It's $5"], { DRACOSH_ANKI_URL: anki.url });
+  assert.match(odd.stdout, /To import: dracosh import --anki Spanish --deck 'It'\\''s \$5' --yes/, "quoted for the shell");
   const done = await run(dir, ["import", "--anki", "Spanish", "--yes"], { DRACOSH_ANKI_URL: anki.url });
   assert.equal(done.status, 0, done.stderr);
   assert.ok(library(dir).cards.some((card) => card.front === "el gato"));
@@ -105,6 +109,18 @@ test("dracosh export --anki: one package into Anki, asked first, never with a fi
   const file = join(dir, "..", `${dir.split("/").pop()}.apkg`);
   assert.match((await run(dir, ["export", file])).stdout, /came from Anki: imported into that same Anki, they're a second copy/);
   anki.close();
+});
+
+test("a Dracosh note type changed in Anki (a field added) is never updated over: nothing is sent", async () => {
+  const fields = ["Front", "Back", "Example", "Forward", "Backward"];
+  const dir = home();
+  assert.equal((await run(dir, ["import", "-", "--deck", "Italian", "--yes"], {}, "il gatto = the cat\n")).status, 0);
+  const same = await fakeAnki({ noteTypes: { Dracosh: { id: 1760358162311, fields } } });
+  assert.equal((await run(dir, ["export", "--anki", "--yes"], { DRACOSH_ANKI_URL: same.url })).status, 0);
+  const changed = await fakeAnki({ noteTypes: { "My words": { id: 1760358162311, fields: [...fields, "My notes"] } } });
+  const refused = await run(dir, ["export", "--anki", "--yes"], { DRACOSH_ANKI_URL: changed.url });
+  assert.match(refused.stderr, /The note type My words in Anki has other fields now \(Front, Back, Example, Forward, Backward, My notes\)/);
+  assert.equal(changed.imported.length, 0);
 });
 
 test("no Anki, an old AnkiConnect, a key it asks for: each said plainly", async () => {

@@ -1421,7 +1421,8 @@
         "many": "{count} kart pochodzi z Anki i zostaje pominiętych: Anki już je ma.",
         "other": "{count} karty pochodzą z Anki i zostają pominięte: Anki już je ma."
       },
-      "nothingNew": "Nie ma czego wysłać: wszystkie te karty pochodzą z Anki, które już je ma."
+      "nothingNew": "Nie ma czego wysłać: wszystkie te karty pochodzą z Anki, które już je ma.",
+      "changedNoteType": "Typ notatki {type} w Anki ma teraz inne pola ({fields}): aktualizacja jego notatek straciłaby to, co w nich jest. Nic nie zostało wysłane. Żeby zachować oba, wyeksportuj do pliku (dracosh export karty.apkg) i zaimportuj go w Anki."
     },
     "fromAnkiCopies": {
       "one": "1 karta w pliku pochodzi z Anki: zaimportowana do tego samego Anki będzie drugą kopią.",
@@ -1434,6 +1435,10 @@
     "notRunning": "Anki nie odpowiada. Otwórz Anki z dodatkiem AnkiConnect (Narzędzia → Dodatki → Pobierz dodatki..., kod 2055492159, potem uruchom Anki ponownie) i spróbuj jeszcze raz.",
     "old": "Ten AnkiConnect jest za stary dla Dracosh: w Anki wybierz Narzędzia → Dodatki → Sprawdź dostępność aktualizacji.",
     "key": "AnkiConnect wymaga klucza API: uruchom to jeszcze raz z ustawionym DRACOSH_ANKI_KEY.",
-    "said": "Anki odpowiada: {detail}"
+    "said": "Anki odpowiada: {detail}",
+    "busy": "Anki odebrało połączenie, ale nie odpowiada: może być zajęte (synchronizacja, sprawdzanie bazy) albo uśpione w tle. Przełącz się na Anki i spróbuj jeszcze raz.",
+    "badUrl": "DRACOSH_ANKI_URL to nie adres, którego Dracosh może użyć ({detail}): powinien wyglądać jak http://127.0.0.1:8765.",
+    "noDeck": "W Anki nie ma już talii „{detail}”.",
+    "notImported": "Anki nie przyjęło kart: nic nie zostało wysłane."
   }
 }

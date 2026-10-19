@@ -7,9 +7,9 @@ import { createInterface } from "node:readline/promises";
 import { backupData, backupNow, restoreBackup } from "./backup.js";
 import { plainFront } from "./cardline.js";
 import { readCardList, separatorNamed } from "./cardlist.js";
-import { applyImport, decodeText, planCounts, planImport } from "./importer.js";
-import { readApkg, toApkg } from "./apkg.js";
-import { ankiDecks, connect, exportDeck, importIntoAnki } from "./ankiconnect.js";
+import { applyImport, decodeText, markFromAnki, planCounts, planImport } from "./importer.js";
+import { NOTE_TYPE_FIELDS, readApkg, toApkg } from "./apkg.js";
+import { ankiDecks, connect, exportDeck, importIntoAnki, noteType } from "./ankiconnect.js";
 import { loadSqlite } from "./sqlite.js";
 import { EXPORT_FORMATS, toAnki, toCsv, toDracoshText } from "./exporter.js";
 import { deckLanguages, isKnown, languageName } from "./language.js";
@@ -161,10 +161,13 @@ async function importBackup(file, { yes: sure }) {
   out(t("cli.restore.done"));
 }
 
+// a word for the shell, as typed: quoted when it needs to be ("Spanish verbs", it's, $5)
+const shellQuote = (word) => (/^[\w@%+=:,./-]+$/.test(word) ? word : `'${word.replace(/'/g, "'\\''")}'`);
+
 // Anki's add-on said no, or nobody answered → what to do about it
 function ankiError(err) {
   if (err.code === "NEEDS_NODE") return needsNode(err, "import.needsNode");
-  const key = { NO_ANKI: "anki.notRunning", OLD_ANKICONNECT: "anki.old", ANKI_KEY: "anki.key", ANKI_ERROR: "anki.said" }[err.code];
+  const key = { NO_ANKI: "anki.notRunning", ANKI_BUSY: "anki.busy", BAD_URL: "anki.badUrl", OLD_ANKICONNECT: "anki.old", ANKI_KEY: "anki.key", NO_DECK: "anki.noDeck", NOT_IMPORTED: "anki.notImported", ANKI_ERROR: "anki.said" }[err.code];
   return key ? new Error(t(key, { detail: err.detail })) : err;
 }
 
@@ -174,6 +177,7 @@ function ankiError(err) {
 async function readFromAnki(deckName, { interactive, yes }) {
   const folder = mkdtempSync(join(tmpdir(), "dracosh-anki-"));
   try {
+    await loadSqlite(); // what reading Anki's packages needs, before Anki is asked for any
     const anki = connect();
     const all = await ankiDecks(anki);
     const decks = all.filter((deck) => deck.notes > 0 && !deck.filtered);
@@ -188,6 +192,7 @@ async function readFromAnki(deckName, { interactive, yes }) {
       decks.forEach((deck, i) => out(`  ${i + 1}. ${deck.name} (${t("count.cards", { count: deck.notes })})`));
       for (;;) {
         const answer = await ask(t("import.anki.which"));
+        if (/^q(uit)?$/i.test(answer)) throw new Error(t("cli.restore.nothingChanged"));
         const numbers = answer.split(/[\s,]+/).filter(Boolean).map(Number);
         if (!numbers.length) chosen = decks.map((deck) => deck.name);
         else if (numbers.every((n) => Number.isInteger(n) && n >= 1 && n <= decks.length)) chosen = numbers.map((n) => decks[n - 1].name);
@@ -199,13 +204,15 @@ async function readFromAnki(deckName, { interactive, yes }) {
     const list = { format: "apkg", separator: null, header: {}, items: [], columns: null, ignored: [], unknown: [], anki: true, html: true, media: 0 };
     const inChosen = (deck) => chosen.some((name) => deck === name || deck?.startsWith(`${name}::`));
     // a deck's export leaves out its cards lent to a filtered deck: those come from the filtered one
-    const lending = all.filter((deck) => deck.filtered && deck.notes > 0).map((deck) => deck.name);
+    // (one inside a chosen deck comes with it); and a filtered deck inside a chosen one may hold
+    // other decks' cards, which stay out
+    const lending = all.filter((deck) => deck.filtered && deck.notes > 0 && !inChosen(deck.name)).map((deck) => deck.name);
     for (const [i, name] of [...chosen, ...lending].entries()) {
       if (i < chosen.length) out(t("import.anki.asking", { deck: name }));
       const path = join(folder, `${i}.apkg`);
       await exportDeck(anki, name, path);
       const part = await readApkg(path);
-      const items = i < chosen.length ? part.items : part.items.filter((item) => inChosen(item.deck));
+      const items = part.items.filter((item) => inChosen(item.deck));
       list.items.push(...items.map((item, j) => ({ ...item, line: list.items.length + j + 1 })));
       if (i < chosen.length) list.media += part.media;
     }
@@ -322,6 +329,11 @@ export async function runImport(file, options) {
   const adding = planCounts(plan).new;
   const updating = update ? changed.length : 0;
   if (!adding && !updating) {
+    // nothing to add, but cards found in Anki are remembered as such (a preview saves nothing)
+    if ((interactive || options.yes) && markFromAnki(structuredClone(library), plan)) {
+      const fresh = await loadLibrary();
+      if (markFromAnki(fresh, read(fresh))) await saveLibrary(fresh);
+    }
     out();
     return out(t("import.nothing"));
   }
@@ -349,8 +361,8 @@ export async function runImport(file, options) {
   if (!options.yes) {
     if (!interactive) {
       out();
-      const deckFlag = options.deck ? ` --deck "${options.deck}"` : file === "-" ? ` --deck "${choices.deckName}"` : "";
-      const source = anki ? `--anki${file ? ` "${file}"` : ""}` : file;
+      const deckFlag = options.deck ? ` --deck ${shellQuote(options.deck)}` : file === "-" ? ` --deck ${shellQuote(choices.deckName)}` : "";
+      const source = anki ? `--anki${file ? ` ${shellQuote(file)}` : ""}` : shellQuote(file);
       return out(t("import.previewOnly", { command: `dracosh import ${source}${deckFlag}${choices.split ? " --split" : ""} --yes` }));
     }
     out();
@@ -518,7 +530,12 @@ async function exportToAnki(file, options) {
   const names = decks.map((deck) => deck.name).join(", ");
   const anki = connect();
   try {
-    await anki("deckNames"); // Anki is there before anything is asked
+    // Anki is there before anything is asked, and its Dracosh note types are as Dracosh writes them:
+    // a note type someone changed in Anki would lose what they added when its notes are updated
+    for (const { id, fields } of NOTE_TYPE_FIELDS) {
+      const inAnki = await noteType(anki, id);
+      if (inAnki && inAnki.fields.join("\u0001") !== fields.join("\u0001")) throw new Error(t("export.anki.changedNoteType", { type: inAnki.name, fields: inAnki.fields.join(", ") }));
+    }
   } catch (err) {
     throw ankiError(err);
   }
