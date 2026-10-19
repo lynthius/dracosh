@@ -93,7 +93,7 @@ A header row (`front,back,example`, `term;definition`) is used to pick the colum
 | Export | What you get |
 | --- | --- |
 | `dracosh export spanish.txt` | Dracosh lines: easy to read and edit, and `dracosh import` reads them back unchanged |
-| `dracosh export spanish.tsv` | for Anki: File → Import; cloze cards go into `spanish-cloze.tsv` next to it, as Anki keeps the two note types apart |
+| `dracosh export spanish.tsv` | for Anki: File → Import; cloze cards go into `spanish-cloze.tsv` next to it, as Anki keeps the two note types apart. If your Anki isn't in English, pick its Basic and Cloze note types in the import dialog |
 | `dracosh export spanish.csv` | for a spreadsheet: front, back, example (and deck) |
 | `dracosh export everything.json` | all your cards, progress and settings; `dracosh import everything.json` brings them back, on another computer too |
 

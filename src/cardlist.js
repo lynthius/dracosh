@@ -223,15 +223,20 @@ const splitAnswers = (text) => text.split(/(?<!\\);/).map((part) => part.replace
 function rowFields(cells, roles, html, anki = false) {
   const cell = (i) => (i === null || i === undefined ? "" : cells[i] ?? "");
   const lines = (text) => (html || looksLikeHtml(text) ? htmlLines(text) : text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean));
-  // in an Anki note that isn't a cloze one, braces are plain text
-  const plainNote = roles.notetype !== null && roles.notetype !== undefined && !/cloze/i.test(cell(roles.notetype));
   const written = lines(cell(roles.front)).join(" ");
+  // in an Anki note without "{{c1::…}}" braces are plain text. The note type's name can't tell: Anki
+  // names it in its own language ("Cloze" is "Luka", "Lückentext"…)
+  const plainNote = roles.notetype !== null && roles.notetype !== undefined && !new RegExp(ANKI_GAP.source).test(written);
   const front = plainNote ? written.replace(/(?<!\\)\{\{/g, "\\{{") : fromAnkiCloze(written, anki);
-  const [answers = "", ...more] = lines(cell(roles.back));
-  const example = [...more, ...lines(cell(roles.example))].join(" ");
   const cloze = gapsOf(front).length > 0;
+  let [answers = "", ...more] = lines(cell(roles.back));
+  // a cloze note's Extra field is shown after the answer, so on its own it's an example, not a hint
+  if (anki && cloze && !more.length && !cell(roles.example)) [answers, more] = ["", [answers].filter(Boolean)];
+  const example = [...more, ...lines(cell(roles.example))].join(" ");
+  // a cloze card's back is one hint, as in /add
+  const back = cloze ? [answers.replace(/\\;/g, ";").trim()].filter(Boolean) : splitAnswers(answers);
   // a card without gaps keeps its braces as they are ("\{{x}}" was only there to say they're text)
-  return { front: cloze ? front : front.replace(/\\\{\{/g, "{{"), back: splitAnswers(answers), example, cloze, hasBack: Boolean(answers) || cloze };
+  return { front: cloze ? front : front.replace(/\\\{\{/g, "{{"), back, example, cloze, hasBack: Boolean(answers) || cloze };
 }
 
 // A dash list's line splits on its first dash; a tab still splits a line that has one

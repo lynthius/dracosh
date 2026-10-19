@@ -97,7 +97,7 @@ test("decodeText: UTF-8 with a BOM, UTF-16 from Excel, and no silent guess for a
 
 test("exports read back as the same cards: .txt exactly, .csv and Anki's .tsv by content", () => {
   const { lib, deck } = library();
-  addCard(lib, deck.id, { front: "I {{look}} at {{it}}", back: ["a hint"], cloze: true });
+  addCard(lib, deck.id, { front: "I {{look}} at {{it}}", back: ["a hint"], example: "An example.", cloze: true });
   addCard(lib, deck.id, { front: "#tag", back: ["one; two", "three"], example: "a, \"quoted\" one" });
   addCard(lib, deck.id, { front: "\\#raw", back: ["x"] });
   addCard(lib, deck.id, { front: "I \\{{kept}} and {{gap}} {{ }}", back: [], cloze: true });
@@ -109,11 +109,15 @@ test("exports read back as the same cards: .txt exactly, .csv and Anki's .tsv by
   const basic = toAnki(lib, [deck]);
   const cloze = toAnki(lib, [deck], { cloze: true });
   assert.match(basic, /^#separator:tab\n#html:true\n#notetype:Basic\n#deck:Spanish\nel gato\t/);
-  assert.match(cloze, /^#separator:tab\n#html:true\n#notetype:Cloze\n#deck:Spanish\nI \{\{c1::look\}\} at \{\{c2::it\}\}\ta hint\n/);
+  assert.match(cloze, /^#separator:tab\n#html:true\n#notetype:Cloze\n#deck:Spanish\nI \{\{c1::look\}\} at \{\{c2::it\}\}\ta hint<br>An example.\n/);
   // Anki has no "{{ }}" that isn't a gap, so it comes back as "\{{ }}": the same card, written another way
   const asked = (cards) => cards.map(([front, ...rest]) => [plainFront(front), gapsOf(front), ...rest]).sort((a, b) => a[0].localeCompare(b[0]));
   assert.deepEqual(asked([...read(basic), ...read(cloze)]), asked(original));
   assert.deepEqual(read(basic)[0], ["el gato", ["the cat"], "Mi gato duerme.", false]);
+  // Anki shows a cloze note's Extra field after the answer, so a hint on its own comes back as the example
+  const hintOnly = library();
+  addCard(hintOnly.lib, hintOnly.deck.id, { front: "I {{see}} it", back: ["verb"], cloze: true });
+  assert.deepEqual(read(toAnki(hintOnly.lib, [hintOnly.deck], { cloze: true })), [["I {{see}} it", [], "verb", true]]);
 });
 
 const CLI = new URL("../src/cli.js", import.meta.url).pathname;

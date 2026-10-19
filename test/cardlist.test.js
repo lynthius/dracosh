@@ -114,6 +114,15 @@ test("in an Anki file only {{c1::…}} is a gap: other braces stay text", () => 
   assert.deepEqual([card.fields.front, card.fields.cloze], ["plain {{x}} braces", false]);
 });
 
+test("a cloze note from Anki in another language is still a cloze, its Extra field an example", () => {
+  const anki = "#separator:tab\n#html:true\n#notetype column:1\n#deck column:2\nLuka\tSpanish\tYo {{c1::tengo}} {{c2::dos}} perros.\tI have two dogs.\nLückentext\tSpanish\tElla {{c1::come}} pan.\tverb\\; food<br>She eats bread.\nPodstawowy\tSpanish\tplain {{x}}\ty";
+  assert.deepEqual(readCardList(anki).items.map(({ fields }) => [fields.front, fields.back, fields.example, fields.cloze]), [
+    ["Yo {{tengo}} {{dos}} perros.", [], "I have two dogs.", true],
+    ["Ella {{come}} pan.", ["verb; food"], "She eats bread.", true],
+    ["plain {{x}}", ["y"], "", false]
+  ]);
+});
+
 test("#direction belongs to its deck, and one that isn't a direction is said", () => {
   const list = readCardList("#deck:A\n#direction:backward\na = b\n#deck:B\nc = d\n#direction: both ways\ne = f");
   assert.deepEqual(list.items.map((item) => [item.deck, item.direction]), [["A", "backward"], ["B", null], ["B", null]]);
