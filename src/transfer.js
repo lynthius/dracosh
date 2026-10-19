@@ -7,7 +7,7 @@ import { backupData, backupNow, restoreBackup } from "./backup.js";
 import { plainFront } from "./cardline.js";
 import { readCardList, separatorNamed } from "./cardlist.js";
 import { applyImport, decodeText, planCounts, planImport } from "./importer.js";
-import { toApkg } from "./apkg.js";
+import { readApkg, toApkg } from "./apkg.js";
 import { loadSqlite } from "./sqlite.js";
 import { EXPORT_FORMATS, toAnki, toCsv, toDracoshText } from "./exporter.js";
 import { deckLanguages, isKnown, languageName } from "./language.js";
@@ -72,11 +72,32 @@ function describeRead(read) {
   return t("import.formats.table", { separator, columns });
 }
 
-function issueText(problem) {
-  if (problem.issue === "twice") return t("import.issues.twice", { line: problem.first });
+// `notes`: the cards came from an Anki package, so a place in it is a note's number, not a line
+function issueText(problem, notes) {
+  if (problem.issue === "twice") return t(notes ? "import.issues.twiceNote" : "import.issues.twice", { line: problem.first });
   if (problem.issue === "tooLong") return t("import.issues.tooLong", { max: MAX_DECK_NAME, deck: cut(problem.deck, 30) });
   if (problem.issue === "tour") return t("import.issues.tour", { deck: problem.deck });
   return t(`import.issues.${problem.issue}`);
+}
+
+const readError = (err, file) => {
+  const why = { ENOENT: "import.noFile", EISDIR: "import.isFolder", EACCES: "import.noPermission", EPERM: "import.noPermission", TOO_BIG: "import.tooBig" }[err.code];
+  return new Error(why ? t(why, { file, max: MAX_FILE / 1e6 }) : t("errors.cantRead", { file, error: err.message }));
+};
+
+// Anki's own packages need what Node has from 22.15 on (sqlite.js)
+const needsNode = (err, key) => (err.code === "NEEDS_NODE" ? new Error(t(key, { version: err.version, current: process.versions.node })) : err);
+
+// an Anki package (.apkg, .colpkg): read whole, however big its media (only the collection is unpacked)
+async function readPackage(file) {
+  try {
+    if (!(await stat(file)).isFile()) throw Object.assign(new Error(), { code: "EISDIR" });
+    return await readApkg(file);
+  } catch (err) {
+    if (err.code === "NOT_ANKI") throw new Error(t("import.notAnki", { file }));
+    if (err.code === "NEEDS_NODE") throw needsNode(err, "import.needsNode");
+    throw ["ENOENT", "EISDIR", "EACCES", "EPERM"].includes(err.code) ? readError(err, file) : err;
+  }
 }
 
 async function readInput(file, encoding) {
@@ -90,8 +111,7 @@ async function readInput(file, encoding) {
     if ((await stat(file)).size > MAX_FILE) throw Object.assign(new Error(), { code: "TOO_BIG" });
     bytes = await readFile(file);
   } catch (err) {
-    const why = { ENOENT: "import.noFile", EISDIR: "import.isFolder", EACCES: "import.noPermission", EPERM: "import.noPermission", TOO_BIG: "import.tooBig" }[err.code];
-    throw new Error(why ? t(why, { file, max: MAX_FILE / 1e6 }) : t("errors.cantRead", { file, error: err.message }));
+    throw readError(err, file);
   }
   // a picture or a zip has zero bytes where text never does (UTF-16 is read before this)
   const bom16 = (bytes[0] === 0xff && bytes[1] === 0xfe) || (bytes[0] === 0xfe && bytes[1] === 0xff);
@@ -138,20 +158,22 @@ async function importBackup(file, { yes: sure }) {
 
 export async function runImport(file, options) {
   if (!file) throw new Error(t("import.needFile"));
-  const isJson = file !== "-" && extname(file).toLowerCase() === ".json";
-  if (isJson) return importBackup(file, options);
+  const ending = file === "-" ? "" : extname(file).toLowerCase();
+  if (ending === ".json") return importBackup(file, options);
+  const isPackage = ending === ".apkg" || ending === ".colpkg";
   const interactive = process.stdin.isTTY && file !== "-";
   if (options.separator !== undefined && !separatorNamed(options.separator)) throw new Error(t("import.badSeparator", { value: options.separator }));
-  const { text, encoding } = await readInput(file, options.encoding);
+  const { text, encoding, list } = isPackage ? { text: null, encoding: "utf-8", list: await readPackage(file) } : await readInput(file, options.encoding);
   const library = await loadLibrary();
-  const csv = file !== "-" && extname(file).toLowerCase() === ".csv";
-  const choices = { deck: options.deck ?? null, deckName: null, separator: options.separator, csv, directions: {}, split: Boolean(options.split) };
+  const csv = ending === ".csv";
+  const choices = { deck: options.deck ?? null, deckName: null, separator: options.separator, csv, directions: {}, split: Boolean(options.split), list };
   const read = (from) => planImport(from, text, choices);
   let plan = read(library);
 
   out(t("import.reading", { file: file === "-" ? t("import.stdin") : file, what: describeRead(plan.read) }) + (encoding === "utf-8" ? "" : t("import.encoding", { encoding: encoding.toUpperCase() })));
   if (!plan.read.count) throw new Error(t("import.empty"));
   if (plan.read.ignored.length) out(t("import.ignored", { count: plan.read.ignored.length, lines: lineList(plan.read.ignored) }));
+  if (plan.read.media) out(t("import.mediaLeft", { count: plan.read.media }));
   // Anki's export without HTML runs an answer and its example together
   if (plan.read.anki && !plan.read.html) out(t("import.ankiNoHtml"));
 
@@ -206,7 +228,7 @@ export async function runImport(file, options) {
     const counts = planCounts(plan);
     out();
     out([t("import.counts.new", { count: counts.new }), counts.same && t("import.counts.same", { count: counts.same }), counts.changed && t("import.counts.changed", { count: counts.changed })].filter(Boolean).join(" · "));
-    showProblems(plan.problems.filter((p) => p.issue !== "noDeck"));
+    showProblems(plan.problems.filter((p) => p.issue !== "noDeck"), isPackage);
   };
   showPlan();
 
@@ -250,7 +272,7 @@ export async function runImport(file, options) {
     // the answers typed now may start with "/": those cards are named before anything is saved
     const before = plan.problems.length;
     plan = read(library);
-    showProblems(plan.problems.slice(before).filter((p) => p.issue === "slash"));
+    showProblems(plan.problems.slice(before).filter((p) => p.issue === "slash"), isPackage);
   }
 
   const counts = planCounts(plan);
@@ -303,15 +325,15 @@ export async function runImport(file, options) {
 // "3, 7, 9…": the first few line numbers of a list
 const lineList = (lines) => lines.slice(0, 5).join(", ") + (lines.length > 5 ? "…" : "");
 
-function showProblems(problems) {
+function showProblems(problems, notes = false) {
   if (!problems.length) return;
-  out(t("import.problems", { count: problems.length }));
-  for (const problem of problems.slice(0, SHOWN)) out(`  ${t("import.problemLine", { line: problem.line, issue: issueText(problem), text: cut(problem.text.replace(/\t/g, "  "), 50) })}`);
+  out(t(notes ? "import.problemsNotes" : "import.problems", { count: problems.length }));
+  for (const problem of problems.slice(0, SHOWN)) out(`  ${t(notes ? "import.problemNote" : "import.problemLine", { line: problem.line, issue: issueText(problem, notes), text: cut(problem.text.replace(/\t/g, "  "), 50) })}`);
   more(problems.length - SHOWN);
 }
 
 // the cards as read, before any deck is picked: for the question which deck they go into
-const readSample = (text, { separator, csv }) => readCardList(text, { separator, csv }).items.map((item) => item.fields).filter((fields) => fields.front);
+const readSample = (text, { separator, csv, list }) => (list ?? readCardList(text, { separator, csv })).items.map((item) => item.fields).filter((fields) => fields.front);
 
 // a file in Dracosh's own folder (library.json, a backup…) is never written over by an export
 function insideData(file) {
@@ -333,7 +355,7 @@ export async function runExport(file, options) {
   const format = file === "-" ? "txt" : extname(file).slice(1).toLowerCase();
   if (!EXPORT_FORMATS.includes(format)) throw new Error(t("export.unknownFormat", { file }));
   if (format === "json" && options.deck) throw new Error(t("export.jsonAll"));
-  if (format === "apkg") await loadSqlite(); // a Node without it is said before anything is asked
+  if (format === "apkg") await loadSqlite().catch((err) => Promise.reject(needsNode(err, "export.needsNode"))); // said before anything is asked
 
   const library = await loadLibrary();
   let decks = library.decks.filter((deck) => !deck.tour);

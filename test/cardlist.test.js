@@ -48,7 +48,7 @@ test("an Anki export: its headers, HTML, cloze and the deck column", () => {
   const list = readCardList(anki);
   assert.deepEqual(list.items.map((item) => [item.deck, item.fields.front, item.fields.back, item.fields.example, item.fields.cloze]), [
     ["Spanish", "el gato", ["the cat"], "Mi gato duerme.", false],
-    ["Spanish", "I {{look}} at {{it}}", [], "", true]
+    ["Spanish", "I {{look}} at {{it}}", ["verb"], "", true]
   ]);
 });
 

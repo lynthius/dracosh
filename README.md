@@ -33,7 +33,7 @@ It's made for people who live in a terminal or spend most of the day at a comput
 
 ## Install
 
-You need Node 22.13 or newer.
+You need Node 22.15 or newer.
 
 ```bash
 npm install -g dracosh
@@ -80,6 +80,7 @@ They're slash commands because "pause" and "quit" are perfectly good English ans
 
 ```bash
 dracosh import words.txt            # Dracosh lines, see below
+dracosh import spanish.apkg         # an Anki deck: shared on AnkiWeb, or File → Export → Anki Deck Package
 dracosh import anki-export.txt      # Anki: File → Export → Notes in Plain Text
 dracosh import quizlet.txt          # Quizlet: Export, tab between term and definition
 dracosh import vocabulary.csv       # a spreadsheet (Excel's semicolons work too)
@@ -89,6 +90,8 @@ dracosh import words.csv --deck "Spanish"
 An import reads the file, then shows what it found before anything is saved: how it split the columns, which deck the cards go into, the new cards, the ones already there, and every line it can't use, with its line number. Cards already in the deck with other answers are listed as they are now and as the file has them, and you decide whether they're updated (their progress stays). Answers listed the way Anki and Quizlet decks often have them ("cat, kitty") can be taken as separate answers. A new deck asks which way to quiz, as in `/add`, and the last question says exactly what will be added and updated. When you already have cards, a backup is taken first, so `dracosh restore 1` undoes an import. Outside a terminal nothing is written without `--yes`: the preview ends with the command that imports for real. For scripts, `--update` takes the file's version of cards already there and `--split` splits listed answers.
 
 A header row (`front,back,example`, `term;definition`) is used to pick the columns, in any order. A file that isn't UTF-8 is never guessed at: Dracosh shows its first line read each likely way and asks for `--encoding`.
+
+An Anki package (`.apkg`, or a whole collection's `.colpkg`) goes the same way, whatever language Anki was set up in. Cloze notes become cards with gaps (with a gap's hint), a deck with reverse cards asks both ways, and fields are picked by their names (Word, Meaning, Sentence…). Pictures and sounds stay out, picture cards (image occlusion) are listed as left out, and progress in Anki isn't brought over.
 
 | Export | What you get |
 | --- | --- |
@@ -157,7 +160,7 @@ The other languages live next to it in `locales/`, the tour included. `npm test`
 
 Coming next, roughly in this order:
 
-- More imports: `.apkg` decks shared on AnkiWeb, and a copy straight from a running Anki.
+- Anki without files: a copy straight from a running Anki, and back.
 - Decks and cards in the app: browse, edit and delete with undo, plus a welcome flow for new users.
 - Optional AI help for writing cards, with your own API key or a local model.
 - Linux and Windows, pronunciation there included.

@@ -1,9 +1,9 @@
+import { open } from "node:fs/promises";
 import { crc32, deflateRawSync, inflateRawSync } from "node:zlib";
 
 // A zip file (PKWARE APPNOTE 6.3), the container of an Anki package: each file deflated, names in
 // UTF-8, no zip64 (an export never comes near 4 GB).
 //   writeZip([{ name: "media", data: Buffer }], { date }) → Buffer
-//   readZip(buffer) → Map of name → Buffer (stored or deflated files, as Anki writes them)
 
 const dosTime = (date) => (date.getHours() << 11) | (date.getMinutes() << 5) | (date.getSeconds() >> 1);
 const dosDate = (date) => ((Math.max(date.getFullYear(), 1980) - 1980) << 9) | ((date.getMonth() + 1) << 5) | date.getDate();
@@ -64,27 +64,49 @@ export function writeZip(entries, { date = new Date() } = {}) {
 }
 
 const STORED = 0;
+const END = 0x06054b50;
+const CENTRAL = 0x02014b50;
 
-export function readZip(buffer) {
-  const endAt = buffer.lastIndexOf(Buffer.from([0x50, 0x4b, 0x05, 0x06]));
-  if (endAt < 0) throw new Error("Not a zip file");
-  const count = buffer.readUInt16LE(endAt + 10);
-  let at = buffer.readUInt32LE(endAt + 16);
-  const files = new Map();
-  for (let i = 0; i < count; i++) {
-    if (buffer.readUInt32LE(at) !== 0x02014b50) throw new Error("Damaged zip file");
-    const method = buffer.readUInt16LE(at + 10);
-    const size = buffer.readUInt32LE(at + 20);
-    const nameLength = buffer.readUInt16LE(at + 28);
-    const skip = nameLength + buffer.readUInt16LE(at + 30) + buffer.readUInt16LE(at + 32);
-    const name = buffer.toString("utf8", at + 46, at + 46 + nameLength);
-    const local = buffer.readUInt32LE(at + 42);
-    const dataAt = local + 30 + buffer.readUInt16LE(local + 26) + buffer.readUInt16LE(local + 28);
-    const packed = buffer.subarray(dataAt, dataAt + size);
-    if (method === STORED) files.set(name, packed);
-    else if (method === DEFLATE) files.set(name, inflateRawSync(packed));
-    else throw new Error(`Unsupported zip compression (${method}) in ${name}`);
-    at += 46 + skip;
+// readZip(file, names) → Map of name → Buffer, for just the files asked for (an Anki package can hold
+// gigabytes of media next to the collection). Stored or deflated files, as Anki writes them.
+export async function readZip(file, names) {
+  const handle = await open(file, "r");
+  try {
+    const { size } = await handle.stat();
+    const read = async (position, length) => {
+      const buffer = Buffer.alloc(length);
+      const { bytesRead } = await handle.read(buffer, 0, length, position);
+      return buffer.subarray(0, bytesRead);
+    };
+    // the end record is in the last 22 bytes, or before a comment of up to 64 KB
+    const tailStart = Math.max(0, size - 22 - 0xffff);
+    const tail = await read(tailStart, size - tailStart);
+    let endAt = -1;
+    for (let i = tail.length - 22; i >= 0 && endAt < 0; i--) if (tail.readUInt32LE(i) === END) endAt = i;
+    if (endAt < 0) throw Object.assign(new Error("Not a zip file"), { code: "NOT_ZIP" });
+    const count = tail.readUInt16LE(endAt + 10);
+    const directorySize = tail.readUInt32LE(endAt + 12);
+    const directoryAt = tail.readUInt32LE(endAt + 16);
+    if (directoryAt === 0xffffffff || count === 0xffff) throw Object.assign(new Error("A zip64 file"), { code: "ZIP64" });
+    const directory = await read(directoryAt, directorySize);
+    const found = new Map();
+    for (let at = 0, i = 0; i < count; i++) {
+      if (directory.readUInt32LE(at) !== CENTRAL) throw Object.assign(new Error("Damaged zip file"), { code: "DAMAGED_ZIP" });
+      const nameLength = directory.readUInt16LE(at + 28);
+      const name = directory.toString("utf8", at + 46, at + 46 + nameLength);
+      if (names.includes(name)) found.set(name, { method: directory.readUInt16LE(at + 10), size: directory.readUInt32LE(at + 20), local: directory.readUInt32LE(at + 42) });
+      at += 46 + nameLength + directory.readUInt16LE(at + 30) + directory.readUInt16LE(at + 32);
+    }
+    const files = new Map();
+    for (const [name, { method, size: packedSize, local }] of found) {
+      const header = await read(local, 30);
+      const packed = await read(local + 30 + header.readUInt16LE(26) + header.readUInt16LE(28), packedSize);
+      if (method === STORED) files.set(name, packed);
+      else if (method === DEFLATE) files.set(name, inflateRawSync(packed));
+      else throw Object.assign(new Error(`Unsupported compression in ${name}`), { code: "DAMAGED_ZIP" });
+    }
+    return files;
+  } finally {
+    await handle.close();
   }
-  return files;
 }

@@ -249,7 +249,7 @@ test("a folder, a picture or a phrase: each is said for what it is", () => {
   assert.equal(planImport(emptyLibrary(), "Hello, world\tCześć, świecie", { deckName: "D" }).read.splittable, 0);
 });
 
-test("dracosh export x.apkg writes an Anki package and says how to open it", () => {
+test("dracosh export x.apkg writes an Anki package and says how to open it", async () => {
   const home = mkdtempSync(join(tmpdir(), "dracosh-"));
   assert.equal(run(home, ["import", "-", "--deck", "Spanish", "--yes"], "el gato = the cat\nElla {{come}}.\n").status, 0);
   const file = join(mkdtempSync(join(tmpdir(), "dracosh-out-")), "spanish.apkg");
@@ -257,5 +257,22 @@ test("dracosh export x.apkg writes an Anki package and says how to open it", () 
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /Wrote 2 cards to .*spanish\.apkg\.\nIn Anki: double-click/);
   assert.equal(result.stderr, "", "no warning about SQLite being experimental");
-  assert.deepEqual([...readZip(readFileSync(file)).keys()], ["collection.anki2", "media"]);
+  assert.deepEqual([...(await readZip(file, ["collection.anki2", "media"])).keys()], ["collection.anki2", "media"]);
+});
+
+test("dracosh import x.apkg: Anki's decks with how they ask, a picture card named, pictures and sounds left out", () => {
+  const home = mkdtempSync(join(tmpdir(), "dracosh-"));
+  const file = new URL("./fixtures/anki-modern.apkg", import.meta.url).pathname;
+  const preview = run(home, ["import", file]);
+  assert.equal(preview.status, 0, preview.stderr);
+  assert.match(preview.stdout, /Reading .*anki-modern\.apkg: an Anki package\n2 notes have pictures or sounds/);
+  assert.match(preview.stdout, /1 note can't be added:\n  note 6  a picture with parts to guess \(image occlusion\): Where\?/);
+  assert.equal(preview.stderr, "");
+  const result = run(home, ["import", file, "--yes"]);
+  assert.equal(result.status, 0, result.stderr);
+  const library = JSON.parse(readFileSync(join(home, "library.json"), "utf8"));
+  const decks = Object.fromEntries(library.decks.filter((deck) => !deck.tour).map((deck) => [deck.name, deck.directions]));
+  assert.deepEqual(decks, { Spanish: "forward", "Spanish::Both ways": "both" });
+  assert.equal(library.cards.filter((card) => card.cloze).length, 1);
+  assert.equal(run(home, ["import", file, "--yes"]).stdout.match(/0 new cards · 6 already there/)?.length, 1, "a second import adds nothing");
 });

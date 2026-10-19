@@ -56,6 +56,24 @@ const fromAnkiCloze = (text, anki = false) => {
   if (!new RegExp(ANKI_GAP.source).test(text)) return anki ? text.replace(/(?<!\\)\{\{/g, "\\{{") : text;
   return text.replace(/\{\{(?!c\d+::)/g, "\\{{").replace(ANKI_GAP, "{{$1}}");
 };
+// "{{c1::come::verb}}": Anki's hints, shown in place of the gap. Dracosh has one hint per card
+const gapHints = (text) => [...new Set([...text.matchAll(/\{\{c\d+::[^{}]*?::([^{}]*?)\}\}/g)].map((match) => match[1].trim()).filter(Boolean))].join(", ");
+
+// One Anki note (from a package) → card fields, from its fields' HTML by role. `cloze`: the note
+// type is a cloze one. A cloze note's second field is Anki's Extra, shown after the answer, so it's
+// an example; `hint: true` (Dracosh Cloze) says it's a hint shown with the gap instead.
+export function noteFields({ front = "", back = "", example = "", cloze = false, hint = false }) {
+  const written = htmlLines(front).join(" ");
+  const backLines = htmlLines(back);
+  const extra = htmlLines(example);
+  const text = cloze ? fromAnkiCloze(written, true) : written;
+  if (gapsOf(text).length) {
+    const hintText = hint ? backLines.join(" ") : gapHints(written);
+    return { front: text, back: [hintText].filter(Boolean), example: [...(hint ? [] : backLines), ...extra].join(" "), cloze: true, hasBack: true };
+  }
+  const [answers = "", ...more] = backLines;
+  return { front: written, back: splitAnswers(answers), example: [...more, ...extra].join(" "), cloze: false, hasBack: Boolean(answers) };
+}
 
 // The header lines at the top ("#key:value"); the rest is the body, its line numbers kept
 function readHeader(lines) {
@@ -190,7 +208,7 @@ const isHeaderRow = (cells) => {
 
 // → { front, back, example, deck, skip: Set } column indexes, from a header row or Anki's headers;
 // without names: front, back, example in that order
-function columnsFrom(names, header) {
+export function columnsFrom(names, header = {}) {
   const roles = { front: null, back: null, example: null, deck: null, notetype: null, skip: new Set() };
   const at = (value) => (/^\d+$/.test(String(value ?? "").trim()) ? Number(value) - 1 : null);
   for (const key of ["guid column", "notetype column", "tags column"]) if (at(header[key]) !== null) roles.skip.add(at(header[key]));
@@ -234,7 +252,7 @@ function rowFields(cells, roles, html, anki = false) {
   if (anki && cloze && !more.length && !cell(roles.example)) [answers, more] = ["", [answers].filter(Boolean)];
   const example = [...more, ...lines(cell(roles.example))].join(" ");
   // a cloze card's back is one hint, as in /add
-  const back = cloze ? [answers.replace(/\\;/g, ";").trim()].filter(Boolean) : splitAnswers(answers);
+  const back = cloze ? [answers.replace(/\\;/g, ";").trim() || (anki ? gapHints(written) : "")].filter(Boolean) : splitAnswers(answers);
   // a card without gaps keeps its braces as they are ("\{{x}}" was only there to say they're text)
   return { front: cloze ? front : front.replace(/\\\{\{/g, "{{"), back, example, cloze, hasBack: Boolean(answers) || cloze };
 }

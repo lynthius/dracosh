@@ -48,13 +48,15 @@ const answersKey = (back) => back.map((answer) => answer.trim()).sort().join("\u
 //   { kind: "changed", line, fields, card }  in the deck with other answers or example: asked about
 // problems: [{ line, issue, text, first? }]: issue is noFront, noBack, noSeparator (a Dracosh line
 // without " = "), slash (an answer to type starts with "/"), twice (first: the line it was on before),
-// noDeck, tooLong (a deck name), tour (a deck name taken by the tour).
+// noDeck, tooLong (a deck name), tour (a deck name taken by the tour), picture (an Anki note that
+// is a picture, from a package).
 // `deck`: every card goes into this deck (--deck); `deckName`: the deck for cards the file doesn't put
 // in one (what was asked). `directions`: { deck name: direction } picked for new decks.
 // `split`: in a table, one answer listing several ("cat, kitty", "cat / kitty") becomes several;
-// read.splittable says how many there are, with an example.
-export function planImport(library, text, { deck: only = null, deckName = null, separator = null, csv = false, directions = {}, split = false } = {}) {
-  const list = readCardList(text, { separator, csv });
+// read.splittable says how many there are, with an example. `list`: the cards already read (an Anki
+// package, by apkg.js), instead of `text`.
+export function planImport(library, text, { deck: only = null, deckName = null, separator = null, csv = false, directions = {}, split = false, list: given = null } = {}) {
+  const list = given ?? readCardList(text, { separator, csv });
   const decks = new Map();
   const problems = [];
   const seen = new Map(); // deck name + front → the line it was first on
@@ -66,6 +68,10 @@ export function planImport(library, text, { deck: only = null, deckName = null, 
     const name = fitName((only ?? item.deck ?? deckName ?? "").trim());
     let { fields } = item;
     const problem = (issue, extra = {}) => problems.push({ line: item.line, issue, text: item.source, ...extra });
+    if (item.skip) {
+      problem(item.skip);
+      continue;
+    }
     if (!fields.front) {
       problem("noFront");
       continue;
@@ -75,7 +81,7 @@ export function planImport(library, text, { deck: only = null, deckName = null, 
       continue;
     }
     // a phrase ("Hello, world") is translated by a phrase, not a list
-    const listed = list.format === "table" && !fields.cloze && fields.back.length === 1 && !fields.front.includes(",") && listedAnswers(fields.back[0]);
+    const listed = (list.format === "table" || list.format === "apkg") && !fields.cloze && fields.back.length === 1 && !fields.front.includes(",") && listedAnswers(fields.back[0]);
     if (listed) {
       splittable.push(fields.back[0]);
       if (split) fields = { ...fields, back: listed };
@@ -123,7 +129,7 @@ export function planImport(library, text, { deck: only = null, deckName = null, 
   return {
     decks: [...decks.values()].filter((deck) => deck.items.length),
     problems,
-    read: { anki: list.anki, html: list.html, format: list.format, separator: list.separator, columns: list.columns, ignored: list.ignored, count: list.items.length, splittable: splittable.length, splitExample: splittable[0] ?? null }
+    read: { anki: list.anki, html: list.html, media: list.media ?? 0, format: list.format, separator: list.separator, columns: list.columns, ignored: list.ignored, count: list.items.length, splittable: splittable.length, splitExample: splittable[0] ?? null }
   };
 }
 

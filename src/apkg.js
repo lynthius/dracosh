@@ -1,12 +1,13 @@
 import { createHash } from "node:crypto";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { columnsFrom, htmlLines, noteFields } from "./cardlist.js";
 import { GAP } from "./cardline.js";
 import { escapeHtml, joinAnswers } from "./exporter.js";
 import { cardsOf } from "./library.js";
-import { loadSqlite } from "./sqlite.js";
-import { writeZip } from "./zip.js";
+import { loadSqlite, unzstd } from "./sqlite.js";
+import { readZip, writeZip } from "./zip.js";
 
 // An Anki deck package (.apkg): a zip with the collection as an SQLite file, in the schema Anki
 // writes with "Support older Anki versions" (schema 11, as genanki writes it), so every Anki
@@ -201,4 +202,173 @@ export async function toApkg(library, decks, { now = Date.now() } = {}) {
   } finally {
     rmSync(folder, { recursive: true, force: true });
   }
+}
+
+// ── Reading ──
+//
+// A package from Anki (.apkg, decks; .colpkg, a whole collection) → a card list in the shape
+// readCardList gives (format "apkg"), so an import goes on as from a text file: the same preview,
+// duplicates and backup. Anki has written three kinds of collection over the years, newest first:
+//   collection.anki21b  zstd-compressed, schema 18: note types, fields and decks in tables of their own
+//   collection.anki21   schema 11 (Anki 2.1, and "Support older Anki versions")
+//   collection.anki2    schema 11 (Anki 2.0, genanki and Dracosh); next to a newer one, only a stub
+// A note's deck is the one its cards are in (for a card in a filtered deck, the one it came from). Its
+// note type's kind says how to read it, never its name, which Anki gives in its own language: a cloze
+// type's first field is the text with gaps and the next Anki's Extra, shown after the answer (an
+// example); other types' fields are read by their names when those say (Word, Meaning, Sentence…),
+// otherwise as front and back in order. Dracosh's own note types come back exactly, with how each
+// deck asks. A deck with reverse cards asks both ways. Pictures and sounds stay out; image occlusion
+// notes (masks over a picture) are listed as left out. Progress in Anki isn't brought over.
+
+const COLLECTIONS = ["collection.anki21b", "collection.anki21", "collection.anki2"];
+const notAnki = (why) => Object.assign(new Error(why), { code: "NOT_ANKI" });
+
+export async function readApkg(file) {
+  const { DatabaseSync } = await loadSqlite();
+  let files;
+  try {
+    files = await readZip(file, COLLECTIONS);
+  } catch (err) {
+    throw ["NOT_ZIP", "DAMAGED_ZIP", "ZIP64", "Z_DATA_ERROR", "Z_BUF_ERROR"].includes(err.code) ? notAnki(err.message) : err;
+  }
+  const name = COLLECTIONS.find((each) => files.has(each));
+  if (!name) throw notAnki("No collection in the package");
+  const folder = mkdtempSync(join(tmpdir(), "dracosh-apkg-"));
+  try {
+    const path = join(folder, "collection.db");
+    let db;
+    try {
+      writeFileSync(path, name.endsWith("b") ? unzstd(files.get(name)) : files.get(name));
+      if (name.endsWith("b")) dropUnicase(DatabaseSync, path);
+      db = new DatabaseSync(path, { readOnly: true });
+      return readCollection(db);
+    } catch (err) {
+      // not a database, not zstd, or a collection without what Anki keeps in one
+      const unreadable = err.code === "ERR_SQLITE_ERROR" || String(err.code).startsWith("ZSTD_") || err instanceof SyntaxError || err instanceof TypeError;
+      throw unreadable ? notAnki(err.message) : err;
+    } finally {
+      db?.close();
+    }
+  } finally {
+    rmSync(folder, { recursive: true, force: true });
+  }
+}
+
+// Anki compares names with a collation of its own ("unicase") that plain SQLite doesn't have, and
+// won't read those tables without it. This copy is a throwaway one, so the collation is taken out of
+// its schema: names are only read here, never sorted or looked up.
+function dropUnicase(DatabaseSync, path) {
+  const db = new DatabaseSync(path, { defensive: false });
+  try {
+    db.exec("PRAGMA writable_schema = ON");
+    db.prepare("UPDATE sqlite_master SET sql = replace(sql, ' COLLATE unicase', '') WHERE sql LIKE '%COLLATE unicase%'").run();
+    db.exec("PRAGMA writable_schema = OFF");
+  } finally {
+    db.close();
+  }
+}
+
+// field `number` of a protobuf message, when it's a number (schema 18 keeps a note type's settings so)
+function protobufNumber(bytes, number) {
+  let at = 0;
+  const varint = () => {
+    let value = 0;
+    for (let shift = 0; at < bytes.length; shift += 7) {
+      const byte = bytes[at++];
+      value += (byte & 0x7f) * 2 ** shift;
+      if (byte < 0x80) break;
+    }
+    return value;
+  };
+  while (at < bytes.length) {
+    const key = varint();
+    const wire = key % 8;
+    if (wire === 0) {
+      const value = varint();
+      if (Math.floor(key / 8) === number) return value;
+    } else if (wire === 1) at += 8;
+    else if (wire === 2) at += varint();
+    else if (wire === 5) at += 4;
+    else return null;
+  }
+  return null;
+}
+
+const CLOZE_KIND = 1;
+
+// → { types: Map id → { name, cloze, fields: [names] }, decks: Map id → name }
+function schema18(db) {
+  const types = new Map(db.prepare("SELECT id, name, config FROM notetypes").all().map(({ id, name, config }) => [id, { name, cloze: protobufNumber(config, 1) === CLOZE_KIND, fields: [] }]));
+  for (const { ntid, ord, name } of db.prepare("SELECT ntid, ord, name FROM fields").all()) if (types.has(ntid)) types.get(ntid).fields[ord] = name;
+  const decks = new Map(db.prepare("SELECT id, name FROM decks").all().map(({ id, name }) => [id, name.replaceAll("\x1f", "::")]));
+  return { types, decks };
+}
+
+function schema11(db) {
+  const col = db.prepare("SELECT models, decks FROM col").get();
+  const types = new Map(Object.values(JSON.parse(col.models)).map((type) => [Number(type.id), { name: type.name, cloze: type.type === CLOZE_KIND, fields: [...type.flds].sort((a, b) => a.ord - b.ord).map((f) => f.name) }]));
+  const decks = new Map(Object.values(JSON.parse(col.decks)).map((deck) => [Number(deck.id), deck.name]));
+  return { types, decks };
+}
+
+const MEDIA = /<img\b|\[sound:/i;
+const IMAGE_OCCLUSION = /\{\{c\d+::image-occlusion:/;
+const textOf = (html) => htmlLines(html).join(" ");
+
+function readCollection(db) {
+  const tables = new Set(db.prepare("SELECT name FROM sqlite_master WHERE type = 'table'").all().map((row) => row.name));
+  if (!tables.has("notes") || !tables.has("cards") || !tables.has("col")) throw notAnki("Not an Anki collection");
+  const { types, decks } = tables.has("notetypes") ? schema18(db) : schema11(db);
+  const cardsOfNote = new Map();
+  for (const { nid, did, odid, ord } of db.prepare("SELECT nid, did, odid, ord FROM cards ORDER BY ord").all()) {
+    if (!cardsOfNote.has(nid)) cardsOfNote.set(nid, []);
+    cardsOfNote.get(nid).push({ deck: odid || did, ord });
+  }
+
+  const items = [];
+  const asks = new Map(); // deck name → how its notes ask: { forward, backward, both } counts
+  let media = 0;
+  db.prepare("SELECT id, mid, flds FROM notes ORDER BY id")
+    .all()
+    .forEach((note, i) => {
+      const type = types.get(note.mid) ?? { name: "", cloze: false, fields: [] };
+      const values = note.flds.split("\x1f");
+      const byName = (name) => values[type.fields.indexOf(name)] ?? "";
+      const cards = cardsOfNote.get(note.id) ?? [];
+      const deck = decks.get(cards[0]?.deck) ?? null;
+      if (values.some((value) => MEDIA.test(value))) media++;
+      const item = { line: i + 1, deck, direction: null, source: values.slice(0, 2).map(textOf).filter(Boolean).join(" = ") };
+      // a picture card is named by its header, or its picture's file
+      const picture = () => values.slice(1).map(textOf).find(Boolean) ?? values.join(" ").match(/<img[^>]*src="([^"]+)"/i)?.[1] ?? "";
+      if (type.cloze && IMAGE_OCCLUSION.test(values[0])) return items.push({ ...item, source: picture(), skip: "picture", fields: noteFields({}) });
+
+      let fields;
+      let ask = null;
+      if (note.mid === BASIC_ID || (type.name === "Dracosh" && type.fields.includes("Forward"))) {
+        fields = noteFields({ front: byName("Front"), back: byName("Back"), example: byName("Example") });
+        const [forward, backward] = [byName("Forward"), byName("Backward")].map((flag) => Boolean(textOf(flag)));
+        ask = forward && backward ? "both" : backward ? "backward" : "forward";
+      } else if (note.mid === CLOZE_ID || (type.name === "Dracosh Cloze" && type.fields.includes("Hint"))) {
+        fields = noteFields({ front: byName("Text"), back: byName("Hint"), example: byName("Example"), cloze: true, hint: true });
+      } else if (type.cloze) {
+        fields = noteFields({ front: values[0], back: values[1], cloze: true });
+      } else {
+        const roles = columnsFrom(type.fields.length >= 2 ? type.fields : null);
+        fields = noteFields({ front: values[roles.front], back: values[roles.back], example: roles.example === null ? "" : values[roles.example] });
+        const ords = new Set(cards.map((card) => card.ord));
+        ask = ords.has(0) && cards.some((card) => card.ord > 0) ? "both" : "forward";
+      }
+      if (ask && deck) {
+        const counts = asks.get(deck) ?? { forward: 0, backward: 0, both: 0 };
+        counts[ask]++;
+        asks.set(deck, counts);
+      }
+      items.push({ ...item, fields });
+    });
+  // a deck asks the way most of its notes do
+  for (const item of items) {
+    const counts = asks.get(item.deck);
+    if (counts) item.direction = Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
+  }
+  return { format: "apkg", separator: null, header: {}, items, columns: null, ignored: [], unknown: [], anki: true, html: true, media };
 }
