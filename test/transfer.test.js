@@ -9,6 +9,7 @@ import { toAnki, toCsv, toDracoshText } from "../src/exporter.js";
 import { readCardList } from "../src/cardlist.js";
 import { gapsOf, plainFront } from "../src/cardline.js";
 import { addCard, cardsOf, createDeck, emptyLibrary } from "../src/library.js";
+import { readZip } from "../src/zip.js";
 
 const library = () => {
   const lib = emptyLibrary();
@@ -246,4 +247,15 @@ test("a folder, a picture or a phrase: each is said for what it is", () => {
   assert.match(run(home, ["import", "a.txt", "b.txt"]).stderr, /one file at a time/);
   assert.match(run(home, ["--bogus"]).stderr, /Unknown option --bogus/);
   assert.equal(planImport(emptyLibrary(), "Hello, world\tCześć, świecie", { deckName: "D" }).read.splittable, 0);
+});
+
+test("dracosh export x.apkg writes an Anki package and says how to open it", () => {
+  const home = mkdtempSync(join(tmpdir(), "dracosh-"));
+  assert.equal(run(home, ["import", "-", "--deck", "Spanish", "--yes"], "el gato = the cat\nElla {{come}}.\n").status, 0);
+  const file = join(mkdtempSync(join(tmpdir(), "dracosh-out-")), "spanish.apkg");
+  const result = run(home, ["export", file]);
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /Wrote 2 cards to .*spanish\.apkg\.\nIn Anki: double-click/);
+  assert.equal(result.stderr, "", "no warning about SQLite being experimental");
+  assert.deepEqual([...readZip(readFileSync(file)).keys()], ["collection.anki2", "media"]);
 });

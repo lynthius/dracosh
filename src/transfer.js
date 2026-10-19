@@ -7,6 +7,8 @@ import { backupData, backupNow, restoreBackup } from "./backup.js";
 import { plainFront } from "./cardline.js";
 import { readCardList, separatorNamed } from "./cardlist.js";
 import { applyImport, decodeText, planCounts, planImport } from "./importer.js";
+import { toApkg } from "./apkg.js";
+import { loadSqlite } from "./sqlite.js";
 import { EXPORT_FORMATS, toAnki, toCsv, toDracoshText } from "./exporter.js";
 import { deckLanguages, isKnown, languageName } from "./language.js";
 import { cardsOf, findDeck, MAX_DECK_NAME } from "./library.js";
@@ -331,6 +333,7 @@ export async function runExport(file, options) {
   const format = file === "-" ? "txt" : extname(file).slice(1).toLowerCase();
   if (!EXPORT_FORMATS.includes(format)) throw new Error(t("export.unknownFormat", { file }));
   if (format === "json" && options.deck) throw new Error(t("export.jsonAll"));
+  if (format === "apkg") await loadSqlite(); // a Node without it is said before anything is asked
 
   const library = await loadLibrary();
   let decks = library.decks.filter((deck) => !deck.tour);
@@ -373,8 +376,14 @@ export async function runExport(file, options) {
     return out(t("export.nextCloze", { file: clozeFile }));
   }
 
-  const text =
-    format === "json" ? `${JSON.stringify(await backupData("export"), null, 2)}\n` : format === "csv" ? toCsv(library, decks) : format === "tsv" ? toAnki(library, decks) : toDracoshText(library, decks);
+  const contents = {
+    json: async () => `${JSON.stringify(await backupData("export"), null, 2)}\n`,
+    apkg: () => toApkg(library, decks),
+    tsv: () => toAnki(library, decks),
+    csv: () => toCsv(library, decks),
+    txt: () => toDracoshText(library, decks)
+  };
+  const text = await contents[format]();
   if (file === "-") return process.stdout.write(text);
   await write(file, text);
   out(format === "json" ? t("export.wroteAll", { file }) : t("export.wrote", { count: count(), file }));

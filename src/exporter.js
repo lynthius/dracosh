@@ -5,11 +5,12 @@ import { cardsOf } from "./library.js";
 // Decks written out as text, picked by the file's extension:
 //   .txt  Dracosh lines, as /add takes them, with "#deck:" and "#direction:" above each deck: easy to
 //         read and edit (by you or an AI assistant), and `dracosh import` reads it back unchanged
-//   .tsv  for Anki: File → Import takes it as it is (tab-separated, with Anki's header lines)
+//   .apkg for Anki: a deck package with its own note types (apkg.js)
+//   .tsv  Anki's plain text: File → Import takes it as it is (tab-separated, with Anki's header lines)
 //   .csv  for spreadsheets: front, back, example (and deck, when there are several)
 // A full backup (.json) is backup.js's job. Each function takes the decks to write and the library.
 
-export const EXPORT_FORMATS = ["txt", "tsv", "csv", "json"];
+export const EXPORT_FORMATS = ["txt", "apkg", "tsv", "csv", "json"];
 
 // a line starting with "#" would read as a comment: "\#" keeps it a card (and "\\#" a "\#" front)
 const keepHash = (line) => (/^\\*#/.test(line) ? `\\${line}` : line);
@@ -43,9 +44,9 @@ export function toCsv(library, decks) {
 const textFront = (card) => (card.cloze ? card.front : card.front.replace(/\{\{/g, "\\{{"));
 
 // answers joined by ";" as in /add: one holding a ";" keeps it as "\;"
-const joinAnswers = (back) => back.map((answer) => answer.replace(/;/g, "\\;")).join("; ");
+export const joinAnswers = (back) => back.map((answer) => answer.replace(/;/g, "\\;")).join("; ");
 
-const escapeHtml = (text) => String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+export const escapeHtml = (text) => String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 // For Anki, one kind of card per file (`cloze`: the cloze cards, otherwise the others). Anki names its
 // note types in the language it was set up in ("Basic" is "Podstawowy", "Einfach"…) and finds them by

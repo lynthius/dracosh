@@ -17,7 +17,7 @@ It's made for people who live in a terminal or spend most of the day at a comput
 - Your cards live in Dracosh's own library, organised in decks; no other app needs to be running
 - Add cards, start decks and switch between them right in the app (`/add`, `/decks`)
 - One line is a card: `el gato = the cat; the kitty // Mi gato duerme.` (`;` separates right answers, `//` adds an example). Paste a whole list, or rows copied from a spreadsheet, and check it before it's saved
-- Import cards from Anki and Quizlet exports, a spreadsheet's CSV or a plain text list, and export them for Anki, a spreadsheet or a text file you can edit (or have an AI assistant write); you see what changes before anything is saved
+- Import cards from Anki and Quizlet exports, a spreadsheet's CSV or a plain text list, and export them as an Anki deck package, for a spreadsheet or as a text file you can edit (or have an AI assistant write); you see what changes before anything is saved
 - Each deck is asked the way you pick after its first card: front → back, back → front, or both ways; change it any time in `/decks`
 - Pronunciation, if you turn it on in `/settings`: once the answer is out, the word in the language you're learning in that deck is read aloud with a macOS voice (other systems later); decks in one language, like definitions, stay quiet
 - Dracosh works out which languages a deck is in (Spanish → English, say) and which of the two you're learning, from the cards, the deck's name and your other decks, whatever language you use Dracosh in, and says when it's only a guess; set either in `/decks` when it can't tell or guesses wrong
@@ -33,7 +33,7 @@ It's made for people who live in a terminal or spend most of the day at a comput
 
 ## Install
 
-You need Node 22 or newer.
+You need Node 22.13 or newer.
 
 ```bash
 npm install -g dracosh
@@ -92,12 +92,13 @@ A header row (`front,back,example`, `term;definition`) is used to pick the colum
 
 | Export | What you get |
 | --- | --- |
+| `dracosh export spanish.apkg` | for Anki: open it (double-click, or File → Import) and the decks are there, in an Anki set up in any language. It brings two note types of its own, Dracosh and Dracosh Cloze, with the example in a field of its own and a card for each way the deck asks. Export again after changing cards and Anki updates the same notes instead of adding them twice. Progress isn't carried over: the cards start as new |
 | `dracosh export spanish.txt` | Dracosh lines: easy to read and edit, and `dracosh import` reads them back unchanged |
-| `dracosh export spanish.tsv` | for Anki: File → Import; cloze cards go into `spanish-cloze.tsv` next to it, as Anki keeps the two note types apart. If your Anki isn't in English, pick its Basic and Cloze note types in the import dialog |
+| `dracosh export spanish.tsv` | Anki's plain text, for other apps or when you want Anki's own note types: File → Import; cloze cards go into `spanish-cloze.tsv` next to it, as Anki keeps the two note types apart. If your Anki isn't in English, pick its Basic and Cloze note types in the import dialog |
 | `dracosh export spanish.csv` | for a spreadsheet: front, back, example (and deck) |
 | `dracosh export everything.json` | all your cards, progress and settings; `dracosh import everything.json` brings them back, on another computer too |
 
-Add `--deck "Spanish"` for one deck; without it you get all of them. Only `.txt` and `.json` keep how each deck asks; a `.csv` or `.tsv` holds just the cards. An export never writes into Dracosh's own folder.
+Add `--deck "Spanish"` for one deck; without it you get all of them. `.txt`, `.json` and `.apkg` keep how each deck asks; a `.csv` or `.tsv` holds just the cards. An export never writes into Dracosh's own folder.
 
 ### The Dracosh text format
 

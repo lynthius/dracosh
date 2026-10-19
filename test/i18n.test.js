@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readdirSync, readFileSync } from "node:fs";
 import { test } from "node:test";
 import { englishMessages, isPlural, keysOf, LANGUAGES, setLanguage, systemLanguage, t } from "../src/i18n.js";
+import { EXPORT_FORMATS } from "../src/exporter.js";
 import { judge } from "../src/judge.js";
 import { BADGES, ELEMENTS, STAGES } from "../src/progress.js";
 import { TIPS } from "../src/tips.js";
@@ -41,7 +42,7 @@ const dynamicKeys = [
   ...["tab", "comma", "semicolon", "pipe", "colon", "space"].map((name) => `import.separators.${name}`),
   ...["deck", "front", "back", "example"].map((role) => `import.roles.${role}`),
   ...["noFront", "noBack", "noSeparator", "noDeck", "badDirection"].map((issue) => `import.issues.${issue}`),
-  ...["txt", "tsv", "csv", "json"].map((format) => `export.next.${format}`),
+  ...EXPORT_FORMATS.map((format) => `export.next.${format}`),
   ...["idle", "smile", "happy", "sad", "blink", "sleep"].map((face) => `preview.faces.${face}`),
   ...Object.keys(english.preview.scenes).flatMap((id) => [`preview.scenes.${id}.label`, `preview.scenes.${id}.hint`]),
   ...Object.keys(english.commands).map((name) => `commands.${name}`)

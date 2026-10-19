@@ -781,7 +781,7 @@
     "slashSwitch": "Trzeba by wpisać „{text}”, a w quizie / otwiera komendy. Najpierw popraw tę kartę."
   },
   "cli": {
-    "help": "Dracosh: trener słówek i quizów w terminalu\n\nUżycie: dracosh [opcje]\n        dracosh import <plik|->   dodaj karty z pliku (.txt, .csv, .tsv, eksporty z Anki i Quizletu, kopia .json) albo „-” ze standardowego wejścia\n        dracosh export <plik>     zapisz talie do .txt, .tsv (dla Anki), .csv albo .json (wszystko)\n        dracosh restore [numer]   lista kopii zapasowych albo przywrócenie jednej z nich\n\n  --deck <nazwa>   quiz z tej talii, tylko tym razem (inaczej ta wybrana w /decks)\n                   przy import i export: talia do uzupełnienia albo zapisania\n  --every <czas>   odstęp między pytaniami: 30s, 10m, 1h (domyślnie: {interval})\n  --no-sound       wyłącz dźwięki\n  --volume <0-1>   głośność (domyślnie: {volume})\n  --stats          wypisz postępy i zakończ\n  --data           pokaż, gdzie są karty, postępy i kopie zapasowe\n  --preview        obejrzyj wszystkie animacje i ekrany na zmyślonych danych (nic się nie zapisuje)\n  --update         import: karty, które już są, dostają odpowiedzi z pliku (inaczej pytanie)\n  --split          import: odpowiedź z kilkoma wariantami („cat, kitty”) staje się kilkoma odpowiedziami\n  --separator <s>  import: co dzieli kolumny: tab, comma, semicolon, pipe, colon, space albo znak\n  --encoding <e>   import: plik, który nie jest w UTF-8, np. windows-1250\n  -y, --yes        import, eksport albo przywrócenie bez pytania\n  -h, --help       pokaż tę pomoc\n\nOpcje zmieniają zapisane ustawienia tylko na to uruchomienie. Zapisane zmienisz w /settings.\n\nW trakcie: Enter wysyła (pusty pokazuje odpowiedź, potem 1 albo 2), „/” otwiera menu komend (/add, /decks, /settings, /stats, /help…),\nEsc wychodzi (najpierw czyści wpisany tekst). Ctrl+C też działa.\nMiędzy kartami: Enter od razu zadaje następną, q wychodzi. Resztę wyjaśnia /help.",
+    "help": "Dracosh: trener słówek i quizów w terminalu\n\nUżycie: dracosh [opcje]\n        dracosh import <plik|->   dodaj karty z pliku (.txt, .csv, .tsv, eksporty z Anki i Quizletu, kopia .json) albo „-” ze standardowego wejścia\n        dracosh export <plik>     zapisz talie do .apkg (Anki), .txt, .tsv, .csv albo .json (wszystko)\n        dracosh restore [numer]   lista kopii zapasowych albo przywrócenie jednej z nich\n\n  --deck <nazwa>   quiz z tej talii, tylko tym razem (inaczej ta wybrana w /decks)\n                   przy import i export: talia do uzupełnienia albo zapisania\n  --every <czas>   odstęp między pytaniami: 30s, 10m, 1h (domyślnie: {interval})\n  --no-sound       wyłącz dźwięki\n  --volume <0-1>   głośność (domyślnie: {volume})\n  --stats          wypisz postępy i zakończ\n  --data           pokaż, gdzie są karty, postępy i kopie zapasowe\n  --preview        obejrzyj wszystkie animacje i ekrany na zmyślonych danych (nic się nie zapisuje)\n  --update         import: karty, które już są, dostają odpowiedzi z pliku (inaczej pytanie)\n  --split          import: odpowiedź z kilkoma wariantami („cat, kitty”) staje się kilkoma odpowiedziami\n  --separator <s>  import: co dzieli kolumny: tab, comma, semicolon, pipe, colon, space albo znak\n  --encoding <e>   import: plik, który nie jest w UTF-8, np. windows-1250\n  -y, --yes        import, eksport albo przywrócenie bez pytania\n  -h, --help       pokaż tę pomoc\n\nOpcje zmieniają zapisane ustawienia tylko na to uruchomienie. Zapisane zmienisz w /settings.\n\nW trakcie: Enter wysyła (pusty pokazuje odpowiedź, potem 1 albo 2), „/” otwiera menu komend (/add, /decks, /settings, /stats, /help…),\nEsc wychodzi (najpierw czyści wpisany tekst). Ctrl+C też działa.\nMiędzy kartami: Enter od razu zadaje następną, q wychodzi. Resztę wyjaśnia /help.",
     "badEvery": "Niepoprawne --every „{value}”. Użyj np. 30s, 10m, 1h.",
     "badVolume": "Niepoprawne --volume „{value}”. Podaj liczbę od 0 do 1.",
     "unknownCommand": "Nieznana komenda „{command}”. Zobacz dracosh --help.",
@@ -1347,8 +1347,9 @@
     "backupReplaces": "Zastępuje to, co masz teraz ({decks} · {cards})."
   },
   "export": {
-    "needFile": "Dokąd? dracosh export <plik>: .txt (Dracosh), .tsv (Anki), .csv albo .json (wszystko)",
-    "unknownFormat": "{file}: format wybiera końcówka pliku: .txt (Dracosh), .tsv (Anki), .csv albo .json (wszystko).",
+    "needFile": "Dokąd? dracosh export <plik>: .apkg (Anki), .txt (Dracosh), .tsv (tekst dla Anki), .csv albo .json (wszystko)",
+    "unknownFormat": "{file}: format wybiera końcówka pliku: .apkg (Anki), .txt (Dracosh), .tsv (tekst dla Anki), .csv albo .json (wszystko).",
+    "needsNode": "Paczka Anki wymaga Node {version} lub nowszego (masz {current}). Zaktualizuj Node albo wyeksportuj do .tsv.",
     "jsonAll": "Eksport .json zawiera wszystko (wszystkie talie, postępy i ustawienia): pomiń --deck.",
     "noDecks": "Nie ma jeszcze własnych talii do eksportu.",
     "exists": "{file} już istnieje. Nadpisać?",
@@ -1362,6 +1363,7 @@
     "wroteAll": "Zapisano karty, postępy i ustawienia do {file}.",
     "next": {
       "txt": "Wczytasz go z powrotem przez: dracosh import {file}",
+      "apkg": "W Anki: kliknij dwa razy {file} albo wybierz Plik → Importuj. Paczka ma własne typy notatek, więc nic nie trzeba wybierać, a kolejny eksport zaktualizuje te same notatki.",
       "tsv": "W Anki: Plik → Importuj, wybierz {file} i sprawdź, czy typ notatki to Podstawowy.",
       "csv": "Otworzy się w każdym arkuszu; dracosh import {file} wczyta go z powrotem.",
       "json": "dracosh import {file} przywraca wszystko, na tym albo innym komputerze."
