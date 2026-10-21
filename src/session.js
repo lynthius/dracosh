@@ -2,8 +2,8 @@ import { t as say } from "./i18n.js"; // `t` and `text` are taken here (the cloc
 import { blankGap, plainFront } from "./cardline.js";
 import { ALMOST, closestCandidate, judge } from "./judge.js";
 import { addVacation, applyAnswer, applyCaughtUp, markWorkWaiting, applyOverrule, calendarMonth, cancelVacations, ensureProgress, markBadgesSeen, missedOn, recordMiss, snapshot, undoMiss, unseenBadges, vacationInfo } from "./progress.js";
-import { BOX_INTERVALS_DAYS, describeDue, grade, itemKey, nextDueAt, pickNext, startOfTomorrow } from "./scheduler.js";
-import { recordAnswer, saveState } from "./store.js";
+import { describeDue, grade, intervalDays, itemKey, nextDueAt, pickNext, Rating, ratingFor, startOfTomorrow } from "./scheduler.js";
+import { recordAnswer, saveState, STATE_VERSION } from "./store.js";
 import { createTipDeck } from "./tips.js";
 import { dayKey } from "./dates.js";
 import { parsePause } from "./pause.js";
@@ -32,6 +32,14 @@ export function toSpeak(question, answer = null) {
 
 // Quiz logic without any I/O of its own: words, settings and persistence are injected, the UI only renders what this returns.
 // `loadAllWords` → [{ words, deck }] for every deck of yours: "all done for today" means the whole library.
+// the days until a card comes back (0: minutes away, still being learned), and the days a clean answer
+// would have given it; null when the difference isn't worth a line (a day or two, or under a quarter)
+function heldBack(entry, would) {
+  const [days, wouldDays] = [intervalDays(entry), intervalDays(would)];
+  const worth = days === 0 ? wouldDays > 0 : wouldDays - days >= 2 && wouldDays >= days * 1.25;
+  return worth ? { days, would: wouldDays } : null;
+}
+
 export function createSession({ loadWords, loadAllWords, state, getSettings, save = saveState, now = Date.now, tipDeck = createTipDeck({ state }) }) {
   const rules = () => ({ skipWeekends: getSettings().skipWeekends });
   const totals = { asked: 0, correct: 0, combo: 0 };
@@ -134,7 +142,7 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
   // An empty Enter shows the answer and nothing is written yet: you say whether you knew it (selfGrade).
   const reveal = (question) => ({ expected: question.expected, example: question.word.example });
 
-  // After a reveal. "Knew it" counts exactly like a typed right answer: boxes, goal, streak, combo and
+  // After a reveal. "Knew it" counts exactly like a typed right answer: scheduling, goal, streak, combo and
   // badges. Long answers can't be typed word for word, and they must be able to earn everything too.
   async function selfGrade(question, knew, { hinted = false } = {}) {
     return { ...(await record(question, { result: knew ? "exact" : "wrong", text: "", hinted })), self: true };
@@ -146,11 +154,13 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
     const t = now();
     const before = state.items[key];
     const comboBefore = totals.combo;
-    // almost right (an article left out, an umlaut left plain) counts, but the card doesn't move up, like with a hint
-    const almost = ALMOST.includes(result);
-    const entry = grade(before, correct, t, { hinted: hinted || almost });
-    const would = almost ? grade(before, true, t, { hinted }) : entry; // a hint alone would have held it too
-    const held = would.box > entry.box ? { days: BOX_INTERVALS_DAYS[entry.box - 1], would: BOX_INTERVALS_DAYS[would.box - 1] } : null;
+    // almost right (an article left out, an umlaut left plain) or a typo counts, but like with a hint
+    // the card comes back sooner than after a clean answer: `held` says when, and when it would have
+    const almost = ALMOST.includes(result) || result === "typo";
+    const rating = ratingFor({ correct, hinted, almost });
+    const entry = grade(before, rating, t);
+    // a tour card never comes back, so there's nothing to say about when
+    const held = rating === Rating.Hard && !question.tour ? heldBack(entry, grade(before, Rating.Good, t)) : null;
     recordAnswer(state, question.word.noteId, question.direction, entry, t, { countNew: !question.tour });
 
     totals.asked += 1;
@@ -179,7 +189,7 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
     const { question, text, key, before, comboBefore, hinted, at } = lastWrong;
     lastWrong = null;
 
-    const entry = grade(before, true, at, { hinted });
+    const entry = grade(before, ratingFor({ correct: true, hinted }), at);
     state.items[key] = entry;
     undoMiss(state, key, at);
     state.accepted ??= {};
@@ -264,12 +274,12 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
   }
 
   // Reset from /settings (the caller makes a backup first). "progress" starts the game over: badges,
-  // streak, stats and the dragon's form and element; your cards and their boxes stay. "everything"
+  // streak, stats and the dragon's form and element; your cards and how well you know them stay. "everything"
   // empties the state as on a fresh install, so the egg hatches again.
   async function reset(scope) {
     if (scope === "everything") {
       for (const key of Object.keys(state)) delete state[key];
-      Object.assign(state, { version: 1, items: {}, newToday: { date: "", count: 0 } });
+      Object.assign(state, { version: STATE_VERSION, items: {}, newToday: { date: "", count: 0 } });
     } else {
       delete state.progress;
       delete state.tips;

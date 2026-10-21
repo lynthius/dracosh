@@ -49,7 +49,9 @@ test("a long random run keeps the progress data consistent", async () => {
   assert.ok(stats.companion.index >= 0 && stats.companion.index <= 5);
 
   for (const entry of Object.values(state.items)) {
-    assert.ok(entry.box >= 1 && entry.box <= 5, "box in range");
+    assert.ok(["learning", "review", "relearning"].includes(entry.phase), "a known phase");
+    assert.ok(entry.stability > 0 && entry.difficulty >= 1 && entry.difficulty <= 10, "FSRS's memory in range");
+    assert.ok(entry.due > entry.last, "due after the last answer");
     assert.ok(entry.seen === entry.correct + entry.wrong, "seen = correct + wrong");
   }
   for (const [key, day] of Object.entries(state.progress.days)) {

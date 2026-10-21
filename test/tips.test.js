@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { COMMANDS } from "../src/commands.js";
 import { MAX_FREEZES, STAGES } from "../src/progress.js";
-import { BOX_INTERVALS_DAYS, NEW_PER_DAY } from "../src/scheduler.js";
+import { NEW_PER_DAY, RELEARN_DELAY } from "../src/scheduler.js";
 import { createTipDeck, shouldShowTip, TIPS } from "../src/tips.js";
 
 test("the tips are well-formed and short enough for the wait screen", () => {
@@ -20,9 +20,9 @@ test("the tips only name commands that exist and numbers the app really uses", (
     for (const command of tip.text.match(/(?<![\w~])\/[a-z]+/g) ?? []) assert.ok(names.some((name) => name.startsWith(command)), `${tip.id}: ${command}`);
   }
   const text = (id) => TIPS.find((t) => t.id === id).text;
-  assert.match(text("cards-boxes"), new RegExp(`${BOX_INTERVALS_DAYS.slice(0, -1).join(", ")}, then ${BOX_INTERVALS_DAYS.at(-1)} days`));
   assert.match(text("dragon-forms"), new RegExp(`${STAGES.slice(1, -1).map((s) => s.from).join(", ")} and ${STAGES.at(-1).from} days`));
   assert.match(text("cards-new"), new RegExp(`${NEW_PER_DAY} new`));
+  assert.equal(RELEARN_DELAY, 10 * 60_000, "cards-miss says a missed card comes back within minutes");
   assert.equal(MAX_FREEZES, 2, "streak-freeze says you can keep two");
 });
 

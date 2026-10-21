@@ -6,9 +6,9 @@ import { createInterface } from "node:readline/promises";
 import { createAlerts } from "./alerts.js";
 import { existsSync } from "node:fs";
 import { language, setLanguage, t } from "./i18n.js";
-import { BACKUP_DIR, dailyBackup, listBackups, restoreBackup } from "./backup.js";
+import { BACKUP_DIR, dailyBackup, listBackups, restoreBackup, saveUpgraded } from "./backup.js";
 import { ensureProgress, snapshot } from "./progress.js";
-import { BOX_INTERVALS_DAYS } from "./scheduler.js";
+import { intervalDays, MASTERED_DAYS } from "./scheduler.js";
 import { createSession } from "./session.js";
 import { DEFAULTS, formatInterval, normalizeSettings } from "./settings.js";
 import { seedLibrary } from "./starter.js";
@@ -45,11 +45,13 @@ function printStats(state, settings) {
 
   const entries = Object.values(state.items);
   if (!entries.length) return;
-  const perBox = BOX_INTERVALS_DAYS.map((days, i) => t("cli.stats.box", { box: i + 1, days, count: entries.filter((e) => e.box === i + 1).length }));
+  // how far apart the reviews are: still learning (minutes), under a week, under a month, a month or more
+  const spread = { learning: 0, week: 0, month: 0, mastered: 0 };
+  for (const entry of entries) spread[entry.phase !== "review" ? "learning" : intervalDays(entry) < 7 ? "week" : intervalDays(entry) < MASTERED_DAYS ? "month" : "mastered"] += 1;
   const correct = entries.reduce((sum, e) => sum + e.correct, 0);
   const total = entries.reduce((sum, e) => sum + e.seen, 0);
   console.log(t("cli.stats.practised", { count: entries.length, correct, total, percent: Math.round((correct / total) * 100) }));
-  console.log(perBox.join("  "));
+  console.log(t("cli.stats.spread", spread));
 }
 
 const formatTime = (ms) => new Date(ms).toLocaleString("sv").slice(0, 16);
@@ -163,6 +165,7 @@ async function main() {
 
   acquireLock();
   await dailyBackup();
+  await saveUpgraded(state);
   if (seeded) await saveLibrary(library);
 
   // --deck must exist (fail fast, before taking over the screen); a deck saved in /decks that has

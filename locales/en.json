@@ -1,6 +1,6 @@
 {
   "commands": {
-    "hint": "Reveal another letter (the card won't climb a box)",
+    "hint": "Reveal another letter (the card comes back sooner)",
     "add": "Add cards to a deck, or start a new one",
     "decks": "Switch to another deck, or start a new one",
     "settings": "Language, rhythm, interval, quiet hours, sound, goal, tips",
@@ -36,8 +36,8 @@
       "gradeWhat": "after the answer is shown: didn't know (or Esc) / knew it"
     },
     "how": {
-      "boxes": "A right answer moves a card to a later box: it comes back in {first}, then {last} days. A miss sends it back to the first box.",
-      "typos": "One wrong letter in a longer word still counts, and you see the right spelling.",
+      "spacing": "Every card gets its own spacing: the better you know it, the longer it waits, from days to months. A miss brings it back in 10 minutes.",
+      "typos": "One wrong letter in a longer word still counts, and you see the right spelling. The card comes back a little sooner, as with a hint.",
       "streak": "Reach your daily goal to keep your streak going; a day where you did every card there was counts too. Your dragon grows with your best streak.",
       "freezes": "A freeze covers a day you missed. You start with {max} and get one back each week, {max} at most.",
       "cards": "In /add a line is a card: kot = cat; kitty // example. Braces make a gap to fill in: I {{look forward}} to it."
@@ -280,7 +280,7 @@
   "quiz": {
     "youWrote": "you wrote ",
     "closeEnough": "  (close enough)",
-    "hintUsed": "hint used · the card stays in its box",
+    "hintUsed": "hint used",
     "countedCorrect": "counted as correct",
     "acceptedFromNow": " · \"{answer}\" is accepted from now on",
     "tip": "tip · {cat}",
@@ -335,9 +335,14 @@
       "umlaut": "Almost: mind the umlaut (ä, ö, ü); ae, oe, ue work too.",
       "article-umlaut": "Almost: mind the article and the umlaut; ae, oe, ue work too.",
       "held": "The card comes back {now}, not {would}.",
+      "soon": "in a few minutes",
       "days": {
         "one": "tomorrow",
         "other": "in {count} days"
+      },
+      "months": {
+        "one": "in about a month",
+        "other": "in about {count} months"
       }
     }
   },
@@ -696,7 +701,7 @@
       "cardDeck": "a card in a deck that doesn't exist",
       "cardIds": "two cards with the same id",
       "noProgress": "no progress in it",
-      "progressEntry": "a card without its box or date",
+      "progressEntry": "a card without its review date",
       "streak": "the streak and badges are unreadable"
     },
     "slashSwitch": "\"{text}\" would have to be typed, and in the quiz / opens the commands. Change that card first."
@@ -717,7 +722,7 @@
       "goalReached": " ✓ goal reached",
       "badges": "Badges {unlocked}/{total} · {mastered} cards mastered · companion: {companion}",
       "practised": "{count} cards practised, {correct}/{total} correct ({percent}%)",
-      "box": "box {box} ({days}d): {count}"
+      "spread": "learning: {learning} · under a week: {week} · under a month: {month} · a month or more: {mastered}"
     },
     "data": {
       "where": "Dracosh keeps everything in {home}",
@@ -754,7 +759,8 @@
         "before-reset": "before reset",
         "before-delete": "before delete",
         "before-restore": "before restore",
-        "before-import": "before import"
+        "before-import": "before import",
+        "before-upgrade": "before upgrade"
       }
     },
     "backups": {
@@ -793,17 +799,17 @@
       "cat": "Cards",
       "text": "One wrong letter in a longer word still counts as right. Dracosh shows you the correct spelling."
     },
-    "cards-boxes": {
+    "cards-spacing": {
       "cat": "Cards",
-      "text": "A right answer sends a card to a later box: it comes back in 1, 3, 7, 14, then 30 days."
+      "text": "Each card gets its own spacing: one you know well waits weeks, a tricky one comes back sooner."
     },
     "cards-miss": {
       "cat": "Cards",
-      "text": "A missed card goes back to the first box and comes back within minutes, until it sticks."
+      "text": "A missed card comes back within minutes, until it sticks."
     },
     "cards-hint": {
       "cat": "Cards",
-      "text": "Stuck on a card? /hint reveals one more letter. The card still counts, but stays in its box."
+      "text": "Stuck on a card? /hint reveals one more letter. The card still counts, but comes back sooner."
     },
     "cards-correct": {
       "cat": "Cards",
@@ -1004,14 +1010,14 @@
           "4",
           "four"
         ],
-        "example": "Every right answer moves a card to a later box, so you see it less and less often."
+        "example": "Every right answer sends a card further off, so you see it less and less often."
       },
       {
         "front": "Stuck? Type `/hint` and press Enter, and the answer shows up letter by letter. Try it, then type `apple`",
         "back": [
           "apple"
         ],
-        "example": "A hinted answer still counts, but the card stays in its box for now."
+        "example": "A hinted answer still counts, but the card comes back sooner."
       },
       {
         "front": "What is your dragon's secret name? Nobody knows, so get this one wrong on purpose and type `dog`",

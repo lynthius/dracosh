@@ -2,7 +2,7 @@ import { t } from "./i18n.js";
 import { copyFile, readdir, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { dayKey } from "./dates.js";
-import { DATA_FILES, HOME, readJson, writeJson } from "./store.js";
+import { DATA_FILES, HOME, readJson, saveState, writeJson } from "./store.js";
 
 // A backup is one JSON file in ~/.dracosh/backups holding the library, progress and settings as they
 // were. One is taken on the first start of each day, and right before anything that changes a lot at
@@ -71,6 +71,15 @@ export async function dailyBackup(now = Date.now()) {
   const backups = await listBackups();
   if (backups.some((b) => b.reason === "daily" && dayKey(b.created) === today)) return null;
   return backupNow("daily", now, { skipDamaged: true });
+}
+
+// Progress an older Dracosh wrote, brought up to date by loadState (`upgraded`): backed up as it was on
+// disk, then saved in this version's shape. → whether it did
+export async function saveUpgraded(state, now = Date.now()) {
+  if (!state.upgraded) return false;
+  await backupNow("before-upgrade", now);
+  await saveState(state);
+  return true;
 }
 
 // → newest first: { file, created, reason, decks, cards, practiced }

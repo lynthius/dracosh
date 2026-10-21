@@ -6,7 +6,7 @@ import { test } from "node:test";
 
 process.env.DRACOSH_HOME = mkdtempSync(join(tmpdir(), "dracosh-"));
 const { DATA_FILES, loadLibrary, loadState, saveLibrary, saveState, patchSettings } = await import("../src/store.js");
-const { backupNow, dailyBackup, KEEP, listBackups, restoreBackup } = await import("../src/backup.js");
+const { backupNow, dailyBackup, KEEP, listBackups, restoreBackup, saveUpgraded } = await import("../src/backup.js");
 const { addCard, createDeck } = await import("../src/library.js");
 
 const DAY = 86_400_000;
@@ -99,4 +99,19 @@ test("broken settings don't stop the daily backup of cards and progress", async 
   const [latest] = await listBackups();
   assert.ok(latest.cards > 0);
   writeFileSync(DATA_FILES.settings, "{}");
+});
+
+test("progress from Dracosh 0.5 is backed up as it was, then saved for FSRS, once", async () => {
+  const { readFileSync } = await import("node:fs");
+  const v1 = { version: 1, items: { "x:en-pl": { box: 5, due: start + 90 * DAY, last: start + 60 * DAY, seen: 5, correct: 5, wrong: 0, streak: 5 } }, newToday: { date: "", count: 0 } };
+  await saveState(v1);
+  const state = await loadState();
+  assert.equal(JSON.parse(readFileSync(DATA_FILES.state, "utf8")).version, 1, "loading alone writes nothing");
+  assert.equal(await saveUpgraded(state, start + 80 * DAY), true);
+  const backup = (await listBackups()).find((b) => b.reason === "before-upgrade");
+  assert.deepEqual(JSON.parse(readFileSync(backup.file, "utf8")).files.state, v1, "the backup holds the boxes");
+  const saved = JSON.parse(readFileSync(DATA_FILES.state, "utf8"));
+  assert.equal(saved.version, 2);
+  assert.deepEqual([saved.items["x:en-pl"].phase, saved.items["x:en-pl"].stability], ["review", 30]);
+  assert.equal(await saveUpgraded(await loadState(), start + 81 * DAY), false, "nothing more to do");
 });

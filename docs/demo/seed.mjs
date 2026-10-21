@@ -32,12 +32,12 @@ const weekStart = (t) => {
   return key(d);
 };
 // every card waiting, in the order the demo answers them
-const items = Object.fromEntries(ids.map((id, i) => [`${id}:en-pl`, { box: 2, seen: 4, correct: 3, wrong: 1, streak: 1, due: now - 60_000 * (ids.length - i), last: now - 2 * day }]));
+const items = Object.fromEntries(ids.map((id, i) => [`${id}:en-pl`, { phase: "review", step: 0, stability: 2, difficulty: 5, lapses: 1, seen: 4, correct: 3, wrong: 1, streak: 1, due: now - 60_000 * (ids.length - i), last: now - 2 * day }]));
 const days = Object.fromEntries(Array.from({ length: 12 }, (_, i) => [key(now - (i + 1) * day), { asked: 22, correct: 20, goalMet: true }]));
 // what twelve days of practice have earned already, so no badge pops up mid-demo
 const EARNED = ["hello", "first-steps", "century", "on-a-roll", "week", "hot-streak", "weekend", "perfect-week"];
 const state = {
-  version: 1,
+  version: 2,
   items,
   newToday: { date: "", count: 0 },
   hatched: true,

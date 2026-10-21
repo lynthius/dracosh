@@ -37,7 +37,7 @@ const dynamicKeys = [
   ...["article", "umlaut", "article-umlaut"].map((reason) => `quiz.almost.${reason}`),
   ...["progress", "everything"].flatMap((scope) => ["label", "note", "question", "stays", "yes"].map((part) => `reset.${scope}.${part}`)),
   ...["cards", "progress", "settings"].map((part) => `cli.restore.what.${part}`),
-  ...["daily", "before-reset", "before-delete", "before-restore", "before-import"].map((reason) => `cli.restore.reasons.${reason}`),
+  ...["daily", "before-reset", "before-delete", "before-restore", "before-import", "before-upgrade"].map((reason) => `cli.restore.reasons.${reason}`),
   ...["lines", "dashes", "apkg"].map((format) => `import.formats.${format}`),
   ...["tab", "comma", "semicolon", "pipe", "colon", "space"].map((name) => `import.separators.${name}`),
   ...["deck", "front", "back", "example"].map((role) => `import.roles.${role}`),

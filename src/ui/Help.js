@@ -2,7 +2,6 @@ import { Fragment } from "react";
 import { Box, useInput } from "ink";
 import { t } from "../i18n.js";
 import { MAX_FREEZES } from "../progress.js";
-import { BOX_INTERVALS_DAYS } from "../scheduler.js";
 import { cellWidth, html, KeyHints, Text, theme, usePanelWidth } from "./kit.js";
 
 // built at render time, so the texts follow the app language
@@ -16,7 +15,7 @@ const keys = () => [
 ];
 
 const how = () => [
-  t("help.how.boxes", { first: BOX_INTERVALS_DAYS.slice(0, -1).join(", "), last: BOX_INTERVALS_DAYS.at(-1) }),
+  t("help.how.spacing"),
   t("help.how.typos"),
   t("help.how.cards"),
   t("help.how.streak"),
@@ -62,7 +61,7 @@ const Section = ({ title, children }) => html`
   <//>
 `;
 
-// How Dracosh works, on one screen: the keys, the rules behind the boxes and the streak,
+// How Dracosh works, on one screen: the keys, the rules behind the spacing and the streak,
 // and what you can do from the shell.
 export function Help({ onClose }) {
   const panel = usePanelWidth();

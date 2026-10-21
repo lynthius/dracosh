@@ -1,6 +1,6 @@
 {
   "commands": {
-    "hint": "Odsłoń kolejną literę (karta nie przejdzie wyżej)",
+    "hint": "Odsłoń kolejną literę (karta wróci wcześniej)",
     "add": "Dodaj karty do talii albo stwórz nową",
     "decks": "Przełącz się na inną talię albo stwórz nową",
     "settings": "Język, rytm, interwał, godziny ciszy, dźwięk, cel, porady",
@@ -36,8 +36,8 @@
       "gradeWhat": "po pokazaniu odpowiedzi: nie pamiętam (albo Esc) / pamiętam"
     },
     "how": {
-      "boxes": "Dobra odpowiedź przenosi kartę do wyższego pudełka: wraca po {first}, a potem po {last} dniach. Błąd odsyła ją do pierwszego pudełka.",
-      "typos": "Jedna zła litera w dłuższym słowie wciąż się liczy, a Dracosh pokazuje poprawną pisownię.",
+      "spacing": "Każda karta ma własny odstęp między powtórkami: im lepiej ją znasz, tym dłużej czeka, od kilku dni do miesięcy. Po błędzie wraca za 10 minut.",
+      "typos": "Jedna zła litera w dłuższym słowie wciąż się liczy, a Dracosh pokazuje poprawną pisownię. Karta wraca wtedy trochę wcześniej, jak po podpowiedzi.",
       "streak": "Osiągaj cel dnia, żeby utrzymać serię; dzień, w którym zrobisz wszystkie dostępne karty, też się liczy. Twój smok rośnie wraz z najdłuższą serią.",
       "freezes": "Zamrożenie ratuje opuszczony dzień. Na start masz {max} i co tydzień jedno wraca, maksymalnie {max}.",
       "cards": "W /add jedna linia to karta: cat = kot; kotek // przykład. Nawiasy klamrowe tworzą lukę do uzupełnienia: I {{look forward}} to it."
@@ -299,7 +299,7 @@
   "quiz": {
     "youWrote": "twoja odpowiedź: ",
     "closeEnough": "  (wystarczająco blisko)",
-    "hintUsed": "z podpowiedzią · karta zostaje w swoim pudełku",
+    "hintUsed": "z podpowiedzią",
     "countedCorrect": "uznane za poprawne",
     "acceptedFromNow": " · „{answer}” od teraz też się liczy",
     "tip": "porada · {cat}",
@@ -358,11 +358,18 @@
       "umlaut": "Prawie: zwróć uwagę na umlaut (ä, ö, ü); można też pisać ae, oe, ue.",
       "article-umlaut": "Prawie: zwróć uwagę na rodzajnik i umlaut; można też pisać ae, oe, ue.",
       "held": "Karta wróci {now}, a nie {would}.",
+      "soon": "za kilka minut",
       "days": {
         "one": "jutro",
         "few": "za {count} dni",
         "many": "za {count} dni",
         "other": "za {count} dnia"
+      },
+      "months": {
+        "one": "za około miesiąc",
+        "few": "za około {count} miesiące",
+        "many": "za około {count} miesięcy",
+        "other": "za około {count} miesiąca"
       }
     }
   },
@@ -775,7 +782,7 @@
       "cardDeck": "karta w talii, która nie istnieje",
       "cardIds": "dwie karty z tym samym identyfikatorem",
       "noProgress": "brak w nim postępów",
-      "progressEntry": "karta bez pudełka albo daty",
+      "progressEntry": "karta bez terminu powtórki",
       "streak": "nie da się odczytać serii i odznak"
     },
     "slashSwitch": "Trzeba by wpisać „{text}”, a w quizie / otwiera komendy. Najpierw popraw tę kartę."
@@ -803,7 +810,7 @@
         "many": "{count} przećwiczonych kart, {correct}/{total} poprawnych ({percent}%)",
         "other": "{count} przećwiczonej karty, {correct}/{total} poprawnych ({percent}%)"
       },
-      "box": "pudełko {box} ({days} d): {count}"
+      "spread": "w nauce: {learning} · do tygodnia: {week} · do miesiąca: {month} · miesiąc i dłużej: {mastered}"
     },
     "data": {
       "where": "Dracosh trzyma wszystko w {home}",
@@ -840,7 +847,8 @@
         "before-reset": "przed resetem",
         "before-delete": "przed usunięciem",
         "before-restore": "przed przywróceniem",
-        "before-import": "przed importem"
+        "before-import": "przed importem",
+        "before-upgrade": "przed aktualizacją"
       }
     },
     "backups": {
@@ -881,17 +889,17 @@
       "cat": "Karty",
       "text": "Jedna zła litera w dłuższym słowie wciąż się liczy. Dracosh pokazuje poprawną pisownię."
     },
-    "cards-boxes": {
+    "cards-spacing": {
       "cat": "Karty",
-      "text": "Dobra odpowiedź przenosi kartę do wyższego pudełka: wraca po 1, 3, 7, 14, a potem po 30 dniach."
+      "text": "Każda karta ma własny odstęp między powtórkami: dobrze znana czeka tygodniami, trudniejsza wraca wcześniej."
     },
     "cards-miss": {
       "cat": "Karty",
-      "text": "Karta z błędem wraca do pierwszego pudełka i pojawia się po kilku minutach, aż zapadnie w pamięć."
+      "text": "Karta z błędem wraca po kilku minutach, aż zapadnie w pamięć."
     },
     "cards-hint": {
       "cat": "Karty",
-      "text": "Karta stawia opór? /hint odsłania kolejną literę. Karta się liczy, ale zostaje w swoim pudełku."
+      "text": "Karta stawia opór? /hint odsłania kolejną literę. Karta się liczy, ale wróci wcześniej."
     },
     "cards-correct": {
       "cat": "Karty",
@@ -1097,14 +1105,14 @@
           "4",
           "cztery"
         ],
-        "example": "Każda dobra odpowiedź przenosi kartę do wyższego pudełka, więc widzisz ją coraz rzadziej."
+        "example": "Każda dobra odpowiedź odsuwa kartę dalej, więc widzisz ją coraz rzadziej."
       },
       {
         "front": "Nie pamiętasz? Wpisz `/hint` i naciśnij Enter, a odpowiedź pojawi się litera po literze. Spróbuj, a potem wpisz `jabłko`",
         "back": [
           "jabłko"
         ],
-        "example": "Odpowiedź z podpowiedzią się liczy, ale karta na razie zostaje w swoim pudełku."
+        "example": "Odpowiedź z podpowiedzią się liczy, ale karta wróci wcześniej."
       },
       {
         "front": "Jak brzmi sekretne imię twojego smoka? Nikt nie wie, więc tym razem celowo odpowiedz źle: wpisz `pies`",
