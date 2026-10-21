@@ -781,7 +781,7 @@
     "slashSwitch": "Trzeba by wpisać „{text}”, a w quizie / otwiera komendy. Najpierw popraw tę kartę."
   },
   "cli": {
-    "help": "Dracosh: trener słówek i quizów w terminalu\n\nUżycie: dracosh [opcje]\n        dracosh restore [numer]   lista kopii zapasowych albo przywrócenie jednej z nich\n\n  --deck <nazwa>   quiz z tej talii, tylko tym razem (inaczej ta wybrana w /decks)\n  --every <czas>   odstęp między pytaniami: 30s, 10m, 1h (domyślnie: {interval})\n  --no-sound       wyłącz dźwięki\n  --volume <0-1>   głośność (domyślnie: {volume})\n  --stats          wypisz postępy i zakończ\n  --data           pokaż, gdzie są karty, postępy i kopie zapasowe\n  --preview        obejrzyj wszystkie animacje i ekrany na zmyślonych danych (nic się nie zapisuje)\n  -y, --yes        przywróć bez pytania\n  -h, --help       pokaż tę pomoc\n\nOpcje zmieniają zapisane ustawienia tylko na to uruchomienie. Zapisane zmienisz w /settings.\n\nW trakcie: Enter wysyła (pusty pokazuje odpowiedź, potem 1 albo 2), „/” otwiera menu komend (/add, /decks, /settings, /stats, /help…),\nEsc wychodzi (najpierw czyści wpisany tekst). Ctrl+C też działa.\nMiędzy kartami: Enter od razu zadaje następną, q wychodzi. Resztę wyjaśnia /help.",
+    "help": "Dracosh: trener słówek i quizów w terminalu\n\nUżycie: dracosh [opcje]\n        dracosh import <plik|->   dodaj karty z pliku (.txt, .csv, .tsv, pakiet Anki .apkg lub .colpkg, eksporty tekstowe z Anki i Quizletu, kopia .json) albo „-” ze standardowego wejścia\n        dracosh export <plik>     zapisz talie do .apkg (Anki), .txt, .tsv, .csv albo .json (wszystko)\n        dracosh restore [numer]   lista kopii zapasowych albo przywrócenie jednej z nich\n\n  --deck <nazwa>   quiz z tej talii, tylko tym razem (inaczej ta wybrana w /decks)\n                   przy import i export: talia do uzupełnienia albo zapisania\n  --every <czas>   odstęp między pytaniami: 30s, 10m, 1h (domyślnie: {interval})\n  --no-sound       wyłącz dźwięki\n  --volume <0-1>   głośność (domyślnie: {volume})\n  --stats          wypisz postępy i zakończ\n  --data           pokaż, gdzie są karty, postępy i kopie zapasowe\n  --preview        obejrzyj wszystkie animacje i ekrany na zmyślonych danych (nic się nie zapisuje)\n  --update         import: karty, które już są, dostają odpowiedzi z pliku (inaczej pytanie)\n  --split          import: odpowiedź z kilkoma wariantami („cat, kitty”) staje się kilkoma odpowiedziami\n  --separator <s>  import: co dzieli kolumny: tab, comma, semicolon, pipe, colon, space albo znak\n  --encoding <e>   import: plik, który nie jest w UTF-8, np. windows-1250\n  --anki           import albo eksport: prosto z działającego Anki albo do niego (dodatek AnkiConnect)\n  -y, --yes        import, eksport albo przywrócenie bez pytania\n  -h, --help       pokaż tę pomoc\n\nOpcje zmieniają zapisane ustawienia tylko na to uruchomienie. Zapisane zmienisz w /settings.\n\nW trakcie: Enter wysyła (pusty pokazuje odpowiedź, potem 1 albo 2), „/” otwiera menu komend (/add, /decks, /settings, /stats, /help…),\nEsc wychodzi (najpierw czyści wpisany tekst). Ctrl+C też działa.\nMiędzy kartami: Enter od razu zadaje następną, q wychodzi. Resztę wyjaśnia /help.",
     "badEvery": "Niepoprawne --every „{value}”. Użyj np. 30s, 10m, 1h.",
     "badVolume": "Niepoprawne --volume „{value}”. Podaj liczbę od 0 do 1.",
     "unknownCommand": "Nieznana komenda „{command}”. Zobacz dracosh --help.",
@@ -839,7 +839,8 @@
         "daily": "codzienna",
         "before-reset": "przed resetem",
         "before-delete": "przed usunięciem",
-        "before-restore": "przed przywróceniem"
+        "before-restore": "przed przywróceniem",
+        "before-import": "przed importem"
       }
     },
     "backups": {
@@ -847,7 +848,9 @@
       "few": "{count} kopie zapasowe",
       "many": "{count} kopii zapasowych",
       "other": "{count} kopii zapasowej"
-    }
+    },
+    "unknownOption": "Nieznana opcja {option}. Zobacz dracosh --help.",
+    "oneFile": "dracosh {command} przyjmuje jeden plik naraz."
   },
   "tips": {
     "keys-enter": {
@@ -1169,5 +1172,273 @@
     "learningArticles": "Brak albo zły rodzajnik w tym języku to „prawie”.",
     "savedWithLearning": "Języki talii „{deck}”: {pair}, język nauki: {language}.",
     "learningUmlauts": "W niemieckim także pominięty umlaut."
+  },
+  "import": {
+    "needFile": "Który plik? dracosh import <plik> (albo -, żeby czytać karty ze standardowego wejścia)",
+    "noFile": "Nie ma pliku {file}.",
+    "unknownEncoding": "Nieznane kodowanie „{encoding}”. Spróbuj utf-8, utf-16, windows-1250 albo windows-1252.",
+    "notUtf8": "{file} nie jest zapisany w UTF-8. Oto jego pierwsza linia ze znakami specjalnymi, odczytana w każdym z prawdopodobnych kodowań:",
+    "notUtf8Hint": "Uruchom import jeszcze raz z tym, które czyta się dobrze, albo zapisz plik w UTF-8 (w Excelu: CSV UTF-8).",
+    "stdin": "standardowe wejście",
+    "reading": "Czytam {file}: {what}",
+    "encoding": " (odczytane jako {encoding})",
+    "formats": {
+      "lines": "linie Dracosh (przód = odpowiedź; inna odpowiedź // przykład)",
+      "dashes": "lista z myślnikami (przód - odpowiedź)",
+      "table": "tabela dzielona przez {separator}; kolumny: {columns}",
+      "apkg": "pakiet Anki"
+    },
+    "separators": {
+      "tab": "tabulatory",
+      "comma": "przecinki",
+      "semicolon": "średniki",
+      "pipe": "„|”",
+      "colon": "dwukropki",
+      "space": "spacje"
+    },
+    "column": "{number} {role}",
+    "roles": {
+      "front": "przód",
+      "back": "odpowiedź",
+      "example": "przykład",
+      "deck": "talia"
+    },
+    "empty": "Nie ma w nim kart.",
+    "yourDecks": "Twoje talie: {decks}",
+    "askDeck": "Do której talii? Enter tworzy nową talię „{deck}”, albo wpisz nazwę: ",
+    "askDeckEmpty": "Do której talii? Wpisz nazwę: ",
+    "needDeck": "Podaj talię dla kart: dracosh import - --deck <nazwa>",
+    "intoDeck": "Do talii {deck} (teraz {cards}):",
+    "intoNewDeck": "Do nowej talii {deck}:",
+    "more": {
+      "one": "… i jeszcze 1",
+      "few": "… i jeszcze {count}",
+      "many": "… i jeszcze {count}",
+      "other": "… i jeszcze {count}"
+    },
+    "counts": {
+      "new": {
+        "one": "1 nowa karta",
+        "few": "{count} nowe karty",
+        "many": "{count} nowych kart",
+        "other": "{count} nowej karty"
+      },
+      "same": {
+        "one": "1 już jest",
+        "few": "{count} już są",
+        "many": "{count} już jest",
+        "other": "{count} już jest"
+      },
+      "changed": {
+        "one": "1 już jest, w pliku inna",
+        "few": "{count} już są, w pliku inne",
+        "many": "{count} już jest, w pliku inne",
+        "other": "{count} już jest, w pliku inne"
+      }
+    },
+    "problems": {
+      "one": "1 linii nie da się dodać:",
+      "few": "{count} linii nie da się dodać:",
+      "many": "{count} linii nie da się dodać:",
+      "other": "{count} linii nie da się dodać:"
+    },
+    "issues": {
+      "noFront": "brak przodu",
+      "noBack": "brak odpowiedzi",
+      "noDeck": "brak talii",
+      "twice": "jest też w linii {line}",
+      "slash": "odpowiedź zaczyna się od /",
+      "tooLong": "nazwa talii „{deck}” ma więcej niż {max} znaków: wybierz inną przez --deck",
+      "tour": "„{deck}” to talia z samouczkiem: wybierz inną nazwę",
+      "noSeparator": "brak „ = ” między przodem a odpowiedzią",
+      "badDirection": "to nie kierunek: użyj forward, backward albo both",
+      "twiceNote": "dwa razy w pakiecie",
+      "picture": "obrazek z zakrytymi fragmentami (zakrycie obrazu)",
+      "mediaOnly": "tylko obrazek albo dźwięk, nie ma tekstu, o który można zapytać"
+    },
+    "ignored": {
+      "one": "1 wiersz ma tekst w kolumnie, która nie jest czytana (linia {lines}): tylko przód, odpowiedź i przykład.",
+      "few": "{count} wiersze mają tekst w kolumnach, które nie są czytane (linie {lines}): tylko przód, odpowiedź i przykład.",
+      "many": "{count} wierszy ma tekst w kolumnach, które nie są czytane (linie {lines}): tylko przód, odpowiedź i przykład.",
+      "other": "{count} wiersza ma tekst w kolumnach, które nie są czytane (linie {lines}): tylko przód, odpowiedź i przykład."
+    },
+    "changedTitle": {
+      "one": "1 karta już jest, a plik ma ją inaczej (teraz → w pliku):",
+      "few": "{count} karty już są, a plik ma je inaczej (teraz → w pliku):",
+      "many": "{count} kart już jest, a plik ma je inaczej (teraz → w pliku):",
+      "other": "{count} karty już jest, a plik ma je inaczej (teraz → w pliku):"
+    },
+    "updateAsk": {
+      "one": "Zaktualizować ją do wersji z pliku? Postępy zostają.",
+      "few": "Zaktualizować te {count} do wersji z pliku? Postępy zostają.",
+      "many": "Zaktualizować te {count} do wersji z pliku? Postępy zostają.",
+      "other": "Zaktualizować te {count} do wersji z pliku? Postępy zostają."
+    },
+    "changedLeft": "Zostają bez zmian (--update bierze wersję z pliku).",
+    "nothing": "Nic do dodania: karty już są albo nie da się ich dodać w tej postaci.",
+    "directionTitle": "Jak ma pytać talia {deck}?",
+    "directionAsk": "Wybierz 1, 2 albo 3 (Enter: 1): ",
+    "askSuffix": "[T/n]",
+    "doneNew": {
+      "one": "Utworzono talię {deck} z 1 kartą.",
+      "few": "Utworzono talię {deck} z {count} kartami.",
+      "many": "Utworzono talię {deck} z {count} kartami.",
+      "other": "Utworzono talię {deck} z {count} karty."
+    },
+    "done": {
+      "one": "Dodano 1 kartę do talii {deck}.",
+      "few": "Dodano {count} karty do talii {deck}.",
+      "many": "Dodano {count} kart do talii {deck}.",
+      "other": "Dodano {count} karty do talii {deck}."
+    },
+    "doneUpdated": {
+      "one": " Zaktualizowano 1.",
+      "few": " Zaktualizowano {count}.",
+      "many": " Zaktualizowano {count}.",
+      "other": " Zaktualizowano {count}."
+    },
+    "doneOnlyUpdated": {
+      "one": "Zaktualizowano 1 kartę w talii {deck}.",
+      "few": "Zaktualizowano {count} karty w talii {deck}.",
+      "many": "Zaktualizowano {count} kart w talii {deck}.",
+      "other": "Zaktualizowano {count} karty w talii {deck}."
+    },
+    "undo": "Cofniesz to przez „dracosh restore 1” (kopia zrobiona przed chwilą).",
+    "start": "Ćwicz z: dracosh --deck {deck}",
+    "inDecks": "Dracosh jest uruchomiony: nowe karty są w /decks.",
+    "backupFile": "{file} to pełna kopia Dracosh: przywraca karty, postępy i ustawienia, które w niej są.",
+    "backupAsk": "Przywrócić?",
+    "askDeckYours": "Do której talii? Enter: {deck} (twoja, {cards}), albo wpisz nazwę: ",
+    "listed": {
+      "one": "1 odpowiedź wymienia kilka wariantów, np. „{example}”.",
+      "few": "{count} odpowiedzi wymieniają kilka wariantów, np. „{example}”.",
+      "many": "{count} odpowiedzi wymienia kilka wariantów, np. „{example}”.",
+      "other": "{count} odpowiedzi wymienia kilka wariantów, np. „{example}”."
+    },
+    "splitAsk": "Traktować każdy wariant jako osobną odpowiedź?",
+    "splitHint": "Każda zostaje jedną odpowiedzią, tak jak jest zapisana (--split rozdziela warianty).",
+    "directionTitleMany": "Jak mają pytać nowe talie ({count})?",
+    "previewOnly": "To tylko podgląd, nic nie zapisano. Import: {command}",
+    "confirmAdd": {
+      "one": "Dodać 1 kartę?",
+      "few": "Dodać {count} karty?",
+      "many": "Dodać {count} kart?",
+      "other": "Dodać {count} karty?"
+    },
+    "confirmUpdate": {
+      "one": "Zaktualizować 1 kartę?",
+      "few": "Zaktualizować {count} karty?",
+      "many": "Zaktualizować {count} kart?",
+      "other": "Zaktualizować {count} karty?"
+    },
+    "confirmBoth": {
+      "one": "Dodać: {cards}, i zaktualizować 1?",
+      "few": "Dodać: {cards}, i zaktualizować {count}?",
+      "many": "Dodać: {cards}, i zaktualizować {count}?",
+      "other": "Dodać: {cards}, i zaktualizować {count}?"
+    },
+    "tourGone": "Talia z samouczkiem zrobiła miejsce dla twojej własnej.",
+    "badSeparator": "Nieznany separator „{value}”: użyj tab, comma, semicolon, pipe, colon, space albo jednego znaku.",
+    "languagesGuess": "Języki: {front} → {back} (to tylko domysł; zmienisz w /decks)",
+    "languagesUnsure": "Języki: jeszcze nie wiadomo (ustawisz w /decks)",
+    "ankiNoHtml": "Ten eksport z Anki nie ma HTML, więc odpowiedź i przykład zlewają się w jedno: wyeksportuj jeszcze raz z włączoną opcją HTML.",
+    "no": "n|nie|no",
+    "isFolder": "{file} to folder: podaj plik z niego.",
+    "noPermission": "Dracosh nie ma dostępu do {file}.",
+    "tooBig": "{file} ma ponad {max} MB: to nie jest talia. Podziel go albo sprawdź, czy to właściwy plik.",
+    "notText": "{file} to nie plik tekstowy. Dracosh importuje tekst (linie Dracosh, CSV, TSV, eksporty tekstowe z Anki i Quizletu) i pakiety Anki (.apkg, .colpkg).",
+    "problemLine": "linia {line}  {issue}: {text}",
+    "backupReplaces": "Zastępuje to, co masz teraz ({decks} · {cards}).",
+    "mediaLeft": {
+      "one": "1 notatka ma obrazki lub dźwięki; importowany jest tylko jej tekst.",
+      "few": "{count} notatki mają obrazki lub dźwięki; importowany jest tylko ich tekst.",
+      "many": "{count} notatek ma obrazki lub dźwięki; importowany jest tylko ich tekst.",
+      "other": "{count} notatki ma obrazki lub dźwięki; importowany jest tylko ich tekst."
+    },
+    "problemsNotes": {
+      "one": "Nie da się dodać 1 notatki:",
+      "few": "Nie da się dodać {count} notatek:",
+      "many": "Nie da się dodać {count} notatek:",
+      "other": "Nie da się dodać {count} notatki:"
+    },
+    "problemNote": "{issue}: {text}",
+    "notAnki": "{file} to nie pakiet Anki, który Dracosh umie odczytać. W Anki zrobisz go przez Plik → Eksportuj → Pakiet talii Anki (.apkg).",
+    "needsNode": "Odczyt pakietu Anki wymaga Node {version} lub nowszego (masz {current}). Zaktualizuj Node albo wyeksportuj talię z Anki jako Notatki jako zwykły tekst i zaimportuj ten plik.",
+    "subdecks": "Podtalie z Anki stają się tu osobnymi taliami, np. „{deck}”.",
+    "hint": "(podpowiedź: {hint})",
+    "notForPackage": "--separator i --encoding są dla plików tekstowych: pakiet Anki ich nie potrzebuje.",
+    "anki": {
+      "empty": "W Anki nie ma kart do przeniesienia.",
+      "noDeck": "W Anki nie ma talii „{deck}” z kartami. Talie w Anki: {decks}",
+      "yourDecks": "Twoje talie w Anki:",
+      "which": "Które? Numery, np. 1 3, albo Enter, żeby wziąć wszystkie: ",
+      "asking": "Pobieram {deck} z Anki…",
+      "read": "Z Anki: {decks}"
+    }
+  },
+  "export": {
+    "needFile": "Dokąd? dracosh export <plik>: .apkg (Anki), .txt (Dracosh), .tsv (tekst dla Anki), .csv albo .json (wszystko)",
+    "unknownFormat": "{file}: format wybiera końcówka pliku: .apkg (Anki), .txt (Dracosh), .tsv (tekst dla Anki), .csv albo .json (wszystko).",
+    "needsNode": "Pakiet Anki wymaga Node {version} lub nowszego (masz {current}). Zaktualizuj Node albo wyeksportuj do .tsv.",
+    "jsonAll": "Eksport .json zawiera wszystko (wszystkie talie, postępy i ustawienia): pomiń --deck.",
+    "noDecks": "Nie ma jeszcze własnych talii do eksportu.",
+    "exists": "{file} już istnieje. Nadpisać?",
+    "existsNeedsYes": "{file} już istnieje: dodaj --yes, żeby go nadpisać.",
+    "wrote": {
+      "one": "Zapisano 1 kartę do {file}.",
+      "few": "Zapisano {count} karty do {file}.",
+      "many": "Zapisano {count} kart do {file}.",
+      "other": "Zapisano {count} karty do {file}."
+    },
+    "wroteAll": "Zapisano karty, postępy i ustawienia do {file}.",
+    "next": {
+      "txt": "Wczytasz go z powrotem przez: dracosh import {file}",
+      "apkg": "W Anki: kliknij dwa razy {file} albo wybierz Plik → Importuj. Kolejny eksport zaktualizuje te same notatki.",
+      "tsv": "W Anki: Plik → Importuj, wybierz {file} i sprawdź, czy typ notatki to Podstawowy.",
+      "csv": "Otworzy się w każdym arkuszu; dracosh import {file} wczyta go z powrotem.",
+      "json": "dracosh import {file} przywraca wszystko, na tym albo innym komputerze."
+    },
+    "fileHeader": "Karty Dracosh, {date}. Jedna karta w linii: przód = odpowiedź; inna odpowiedź // przykład",
+    "fileHowTo": "Wczytasz je z powrotem przez: dracosh import <ten plik>",
+    "inData": "To folder samego Dracosh ({home}): wybierz inne miejsce, żeby nic tam nie zostało nadpisane.",
+    "cantWrite": "Nie da się zapisać {file}: {error}",
+    "noFolder": "nie ma takiego folderu",
+    "wroteCloze": {
+      "one": "Zapisano 1 kartę z luką do {file}.",
+      "few": "Zapisano {count} karty z luką do {file}.",
+      "many": "Zapisano {count} kart z luką do {file}.",
+      "other": "Zapisano {count} karty z luką do {file}."
+    },
+    "nextCloze": "Zaimportuj go do Anki tak samo, z typem notatki Luka: Anki trzyma te dwa rodzaje osobno.",
+    "anki": {
+      "noFile": "--anki wysyła karty prosto do Anki, bez pliku: dracosh export --anki, albo dodaj --deck <nazwa> dla jednej talii.",
+      "needsYes": "Wysłanie do Anki zmienia Twoją kolekcję Anki: dodaj --yes, żeby zrobić to bez pytania.",
+      "ask": "Wysłać do Anki: {cards} ({decks})?",
+      "sent": "Wysłano do Anki: {cards} ({decks}). Notatki z Dracosh, które Anki już miało, są zaktualizowane.",
+      "fromAnki": {
+        "one": "1 karta pochodzi z Anki i zostaje pominięta: Anki już ją ma.",
+        "few": "{count} karty pochodzą z Anki i zostają pominięte: Anki już je ma.",
+        "many": "{count} kart pochodzi z Anki i zostaje pominiętych: Anki już je ma.",
+        "other": "{count} karty pochodzą z Anki i zostają pominięte: Anki już je ma."
+      },
+      "nothingNew": "Nie ma czego wysłać: wszystkie te karty pochodzą z Anki, które już je ma.",
+      "changedNoteType": "Typ notatki {type} w Anki ma teraz inne pola ({fields}): aktualizacja jego notatek straciłaby to, co w nich jest. Nic nie zostało wysłane. Żeby zachować oba, wyeksportuj do pliku (dracosh export karty.apkg) i zaimportuj go w Anki."
+    },
+    "fromAnkiCopies": {
+      "one": "1 karta w pliku pochodzi z Anki: zaimportowana do tego samego Anki będzie drugą kopią.",
+      "few": "{count} karty w pliku pochodzą z Anki: zaimportowane do tego samego Anki będą drugą kopią.",
+      "many": "{count} kart w pliku pochodzi z Anki: zaimportowane do tego samego Anki będą drugą kopią.",
+      "other": "{count} karty w pliku pochodzą z Anki: zaimportowane do tego samego Anki będą drugą kopią."
+    }
+  },
+  "anki": {
+    "notRunning": "Anki nie odpowiada. Otwórz Anki z dodatkiem AnkiConnect (Narzędzia → Dodatki → Pobierz dodatki..., kod 2055492159, potem uruchom Anki ponownie) i spróbuj jeszcze raz.",
+    "old": "Ten AnkiConnect jest za stary dla Dracosh: w Anki wybierz Narzędzia → Dodatki → Sprawdź dostępność aktualizacji.",
+    "key": "AnkiConnect wymaga klucza API: uruchom to jeszcze raz z ustawionym DRACOSH_ANKI_KEY.",
+    "said": "Anki odpowiada: {detail}",
+    "busy": "Anki odebrało połączenie, ale nie odpowiada: może być zajęte (synchronizacja, sprawdzanie bazy) albo uśpione w tle. Przełącz się na Anki i spróbuj jeszcze raz.",
+    "badUrl": "DRACOSH_ANKI_URL to nie adres, którego Dracosh może użyć ({detail}): powinien wyglądać jak http://127.0.0.1:8765.",
+    "noDeck": "W Anki nie ma już talii „{detail}”.",
+    "notImported": "Anki nie przyjęło kart: nic nie zostało wysłane."
   }
 }

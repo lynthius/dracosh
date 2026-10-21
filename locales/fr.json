@@ -758,7 +758,7 @@
     "slashSwitch": "Il faudrait taper « {text} », et dans le quiz / ouvre les commandes. Modifie d'abord cette carte."
   },
   "cli": {
-    "help": "Dracosh : un entraîneur de vocabulaire et de quiz pour ton terminal\n\nUsage : dracosh [options]\n        dracosh restore [numéro]  liste tes sauvegardes, ou en restaure une\n\n  --deck <nom>     réviser ce paquet, pour cette fois seulement (sinon celui choisi dans /decks)\n  --every <durée>  pause entre les questions : 30s, 10m, 1h (par défaut : {interval})\n  --no-sound       couper les sons\n  --volume <0-1>   volume du son (par défaut : {volume})\n  --stats          afficher la progression et quitter\n  --data           montrer où sont gardées tes cartes, ta progression et tes sauvegardes\n  --preview        parcourir toutes les animations et tous les écrans sur des données inventées (rien n'est enregistré)\n  -y, --yes        restaurer sans demander\n  -h, --help       afficher cette aide\n\nLes options remplacent tes réglages enregistrés pour ce lancement seulement. Change-les pour de bon dans /settings.\n\nPendant l'utilisation : Entrée valide (à vide, elle montre la réponse, puis 1 ou 2), « / » ouvre le menu des commandes (/add, /decks, /settings, /stats, /help…),\nÉchap quitte (efface d'abord ce que tu as tapé). Ctrl+C marche aussi.\nEntre deux cartes : Entrée demande la suivante tout de suite, q quitte. /help explique le reste.",
+    "help": "Dracosh : un entraîneur de vocabulaire et de quiz pour ton terminal\n\nUsage : dracosh [options]\n        dracosh import <fichier|-> ajouter des cartes depuis un fichier (.txt, .csv, .tsv, un paquet Anki .apkg ou .colpkg, exports texte Anki ou Quizlet, une sauvegarde .json), ou « - » pour l'entrée standard\n        dracosh export <fichier>  écrire tes paquets en .apkg (Anki), .txt, .tsv, .csv ou .json (tout)\n        dracosh restore [numéro]  liste tes sauvegardes, ou en restaure une\n\n  --deck <nom>     réviser ce paquet, pour cette fois seulement (sinon celui choisi dans /decks)\n                   avec import ou export : le paquet à remplir ou à écrire\n  --every <durée>  pause entre les questions : 30s, 10m, 1h (par défaut : {interval})\n  --no-sound       couper les sons\n  --volume <0-1>   volume du son (par défaut : {volume})\n  --stats          afficher la progression et quitter\n  --data           montrer où sont gardées tes cartes, ta progression et tes sauvegardes\n  --preview        parcourir toutes les animations et tous les écrans sur des données inventées (rien n'est enregistré)\n  --update         import : les cartes déjà là prennent les réponses du fichier (sinon on te demande)\n  --split          import : une réponse qui en liste plusieurs (« cat, kitty ») devient une réponse par mot\n  --separator <s>  import : ce qui sépare les colonnes : tab, comma, semicolon, pipe, colon, space ou un caractère\n  --encoding <e>   import : un fichier qui n'est pas en UTF-8, p. ex. windows-1252\n  --anki           import ou export : directement depuis ou vers un Anki ouvert (greffon AnkiConnect)\n  -y, --yes        importer, exporter ou restaurer sans demander\n  -h, --help       afficher cette aide\n\nLes options remplacent tes réglages enregistrés pour ce lancement seulement. Change-les pour de bon dans /settings.\n\nPendant l'utilisation : Entrée valide (à vide, elle montre la réponse, puis 1 ou 2), « / » ouvre le menu des commandes (/add, /decks, /settings, /stats, /help…),\nÉchap quitte (efface d'abord ce que tu as tapé). Ctrl+C marche aussi.\nEntre deux cartes : Entrée demande la suivante tout de suite, q quitte. /help explique le reste.",
     "badEvery": "--every « {value} » invalide. Utilise par ex. 30s, 10m, 1h.",
     "badVolume": "--volume « {value} » invalide. Utilise un nombre de 0 à 1.",
     "unknownCommand": "Commande inconnue « {command} ». Voir dracosh --help.",
@@ -814,14 +814,17 @@
         "daily": "quotidienne",
         "before-reset": "avant réinit.",
         "before-delete": "avant suppression",
-        "before-restore": "avant restauration"
+        "before-restore": "avant restauration",
+        "before-import": "avant import"
       }
     },
     "backups": {
       "one": "{count} sauvegarde",
       "many": "{count} sauvegardes",
       "other": "{count} sauvegardes"
-    }
+    },
+    "unknownOption": "Option inconnue {option}. Voir dracosh --help.",
+    "oneFile": "dracosh {command} prend un fichier à la fois."
   },
   "tips": {
     "keys-enter": {
@@ -1144,5 +1147,251 @@
     "learningArticles": "Un article manquant ou faux y compte comme « presque ».",
     "savedWithLearning": "Langues de « {deck} » : {pair}, langue apprise : {language}.",
     "learningUmlauts": "En allemand, un tréma oublié aussi."
+  },
+  "import": {
+    "needFile": "Quel fichier ? dracosh import <fichier> (ou - pour lire les cartes sur l'entrée standard)",
+    "noFile": "Le fichier {file} n'existe pas.",
+    "unknownEncoding": "Encodage inconnu « {encoding} ». Essaie utf-8, utf-16, windows-1250 ou windows-1252.",
+    "notUtf8": "{file} n'est pas enregistré en UTF-8. Voici sa première ligne avec des caractères spéciaux, lue dans chaque encodage probable :",
+    "notUtf8Hint": "Relance l'import avec celui qui se lit bien, ou enregistre le fichier en UTF-8 (dans Excel : CSV UTF-8).",
+    "stdin": "l'entrée standard",
+    "reading": "Lecture de {file} : {what}",
+    "encoding": " (lu en {encoding})",
+    "formats": {
+      "lines": "des lignes Dracosh (recto = réponse; autre réponse // exemple)",
+      "dashes": "une liste avec des tirets (recto - réponse)",
+      "table": "un tableau séparé par des {separator} ; colonnes : {columns}",
+      "apkg": "un paquet Anki"
+    },
+    "separators": {
+      "tab": "tabulations",
+      "comma": "virgules",
+      "semicolon": "points-virgules",
+      "pipe": "« | »",
+      "colon": "deux-points",
+      "space": "espaces"
+    },
+    "column": "{number} {role}",
+    "roles": {
+      "front": "recto",
+      "back": "réponse",
+      "example": "exemple",
+      "deck": "paquet"
+    },
+    "empty": "Il ne contient aucune carte.",
+    "yourDecks": "Tes paquets : {decks}",
+    "askDeck": "Dans quel paquet ? Entrée crée un nouveau paquet « {deck} », ou tape un nom : ",
+    "askDeckEmpty": "Dans quel paquet ? Tape un nom : ",
+    "needDeck": "Indique le paquet des cartes : dracosh import - --deck <nom>",
+    "intoDeck": "Dans {deck} ({cards} pour l'instant) :",
+    "intoNewDeck": "Dans un nouveau paquet, {deck} :",
+    "more": {
+      "one": "… et 1 de plus",
+      "many": "… et {count} de plus",
+      "other": "… et {count} de plus"
+    },
+    "counts": {
+      "new": {
+        "one": "1 nouvelle carte",
+        "many": "{count} nouvelles cartes",
+        "other": "{count} nouvelles cartes"
+      },
+      "same": {
+        "one": "1 déjà là",
+        "many": "{count} déjà là",
+        "other": "{count} déjà là"
+      },
+      "changed": {
+        "one": "1 déjà là, différente dans le fichier",
+        "many": "{count} déjà là, différentes dans le fichier",
+        "other": "{count} déjà là, différentes dans le fichier"
+      }
+    },
+    "problems": {
+      "one": "1 ligne ne peut pas être ajoutée :",
+      "many": "{count} lignes ne peuvent pas être ajoutées :",
+      "other": "{count} lignes ne peuvent pas être ajoutées :"
+    },
+    "issues": {
+      "noFront": "pas de recto",
+      "noBack": "pas de réponse",
+      "noDeck": "pas de paquet",
+      "twice": "aussi à la ligne {line}",
+      "slash": "une réponse commence par /",
+      "tooLong": "le nom de paquet « {deck} » dépasse {max} caractères : choisis-en un avec --deck",
+      "tour": "« {deck} » est le paquet de découverte : choisis un autre nom",
+      "noSeparator": "pas de « = » entre le recto et la réponse",
+      "badDirection": "pas un sens : utilise forward, backward ou both",
+      "twiceNote": "deux fois dans le paquet",
+      "picture": "une image avec des parties à deviner (schéma à remplir)",
+      "mediaOnly": "seulement une image ou un son, pas de texte à demander"
+    },
+    "ignored": {
+      "one": "1 ligne a du texte dans une colonne qui n'est pas lue (ligne {lines}) : seuls le recto, la réponse et l'exemple le sont.",
+      "many": "{count} lignes ont du texte dans des colonnes qui ne sont pas lues (lignes {lines}) : seuls le recto, la réponse et l'exemple le sont.",
+      "other": "{count} lignes ont du texte dans des colonnes qui ne sont pas lues (lignes {lines}) : seuls le recto, la réponse et l'exemple le sont."
+    },
+    "changedTitle": {
+      "one": "1 carte est déjà là et le fichier l'a autrement (maintenant → dans le fichier) :",
+      "many": "{count} cartes sont déjà là et le fichier les a autrement (maintenant → dans le fichier) :",
+      "other": "{count} cartes sont déjà là et le fichier les a autrement (maintenant → dans le fichier) :"
+    },
+    "updateAsk": {
+      "one": "La mettre à jour avec la version du fichier ? Sa progression reste.",
+      "many": "Mettre ces {count} à jour avec la version du fichier ? Leur progression reste.",
+      "other": "Mettre ces {count} à jour avec la version du fichier ? Leur progression reste."
+    },
+    "changedLeft": "Elles restent telles quelles (--update prend la version du fichier).",
+    "nothing": "Rien à ajouter : les cartes sont déjà là, ou ne peuvent pas être ajoutées telles quelles.",
+    "directionTitle": "Comment {deck} doit-il interroger ?",
+    "directionAsk": "Choisis 1, 2 ou 3 (Entrée : 1) : ",
+    "askSuffix": "[O/n]",
+    "doneNew": {
+      "one": "Paquet {deck} créé avec 1 carte.",
+      "many": "Paquet {deck} créé avec {count} cartes.",
+      "other": "Paquet {deck} créé avec {count} cartes."
+    },
+    "done": {
+      "one": "1 carte ajoutée à {deck}.",
+      "many": "{count} cartes ajoutées à {deck}.",
+      "other": "{count} cartes ajoutées à {deck}."
+    },
+    "doneUpdated": {
+      "one": " 1 mise à jour.",
+      "many": " {count} mises à jour.",
+      "other": " {count} mises à jour."
+    },
+    "doneOnlyUpdated": {
+      "one": "1 carte mise à jour dans {deck}.",
+      "many": "{count} cartes mises à jour dans {deck}.",
+      "other": "{count} cartes mises à jour dans {deck}."
+    },
+    "undo": "Pour annuler : « dracosh restore 1 » (la sauvegarde faite à l'instant).",
+    "start": "Pour réviser : dracosh --deck {deck}",
+    "inDecks": "Dracosh est ouvert : les nouvelles cartes sont dans /decks.",
+    "backupFile": "{file} est une sauvegarde complète de Dracosh : elle restaure les cartes, la progression et les réglages qu'elle contient.",
+    "backupAsk": "La restaurer ?",
+    "askDeckYours": "Dans quel paquet ? Entrée : {deck} (le tien, {cards}), ou tape un nom : ",
+    "listed": {
+      "one": "1 réponse en liste plusieurs, comme « {example} ».",
+      "many": "{count} réponses en listent plusieurs, comme « {example} ».",
+      "other": "{count} réponses en listent plusieurs, comme « {example} »."
+    },
+    "splitAsk": "Prendre chacune comme une réponse à part ?",
+    "splitHint": "Chacune reste une seule réponse, telle qu'écrite (--split les sépare).",
+    "directionTitleMany": "Comment les {count} nouveaux paquets doivent-ils interroger ?",
+    "previewOnly": "Simple aperçu, rien n'est enregistré. Pour importer : {command}",
+    "confirmAdd": {
+      "one": "Ajouter 1 carte ?",
+      "many": "Ajouter {count} cartes ?",
+      "other": "Ajouter {count} cartes ?"
+    },
+    "confirmUpdate": {
+      "one": "Mettre à jour 1 carte ?",
+      "many": "Mettre à jour {count} cartes ?",
+      "other": "Mettre à jour {count} cartes ?"
+    },
+    "confirmBoth": {
+      "one": "Ajouter {cards} et en mettre 1 à jour ?",
+      "many": "Ajouter {cards} et en mettre {count} à jour ?",
+      "other": "Ajouter {cards} et en mettre {count} à jour ?"
+    },
+    "tourGone": "Le paquet de découverte a laissé la place au tien.",
+    "badSeparator": "Séparateur inconnu « {value} » : utilise tab, comma, semicolon, pipe, colon, space ou un caractère.",
+    "languagesGuess": "Langues : {front} → {back} (une supposition ; à changer dans /decks)",
+    "languagesUnsure": "Langues : pas encore sûr (à régler dans /decks)",
+    "ankiNoHtml": "Cet export Anki n'a pas de HTML, la réponse et son exemple se mélangent : exporte de nouveau avec l'option HTML activée.",
+    "no": "n|non|no",
+    "isFolder": "{file} est un dossier : indique un fichier dedans.",
+    "noPermission": "Dracosh n'a pas le droit de lire {file}.",
+    "tooBig": "{file} dépasse {max} Mo : ce n'est pas un paquet. Découpe-le, ou vérifie que c'est le bon fichier.",
+    "notText": "{file} n'est pas un fichier texte. Dracosh importe du texte (lignes Dracosh, CSV, TSV, exports texte d'Anki et de Quizlet) et les paquets Anki (.apkg, .colpkg).",
+    "problemLine": "ligne {line}  {issue} : {text}",
+    "backupReplaces": "Elle remplace ce que tu as maintenant ({decks} · {cards}).",
+    "mediaLeft": {
+      "one": "1 note a des images ou des sons ; seul son texte est importé.",
+      "many": "{count} notes ont des images ou des sons ; seul leur texte est importé.",
+      "other": "{count} notes ont des images ou des sons ; seul leur texte est importé."
+    },
+    "problemsNotes": {
+      "one": "1 note ne peut pas être ajoutée :",
+      "many": "{count} notes ne peuvent pas être ajoutées :",
+      "other": "{count} notes ne peuvent pas être ajoutées :"
+    },
+    "problemNote": "{issue} : {text}",
+    "notAnki": "{file} n'est pas un paquet Anki que Dracosh sait lire. Dans Anki, Fichier → Exporter → Paquet de paquets Anki (.apkg) en crée un.",
+    "needsNode": "Lire un paquet Anki demande Node {version} ou plus récent (ici : {current}). Mets Node à jour, ou exporte le paquet depuis Anki en « Notes en texte » et importe ce fichier.",
+    "subdecks": "Les sous-paquets d'Anki deviennent ici des paquets à part, comme « {deck} ».",
+    "hint": "(indice : {hint})",
+    "notForPackage": "--separator et --encoding servent aux fichiers texte : un paquet Anki n'en a pas besoin.",
+    "anki": {
+      "empty": "Il n'y a pas de cartes à reprendre dans Anki.",
+      "noDeck": "Anki n'a pas de paquet « {deck} » avec des cartes. Ses paquets : {decks}",
+      "yourDecks": "Tes paquets dans Anki :",
+      "which": "Lesquels ? Des numéros comme 1 3, ou Entrée pour tous : ",
+      "asking": "Récupération de {deck} depuis Anki…",
+      "read": "Depuis Anki : {decks}"
+    }
+  },
+  "export": {
+    "needFile": "Où ? dracosh export <fichier> : .apkg (Anki), .txt (Dracosh), .tsv (texte pour Anki), .csv ou .json (tout)",
+    "unknownFormat": "{file} : le format dépend de l'extension : .apkg (Anki), .txt (Dracosh), .tsv (texte pour Anki), .csv ou .json (tout).",
+    "needsNode": "Un paquet Anki demande Node {version} ou plus récent (ici : {current}). Mets Node à jour, ou exporte plutôt en .tsv.",
+    "jsonAll": "Un export .json contient tout (tous les paquets, la progression et les réglages) : enlève --deck.",
+    "noDecks": "Pas encore de paquet à toi à exporter.",
+    "exists": "{file} existe déjà. L'écraser ?",
+    "existsNeedsYes": "{file} existe déjà : ajoute --yes pour l'écraser.",
+    "wrote": {
+      "one": "1 carte écrite dans {file}.",
+      "many": "{count} cartes écrites dans {file}.",
+      "other": "{count} cartes écrites dans {file}."
+    },
+    "wroteAll": "Cartes, progression et réglages écrits dans {file}.",
+    "next": {
+      "txt": "Pour le relire : dracosh import {file}",
+      "apkg": "Dans Anki : double-clique sur {file}, ou Fichier → Importer. Un nouvel export mettra à jour les mêmes notes.",
+      "tsv": "Dans Anki : Fichier → Importer, choisis {file} et vérifie que le type de note est Basique.",
+      "csv": "S'ouvre dans n'importe quel tableur ; dracosh import {file} le relit.",
+      "json": "dracosh import {file} restaure tout, sur cet ordinateur ou un autre."
+    },
+    "fileHeader": "Cartes Dracosh, {date}. Une carte par ligne : recto = réponse; autre réponse // exemple",
+    "fileHowTo": "Pour les relire : dracosh import <ce fichier>",
+    "inData": "C'est le dossier de Dracosh ({home}) : exporte ailleurs, pour que rien n'y soit écrasé.",
+    "cantWrite": "Impossible d'écrire {file} : {error}",
+    "noFolder": "ce dossier n'existe pas",
+    "wroteCloze": {
+      "one": "1 carte à trous écrite dans {file}.",
+      "many": "{count} cartes à trous écrites dans {file}.",
+      "other": "{count} cartes à trous écrites dans {file}."
+    },
+    "nextCloze": "Importe-le dans Anki de la même façon, avec le type de note Texte à trous : Anki garde les deux sortes à part.",
+    "anki": {
+      "noFile": "--anki envoie les cartes directement à Anki, sans fichier : dracosh export --anki, ou ajoute --deck <nom> pour un seul paquet.",
+      "needsYes": "L'envoi à Anki modifie ta collection Anki : ajoute --yes pour le faire sans demander.",
+      "ask": "Envoyer à Anki : {cards} ({decks}) ?",
+      "sent": "Envoyé à Anki : {cards} ({decks}). Les notes de Dracosh qu'Anki avait déjà sont mises à jour.",
+      "fromAnki": {
+        "one": "1 carte vient d'Anki et reste de côté : Anki l'a déjà.",
+        "many": "{count} cartes viennent d'Anki et restent de côté : Anki les a déjà.",
+        "other": "{count} cartes viennent d'Anki et restent de côté : Anki les a déjà."
+      },
+      "nothingNew": "Rien à envoyer : toutes ces cartes viennent d'Anki, qui les a déjà.",
+      "changedNoteType": "Le type de note {type} a maintenant d'autres champs dans Anki ({fields}) : mettre ses notes à jour perdrait leur contenu. Rien n'a été envoyé. Pour garder les deux, exporte dans un fichier (dracosh export cartes.apkg) et importe-le dans Anki."
+    },
+    "fromAnkiCopies": {
+      "one": "1 carte du fichier vient d'Anki : importée dans ce même Anki, ce sera un doublon.",
+      "many": "{count} cartes du fichier viennent d'Anki : importées dans ce même Anki, ce seront des doublons.",
+      "other": "{count} cartes du fichier viennent d'Anki : importées dans ce même Anki, ce seront des doublons."
+    }
+  },
+  "anki": {
+    "notRunning": "Anki ne répond pas. Ouvre Anki avec le greffon AnkiConnect (Outils → Greffons → Acquérir des greffons..., code 2055492159, puis redémarre Anki) et réessaie.",
+    "old": "Cet AnkiConnect est trop ancien pour Dracosh : dans Anki, Outils → Greffons → Vérifier les mises à jour.",
+    "key": "AnkiConnect demande sa clé API : relance avec DRACOSH_ANKI_KEY défini.",
+    "said": "Anki répond : {detail}",
+    "busy": "Anki a pris l'appel mais ne répond pas : il est peut-être occupé (synchronisation, vérification de la base) ou endormi en arrière-plan. Mets Anki au premier plan et réessaie.",
+    "badUrl": "DRACOSH_ANKI_URL n'est pas une adresse que Dracosh peut utiliser ({detail}) : elle ressemble à http://127.0.0.1:8765.",
+    "noDeck": "Anki n'a plus de paquet « {detail} ».",
+    "notImported": "Anki n'a pas pris les cartes : rien n'a été envoyé."
   }
 }

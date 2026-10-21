@@ -2,7 +2,8 @@ import { Fragment, useEffect, useRef, useState } from "react";
 import { Box, useInput } from "ink";
 import { MAX_DECK_NAME, typedSides } from "../library.js";
 import { blankGap, formatLine, gapsOf, parseBack, parseLine, plainFront } from "../cardline.js";
-import { normalize } from "../judge.js";
+import { readCardList } from "../cardlist.js";
+import { frontKey } from "../judge.js";
 import { isKnown, languageName } from "../language.js";
 import { LanguagePicker, pairText } from "./Languages.js";
 import { AnswerInput } from "./AnswerInput.js";
@@ -31,23 +32,13 @@ function startsWithSlash(fields, directions) {
   return typedSides({ directions: directions ?? "forward" }).some((side) => [fields[side]].flat().some(slash));
 }
 
-// A pasted list, one card per line: a tab splits the lines when every one of them has one (Anki and
-// Quizlet exports), " = " otherwise. Lines that can't be added as they are say why.
-// A list written with dashes ("apple - jabłko") is taken as it is when most lines have one and none
-// has " = "; each line splits on a tab, or on its first dash
-const DASHES = [" - ", " – ", " — "];
-function separatorFor(lines) {
-  const dashed = !lines.some((line) => line.includes(" = ")) && lines.filter((line) => DASHES.some((dash) => line.includes(dash))).length * 2 >= lines.length;
-  return (line) => (line.includes("\t") ? "\t" : dashed ? (DASHES.map((dash) => [dash, line.indexOf(dash)]).filter(([, at]) => at >= 0).sort((a, b) => a[1] - b[1])[0]?.[0] ?? " = ") : " = ");
-}
-
-function readPaste(lines, existing, directions) {
-  const separatorOf = separatorFor(lines);
-  return lines.map((line) => {
-    const separator = separatorOf(line);
-    const fields = parseLine(line, { separator });
-    const issue = issueOf(fields, directions, existing.has(normalize(fields.front)));
-    return { line: separator === " = " ? line.trim() : formatLine(fields), fields, issue, dropped: false };
+// A pasted list, read the way `dracosh import` reads a file (src/cardlist.js): Dracosh lines, rows
+// copied from a spreadsheet or an Anki or Quizlet export, or a list with dashes. Lines that can't be
+// added as they are say why. A row that isn't a Dracosh line is shown as one, for fixing.
+function readPaste(list, existing, directions) {
+  return list.items.map(({ source, fields }) => {
+    const issue = issueOf(fields, directions, existing.has(frontKey(fields.front)));
+    return { line: list.format === "lines" && !source.includes("\t") ? source : formatLine(fields), fields, issue, dropped: false };
   });
 }
 
@@ -59,7 +50,7 @@ function withRepeats(items) {
   const seen = new Set();
   return items.map((item) => {
     if (item.dropped || item.issue) return item;
-    const key = normalize(item.fields.front);
+    const key = frontKey(item.fields.front);
     if (seen.has(key)) return { ...item, issue: "twice" };
     seen.add(key);
     return item;
@@ -230,6 +221,7 @@ export function AddCard({ current, actions, onDone, startNew = false }) {
       return save({ ...draft, back, example: example || draft.example });
     }
     if (step === "fix") {
+      if (!value) return setStep("review"); // nothing typed: the line stays as it was
       const fields = parseLine(value);
       return actions
         .existingCard(deck.name, fields.front)
@@ -303,7 +295,7 @@ export function AddCard({ current, actions, onDone, startNew = false }) {
       setError(err.message);
     }
     const lines = typedAhead.current.split(/\r\n|\r|\n/).filter((line) => line.trim());
-    if (lines.length > 1) return void openPaste(lines); // a list pasted in: the review, as on the field
+    if (lines.length > 1) return void openPaste(typedAhead.current); // a list pasted in: the review, as on the field
     // `ahead`: the field starts with typedAhead as it is when the field is drawn
     setField((f) => ({ key: f.key + 1, initial: "", ahead: true }));
     setDuplicate(null);
@@ -318,11 +310,12 @@ export function AddCard({ current, actions, onDone, startNew = false }) {
   }, [field]);
 
   // a pasted list: each line checked against the deck before anything is saved
-  async function openPaste(lines) {
-    const separatorOf = separatorFor(lines);
-    const fronts = await Promise.all(lines.map((line) => actions.existingCard(deck.name, parseLine(line, { separator: separatorOf(line) }).front).catch(() => null)));
-    const existing = new Set(fronts.filter(Boolean).map((card) => normalize(card.front)));
-    setPasted({ items: readPaste(lines, existing, deck.isNew ? null : deck.directions), selected: 0, confirm: false, total: lines.length });
+  async function openPaste(text) {
+    const list = readCardList(text, { comments: false }); // a pasted "#tag = hashtag" is a card
+    if (!list.items.length) return setStep("line");
+    const fronts = await Promise.all(list.items.map((item) => actions.existingCard(deck.name, item.fields.front).catch(() => null)));
+    const existing = new Set(fronts.filter(Boolean).map((card) => frontKey(card.front)));
+    setPasted({ items: readPaste(list, existing, deck.isNew ? null : deck.directions), selected: 0, confirm: false, total: list.items.length });
     setError("");
     setMessage("");
     setStep("review");

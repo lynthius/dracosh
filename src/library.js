@@ -1,6 +1,6 @@
 import { t } from "./i18n.js";
 import { randomBytes } from "node:crypto";
-import { normalize } from "./judge.js";
+import { frontKey } from "./judge.js";
 import { gapsOf } from "./cardline.js";
 
 // The card library: decks and their cards. Pure functions over a plain object; saving is the caller's job.
@@ -88,10 +88,12 @@ export function createDeck(library, { name, type = "translation", languages = nu
 }
 
 // Progress is kept per direction, so turning one off only stops asking it: its boxes stay for later.
-export function setDirections(library, deckId, directions) {
+// `updated` says when: an Anki package written later makes its notes ask the new way too
+export function setDirections(library, deckId, directions, now = Date.now()) {
   if (!DIRECTIONS.includes(directions)) throw new Error(`Unknown direction "${directions}".`);
   const deck = library.decks.find((d) => d.id === deckId);
   if (!deck) throw new Error("That deck doesn't exist.");
+  if (deck.directions !== directions) deck.updated = now;
   deck.directions = directions;
   return deck;
 }
@@ -124,15 +126,21 @@ export function removeDeck(library, deckId) {
 
 export const cardsOf = (library, deckId) => library.cards.filter((card) => card.deckId === deckId);
 
-// a card with the same front (ignoring case, accents and punctuation) in the same deck
-export const findDuplicate = (library, deckId, front) => {
-  const key = normalize(front);
-  return library.cards.find((card) => card.deckId === deckId && normalize(card.front) === key) ?? null;
+// a card with the same front (ignoring case and punctuation: see frontKey) in the same deck. `index`,
+// a Map of frontKey → card for the deck, saves reading every card again (an import adds thousands)
+export const findDuplicate = (library, deckId, front, index = null) => {
+  const key = frontKey(front);
+  if (index) return index.get(key) ?? null;
+  return library.cards.find((card) => card.deckId === deckId && frontKey(card.front) === key) ?? null;
 };
+export const frontIndex = (library, deckId) => new Map(cardsOf(library, deckId).map((card) => [frontKey(card.front), card]));
 
 // → { card, duplicate }: `duplicate` is the existing card when the front is already in the deck (nothing is added then)
 // `cloze`: the front has {{gaps}}, each asked as a card of its own; the back is then only a hint
-export function addCard(library, deckId, { front, back, example = "", tags = [], cloze = false, id, now = Date.now() }) {
+// `index`: the deck's frontIndex, kept up to date here (see findDuplicate)
+// `guid`: the note in a Dracosh package it came from, so going back to Anki it's that note again;
+// `fromAnki`: it came from a note of Anki's own (see apkg.js), which Anki still has
+export function addCard(library, deckId, { front, back, example = "", tags = [], cloze = false, id, guid, fromAnki = false, now = Date.now() }, index = null) {
   if (!library.decks.some((deck) => deck.id === deckId)) throw new Error("That deck doesn't exist.");
   const cleanFront = String(front ?? "").trim();
   const cleanBack = cleanList(back);
@@ -140,12 +148,13 @@ export function addCard(library, deckId, { front, back, example = "", tags = [],
   if (!cleanFront) throw new Error(t("errors.cardNeedsFront"));
   if (!cleanBack.length && !isCloze) throw new Error(t("errors.cardNeedsBack"));
 
-  const duplicate = findDuplicate(library, deckId, cleanFront);
+  const duplicate = findDuplicate(library, deckId, cleanFront, index);
   if (duplicate) return { card: null, duplicate };
 
-  const card = { id: id ? String(id) : newId("c"), deckId, front: cleanFront, back: cleanBack, example: String(example).trim(), tags: cleanList(tags), ...(isCloze && { cloze: true }), created: now, updated: now };
-  if (library.cards.some((c) => c.id === card.id)) throw new Error(`A card with id ${card.id} already exists.`);
+  const card = { id: id ? String(id) : newId("c"), deckId, front: cleanFront, back: cleanBack, example: String(example).trim(), tags: cleanList(tags), ...(isCloze && { cloze: true }), ...(guid && { guid: String(guid) }), ...(fromAnki && { fromAnki: true }), created: now, updated: now };
+  if (id && library.cards.some((c) => c.id === card.id)) throw new Error(`A card with id ${card.id} already exists.`);
   library.cards.push(card);
+  index?.set(frontKey(cleanFront), card);
   return { card, duplicate: null };
 }
 

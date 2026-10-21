@@ -123,3 +123,11 @@ test("your own language: what your other decks share, then the system's, then th
   assert.deepEqual(homeLanguages({ others: [], ui: "pl", system: "en" }), [{ code: "pl", sure: false }, { code: "en", sure: false }], "the UI's before the system's, both only hints");
   assert.deepEqual(learningSide({ front: "pl", back: "en" }, { name: "Words" }, homeLanguages({ ui: "en", system: "en" })), { side: "front", lang: "pl", sure: false }, "a Pole with everything in English: a guess, and asked");
 });
+
+test("both sides read as one language while the deck's name says another: the name wins where it fits", () => {
+  const cards = ["hablar=to speak", "comer=to eat", "vivir=to live", "tener=to have", "hacer=to do", "decir=to say"].map((line) => {
+    const [front, back] = line.split("=");
+    return { front, back: [back] };
+  });
+  assert.deepEqual(deckLanguages({ name: "Spanish Verbs" }, cards, "en"), { front: "es", back: "en", guessed: true });
+});

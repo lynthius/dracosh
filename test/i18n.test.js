@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readdirSync, readFileSync } from "node:fs";
 import { test } from "node:test";
 import { englishMessages, isPlural, keysOf, LANGUAGES, setLanguage, systemLanguage, t } from "../src/i18n.js";
+import { EXPORT_FORMATS } from "../src/exporter.js";
 import { judge } from "../src/judge.js";
 import { BADGES, ELEMENTS, STAGES } from "../src/progress.js";
 import { TIPS } from "../src/tips.js";
@@ -36,7 +37,12 @@ const dynamicKeys = [
   ...["article", "umlaut", "article-umlaut"].map((reason) => `quiz.almost.${reason}`),
   ...["progress", "everything"].flatMap((scope) => ["label", "note", "question", "stays", "yes"].map((part) => `reset.${scope}.${part}`)),
   ...["cards", "progress", "settings"].map((part) => `cli.restore.what.${part}`),
-  ...["daily", "before-reset", "before-delete", "before-restore"].map((reason) => `cli.restore.reasons.${reason}`),
+  ...["daily", "before-reset", "before-delete", "before-restore", "before-import"].map((reason) => `cli.restore.reasons.${reason}`),
+  ...["lines", "dashes", "apkg"].map((format) => `import.formats.${format}`),
+  ...["tab", "comma", "semicolon", "pipe", "colon", "space"].map((name) => `import.separators.${name}`),
+  ...["deck", "front", "back", "example"].map((role) => `import.roles.${role}`),
+  ...["noFront", "noBack", "noSeparator", "noDeck", "badDirection", "picture", "mediaOnly"].map((issue) => `import.issues.${issue}`),
+  ...EXPORT_FORMATS.map((format) => `export.next.${format}`),
   ...["idle", "smile", "happy", "sad", "blink", "sleep"].map((face) => `preview.faces.${face}`),
   ...Object.keys(english.preview.scenes).flatMap((id) => [`preview.scenes.${id}.label`, `preview.scenes.${id}.hint`]),
   ...Object.keys(english.commands).map((name) => `commands.${name}`)

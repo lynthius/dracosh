@@ -27,7 +27,7 @@ const args = (value) => value.trim().split(/\s+/).slice(1).join(" ");
 // `commandOnly` is the between-questions variant: it starts at "/" and Esc or erasing the "/" closes it.
 // `plain` is a text field with no commands at all ("and/or" is just text there).
 // `onChange` hears every edit; `onRecall` is ↑ on an empty plain field (/add brings back the last card);
-// `onPaste` takes a paste of several lines (/add reviews them as cards), anything else is typed in.
+// `onPaste` takes a paste of several lines, as it came (/add reviews them as cards); anything else is typed in.
 export function AnswerInput({ onSubmit, onCommand, onExit, onEdit, onCancel, onChange, onRecall, onPaste, commands = COMMANDS, initial = "", commandOnly = false, plain = false }) {
   const [value, setValue] = useState(initial);
   const [cursor, setCursor] = useState(initial.length);
@@ -47,8 +47,8 @@ export function AnswerInput({ onSubmit, onCommand, onExit, onEdit, onCancel, onC
   // pasted text arrives whole (bracketed paste); lines become spaces unless /add takes them as cards
   const paste = (text) => {
     const lines = /[\r\n]/.test(text) ? text.split(/\r\n|\r|\n/).filter((line) => line.trim()) : [text];
-    if (onPaste && lines.length > 1) return onPaste(lines);
-    const typed = lines.join(" ");
+    if (onPaste && lines.length > 1) return onPaste(text);
+    const typed = lines.join(" ").replace(/\t/g, " ");
     edit(value.slice(0, cursor) + typed + value.slice(cursor), cursor + typed.length);
   };
   usePaste(paste);
