@@ -136,6 +136,10 @@
         "label": "Heures calmes",
         "hint": "ni questions, ni sons, ni notifications pendant ces heures"
       },
+      "dragonLook": {
+        "label": "Apparence du dragon",
+        "hint": "son élément, tiré au dé ; Entrée revient au dragon vert par défaut"
+      },
       "reset": {
         "label": "Réinitialiser",
         "hint": "repartir de zéro : ta progression seulement, ou tout (une sauvegarde est faite avant)"
@@ -159,7 +163,12 @@
       "session-20": "session · 20 cartes"
     },
     "notSet": "non choisie",
-    "homeTitle": "Quelle langue parles-tu ?"
+    "homeTitle": "Quelle langue parles-tu ?",
+    "lookQuestion": "Revenir au dragon vert par défaut ?",
+    "lookNote": "Son élément ({element}) disparaît pour de bon : le dé ne roulera plus jamais.",
+    "lookYes": "Apparence par défaut",
+    "lookNo": "Garder l'élément",
+    "lookDropped": "Ton dragon a retrouvé son apparence par défaut."
   },
   "count": {
     "cards": {

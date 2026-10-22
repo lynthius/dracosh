@@ -4,6 +4,7 @@ import { language, LANGUAGES, t } from "../i18n.js";
 import { GOALS, INTERVALS, QUIET_PRESETS, RHYTHMS, TIP_MODES, VOLUMES, formatInterval } from "../settings.js";
 import { formatQuiet } from "../quiet.js";
 import { languageName } from "../language.js";
+import { elementName } from "../progress.js";
 import { Bar, html, KeyHints, Text, theme, usePanelWidth } from "./kit.js";
 
 function VolumeValue({ value }) {
@@ -23,6 +24,7 @@ const ALL_ROWS = [
   { key: "tips", options: TIP_MODES, format: (v) => t(`settings.tipModes.${v}`) },
   { key: "skipWeekends", options: [true, false], format: (v) => t(v ? "settings.weekendsRest" : "settings.weekendsCount"), toggle: true },
   { key: "quiet", options: QUIET_PRESETS, format: formatQuiet },
+  { key: "dragonLook", action: true, onlyWith: "element", format: (element) => elementName(element) },
   { key: "reset", action: true, format: () => t("settings.pressEnter") }
 ];
 const label = (row) => t(`settings.rows.${row.key}.label`);
@@ -37,7 +39,8 @@ const nearestIndex = (options, value) => {
 // their own screen through `onAction(key)`; without it (the preview) they are left out.
 // `startRow` and `onRow`: the row to open on, and each row moved to, so a screen opened from a row
 // comes back to it
-export function Settings({ settings, onChange, onClose, onAction, startRow = 0, onRow = () => {} }) {
+// `element`: the dragon's element, if the die gave it one (the row to go back to the default look)
+export function Settings({ settings, element = null, onChange, onClose, onAction, startRow = 0, onRow = () => {} }) {
   const panel = usePanelWidth();
   const [row, setRowState] = useState(startRow);
   const setRow = (next) => setRowState((r) => {
@@ -45,8 +48,8 @@ export function Settings({ settings, onChange, onClose, onAction, startRow = 0, 
     onRow(value);
     return value;
   });
-  const ROWS = onAction ? ALL_ROWS : ALL_ROWS.filter((item) => !item.action);
-  const values = { ...settings, language: settings.language ?? language() };
+  const ROWS = (onAction ? ALL_ROWS : ALL_ROWS.filter((item) => !item.action)).filter((item) => item.onlyWith !== "element" || element);
+  const values = { ...settings, language: settings.language ?? language(), dragonLook: element };
   const labelWidth = Math.max(...ROWS.map((item) => label(item).length)) + 2;
 
   useInput((input, key) => {

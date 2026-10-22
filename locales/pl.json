@@ -136,6 +136,10 @@
         "label": "Godziny ciszy",
         "hint": "w tych godzinach żadnych pytań, dźwięków ani powiadomień"
       },
+      "dragonLook": {
+        "label": "Wygląd smoka",
+        "hint": "jego żywioł, wylosowany kostką; Enter przywraca domyślnego zielonego smoka"
+      },
       "reset": {
         "label": "Reset",
         "hint": "zacznij od nowa: tylko postępy albo wszystko (najpierw powstaje kopia zapasowa)"
@@ -159,7 +163,12 @@
       "session-20": "sesja · 20 kart"
     },
     "notSet": "nie wybrano",
-    "homeTitle": "Jakim językiem mówisz?"
+    "homeTitle": "Jakim językiem mówisz?",
+    "lookQuestion": "Wrócić do domyślnego zielonego smoka?",
+    "lookNote": "Żywioł ({element}) zniknie na dobre: kostka już nigdy się nie potoczy.",
+    "lookYes": "Domyślny wygląd",
+    "lookNo": "Zostaw żywioł",
+    "lookDropped": "Twój smok znów ma domyślny wygląd."
   },
   "count": {
     "cards": {

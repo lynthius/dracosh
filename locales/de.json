@@ -136,6 +136,10 @@
         "label": "Ruhezeiten",
         "hint": "in diesen Stunden keine Fragen, Töne oder Hinweise"
       },
+      "dragonLook": {
+        "label": "Aussehen des Drachen",
+        "hint": "sein Element vom Würfel; Enter holt den grünen Standarddrachen zurück"
+      },
       "reset": {
         "label": "Zurücksetzen",
         "hint": "neu anfangen: nur der Fortschritt oder alles (vorher wird gesichert)"
@@ -159,7 +163,12 @@
       "session-20": "Sitzung · 20 Karten"
     },
     "notSet": "nicht gewählt",
-    "homeTitle": "Welche Sprache sprichst du?"
+    "homeTitle": "Welche Sprache sprichst du?",
+    "lookQuestion": "Zurück zum grünen Standarddrachen?",
+    "lookNote": "Sein Element ({element}) ist dann für immer weg: Der Würfel rollt nie wieder.",
+    "lookYes": "Standardaussehen",
+    "lookNo": "Element behalten",
+    "lookDropped": "Dein Drache sieht wieder aus wie am Anfang."
   },
   "count": {
     "cards": {

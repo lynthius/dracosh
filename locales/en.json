@@ -136,6 +136,10 @@
         "label": "Quiet hours",
         "hint": "no questions, sounds or banners during these hours"
       },
+      "dragonLook": {
+        "label": "Dragon's look",
+        "hint": "its element, from the die; Enter goes back to the default green dragon"
+      },
       "reset": {
         "label": "Reset",
         "hint": "start over: your progress only, or everything (a backup is made first)"
@@ -159,7 +163,12 @@
       "session-20": "session · 20 cards"
     },
     "notSet": "not set",
-    "homeTitle": "Which language do you speak?"
+    "homeTitle": "Which language do you speak?",
+    "lookQuestion": "Go back to the default green dragon?",
+    "lookNote": "Its element ({element}) goes for good: the die never rolls again.",
+    "lookYes": "Default look",
+    "lookNo": "Keep the element",
+    "lookDropped": "Your dragon has its default look again."
   },
   "count": {
     "cards": {

@@ -29,6 +29,8 @@ import { Welcome } from "./Welcome.js";
 import { AddCard } from "./AddCard.js";
 import { ImportScreen } from "./Import.js";
 import { Decks } from "./Decks.js";
+import { Choice, choiceHints } from "./Choice.js";
+import { elementName } from "../progress.js";
 import { Trash } from "./Trash.js";
 import { Cards } from "./Cards.js";
 import { Reset } from "./Reset.js";
@@ -181,6 +183,22 @@ function EmptyDeck({ deck, tour, count, nextDue, dayDone, heldNew = 0, now, widt
         <${Text}>${next}<//>
         ${!tour && heldNew > 0 && html`<${Box} marginTop=${1}><${Text} dimColor>${t("quiz.empty.newTomorrow", { count: heldNew, max: NEW_PER_DAY })}<//><//>`}
       <//>
+    <//>
+  `;
+}
+
+// /settings → the default look: asked first, since the element can't come back
+function DragonLook({ element, onConfirm, onClose }) {
+  const width = usePanelWidth();
+  const [selected, setSelected] = useState(1);
+  return html`
+    <${Fragment}>
+      <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.bad} paddingX=${2} width=${width}>
+        <${Text} bold color=${theme.bad}>${t("settings.lookQuestion")}<//>
+        <${Text} dimColor>${t("settings.lookNote", { element: elementName(element) })}<//>
+        <${Box} marginTop=${1}><${Choice} options=${[{ label: t("settings.lookYes"), danger: true }, { label: t("settings.lookNo") }]} selected=${selected} onMove=${setSelected} onPick=${(i) => (i === 0 ? onConfirm() : onClose())} onCancel=${onClose} /><//>
+      <//>
+      <${Box} paddingX=${1}><${KeyHints} text=${choiceHints("cancel")} /><//>
     <//>
   `;
 }
@@ -786,7 +804,8 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
     <${Box} flexDirection="column" marginY=${1}>
       <${Header} deck=${deckLabel} everyMs=${settings.everyMs} rhythm=${settings.rhythm} wordCount=${question?.wordCount ?? empty?.count} stats=${stats} combo=${session.totals.combo} face=${face} event=${petEvent} tick=${tick} asleep=${asleep} />
       <${Box} marginTop=${1} flexDirection="column">
-        ${screen === "settings" && html`<${Settings} settings=${settings} startRow=${settingsRow.current} onRow=${(row) => (settingsRow.current = row)} onChange=${changeSettings} onClose=${() => setScreen("quiz")} onAction=${library ? (row) => setScreen(row === "reset" ? "reset" : "home-language") : null} />`}
+        ${screen === "settings" && html`<${Settings} settings=${settings} element=${stats.companion.element} startRow=${settingsRow.current} onRow=${(row) => (settingsRow.current = row)} onChange=${changeSettings} onClose=${() => setScreen("quiz")} onAction=${library ? (row) => setScreen({ reset: "reset", homeLanguage: "home-language", dragonLook: "dragon-look" }[row]) : null} />`}
+        ${screen === "dragon-look" && html`<${DragonLook} element=${stats.companion.element} onConfirm=${() => session.defaultLook().then(() => (setScreen("settings"), setNotice(t("settings.lookDropped")))).catch((err) => setProblem(err.message))} onClose=${() => setScreen("settings")} />`}
         ${screen === "home-language" && html`<${LanguageSearch} title=${t("settings.homeTitle")} note=${t("welcome.homeNote")} current=${settings.homeLanguage ?? settings.language} currentNote=${settings.homeLanguage ? t("languages.current") : t("welcome.suggested")} onBack=${() => setScreen("settings")} onPick=${(code) => (changeSettings({ homeLanguage: code }), setScreen("settings"))} />`}
         ${screen === "reset" && html`<${Reset} stats=${stats} actions=${library} onConfirm=${reset} onClose=${() => setScreen("settings")} />`}
         ${screen === "import" && html`<${ImportScreen} actions=${library} fromWelcome=${importFrom === "welcome"} onDone=${importDone} onCancel=${importCancelled} />`}
@@ -798,7 +817,7 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
         }} onLanguages=${(name) => name === deck && phase === "asking" && ask()} onPick=${switchDeck} onNew=${() => (setAddNew(true), setScreen("add"))} onDeleted=${deleteDeck} onRestored=${restoreDeck} onRenamed=${deckRenamed} onMerged=${mergeDecks} onClose=${() => setScreen("quiz")} />`}
         ${screen === "cards" && html`<${Cards} deck=${deck} actions=${library} onDeleted=${deleteCards} onRestored=${restoreDeck} onEdited=${(keys) => session.forgetKeys(keys)} onAdd=${() => (setAddNew(false), setAddInto(deck), setScreen("add"))} onClose=${cardsClosed} />`}
         ${screen === "trash" && html`<${Trash} actions=${library} onRestore=${restoreDeck} onClose=${() => setScreen("quiz")} />`}
-        ${!["settings", "reset", "home-language", "import", "add", "decks", "trash", "cards"].includes(screen) &&
+        ${!["settings", "reset", "home-language", "dragon-look", "import", "add", "decks", "trash", "cards"].includes(screen) &&
           html`
               <${Fragment}>
               ${question &&

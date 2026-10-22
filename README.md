@@ -75,7 +75,7 @@ Type the answer and press Enter. Not sure, or the answer is a whole sentence? Pr
 | `/trash` | decks and cards you deleted, kept for 30 days with their progress: Enter brings one back |
 | `/hint` | reveal one more letter |
 | `/correct` | your answer was right after all; after a yes it's accepted from now on |
-| `/settings` | the app's language, the language you speak, rhythm (a card every few minutes, or a study session), interval, daily goal, sound, pronunciation, quiet hours, weekends, tips, and a reset |
+| `/settings` | the app's language, the language you speak, rhythm (a card every few minutes, or a study session), interval, daily goal, sound, pronunciation, quiet hours, weekends, tips, the dragon's look once the die gave it an element, and a reset |
 | `/stats` | streak and a calendar of your month |
 | `/badges` | all badges and how to get them |
 | `/companion` | your dragon, its element and the forms ahead |
@@ -154,7 +154,9 @@ Fix the lines it lists, and tell me the command to import it for real.
 
 ## Your data
 
-Everything stays on your machine, in `~/.dracosh`; `dracosh --data` shows what's there. Progress is saved after every answer, so you can quit any time. One quiz runs at a time: a second window on the same data is refused, so the two can't overwrite each other's progress. The first start of each day also saves a backup of your cards, progress and settings to `~/.dracosh/backups` (the last 7 are kept); `dracosh restore` brings one back, and backs up what you have first, so a restore can be undone too. To start over, `/settings` → Reset clears your progress only (badges, streak, the dragon) or everything; a backup is made first. To move to another computer, `dracosh export everything.json` there and `dracosh import everything.json` here; to use Dracosh on two computers at once, put that folder somewhere synced and point `DRACOSH_HOME` at it.
+Everything stays on your machine, in `~/.dracosh`; `dracosh --data` shows what's there. Progress is saved after every answer, so you can quit any time. One quiz runs at a time: a second window on the same data is refused, so the two can't overwrite each other's progress. The first start of each day also saves a backup of your cards, progress and settings to `~/.dracosh/backups` (the last 7 are kept); `dracosh restore` brings one back, and backs up what you have first, so a restore can be undone too. To start over, `/settings` → Reset clears your progress only (badges, streak, the dragon) or everything; a backup is made first. Decks and cards you delete wait in `/trash` for 30 days, with their progress. To move to another computer, `dracosh export everything.json` there and `dracosh import everything.json` here; to use Dracosh on two computers at once, put that folder somewhere synced and point `DRACOSH_HOME` at it.
+
+Uninstalling Dracosh (`npm uninstall -g dracosh`) leaves `~/.dracosh` as it is, so installing it again brings everything back. To remove your data too, delete that folder.
 
 Sounds currently play on macOS only.
 

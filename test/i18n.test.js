@@ -29,7 +29,7 @@ const dynamicKeys = [
   ...TIPS.flatMap((tip) => [`tips.${tip.id}.cat`, `tips.${tip.id}.text`]),
   "tour.deck",
   "tour.cards",
-  ...["language", "homeLanguage", "rhythm", "everyMs", "sound", "speak", "volume", "dailyGoal", "tips", "skipWeekends", "quiet", "reset"].flatMap((row) => [`settings.rows.${row}.label`, `settings.rows.${row}.hint`]),
+  ...["language", "homeLanguage", "rhythm", "everyMs", "sound", "speak", "volume", "dailyGoal", "tips", "skipWeekends", "quiet", "dragonLook", "reset"].flatMap((row) => [`settings.rows.${row}.label`, `settings.rows.${row}.hint`]),
   ...RHYTHMS.map((rhythm) => `settings.rhythms.${rhythm}`),
   ...["always", "sometimes", "off"].map((mode) => `settings.tipModes.${mode}`),
   ...["deck", "line", "back"].flatMap((field) => [`add.fields.${field}.label`, `add.fields.${field}.hint`]),

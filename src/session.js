@@ -1,7 +1,7 @@
 import { t as say } from "./i18n.js"; // `t` and `text` are taken here (the clock, an answer)
 import { blankGap, plainFront } from "./cardline.js";
 import { ALMOST, closestCandidate, judge } from "./judge.js";
-import { addVacation, applyAnswer, applyCaughtUp, markWorkWaiting, applyOverrule, calendarMonth, cancelVacations, ensureProgress, markBadgesSeen, missedOn, recordMiss, snapshot, undoMiss, unseenBadges, vacationInfo } from "./progress.js";
+import { addVacation, applyAnswer, applyCaughtUp, markWorkWaiting, applyOverrule, calendarMonth, cancelVacations, dropElement, ensureProgress, markBadgesSeen, missedOn, recordMiss, snapshot, undoMiss, unseenBadges, vacationInfo } from "./progress.js";
 import { describeDue, grade, intervalDays, itemKey, nextDueAt, pickNext, Rating, ratingFor, startOfTomorrow } from "./scheduler.js";
 import { recordAnswer, saveState, STATE_VERSION } from "./store.js";
 import { createTipDeck } from "./tips.js";
@@ -324,6 +324,11 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
     await save(state);
   }
 
+  async function defaultLook() {
+    dropElement(state, now());
+    await save(state);
+  }
+
   // /badges: the ones won since it was last opened, which light up one by one; opening it marks them seen
   async function openBadges() {
     const fresh = unseenBadges(state, now());
@@ -342,5 +347,5 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
     await settleDay(); // nothing askable after all (a direction switched off): the quiet stretch goes on
   }
 
-  return { totals, next, answer, workAdded, reveal, selfGrade, setDirections, forgetKeys, progressOf, restoreProgress, overrule, canOverrule, wrongAnswer, stats, month, missed, nextTip, pause, isFirstRun, markHatched, welcomeStep, setWelcomeStep, openBadges, forget, reset, inTour: () => inTour };
+  return { totals, next, answer, workAdded, reveal, selfGrade, setDirections, forgetKeys, progressOf, restoreProgress, overrule, canOverrule, wrongAnswer, stats, month, missed, nextTip, pause, isFirstRun, markHatched, welcomeStep, setWelcomeStep, openBadges, defaultLook, forget, reset, inTour: () => inTour };
 }
