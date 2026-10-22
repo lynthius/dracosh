@@ -4,6 +4,7 @@ import { seedLibrary } from "./starter.js";
 import { gapsOf } from "./cardline.js";
 import { addCard, cardsOf, createDeck, emptyLibrary, findDeck, findDuplicate, removeDeck, setDirections as setLibraryDirections, setLanguages as setLibraryLanguages, typedSides, updateCard } from "./library.js";
 import { firstWords } from "./firstwords.js";
+import { applyImport, planImport } from "./importer.js";
 import { deckLanguages, homeLanguages, languageName, learningSide } from "./language.js";
 import { itemKey } from "./scheduler.js";
 import { loadLibrary, saveLibrary } from "./store.js";
@@ -219,6 +220,25 @@ export function libraryActions({ load = loadLibrary, save = saveLibrary, backup 
       return { from, to: library.decks.find((d) => d.tour).name };
     },
 
+    // /import: what a file's cards would do to the library now (see planImport); `source` is { text, list }
+    // (each deck there already says how many cards it holds: `cards`)
+    async previewImport(source, choices) {
+      const library = await load();
+      const plan = planImport(library, source.text, { ...choices, list: source.list });
+      return { ...plan, decks: plan.decks.map((deck) => ({ ...deck, cards: deck.deck ? cardsOf(library, deck.deck.id).length : 0 })) };
+    },
+
+    // /import, carried out: a backup first, then the plan made again on the library as it is now (another
+    // window may have changed it). `update`: the changed cards take the file's version. → applyImport's
+    // result, and whether a backup was taken (none on a library with nothing in it yet)
+    async importCards(source, choices, { update = false } = {}) {
+      const backedUp = Boolean(await backup("before-import"));
+      const library = await load();
+      const result = applyImport(library, planImport(library, source.text, { ...choices, list: source.list }), { update, directions: choices.directions });
+      await save(library);
+      return { ...result, backedUp };
+    },
+
     // a reset is always preceded by a backup, so `dracosh restore` can undo it
     backupBeforeReset: () => backup("before-reset"),
 
@@ -234,4 +254,4 @@ export function libraryActions({ load = loadLibrary, save = saveLibrary, backup 
 
 // the app's own: reads and writes ~/.dracosh
 const actions = libraryActions();
-export const { allDecks, ownDecks, startDeck, startFirstWords, setDirections, languagesOf, setLanguages, setLearning, existingDeck, existingCard, addCardTo, addCardsTo, updateCardIn, matchTourLanguage, backupBeforeReset, resetLibrary } = actions;
+export const { allDecks, ownDecks, startDeck, startFirstWords, setDirections, languagesOf, setLanguages, setLearning, existingDeck, existingCard, addCardTo, addCardsTo, updateCardIn, previewImport, importCards, matchTourLanguage, backupBeforeReset, resetLibrary } = actions;

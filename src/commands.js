@@ -4,6 +4,7 @@ import { t } from "./i18n.js";
 export const COMMANDS = [
   { name: "/hint", only: "asking", get hint() { return t("commands.hint"); } },
   { name: "/add", get hint() { return t("commands.add"); } },
+  { name: "/import", get hint() { return t("commands.import"); } },
   { name: "/decks", get hint() { return t("commands.decks"); } },
   { name: "/settings", get hint() { return t("commands.settings"); } },
   { name: "/stats", get hint() { return t("commands.stats"); } },

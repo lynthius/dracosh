@@ -13,7 +13,8 @@ const FIRST_WORDS_COUNT = 30;
 // After the hatching, before the first question: the app's language, the one you speak, the one you're
 // learning, and a way to start. Every answer is kept as it's given (onStep), so a welcome left halfway
 // goes on from that step. `onPreviewLanguage` shows the texts in a language while it's only selected;
-// onStart(how): "words" (the first words of the pair), "tour" or "own" (a deck of your own, in /add).
+// onStart(how): "words" (the first words of the pair), "tour", "import" (cards you have, /import) or
+// "own" (a deck of your own, in /add).
 // `tour`: whether there's still a tour to show (a deck of your own may have taken its place).
 export function Welcome({ step, settings, tour = true, onPreviewLanguage, onStep, onStart }) {
   const panel = usePanelWidth();
@@ -40,6 +41,7 @@ export function Welcome({ step, settings, tour = true, onPreviewLanguage, onStep
     const options = [
       words && { id: "words", label: t("welcome.start.words", { count: FIRST_WORDS_COUNT }), note: t("welcome.start.wordsNote", { language: languageName(learning), home: languageName(home) }) },
       tour && { id: "tour", label: t("welcome.start.tour"), note: t("welcome.start.tourNote", { count: entry("tour.cards").length }) },
+      { id: "import", label: t("welcome.start.import"), note: t("welcome.start.importNote") },
       { id: "own", label: t("welcome.start.own"), note: t("welcome.start.ownNote") }
     ].filter(Boolean);
     // no ready-made words for this pair: said why, naming the language that has none

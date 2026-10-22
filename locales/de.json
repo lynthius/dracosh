@@ -2,6 +2,7 @@
   "commands": {
     "hint": "Noch einen Buchstaben (die Karte kommt früher wieder)",
     "add": "Karten hinzufügen oder einen neuen Stapel anlegen",
+    "import": "Karten aus Anki, einer CSV- oder Textdatei importieren",
     "decks": "Stapel wechseln oder einen neuen anlegen",
     "settings": "Sprache, Rhythmus, Intervall, Ruhezeiten, Ton, Ziel, Tipps",
     "stats": "Serie, Monatskalender und Abzeichen im Überblick",
@@ -76,7 +77,10 @@
     "addName": "enter anlegen · esc abbrechen",
     "confirm": "{yes} ja · {no} nein",
     "languagePick": "tippen zum Suchen · ↑/↓ wählen · enter bestätigen · ← zurück",
-    "choiceLeft": "{choose} · ← zurück"
+    "choiceLeft": "{choose} · ← zurück",
+    "importPath": "enter Datei lesen · esc abbrechen",
+    "importDone": "enter weiter",
+    "importName": "enter weiter · esc zurück"
   },
   "settings": {
     "title": "Einstellungen",
@@ -354,7 +358,8 @@
         "one": "in etwa einem Monat",
         "other": "in etwa {count} Monaten"
       }
-    }
+    },
+    "previewNoImport": "Die Vorschau kann keine Karten importieren; starte dafür dracosh."
   },
   "dragon": {
     "stages": {
@@ -1345,27 +1350,69 @@
     "homeTitle": "Welche Sprache sprichst du?",
     "homeNote": "So kann Dracosh neue Wörter von ihren Übersetzungen unterscheiden.",
     "learningTitle": "Welche Sprache lernst du?",
-    "learningNote": "Wähl für den Anfang eine; Decks in anderen Sprachen kannst du jederzeit hinzufügen. Du lernst keine Sprache? Wähl „Etwas anderes“ am Ende der Liste.",
+    "learningNote": "Wähl für den Anfang eine; Stapel in anderen Sprachen kannst du jederzeit hinzufügen. Du lernst keine Sprache? Wähl „Etwas anderes“ am Ende der Liste.",
     "notLanguage": "Etwas anderes (Definitionen, Fakten …)",
     "startTitle": "Wie möchtest du anfangen?",
-    "startNote": "Du kannst das später ändern: /decks wechselt jederzeit das Deck.",
+    "startNote": "Du kannst das später ändern: /decks wechselt jederzeit den Stapel.",
     "start": {
-      "tour": "Zeig mir, wie es geht",
-      "tourNote": {
-        "one": "{count} kurze Karte dazu, wie Dracosh funktioniert",
-        "other": "{count} kurze Karten dazu, wie Dracosh funktioniert"
-      },
       "words": {
         "one": "Mit {count} Alltagswort anfangen",
         "other": "Mit {count} Alltagswörtern anfangen"
       },
       "wordsNote": "{language} → {home}",
-      "own": "Eigenes Deck anlegen",
+      "tour": "Zeig mir, wie es geht",
+      "tourNote": {
+        "one": "{count} kurze Karte dazu, wie Dracosh funktioniert",
+        "other": "{count} kurze Karten dazu, wie Dracosh funktioniert"
+      },
+      "import": "Ich habe schon Karten",
+      "importNote": "aus Anki, einer CSV- oder Textdatei",
+      "own": "Eigenen Stapel anlegen",
       "ownNote": "Karten eintippen oder einfügen",
-      "noWords": "Fertige Wörter gibt es für {languages}. Für {language} legst du ein eigenes Deck an.",
-      "noWordsHome": "Fertige Wörter gibt es für Paare aus diesen Sprachen: {languages}. {language} ist noch nicht dabei, also fang mit einem eigenen Deck an."
+      "noWords": "Fertige Wörter gibt es für {languages}. Für {language} legst du einen eigenen Stapel an.",
+      "noWordsHome": "Fertige Wörter gibt es für Paare aus diesen Sprachen: {languages}. {language} ist noch nicht dabei, also fang mit einem eigenen Stapel an."
     },
     "firstWordsDeck": "{language}: erste Wörter",
     "suggested": "Vorschlag"
+  },
+  "importScreen": {
+    "title": "Karten importieren",
+    "pathLabel": "Welche Datei?",
+    "pathHint": "Ein Anki-Paket (.apkg), eine CSV- oder Textdatei. Zieh die Datei hierher, um ihren Pfad einzufügen.",
+    "needPath": "Gib den Pfad der Datei ein oder zieh sie hierher.",
+    "reading": "Datei wird gelesen…",
+    "deckLabel": "In welchen Stapel sollen diese Karten?",
+    "splitYes": "Ja, jede ist eine richtige Antwort",
+    "splitNo": "Nein, so lassen, wie sie sind",
+    "add": {
+      "one": "1 Karte hinzufügen",
+      "other": "{count} Karten hinzufügen"
+    },
+    "addUpdate": {
+      "one": "{cards} hinzufügen und 1 aktualisieren",
+      "other": "{cards} hinzufügen und {count} aktualisieren"
+    },
+    "update": {
+      "one": "1 Karte aktualisieren",
+      "other": "{count} Karten aktualisieren"
+    },
+    "cancel": "Abbrechen, nichts ändern",
+    "changedNote": "Eine aktualisierte Karte übernimmt die Antworten aus der Datei und behält ihren Fortschritt.",
+    "saving": "Wird gespeichert…",
+    "practise": "Als Nächstes: {deck}.",
+    "backup": "Das ist eine vollständige Dracosh-Sicherung. Schließ Dracosh und hol sie zurück mit: dracosh import {file}",
+    "notUtf8": "{file} ist nicht als UTF-8 gespeichert. Speichere die Datei als UTF-8 (in Excel: CSV UTF-8) oder importiere sie mit dracosh import, der Befehl liest auch andere Kodierungen (--encoding).",
+    "newDeck": "Neuer Stapel: {deck}",
+    "otherName": "Anderer Name …",
+    "fromFile": "Aus der Datei:",
+    "slashLeft": {
+      "one": "1 Karte wurde ausgelassen: eine Antwort zum Eintippen beginnt mit /.",
+      "other": "{count} Karten wurden ausgelassen: eine Antwort zum Eintippen beginnt mit /."
+    },
+    "undo": "Rückgängig machen: Dracosh beenden, dann dracosh restore 1 ausführen (die eben angelegte Sicherung).",
+    "close": "Schließen",
+    "problemLine": "Zeile {line}: {text}  ({issue})",
+    "problemNote": "{text}  ({issue})",
+    "empty": "Diese Datei enthält keine Karten."
   }
 }

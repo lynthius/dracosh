@@ -43,6 +43,7 @@ On the first start the dragon hatches, and Dracosh asks three things: the langua
 
 - a short tour, where every card tells you what to type and shows you one more thing Dracosh can do
 - 30 everyday words in the language you're learning, which you translate into yours (for any pair of English, Polish, German, French, Ukrainian, Spanish and Italian)
+- cards you already have, from Anki, a CSV or a text file (`/import`)
 - a deck of your own, in `/add`
 
 The first words or a deck of your own take the tour's place. Already have cards somewhere else? See [Import and export](#import-and-export).
@@ -68,6 +69,7 @@ Type the answer and press Enter. Not sure, or the answer is a whole sentence? Pr
 | Command | What it does |
 | --- | --- |
 | `/add` | add cards to one of your decks, or start a new deck (one line per card, ↑ fixes the last one) |
+| `/import` | import cards from an Anki package, a CSV or a text file: type its path or drag the file in |
 | `/decks` | switch to another deck (Dracosh remembers it), start a new one, or press → to change how a deck is asked and which languages it's in |
 | `/hint` | reveal one more letter |
 | `/correct` | your answer was right after all; after a yes it's accepted from now on |
@@ -95,6 +97,8 @@ dracosh import words.csv --deck "Spanish"
 ```
 
 An import reads the file, then shows what it found before anything is saved: how it split the columns, which deck the cards go into, the new cards, the ones already there, and every line it can't use, with its line number. Cards already in the deck with other answers are listed as they are now and as the file has them, and you decide whether they're updated (their progress stays). Answers listed the way Anki and Quizlet decks often have them ("cat, kitty") can be taken as separate answers. A new deck asks which way to quiz, as in `/add`, and the last question says exactly what will be added and updated. When you already have cards, a backup is taken first, so `dracosh restore 1` undoes an import. Outside a terminal nothing is written without `--yes`: the preview ends with the command that imports for real. For scripts, `--update` takes the file's version of cards already there and `--split` splits listed answers.
+
+`/import` does the same inside the quiz: type the file's path or drag the file into the terminal, answer the same questions on screen, and the new deck is the one you practise next. Full backups (`.json`), other encodings (`--encoding`) and `--anki` stay with `dracosh import`.
 
 A header row (`front,back,example`, `term;definition`) is used to pick the columns, in any order. A file that isn't UTF-8 is never guessed at: Dracosh shows its first line read each likely way and asks for `--encoding`.
 
@@ -170,7 +174,7 @@ The other languages live next to it in `locales/`, the tour included. `npm test`
 
 Coming next, roughly in this order:
 
-- Decks and cards in the app: browse, edit and delete with undo, and `/import` without leaving the quiz.
+- Decks and cards in the app: browse, edit and delete with undo.
 - Optional AI help for writing cards, with your own API key or a local model.
 - Linux and Windows, pronunciation there included.
 

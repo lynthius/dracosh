@@ -7,7 +7,7 @@ import { test } from "node:test";
 process.env.DRACOSH_HOME = mkdtempSync(join(tmpdir(), "dracosh-"));
 const { loadLibrary, saveLibrary } = await import("../src/store.js");
 const { seedLibrary, STARTER_DECK } = await import("../src/starter.js");
-const { addCardTo, addCardsTo, allDecks, existingCard, languagesOf, ownDecks, setDirections, setLanguages, startDeck, startFirstWords, updateCardIn } = await import("../src/manage.js");
+const { addCardTo, addCardsTo, allDecks, existingCard, languagesOf, ownDecks, setDirections, setLanguages, startDeck, startFirstWords, updateCardIn, previewImport, importCards } = await import("../src/manage.js");
 const { listBackups } = await import("../src/backup.js");
 const { loadWords } = await import("../src/words.js");
 const { createSession } = await import("../src/session.js");
@@ -190,4 +190,23 @@ test("the welcome's first words: a deck for the pair, the new word shown, in pla
   const spanish = await startFirstWords({ home: "pl", learning: "es" });
   assert.equal(spanish.deck.name, "Spanish: first words 2", "a deck of yours with that name stays yours");
   assert.equal((await loadLibrary()).cards.filter((c) => c.deckId === spanish.deck.id).length, 30);
+});
+
+test("/import: a preview changes nothing, the import takes a backup and adds to a deck of yours", async () => {
+  const before = await loadLibrary();
+  const target = before.decks.find((d) => !d.tour);
+  const count = before.cards.filter((c) => c.deckId === target.id).length;
+  const source = { text: "Stadt = miasto\nHund = pies\n", list: null };
+  const choices = { deckName: target.name, directions: {}, split: false };
+  const plan = await previewImport(source, choices);
+  assert.equal(plan.decks[0].cards, count, "a deck there already says how many cards it has");
+  assert.deepEqual(plan.decks[0].items.map((item) => item.kind), ["new", "new"]);
+  assert.equal((await loadLibrary()).cards.length, before.cards.length, "a preview saves nothing");
+
+  const backups = (await listBackups()).length;
+  const result = await importCards(source, choices);
+  assert.equal(result.added, 2);
+  assert.equal(result.backedUp, true);
+  assert.equal((await listBackups()).length, backups + 1);
+  assert.equal((await loadLibrary()).cards.filter((c) => c.deckId === target.id).length, count + 2);
 });

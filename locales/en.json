@@ -2,6 +2,7 @@
   "commands": {
     "hint": "Reveal another letter (the card comes back sooner)",
     "add": "Add cards to a deck, or start a new one",
+    "import": "Import cards from Anki, a CSV or a text file",
     "decks": "Switch to another deck, or start a new one",
     "settings": "Language, rhythm, interval, quiet hours, sound, goal, tips",
     "stats": "Streak, month calendar and badges summary",
@@ -76,7 +77,10 @@
     "addName": "enter create · esc cancel",
     "confirm": "{yes} yes · {no} no",
     "languagePick": "type to search · ↑/↓ choose · enter confirm · ← back",
-    "choiceLeft": "{choose} · ← back"
+    "choiceLeft": "{choose} · ← back",
+    "importPath": "enter read the file · esc cancel",
+    "importDone": "enter continue",
+    "importName": "enter continue · esc back"
   },
   "settings": {
     "title": "Settings",
@@ -351,7 +355,8 @@
         "one": "in about a month",
         "other": "in about {count} months"
       }
-    }
+    },
+    "previewNoImport": "The preview can't import cards; run dracosh for that."
   },
   "dragon": {
     "stages": {
@@ -1333,16 +1338,18 @@
     "startTitle": "How do you want to start?",
     "startNote": "You can change this later: /decks switches decks any time.",
     "start": {
-      "tour": "Show me how it works",
-      "tourNote": {
-        "one": "{count} short card on how Dracosh works",
-        "other": "{count} short cards on how Dracosh works"
-      },
       "words": {
         "one": "Start with {count} everyday word",
         "other": "Start with {count} everyday words"
       },
       "wordsNote": "{language} → {home}",
+      "tour": "Show me how it works",
+      "tourNote": {
+        "one": "{count} short card on how Dracosh works",
+        "other": "{count} short cards on how Dracosh works"
+      },
+      "import": "I already have cards",
+      "importNote": "from Anki, a CSV or a text file",
       "own": "Make my own deck",
       "ownNote": "type or paste your cards",
       "noWords": "Ready-made words come in {languages}. For {language}, make a deck of your own.",
@@ -1350,5 +1357,45 @@
     },
     "firstWordsDeck": "{language}: first words",
     "suggested": "suggested"
+  },
+  "importScreen": {
+    "title": "Import cards",
+    "pathLabel": "Which file?",
+    "pathHint": "An Anki package (.apkg), a CSV or a text file. Drag the file here to paste its path.",
+    "needPath": "Type the file's path, or drag the file here.",
+    "reading": "Reading the file…",
+    "deckLabel": "Which deck should these cards go into?",
+    "splitYes": "Yes, each one is a right answer",
+    "splitNo": "No, keep them as written",
+    "add": {
+      "one": "Add 1 card",
+      "other": "Add {count} cards"
+    },
+    "addUpdate": {
+      "one": "Add {cards} and update 1",
+      "other": "Add {cards} and update {count}"
+    },
+    "update": {
+      "one": "Update 1 card",
+      "other": "Update {count} cards"
+    },
+    "cancel": "Cancel, change nothing",
+    "changedNote": "An updated card takes the file's answers and keeps its progress.",
+    "saving": "Saving…",
+    "practise": "Up next: {deck}.",
+    "backup": "That's a full Dracosh backup. Close Dracosh and bring it back with: dracosh import {file}",
+    "notUtf8": "{file} isn't saved as UTF-8. Save it as UTF-8 (in Excel: CSV UTF-8), or import it with dracosh import, which can read other encodings (--encoding).",
+    "newDeck": "A new deck: {deck}",
+    "otherName": "Another name…",
+    "fromFile": "From the file:",
+    "slashLeft": {
+      "one": "1 card was left out: an answer to type starts with /.",
+      "other": "{count} cards were left out: an answer to type starts with /."
+    },
+    "undo": "To undo it: quit Dracosh, then run dracosh restore 1 (the backup taken just now).",
+    "close": "Close",
+    "problemLine": "line {line}: {text}  ({issue})",
+    "problemNote": "{text}  ({issue})",
+    "empty": "This file has no cards."
   }
 }

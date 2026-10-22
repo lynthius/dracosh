@@ -54,3 +54,13 @@ test("the session summary renders, its today row whole", async () => {
   const lines = await frame(React.createElement(Summary, { stats, totals: { asked: 6, correct: 4 }, bestCombo: 3, onDone: () => {} }), { stdin });
   assert.ok(lines.some((line) => line.includes("20/20")), JSON.stringify(lines));
 });
+
+test("a dragged-in file's path is read as the terminal pasted it", async () => {
+  const { cleanPath } = await import("../src/ui/Import.js");
+  const { homedir } = await import("node:os");
+  assert.equal(cleanPath("/tmp/My\\ Spanish.csv "), "/tmp/My Spanish.csv", "spaces escaped");
+  assert.equal(cleanPath("'/tmp/My Spanish.csv'"), "/tmp/My Spanish.csv", "in quotes");
+  assert.equal(cleanPath("file:///tmp/My%20Spanish.csv"), "/tmp/My Spanish.csv");
+  assert.equal(cleanPath("~/decks/a.apkg"), `${homedir()}/decks/a.apkg`);
+  assert.equal(cleanPath("   "), "");
+});

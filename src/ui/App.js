@@ -27,6 +27,7 @@ import { Hatch } from "./Hatch.js";
 import { LanguageSearch } from "./Languages.js";
 import { Welcome } from "./Welcome.js";
 import { AddCard } from "./AddCard.js";
+import { ImportScreen } from "./Import.js";
 import { Decks } from "./Decks.js";
 import { Reset } from "./Reset.js";
 import { Help } from "./Help.js";
@@ -201,6 +202,7 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
   const [deck, setDeck] = useState(initialDeck);
   const [addNew, setAddNew] = useState(false); // /add opened from "+ New deck" in /decks
   const [addSuggest, setAddSuggest] = useState(null); // /add from the welcome: a name and an example in your pair
+  const [importFrom, setImportFrom] = useState(null); // "welcome" when /import was picked there: cancelling goes back
   const [restUntil, setRestUntil] = useState(null); // nothing is waiting until then (after the last card due now)
   const [empty, setEmpty] = useState(null); // { tour, count, nextDue } when there is nothing to ask right now
   // quiz | settings | reset | home-language | add | decks | stats | badges | companion | help | missed | evolve | the-one | die
@@ -411,6 +413,7 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
     if (name === "/missed") return setScreen("missed");
     if (name === "/help") return setScreen("help");
     if (name === "/add") return library ? (setAddNew(false), setScreen("add")) : setNotice(t("quiz.previewNoAdd"));
+    if (name === "/import") return library ? (setImportFrom(null), setScreen("import")) : setNotice(t("quiz.previewNoImport"));
     if (name === "/decks") return library ? setScreen("decks") : setNotice(t("quiz.previewNoDecks"));
     if (name === "/hint" && phase === "asking") return setHintLevel((level) => level + 1);
     if (name === "/pause") {
@@ -489,6 +492,11 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
   }
 
   async function begin(how) {
+    // the import may still be cancelled, back to the welcome: it ends the welcome once it's done
+    if (how === "import" && library) {
+      setImportFrom("welcome");
+      return setScreen("import");
+    }
     session.setWelcomeStep(null).catch(() => {});
     if (how === "tour" || !library) return setScreen("quiz");
     if (how === "own") {
@@ -606,6 +614,32 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
     ask();
   }
 
+  // after /import: its first new deck (or the one cards went into) is the one you practise; the tour's
+  // progress goes if a deck of your own took its place
+  async function importDone({ deck: target, removed, added, updated }) {
+    if (importFrom === "welcome") session.setWelcomeStep(null).catch(() => {});
+    setImportFrom(null);
+    try {
+      if (removed.length) await session.forget(removed);
+      if (added || updated) await session.workAdded();
+    } catch {
+      // progress of removed tour cards stays: harmless
+    }
+    if (target && target !== deck) return switchDeck(target);
+    setScreen("quiz");
+    // the open card may be one the file just changed: asked again as it is now
+    if ((added || updated) && (phase === "asking" || phase === "empty")) ask();
+  }
+
+  function importCancelled() {
+    if (importFrom === "welcome") {
+      setImportFrom(null);
+      return setScreen("welcome");
+    }
+    setScreen("quiz");
+    setNotice(t("cli.restore.nothingChanged"));
+  }
+
   // after /add: a first deck of your own replaces the tour; a deck started from /decks (or in place
   // of an empty one) becomes the one you practise; new cards end an empty state
   function addDone({ deck: started, removed, stale = [], added, dropped }) {
@@ -668,13 +702,14 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
         ${screen === "settings" && html`<${Settings} settings=${settings} startRow=${settingsRow.current} onRow=${(row) => (settingsRow.current = row)} onChange=${changeSettings} onClose=${() => setScreen("quiz")} onAction=${library ? (row) => setScreen(row === "reset" ? "reset" : "home-language") : null} />`}
         ${screen === "home-language" && html`<${LanguageSearch} title=${t("settings.homeTitle")} note=${t("welcome.homeNote")} current=${settings.homeLanguage ?? settings.language} currentNote=${settings.homeLanguage ? t("languages.current") : t("welcome.suggested")} onBack=${() => setScreen("settings")} onPick=${(code) => (changeSettings({ homeLanguage: code }), setScreen("settings"))} />`}
         ${screen === "reset" && html`<${Reset} stats=${stats} actions=${library} onConfirm=${reset} onClose=${() => setScreen("settings")} />`}
+        ${screen === "import" && html`<${ImportScreen} actions=${library} fromWelcome=${importFrom === "welcome"} onDone=${importDone} onCancel=${importCancelled} />`}
         ${screen === "add" && html`<${AddCard} current=${deck} actions=${library} onDone=${addDone} startNew=${addNew} suggest=${addSuggest} />`}
         ${screen === "decks" && html`<${Decks} current=${deck} actions=${library} onDirections=${async (cardIds, directions) => {
           await session.setDirections(cardIds, directions);
           await session.workAdded();
           if (phase === "asking" && question && cardIds.includes(question.word.noteId)) ask(); // the open card follows the new way at once
         }} onLanguages=${(name) => name === deck && phase === "asking" && ask()} onPick=${switchDeck} onNew=${() => (setAddNew(true), setScreen("add"))} onClose=${() => setScreen("quiz")} />`}
-        ${!["settings", "reset", "home-language", "add", "decks"].includes(screen) &&
+        ${!["settings", "reset", "home-language", "import", "add", "decks"].includes(screen) &&
           html`
               <${Fragment}>
               ${question &&

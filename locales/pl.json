@@ -2,6 +2,7 @@
   "commands": {
     "hint": "Odsłoń kolejną literę (karta wróci wcześniej)",
     "add": "Dodaj karty do talii albo stwórz nową",
+    "import": "Importuj karty z Anki, pliku CSV albo tekstowego",
     "decks": "Przełącz się na inną talię albo stwórz nową",
     "settings": "Język, rytm, interwał, godziny ciszy, dźwięk, cel, porady",
     "stats": "Seria, kalendarz miesiąca i podsumowanie odznak",
@@ -76,7 +77,10 @@
     "addName": "enter utwórz · esc anuluj",
     "confirm": "{yes} tak · {no} nie",
     "languagePick": "pisz, by szukać · ↑/↓ wybierz · enter potwierdź · ← wstecz",
-    "choiceLeft": "{choose} · ← wstecz"
+    "choiceLeft": "{choose} · ← wstecz",
+    "importPath": "enter wczytaj plik · esc anuluj",
+    "importDone": "enter dalej",
+    "importName": "enter dalej · esc wstecz"
   },
   "settings": {
     "title": "Ustawienia",
@@ -378,7 +382,8 @@
         "many": "za około {count} miesięcy",
         "other": "za około {count} miesiąca"
       }
-    }
+    },
+    "previewNoImport": "Podgląd nie importuje kart; do tego uruchom dracosh."
   },
   "dragon": {
     "stages": {
@@ -1471,13 +1476,6 @@
     "startTitle": "Od czego zaczynamy?",
     "startNote": "Możesz to później zmienić: /decks przełącza talie w każdej chwili.",
     "start": {
-      "tour": "Pokaż, jak to działa",
-      "tourNote": {
-        "one": "{count} krótka karta o tym, jak działa Dracosh",
-        "few": "{count} krótkie karty o tym, jak działa Dracosh",
-        "many": "{count} krótkich kart o tym, jak działa Dracosh",
-        "other": "{count} krótkiej karty o tym, jak działa Dracosh"
-      },
       "words": {
         "one": "Zacznij od {count} codziennego słowa",
         "few": "Zacznij od {count} codziennych słów",
@@ -1485,6 +1483,15 @@
         "other": "Zacznij od {count} codziennego słowa"
       },
       "wordsNote": "{language} → {home}",
+      "tour": "Pokaż, jak to działa",
+      "tourNote": {
+        "one": "{count} krótka karta o tym, jak działa Dracosh",
+        "few": "{count} krótkie karty o tym, jak działa Dracosh",
+        "many": "{count} krótkich kart o tym, jak działa Dracosh",
+        "other": "{count} krótkiej karty o tym, jak działa Dracosh"
+      },
+      "import": "Mam już swoje karty",
+      "importNote": "z Anki, pliku CSV albo tekstowego",
       "own": "Stwórz własną talię",
       "ownNote": "wpisz albo wklej swoje karty",
       "noWords": "Gotowe słowa są dostępne w tych językach: {languages}. Język {language} ich jeszcze nie ma, więc zacznij od własnej talii.",
@@ -1492,5 +1499,53 @@
     },
     "firstWordsDeck": "{language}: pierwsze słowa",
     "suggested": "propozycja"
+  },
+  "importScreen": {
+    "title": "Import kart",
+    "pathLabel": "Który plik?",
+    "pathHint": "Pakiet Anki (.apkg), plik CSV albo tekstowy. Przeciągnij tu plik, żeby wkleić jego ścieżkę.",
+    "needPath": "Wpisz ścieżkę do pliku albo przeciągnij go tutaj.",
+    "reading": "Wczytuję plik…",
+    "deckLabel": "Do której talii trafią te karty?",
+    "splitYes": "Tak, każdy jest dobrą odpowiedzią",
+    "splitNo": "Nie, zostaw bez zmian",
+    "add": {
+      "one": "Dodaj 1 kartę",
+      "few": "Dodaj {count} karty",
+      "many": "Dodaj {count} kart",
+      "other": "Dodaj {count} karty"
+    },
+    "addUpdate": {
+      "one": "Dodaj nowe ({cards}) i zaktualizuj 1 kartę",
+      "few": "Dodaj nowe ({cards}) i zaktualizuj {count} karty",
+      "many": "Dodaj nowe ({cards}) i zaktualizuj {count} kart",
+      "other": "Dodaj nowe ({cards}) i zaktualizuj {count} karty"
+    },
+    "update": {
+      "one": "Zaktualizuj 1 kartę",
+      "few": "Zaktualizuj {count} karty",
+      "many": "Zaktualizuj {count} kart",
+      "other": "Zaktualizuj {count} karty"
+    },
+    "cancel": "Anuluj, nic nie zmieniaj",
+    "changedNote": "Zaktualizowana karta dostaje odpowiedzi z pliku i zachowuje postęp.",
+    "saving": "Zapisuję…",
+    "practise": "Dalej: {deck}.",
+    "backup": "To pełna kopia zapasowa Dracosha. Zamknij Dracosha i przywróć ją poleceniem: dracosh import {file}",
+    "notUtf8": "{file} nie jest zapisany w UTF-8. Zapisz go w UTF-8 (w Excelu: CSV UTF-8) albo zaimportuj przez dracosh import, który czyta inne kodowania (--encoding).",
+    "newDeck": "Nowa talia: {deck}",
+    "otherName": "Inna nazwa…",
+    "fromFile": "Z pliku:",
+    "slashLeft": {
+      "one": "Pominięto 1 kartę: odpowiedź do wpisania zaczyna się od /.",
+      "few": "Pominięto {count} karty: odpowiedź do wpisania zaczyna się od /.",
+      "many": "Pominięto {count} kart: odpowiedź do wpisania zaczyna się od /.",
+      "other": "Pominięto {count} karty: odpowiedź do wpisania zaczyna się od /."
+    },
+    "undo": "Żeby to cofnąć: zamknij Dracosha i uruchom dracosh restore 1 (kopia zrobiona przed chwilą).",
+    "close": "Zamknij",
+    "problemLine": "wiersz {line}: {text}  ({issue})",
+    "problemNote": "{text}  ({issue})",
+    "empty": "W tym pliku nie ma kart."
   }
 }
