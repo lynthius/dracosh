@@ -1,17 +1,21 @@
 import { Fragment, useEffect, useRef, useState } from "react";
 import { Box, useInput } from "ink";
 import { t } from "../i18n.js";
+import { AnswerInput } from "./AnswerInput.js";
 import { Choice, choiceHints } from "./Choice.js";
 import { LanguagePicker, pairText } from "./Languages.js";
 import { isKnown, languageName } from "../language.js";
+import { TRASH_DAYS } from "../library.js";
 import { cutToWidth, html, KeyHints, Text, theme, usePanelWidth } from "./kit.js";
 
 const DIRECTIONS = ["forward", "backward", "both"];
 
 // /decks: your decks with their card counts; Enter quizzes the chosen one from now on, and
-// "+ New deck" starts one (`onNew`). → on a deck of yours: which way it's asked and its languages.
-// Renaming and deleting decks come later.
-export function Decks({ current, actions, onPick, onNew, onClose, onDirections, onLanguages }) {
+// "+ New deck" starts one (`onNew`). → on a deck of yours: which way it's asked, its languages, its
+// name, and Delete: asked first, then into the trash, and u brings it straight back. `onDeleted`
+// ({ cardIds, next }) and `onRestored`({ deck, progress, removed }) let the app follow (progress, the
+// deck practised); `onRenamed`(from, to) too.
+export function Decks({ current, actions, onPick, onNew, onClose, onDirections, onLanguages, onDeleted, onRestored, onRenamed }) {
   const panel = usePanelWidth();
   const [decks, setDecks] = useState(null);
   const [picked, setPicked] = useState(0);
@@ -19,30 +23,37 @@ export function Decks({ current, actions, onPick, onNew, onClose, onDirections, 
   const [menu, setMenu] = useState(null); // { deck, selected }: a deck's settings
   const [setting, setSetting] = useState(null); // { deck, selected }: the direction being picked
   const [naming, setNaming] = useState(null); // the deck whose languages are being picked
+  const [renaming, setRenaming] = useState(null); // the deck being renamed
+  const [deleting, setDeleting] = useState(null); // { deck, selected }: Delete, asked first
+  const [undo, setUndo] = useState(null); // { entry, name }: the deck just deleted, u brings it back
   const saving = useRef(false);
   const [message, setMessage] = useState("");
 
-  useEffect(() => {
+  const reload = (select) =>
     actions.allDecks().then(
       (all) => {
         setDecks(all);
-        setPicked(Math.max(0, all.findIndex((d) => d.name === current)));
+        setPicked(Math.max(0, all.findIndex((d) => d.name === select)));
       },
       (err) => setError(err.message)
     );
+  useEffect(() => {
+    reload(current);
   }, []);
 
   useInput((input, key) => {
     if (!decks?.length && (key.escape || input === "q")) onClose();
+    if (input === "u" && undo && !menu && !setting && !naming && !renaming && !deleting && !saving.current) return restore();
     const deck = decks?.[picked];
     // → into a deck's settings, ← back out of them (Esc works too)
-    if (key.leftArrow && !naming) {
+    if (key.leftArrow && !naming && !renaming && !deleting) {
       if (setting) return setSetting(null);
       if (menu) return setMenu(null);
     }
     // not while a change is still being saved: the menu would show the deck as it was
-    if (key.rightArrow && !menu && !setting && !naming && !saving.current && deck && !deck.tour) {
+    if (key.rightArrow && !menu && !setting && !naming && !renaming && !deleting && !saving.current && deck && !deck.tour) {
       setMessage("");
+      setUndo(null);
       setMenu({ deck, selected: 0 });
     }
   });
@@ -67,14 +78,66 @@ export function Decks({ current, actions, onPick, onNew, onClose, onDirections, 
   }
 
   // the menu stays underneath: Esc in the direction or language picker comes back to it
+  const menuRows = (deck) => ["ask", "languages", ...(deck.learning ? ["learning"] : []), ...(deck.languages.guessed ? [] : ["detect"]), "rename", "delete"];
   function openSetting(index) {
     const { deck } = menu;
     setMenu((m) => ({ ...m, selected: index })); // coming back, the cursor is on the row you opened
-    const rows = ["ask", "languages", ...(deck.learning ? ["learning"] : []), ...(deck.languages.guessed ? [] : ["detect"])];
-    if (rows[index] === "ask") return setSetting({ deck, selected: Math.max(0, DIRECTIONS.indexOf(deck.directions)) });
-    if (rows[index] === "languages") return setNaming(deck);
-    if (rows[index] === "learning") return setNaming({ ...deck, only: "learning" });
+    const row = menuRows(deck)[index];
+    if (row === "ask") return setSetting({ deck, selected: Math.max(0, DIRECTIONS.indexOf(deck.directions)) });
+    if (row === "languages") return setNaming(deck);
+    if (row === "learning") return setNaming({ ...deck, only: "learning" });
+    if (row === "rename") return setRenaming(deck);
+    if (row === "delete") return setDeleting({ deck, selected: 1 }); // Cancel first: Enter by habit keeps the deck
     setLanguages(null, deck); // detect them from the cards again
+  }
+
+  async function rename(deck, name) {
+    if (saving.current) return;
+    if (name.trim() === deck.name) return setRenaming(null);
+    saving.current = true;
+    try {
+      const renamed = await actions.renameDeck(deck.name, name);
+      setRenaming(null);
+      setMenu(null);
+      onRenamed?.(deck.name, renamed.name);
+      await reload(renamed.name);
+      setMessage(t("decks.renamed", { from: deck.name, to: renamed.name }));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      saving.current = false;
+    }
+  }
+
+  async function remove(deck) {
+    if (saving.current) return;
+    saving.current = true;
+    setDeleting(null);
+    setMenu(null);
+    try {
+      const done = await onDeleted(deck.name);
+      setUndo({ entry: done.entry, name: deck.name });
+      await reload(done.next === deck.name ? null : current === deck.name ? done.next : current);
+      setMessage(t("decks.deleted", { deck: deck.name, days: TRASH_DAYS }));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      saving.current = false;
+    }
+  }
+
+  async function restore() {
+    saving.current = true;
+    try {
+      const back = await onRestored(undo.entry);
+      setUndo(null);
+      await reload(back.deck);
+      setMessage(t("decks.restored", { deck: back.deck }));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      saving.current = false;
+    }
   }
 
   // the language you're learning in the deck (pronunciation reads it, "almost" applies to it)
@@ -136,6 +199,34 @@ export function Decks({ current, actions, onPick, onNew, onClose, onDirections, 
 
   if (setting) return directionPicker();
 
+  if (renaming)
+    return html`
+      <${Fragment}>
+        <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.accent} paddingX=${2} width=${panel}>
+          <${Text} bold color=${theme.accent}>${t("decks.renameTitle", { deck: renaming.name })}<//>
+          <${Box} marginTop=${1}><${AnswerInput} plain escLeaves initial=${renaming.name} onSubmit=${(name) => rename(renaming, name)} onExit=${() => (setRenaming(null), setError(""))} onChange=${() => setError("")} /><//>
+          ${error && html`<${Box} marginTop=${1}><${Text} color=${theme.bad}>${error}<//><//>`}
+        <//>
+        <${Box} paddingX=${1}><${KeyHints} text=${t("keyHints.rename")} /><//>
+      <//>
+    `;
+
+  if (deleting) {
+    const { deck } = deleting;
+    return html`
+      <${Fragment}>
+        <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.bad} paddingX=${2} width=${panel}>
+          <${Text} bold color=${theme.bad}>${t("decks.deleteQuestion", { deck: deck.name, cards: t("count.cards", { count: deck.cards }) })}<//>
+          <${Text} dimColor>${t("decks.deleteNote", { days: TRASH_DAYS })}<//>
+          <${Box} marginTop=${1}>
+            <${Choice} options=${[{ label: t("decks.deleteYes"), danger: true }, { label: t("decks.deleteNo") }]} selected=${deleting.selected} onMove=${(selected) => setDeleting((d) => ({ ...d, selected }))} onPick=${(i) => (i === 0 ? remove(deck) : setDeleting(null))} onCancel=${() => setDeleting(null)} />
+          <//>
+        <//>
+        <${Box} paddingX=${1}><${KeyHints} text=${choiceHints("cancel")} /><//>
+      <//>
+    `;
+  }
+
   if (menu) {
     const { deck } = menu;
     const guessedNote = deck.languages.guessed && deck.cards > 0 && (isKnown(deck.languages.front) || isKnown(deck.languages.back)) ? ` · ${t("languages.guessed")}` : "";
@@ -150,7 +241,9 @@ export function Decks({ current, actions, onPick, onNew, onClose, onDirections, 
                 { label: t("decks.askRow"), note: deck.directions === "both" ? t("add.bothWays") : how },
                 { label: t("decks.languagesRow"), note: pairText(deck.languages) + guessedNote },
                 ...(deck.learning ? [{ label: t("decks.learningRow"), note: languageName(deck.learning.lang) + (deck.learning.sure ? "" : ` · ${t("languages.guessShort")}`) }] : []),
-                ...(deck.languages.guessed ? [] : [{ label: t("decks.detectRow") }])
+                ...(deck.languages.guessed ? [] : [{ label: t("decks.detectRow") }]),
+                { label: t("decks.renameRow"), note: deck.name },
+                { label: t("decks.deleteRow"), note: t("count.cards", { count: deck.cards }), danger: true }
               ]}
               selected=${menu.selected}
               onMove=${(selected) => setMenu((m) => ({ ...m, selected }))}
@@ -201,7 +294,7 @@ export function Decks({ current, actions, onPick, onNew, onClose, onDirections, 
         ${message && html`<${Box} marginTop=${1}><${Text} color=${theme.good}>${message}<//><//>`}
         ${error && html`<${Box} marginTop=${1}><${Text} color=${theme.bad}>${error}<//><//>`}
       <//>
-      <${Box} paddingX=${1}><${KeyHints} text=${decks?.[picked] && !decks[picked].tour ? t("keyHints.decks", { choose: choiceHints() }) : choiceHints()} /><//>
+      <${Box} paddingX=${1}><${KeyHints} text=${(undo ? `${t("keyHints.undo")} · ` : "") + (decks?.[picked] && !decks[picked].tour ? t("keyHints.decks", { choose: choiceHints() }) : choiceHints())} /><//>
     <//>
   `;
 }

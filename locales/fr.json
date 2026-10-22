@@ -4,6 +4,7 @@
     "add": "Ajouter des cartes à un paquet, ou en créer un",
     "import": "Importer des cartes depuis Anki, un CSV ou un fichier texte",
     "decks": "Passer à un autre paquet, ou en créer un",
+    "trash": "Paquets supprimés : en récupérer un",
     "settings": "Langue, rythme, intervalle, heures calmes, son, objectif, astuces",
     "stats": "Série, calendrier du mois et résumé des badges",
     "badges": "Tous les badges et comment les débloquer",
@@ -80,7 +81,10 @@
     "choiceLeft": "{choose} · ← retour",
     "importPath": "entrée lire le fichier · échap annuler",
     "importDone": "entrée continuer",
-    "importName": "entrée continuer · échap retour"
+    "importName": "entrée continuer · échap retour",
+    "rename": "entrée enregistrer · échap annuler",
+    "undo": "u annuler",
+    "trash": "↑/↓ choisir · entrée récupérer · échap retour"
   },
   "settings": {
     "title": "Réglages",
@@ -215,7 +219,17 @@
     "languagesRow": "Langues",
     "detectRow": "Détecter d’après les cartes",
     "learningRow": "Langue apprise",
-    "learningShort": "langue apprise : {language}"
+    "learningShort": "langue apprise : {language}",
+    "renameRow": "Renommer",
+    "deleteRow": "Supprimer",
+    "renameTitle": "Nouveau nom pour « {deck} »",
+    "renamed": "« {from} » s'appelle maintenant « {to} ».",
+    "deleteQuestion": "Supprimer le paquet « {deck} » et ses {cards} ?",
+    "deleteNote": "Il va à la corbeille avec sa progression : /trash le récupère pendant {days} jours.",
+    "deleteYes": "Supprimer",
+    "deleteNo": "Le garder",
+    "deleted": "« {deck} » supprimé. u le récupère tout de suite, /trash pendant {days} jours.",
+    "restored": "« {deck} » est de retour, avec sa progression."
   },
   "add": {
     "fields": {
@@ -773,7 +787,8 @@
       "progressEntry": "une carte sans date de révision",
       "streak": "la série et les badges sont illisibles"
     },
-    "slashSwitch": "Il faudrait taper « {text} », et dans le quiz / ouvre les commandes. Modifie d'abord cette carte."
+    "slashSwitch": "Il faudrait taper « {text} », et dans le quiz / ouvre les commandes. Modifie d'abord cette carte.",
+    "notInTrash": "Ce paquet n'est plus dans la corbeille."
   },
   "cli": {
     "help": "Dracosh : un entraîneur de vocabulaire et de quiz pour ton terminal\n\nUsage : dracosh [options]\n        dracosh import <fichier|-> ajouter des cartes depuis un fichier (.txt, .csv, .tsv, un paquet Anki .apkg ou .colpkg, exports texte Anki ou Quizlet, une sauvegarde .json), ou « - » pour l'entrée standard\n        dracosh export <fichier>  écrire tes paquets en .apkg (Anki), .txt, .tsv, .csv ou .json (tout)\n        dracosh restore [numéro]  liste tes sauvegardes, ou en restaure une\n\n  --deck <nom>     réviser ce paquet, pour cette fois seulement (sinon celui choisi dans /decks)\n                   avec import ou export : le paquet à remplir ou à écrire\n  --every <durée>  pause entre les questions : 30s, 10m, 1h (par défaut : {interval})\n  --no-sound       couper les sons\n  --volume <0-1>   volume du son (par défaut : {volume})\n  --stats          afficher la progression et quitter\n  --data           montrer où sont gardées tes cartes, ta progression et tes sauvegardes\n  --preview        parcourir toutes les animations et tous les écrans sur des données inventées (rien n'est enregistré)\n  --update         import : les cartes déjà là prennent les réponses du fichier (sinon on te demande)\n  --split          import : une réponse qui en liste plusieurs (« cat, kitty ») devient une réponse par mot\n  --separator <s>  import : ce qui sépare les colonnes : tab, comma, semicolon, pipe, colon, space ou un caractère\n  --encoding <e>   import : un fichier qui n'est pas en UTF-8, p. ex. windows-1252\n  --anki           import ou export : directement depuis ou vers un Anki ouvert (greffon AnkiConnect)\n  -y, --yes        importer, exporter ou restaurer sans demander\n  -h, --help       afficher cette aide\n\nLes options remplacent tes réglages enregistrés pour ce lancement seulement. Change-les pour de bon dans /settings.\n\nPendant l'utilisation : Entrée valide (à vide, elle montre la réponse, puis 1 ou 2), « / » ouvre le menu des commandes (/add, /decks, /settings, /stats, /help…),\nÉchap quitte (efface d'abord ce que tu as tapé). Ctrl+C marche aussi.\nEntre deux cartes : Entrée demande la suivante tout de suite, q quitte. /help explique le reste.",
@@ -1493,5 +1508,12 @@
     "problemLine": "ligne {line} : {text}  ({issue})",
     "problemNote": "{text}  ({issue})",
     "empty": "Ce fichier ne contient aucune carte."
+  },
+  "trash": {
+    "title": "Corbeille",
+    "note": "Les paquets supprimés restent ici {days} jours, avec leur progression.",
+    "row": "{cards} · supprimé le {deleted} · jusqu'au {until}",
+    "empty": "La corbeille est vide.",
+    "restored": "« {deck} » est de retour, avec sa progression."
   }
 }

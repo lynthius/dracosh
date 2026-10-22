@@ -428,3 +428,19 @@ test("a small difference isn't worth a line: only minutes against days, or a rea
   const result = await session.answer(await session.next(), "cat", { hinted: true });
   assert.ok(result.held === null || (result.held.would - result.held.days >= 2 && result.held.would >= result.held.days * 1.25), JSON.stringify(result.held));
 });
+
+test("a deck's progress can be taken along to the trash and given back", async () => {
+  const { session, state } = setup();
+  const q = await session.next();
+  await session.answer(q, q.expected[0]);
+  const key = Object.keys(state.items)[0];
+  const id = key.slice(0, key.lastIndexOf(":"));
+  state.accepted = { [key]: ["x"] };
+  const kept = session.progressOf([id]);
+  assert.deepEqual(Object.keys(kept.items), [key]);
+  await session.forget([id]);
+  assert.equal(state.items[key], undefined);
+  await session.restoreProgress(kept);
+  assert.deepEqual(state.items[key], kept.items[key]);
+  assert.deepEqual(state.accepted[key], ["x"]);
+});

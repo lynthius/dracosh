@@ -2,7 +2,7 @@ import { language as uiLanguage, t } from "./i18n.js";
 import { backupNow } from "./backup.js";
 import { seedLibrary } from "./starter.js";
 import { gapsOf } from "./cardline.js";
-import { addCard, cardsOf, createDeck, emptyLibrary, findDeck, findDuplicate, removeDeck, setDirections as setLibraryDirections, setLanguages as setLibraryLanguages, typedSides, updateCard } from "./library.js";
+import { addCard, cardsOf, createDeck, emptyLibrary, emptyOldTrash, findDeck, findDuplicate, removeDeck, renameDeck as renameLibraryDeck, restoreDeck, setDirections as setLibraryDirections, setLanguages as setLibraryLanguages, trashDeck, trashedUntil, typedSides, updateCard } from "./library.js";
 import { firstWords } from "./firstwords.js";
 import { applyImport, planImport } from "./importer.js";
 import { deckLanguages, homeLanguages, languageName, learningSide } from "./language.js";
@@ -220,6 +220,49 @@ export function libraryActions({ load = loadLibrary, save = saveLibrary, backup 
       return { from, to: library.decks.find((d) => d.tour).name };
     },
 
+    // /decks → Rename → the deck as it's called now
+    async renameDeck(oldName, newName) {
+      const library = await load();
+      const deck = renameLibraryDeck(library, (await deckNamed(library, oldName)).id, newName);
+      await save(library);
+      return deck;
+    },
+
+    // /decks → Delete, confirmed: a backup, then the deck goes to the trash with its cards and their
+    // progress (`progressOf(cardIds)`, from the session). The last deck leaves the tour in its place.
+    // → { entry, cardIds, next }: the trash entry, the cards gone (their progress goes from the
+    // session too) and the deck to practise if this one was it
+    async deleteDeck(name, progressOf = () => ({})) {
+      await backup("before-delete");
+      const library = await load();
+      const deck = await deckNamed(library, name);
+      const cardIds = cardsOf(library, deck.id).map((card) => card.id);
+      const entry = trashDeck(library, deck.id, { progress: progressOf(cardIds) });
+      if (!library.decks.length) seedLibrary(library);
+      await save(library);
+      const next = library.decks.find((d) => !d.tour) ?? library.decks[0];
+      return { entry: entry.id, cardIds, next: next.name };
+    },
+
+    // /trash: what's in it, newest first; anything there longer than the trash keeps it goes now
+    async trash() {
+      const library = await load();
+      if (emptyOldTrash(library)) await save(library);
+      return (library.trash ?? []).toReversed().map((entry) => ({ id: entry.id, name: entry.deck.name, cards: entry.cards.length, deletedAt: entry.deletedAt, until: trashedUntil(entry) }));
+    },
+
+    // A deck back from the trash (/trash, or u right after deleting it). Like a deck of your own, it takes
+    // the tour's place. → { deck, progress, removed }: its name now, the progress to give back to the
+    // session, and the tour's cards that went
+    async restoreFromTrash(entryId) {
+      const library = await load();
+      const { deck, entry } = restoreDeck(library, entryId);
+      const tour = library.decks.find((d) => d.tour);
+      const removed = tour ? removeDeck(library, tour.id) : [];
+      await save(library);
+      return { deck: deck.name, progress: entry.progress ?? {}, removed };
+    },
+
     // /import: what a file's cards would do to the library now (see planImport); `source` is { text, list }
     // (each deck there already says how many cards it holds: `cards`)
     async previewImport(source, choices) {
@@ -254,4 +297,4 @@ export function libraryActions({ load = loadLibrary, save = saveLibrary, backup 
 
 // the app's own: reads and writes ~/.dracosh
 const actions = libraryActions();
-export const { allDecks, ownDecks, startDeck, startFirstWords, setDirections, languagesOf, setLanguages, setLearning, existingDeck, existingCard, addCardTo, addCardsTo, updateCardIn, previewImport, importCards, matchTourLanguage, backupBeforeReset, resetLibrary } = actions;
+export const { allDecks, ownDecks, startDeck, startFirstWords, setDirections, languagesOf, setLanguages, setLearning, existingDeck, existingCard, addCardTo, addCardsTo, updateCardIn, previewImport, importCards, renameDeck, deleteDeck, trash, restoreFromTrash, matchTourLanguage, backupBeforeReset, resetLibrary } = actions;

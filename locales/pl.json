@@ -4,6 +4,7 @@
     "add": "Dodaj karty do talii albo stwórz nową",
     "import": "Importuj karty z Anki, pliku CSV albo tekstowego",
     "decks": "Przełącz się na inną talię albo stwórz nową",
+    "trash": "Usunięte talie: przywróć którąś",
     "settings": "Język, rytm, interwał, godziny ciszy, dźwięk, cel, porady",
     "stats": "Seria, kalendarz miesiąca i podsumowanie odznak",
     "badges": "Wszystkie odznaki i co je odblokowuje",
@@ -80,7 +81,10 @@
     "choiceLeft": "{choose} · ← wstecz",
     "importPath": "enter wczytaj plik · esc anuluj",
     "importDone": "enter dalej",
-    "importName": "enter dalej · esc wstecz"
+    "importName": "enter dalej · esc wstecz",
+    "rename": "enter zapisz · esc anuluj",
+    "undo": "u cofnij",
+    "trash": "↑/↓ wybierz · enter przywróć · esc wstecz"
   },
   "settings": {
     "title": "Ustawienia",
@@ -219,7 +223,17 @@
     "languagesRow": "Języki",
     "detectRow": "Wróć do rozpoznawania z kart",
     "learningRow": "Język nauki",
-    "learningShort": "nauka: {language}"
+    "learningShort": "nauka: {language}",
+    "renameRow": "Zmień nazwę",
+    "deleteRow": "Usuń",
+    "renameTitle": "Nowa nazwa dla „{deck}”",
+    "renamed": "„{from}” nazywa się teraz „{to}”.",
+    "deleteQuestion": "Usunąć talię „{deck}” ({cards})?",
+    "deleteNote": "Trafi do kosza razem z postępem: /trash przywraca ją przez {days} dni.",
+    "deleteYes": "Usuń",
+    "deleteNo": "Zostaw",
+    "deleted": "Usunięto „{deck}”. u przywraca ją od razu, /trash przez {days} dni.",
+    "restored": "„{deck}” wróciła razem z postępem."
   },
   "add": {
     "fields": {
@@ -797,7 +811,8 @@
       "progressEntry": "karta bez terminu powtórki",
       "streak": "nie da się odczytać serii i odznak"
     },
-    "slashSwitch": "Trzeba by wpisać „{text}”, a w quizie / otwiera komendy. Najpierw popraw tę kartę."
+    "slashSwitch": "Trzeba by wpisać „{text}”, a w quizie / otwiera komendy. Najpierw popraw tę kartę.",
+    "notInTrash": "Tej talii nie ma już w koszu."
   },
   "cli": {
     "help": "Dracosh: trener słówek i quizów w terminalu\n\nUżycie: dracosh [opcje]\n        dracosh import <plik|->   dodaj karty z pliku (.txt, .csv, .tsv, pakiet Anki .apkg lub .colpkg, eksporty tekstowe z Anki i Quizletu, kopia .json) albo „-” ze standardowego wejścia\n        dracosh export <plik>     zapisz talie do .apkg (Anki), .txt, .tsv, .csv albo .json (wszystko)\n        dracosh restore [numer]   lista kopii zapasowych albo przywrócenie jednej z nich\n\n  --deck <nazwa>   quiz z tej talii, tylko tym razem (inaczej ta wybrana w /decks)\n                   przy import i export: talia do uzupełnienia albo zapisania\n  --every <czas>   odstęp między pytaniami: 30s, 10m, 1h (domyślnie: {interval})\n  --no-sound       wyłącz dźwięki\n  --volume <0-1>   głośność (domyślnie: {volume})\n  --stats          wypisz postępy i zakończ\n  --data           pokaż, gdzie są karty, postępy i kopie zapasowe\n  --preview        obejrzyj wszystkie animacje i ekrany na zmyślonych danych (nic się nie zapisuje)\n  --update         import: karty, które już są, dostają odpowiedzi z pliku (inaczej pytanie)\n  --split          import: odpowiedź z kilkoma wariantami („cat, kitty”) staje się kilkoma odpowiedziami\n  --separator <s>  import: co dzieli kolumny: tab, comma, semicolon, pipe, colon, space albo znak\n  --encoding <e>   import: plik, który nie jest w UTF-8, np. windows-1250\n  --anki           import albo eksport: prosto z działającego Anki albo do niego (dodatek AnkiConnect)\n  -y, --yes        import, eksport albo przywrócenie bez pytania\n  -h, --help       pokaż tę pomoc\n\nOpcje zmieniają zapisane ustawienia tylko na to uruchomienie. Zapisane zmienisz w /settings.\n\nW trakcie: Enter wysyła (pusty pokazuje odpowiedź, potem 1 albo 2), „/” otwiera menu komend (/add, /decks, /settings, /stats, /help…),\nEsc wychodzi (najpierw czyści wpisany tekst). Ctrl+C też działa.\nMiędzy kartami: Enter od razu zadaje następną, q wychodzi. Resztę wyjaśnia /help.",
@@ -1547,5 +1562,12 @@
     "problemLine": "wiersz {line}: {text}  ({issue})",
     "problemNote": "{text}  ({issue})",
     "empty": "W tym pliku nie ma kart."
+  },
+  "trash": {
+    "title": "Kosz",
+    "note": "Usunięte talie czekają tu {days} dni, razem z postępem.",
+    "row": "{cards} · usunięta {deleted} · do {until}",
+    "empty": "Kosz jest pusty.",
+    "restored": "„{deck}” wróciła razem z postępem."
   }
 }

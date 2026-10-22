@@ -133,3 +133,35 @@ test("languages that aren't a pair at all are guessed again, never a damaged lib
     assert.equal(upgradeLibrary({ version: 2, decks: [{ id: "d1", name: "X", languages }], cards: [] }).decks[0].languages, null);
   }
 });
+
+test("a deleted deck waits in the trash with its cards and progress, and comes back whole", async () => {
+  const { addCard, createDeck, emptyLibrary, emptyOldTrash, renameDeck, restoreDeck, trashDeck, upgradeLibrary, TRASH_DAYS } = await import("../src/library.js");
+  const library = emptyLibrary();
+  const deck = createDeck(library, { name: "Spanish" });
+  const { card } = addCard(library, deck.id, { front: "perro", back: ["dog"] });
+  const progress = { items: { [`${card.id}:en-pl`]: { due: 1 } } };
+  const entry = trashDeck(library, deck.id, { progress, now: 1000 });
+  assert.deepEqual([library.decks.length, library.cards.length, library.trash.length], [0, 0, 1]);
+  assert.deepEqual(upgradeLibrary(JSON.parse(JSON.stringify(library))).trash, library.trash, "the trash is saved with the library");
+
+  createDeck(library, { name: "spanish" });
+  const { deck: back, entry: from } = restoreDeck(library, entry.id);
+  assert.equal(back.name, "Spanish 2", "a deck with its name now: numbered");
+  assert.equal(back.id, deck.id);
+  assert.deepEqual(library.cards.map((c) => c.id), [card.id]);
+  assert.deepEqual(from.progress, progress);
+  assert.equal("trash" in library, false);
+  assert.throws(() => restoreDeck(library, entry.id), /isn't in the trash/);
+
+  trashDeck(library, back.id, { now: 0 });
+  assert.equal(emptyOldTrash(library, (TRASH_DAYS - 1) * 86_400_000), false);
+  assert.equal(emptyOldTrash(library, TRASH_DAYS * 86_400_000), true, "kept for TRASH_DAYS, then gone");
+  assert.equal("trash" in library, false);
+
+  const other = library.decks[0];
+  assert.throws(() => renameDeck(library, other.id, " "), /needs a name/);
+  assert.equal(renameDeck(library, other.id, " Español ").name, "Español");
+  createDeck(library, { name: "Verbs" });
+  assert.throws(() => renameDeck(library, other.id, "verbs"), /already a deck/);
+  assert.equal(renameDeck(library, other.id, "español").name, "español", "its own name in other letters is fine");
+});

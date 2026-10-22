@@ -4,6 +4,7 @@
     "add": "Karten hinzufügen oder einen neuen Stapel anlegen",
     "import": "Karten aus Anki, einer CSV- oder Textdatei importieren",
     "decks": "Stapel wechseln oder einen neuen anlegen",
+    "trash": "Gelöschte Stapel: einen zurückholen",
     "settings": "Sprache, Rhythmus, Intervall, Ruhezeiten, Ton, Ziel, Tipps",
     "stats": "Serie, Monatskalender und Abzeichen im Überblick",
     "badges": "Alle Abzeichen und wie man sie freischaltet",
@@ -80,7 +81,10 @@
     "choiceLeft": "{choose} · ← zurück",
     "importPath": "enter Datei lesen · esc abbrechen",
     "importDone": "enter weiter",
-    "importName": "enter weiter · esc zurück"
+    "importName": "enter weiter · esc zurück",
+    "rename": "enter speichern · esc abbrechen",
+    "undo": "u rückgängig",
+    "trash": "↑/↓ wählen · enter zurückholen · esc zurück"
   },
   "settings": {
     "title": "Einstellungen",
@@ -211,7 +215,17 @@
     "languagesRow": "Sprachen",
     "detectRow": "Aus den Karten erkennen",
     "learningRow": "Lernsprache",
-    "learningShort": "Lernsprache: {language}"
+    "learningShort": "Lernsprache: {language}",
+    "renameRow": "Umbenennen",
+    "deleteRow": "Löschen",
+    "renameTitle": "Neuer Name für „{deck}“",
+    "renamed": "„{from}“ heißt jetzt „{to}“.",
+    "deleteQuestion": "Den Stapel „{deck}“ mit {cards} löschen?",
+    "deleteNote": "Er kommt mit seinem Fortschritt in den Papierkorb: /trash holt ihn {days} Tage lang zurück.",
+    "deleteYes": "Löschen",
+    "deleteNo": "Behalten",
+    "deleted": "„{deck}“ gelöscht. u holt ihn sofort zurück, /trash {days} Tage lang.",
+    "restored": "„{deck}“ ist zurück, mit seinem Fortschritt."
   },
   "add": {
     "fields": {
@@ -728,7 +742,8 @@
       "progressEntry": "eine Karte ohne Wiederholungstermin",
       "streak": "Serie und Abzeichen sind nicht lesbar"
     },
-    "slashSwitch": "„{text}“ müsste getippt werden, und im Quiz öffnet / die Befehle. Ändere zuerst diese Karte."
+    "slashSwitch": "„{text}“ müsste getippt werden, und im Quiz öffnet / die Befehle. Ändere zuerst diese Karte.",
+    "notInTrash": "Dieser Stapel ist nicht mehr im Papierkorb."
   },
   "cli": {
     "help": "Dracosh: ein Vokabel- und Quiztrainer für dein Terminal\n\nAufruf: dracosh [Optionen]\n        dracosh import <Datei|->  Karten aus einer Datei hinzufügen (.txt, .csv, .tsv, ein Anki-Paket .apkg oder .colpkg, Textexporte aus Anki oder Quizlet, eine .json-Sicherung), oder „-“ für die Standardeingabe\n        dracosh export <Datei>    deine Stapel als .apkg (Anki), .txt, .tsv, .csv oder .json (alles) speichern\n        dracosh restore [Nummer]  deine Sicherungen auflisten oder eine zurückholen\n\n  --deck <Name>    diesen Stapel abfragen, nur dieses Mal (sonst den in /decks gewählten)\n                   bei import und export: der Stapel zum Füllen oder Speichern\n  --every <Zeit>   Abstand zwischen Fragen: 30s, 10m, 1h (Standard: {interval})\n  --no-sound       Töne ausschalten\n  --volume <0-1>   Lautstärke (Standard: {volume})\n  --stats          Fortschritt ausgeben und beenden\n  --data           zeigen, wo Karten, Fortschritt und Sicherungen liegen\n  --preview        alle Animationen und Bildschirme mit erfundenen Daten ansehen (nichts wird gespeichert)\n  --update         import: vorhandene Karten übernehmen die Antworten aus der Datei (sonst wird gefragt)\n  --split          import: eine Antwort mit mehreren („cat, kitty“) wird zu einzelnen Antworten\n  --separator <s>  import: was die Spalten trennt: tab, comma, semicolon, pipe, colon, space oder ein Zeichen\n  --encoding <e>   import: eine Datei, die nicht UTF-8 ist, z. B. windows-1252\n  --anki           Import oder Export: direkt aus einem laufenden Anki oder hinein (Erweiterung AnkiConnect)\n  -y, --yes        Import, Export oder Wiederherstellen ohne Nachfrage\n  -h, --help       diese Hilfe zeigen\n\nOptionen ändern deine gespeicherten Einstellungen nur für diesen Start. Die gespeicherten änderst du in /settings.\n\nWährenddessen: Enter schickt ab (leer zeigt es die Antwort, dann 1 oder 2), „/“ öffnet das Befehlsmenü (/add, /decks, /settings, /stats, /help…),\nEsc beendet (löscht vorher die Eingabe). Strg+C geht auch.\nZwischen Karten: Enter fragt sofort die nächste, q beendet. /help erklärt den Rest.",
@@ -1414,5 +1429,12 @@
     "problemLine": "Zeile {line}: {text}  ({issue})",
     "problemNote": "{text}  ({issue})",
     "empty": "Diese Datei enthält keine Karten."
+  },
+  "trash": {
+    "title": "Papierkorb",
+    "note": "Gelöschte Stapel bleiben hier {days} Tage, mit ihrem Fortschritt.",
+    "row": "{cards} · gelöscht am {deleted} · bis {until}",
+    "empty": "Der Papierkorb ist leer.",
+    "restored": "„{deck}“ ist zurück, mit seinem Fortschritt."
   }
 }

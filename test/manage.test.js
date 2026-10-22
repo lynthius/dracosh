@@ -7,7 +7,7 @@ import { test } from "node:test";
 process.env.DRACOSH_HOME = mkdtempSync(join(tmpdir(), "dracosh-"));
 const { loadLibrary, saveLibrary } = await import("../src/store.js");
 const { seedLibrary, STARTER_DECK } = await import("../src/starter.js");
-const { addCardTo, addCardsTo, allDecks, existingCard, languagesOf, ownDecks, setDirections, setLanguages, startDeck, startFirstWords, updateCardIn, previewImport, importCards } = await import("../src/manage.js");
+const { addCardTo, addCardsTo, allDecks, existingCard, languagesOf, ownDecks, setDirections, setLanguages, startDeck, startFirstWords, updateCardIn, previewImport, importCards, deleteDeck, restoreFromTrash, renameDeck, trash } = await import("../src/manage.js");
 const { listBackups } = await import("../src/backup.js");
 const { loadWords } = await import("../src/words.js");
 const { createSession } = await import("../src/session.js");
@@ -209,4 +209,29 @@ test("/import: a preview changes nothing, the import takes a backup and adds to 
   assert.equal(result.backedUp, true);
   assert.equal((await listBackups()).length, backups + 1);
   assert.equal((await loadLibrary()).cards.filter((c) => c.deckId === target.id).length, count + 2);
+});
+
+test("/decks → Delete: a backup, the deck and its progress into the trash; the last deck leaves the tour", async () => {
+  const library = await loadLibrary();
+  library.decks = [];
+  library.cards = [];
+  delete library.trash;
+  await saveLibrary(library);
+  await startDeck({ name: "Solo" });
+  const { card } = await addCardTo("Solo", { front: "kot", back: ["cat"] });
+  const done = await deleteDeck("Solo", (ids) => ({ items: { [`${ids[0]}:en-pl`]: { due: 5 } } }));
+  assert.deepEqual(done.cardIds, [card.id]);
+  assert.equal(done.next, STARTER_DECK, "nothing left: the tour is back");
+  const [newest] = await listBackups();
+  assert.deepEqual([newest.reason, newest.cards], ["before-delete", 1], "backed up with the deck still in it");
+  const [entry] = await trash();
+  assert.deepEqual([entry.name, entry.cards], ["Solo", 1]);
+
+  const back = await restoreFromTrash(entry.id);
+  assert.equal(back.deck, "Solo");
+  assert.deepEqual(back.progress.items, { [`${card.id}:en-pl`]: { due: 5 } });
+  assert.ok(back.removed.length > 0, "the tour gives way to it again");
+  assert.deepEqual((await loadLibrary()).decks.map((d) => d.name), ["Solo"]);
+  assert.deepEqual(await trash(), []);
+  assert.equal((await renameDeck("Solo", "Duo")).name, "Duo");
 });

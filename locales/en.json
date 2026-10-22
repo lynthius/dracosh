@@ -4,6 +4,7 @@
     "add": "Add cards to a deck, or start a new one",
     "import": "Import cards from Anki, a CSV or a text file",
     "decks": "Switch to another deck, or start a new one",
+    "trash": "Decks you deleted: bring one back",
     "settings": "Language, rhythm, interval, quiet hours, sound, goal, tips",
     "stats": "Streak, month calendar and badges summary",
     "badges": "All badges and what unlocks them",
@@ -80,7 +81,10 @@
     "choiceLeft": "{choose} · ← back",
     "importPath": "enter read the file · esc cancel",
     "importDone": "enter continue",
-    "importName": "enter continue · esc back"
+    "importName": "enter continue · esc back",
+    "rename": "enter save · esc cancel",
+    "undo": "u undo",
+    "trash": "↑/↓ choose · enter bring back · esc back"
   },
   "settings": {
     "title": "Settings",
@@ -208,7 +212,17 @@
     "languagesRow": "Languages",
     "detectRow": "Detect from the cards",
     "learningRow": "Learning",
-    "learningShort": "learning {language}"
+    "learningShort": "learning {language}",
+    "renameRow": "Rename",
+    "deleteRow": "Delete",
+    "renameTitle": "New name for \"{deck}\"",
+    "renamed": "\"{from}\" is now \"{to}\".",
+    "deleteQuestion": "Delete the deck \"{deck}\" and its {cards}?",
+    "deleteNote": "It goes to the trash with its progress: /trash brings it back for {days} days.",
+    "deleteYes": "Delete",
+    "deleteNo": "Keep it",
+    "deleted": "Deleted \"{deck}\". u brings it back now, /trash for {days} days.",
+    "restored": "\"{deck}\" is back, with its progress."
   },
   "add": {
     "fields": {
@@ -716,7 +730,8 @@
       "progressEntry": "a card without its review date",
       "streak": "the streak and badges are unreadable"
     },
-    "slashSwitch": "\"{text}\" would have to be typed, and in the quiz / opens the commands. Change that card first."
+    "slashSwitch": "\"{text}\" would have to be typed, and in the quiz / opens the commands. Change that card first.",
+    "notInTrash": "That deck isn't in the trash any more."
   },
   "cli": {
     "help": "Dracosh: a vocabulary and quiz trainer for your terminal\n\nUsage: dracosh [options]\n       dracosh import <file|->    add cards from a file (.txt, .csv, .tsv, an Anki .apkg or .colpkg, Anki or Quizlet text exports, a .json backup), or \"-\" for standard input\n       dracosh export <file>      write your decks to .apkg (Anki), .txt, .tsv, .csv or .json (everything)\n       dracosh restore [number]   list your backups, or bring one back\n\n  --deck <name>    quiz this deck, this run only (otherwise the one picked in /decks);\n                   with import or export: the deck to fill or write\n  --every <time>   pause between questions: 30s, 10m, 1h (default: {interval})\n  --no-sound       turn sound effects off\n  --volume <0-1>   sound volume (default: {volume})\n  --stats          print progress and exit\n  --data           show where your cards, progress and backups are kept\n  --preview        browse every animation and screen on made-up data (nothing is saved)\n  --update         import: cards already there take the file's answers (otherwise you're asked)\n  --split          import: an answer listing several (\"cat, kitty\") becomes one answer each\n  --separator <s>  import: what splits the columns: tab, comma, semicolon, pipe, colon, space or a character\n  --encoding <e>   import: a file that isn't UTF-8, e.g. windows-1250\n  --anki           import or export: straight from or to a running Anki (AnkiConnect add-on)\n  -y, --yes        import, export or restore without asking first\n  -h, --help       show this help\n\nFlags override your saved settings for this run only. Change the saved ones with /settings.\n\nWhile running: Enter submits (with nothing typed it shows the answer, then 1 or 2), \"/\" opens the command menu (/add, /decks, /settings, /stats, /help…),\nEsc quits (clears the line first if you typed something). Ctrl+C also works.\nBetween cards: Enter asks the next one right away, q quits. /help explains the rest.",
@@ -1397,5 +1412,12 @@
     "problemLine": "line {line}: {text}  ({issue})",
     "problemNote": "{text}  ({issue})",
     "empty": "This file has no cards."
+  },
+  "trash": {
+    "title": "Trash",
+    "note": "Deleted decks stay here for {days} days, with their progress.",
+    "row": "{cards} · deleted {deleted} · until {until}",
+    "empty": "The trash is empty.",
+    "restored": "\"{deck}\" is back, with its progress."
   }
 }

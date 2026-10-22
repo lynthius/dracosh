@@ -29,6 +29,7 @@ import { Welcome } from "./Welcome.js";
 import { AddCard } from "./AddCard.js";
 import { ImportScreen } from "./Import.js";
 import { Decks } from "./Decks.js";
+import { Trash } from "./Trash.js";
 import { Reset } from "./Reset.js";
 import { Help } from "./Help.js";
 import { Missed } from "./Missed.js";
@@ -414,6 +415,7 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
     if (name === "/help") return setScreen("help");
     if (name === "/add") return library ? (setAddNew(false), setScreen("add")) : setNotice(t("quiz.previewNoAdd"));
     if (name === "/import") return library ? (setImportFrom(null), setScreen("import")) : setNotice(t("quiz.previewNoImport"));
+    if (name === "/trash") return library ? setScreen("trash") : setNotice(t("quiz.previewNoDecks"));
     if (name === "/decks") return library ? setScreen("decks") : setNotice(t("quiz.previewNoDecks"));
     if (name === "/hint" && phase === "asking") return setHintLevel((level) => level + 1);
     if (name === "/pause") {
@@ -587,6 +589,41 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
     }
   }
 
+  // the deck practised from now on, without leaving the screen you're on (a deck deleted or renamed in /decks)
+  function followDeck(name) {
+    if (name === deck) return;
+    onSwitchDeck?.(name);
+    setDeck(name);
+    changeSettings({ deck: name });
+    ask();
+  }
+
+  // /decks → Delete, confirmed: the deck and its progress into the trash; another deck if it was this one
+  async function deleteDeck(name) {
+    const done = await library.deleteDeck(name, session.progressOf);
+    await session.forget(done.cardIds);
+    if (name === deck) followDeck(done.next);
+    else if (phase === "empty") ask();
+    return done;
+  }
+
+  // a deck back from the trash, with its progress; the tour gives way to it
+  async function restoreDeck(entryId) {
+    const back = await library.restoreFromTrash(entryId);
+    await session.restoreProgress(back.progress);
+    if (back.removed.length) await session.forget(back.removed);
+    await session.workAdded();
+    if (back.removed.length || phase === "empty") followDeck(back.deck);
+    return back;
+  }
+
+  function deckRenamed(from, to) {
+    if (from !== deck) return;
+    onSwitchDeck?.(to);
+    setDeck(to);
+    changeSettings({ deck: to });
+  }
+
   // /decks and a first deck from /add: quiz another deck from now on, and remember it
   function switchDeck(name) {
     setScreen("quiz");
@@ -708,8 +745,9 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
           await session.setDirections(cardIds, directions);
           await session.workAdded();
           if (phase === "asking" && question && cardIds.includes(question.word.noteId)) ask(); // the open card follows the new way at once
-        }} onLanguages=${(name) => name === deck && phase === "asking" && ask()} onPick=${switchDeck} onNew=${() => (setAddNew(true), setScreen("add"))} onClose=${() => setScreen("quiz")} />`}
-        ${!["settings", "reset", "home-language", "import", "add", "decks"].includes(screen) &&
+        }} onLanguages=${(name) => name === deck && phase === "asking" && ask()} onPick=${switchDeck} onNew=${() => (setAddNew(true), setScreen("add"))} onDeleted=${deleteDeck} onRestored=${restoreDeck} onRenamed=${deckRenamed} onClose=${() => setScreen("quiz")} />`}
+        ${screen === "trash" && html`<${Trash} actions=${library} onRestore=${restoreDeck} onClose=${() => setScreen("quiz")} />`}
+        ${!["settings", "reset", "home-language", "import", "add", "decks", "trash"].includes(screen) &&
           html`
               <${Fragment}>
               ${question &&

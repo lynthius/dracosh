@@ -170,7 +170,7 @@ export function ImportScreen({ actions, onDone, onCancel, fromWelcome = false, r
         <${Box} flexDirection="column" marginTop=${1}>
           <${Text}>${t("importScreen.pathLabel")}<//>
           <${Text} dimColor>${t("importScreen.pathHint")}<//>
-          <${Box} marginTop=${1}>${step === "reading" ? html`<${Text} dimColor>${t("importScreen.reading")}<//>` : html`<${AnswerInput} key=${typed.key} plain initial=${typed.text} onSubmit=${open} onExit=${onCancel} onChange=${() => setError("")} />`}<//>
+          <${Box} marginTop=${1}>${step === "reading" ? html`<${Text} dimColor>${t("importScreen.reading")}<//>` : html`<${AnswerInput} key=${typed.key} plain escLeaves initial=${typed.text} onSubmit=${open} onExit=${onCancel} onChange=${() => setError("")} />`}<//>
         <//>
       `,
       t("keyHints.importPath")
@@ -194,7 +194,7 @@ export function ImportScreen({ actions, onDone, onCancel, fromWelcome = false, r
           <${Box} marginTop=${1}><${Text} bold>${t("importScreen.deckLabel")}<//><//>
           <${Box} marginTop=${1}>
             ${naming
-              ? html`<${AnswerInput} plain onSubmit=${(name) => (name.trim() ? replan({ ...choices, deckName: name.trim() }) : setError(t("add.needName")))} onExit=${back} onChange=${() => setError("")} />`
+              ? html`<${AnswerInput} plain escLeaves onSubmit=${(name) => (name.trim() ? replan({ ...choices, deckName: name.trim() }) : setError(t("add.needName")))} onExit=${back} onChange=${() => setError("")} />`
               : html`<${Choice} options=${options} selected=${Math.min(selected, options.length - 1)} onMove=${setSelected} onPick=${settled(pick)} onCancel=${back} />`}
           <//>
         <//>

@@ -253,6 +253,23 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
     await save(state);
   }
 
+  // the progress of these cards, as the trash keeps it with a deleted deck: how well each direction is
+  // known, answers you declared right, directions resting
+  function progressOf(cardIds) {
+    const ids = new Set(cardIds);
+    const mine = (key) => ids.has(key.slice(0, key.lastIndexOf(":")));
+    const pick = (object) => Object.fromEntries(Object.entries(object ?? {}).filter(([key]) => mine(key)));
+    return structuredClone({ items: pick(state.items), accepted: pick(state.accepted), dormant: (state.dormant ?? []).filter(mine) });
+  }
+
+  // a deck back from the trash: its progress with it
+  async function restoreProgress({ items = {}, accepted = {}, dormant = [] } = {}) {
+    Object.assign(state.items, items);
+    if (Object.keys(accepted).length) state.accepted = { ...state.accepted, ...accepted };
+    if (dormant.length) state.dormant = [...new Set([...(state.dormant ?? []), ...dormant])];
+    await save(state);
+  }
+
   // A deck is asked another way now (/decks): the directions it no longer asks rest. Their progress stays
   // for when they're back, but doesn't count against mastering the card.
   async function setDirections(cardIds, directions) {
@@ -324,5 +341,5 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
     await settleDay(); // nothing askable after all (a direction switched off): the quiet stretch goes on
   }
 
-  return { totals, next, answer, workAdded, reveal, selfGrade, setDirections, forgetKeys, overrule, canOverrule, wrongAnswer, stats, month, missed, nextTip, pause, isFirstRun, markHatched, welcomeStep, setWelcomeStep, openBadges, forget, reset, inTour: () => inTour };
+  return { totals, next, answer, workAdded, reveal, selfGrade, setDirections, forgetKeys, progressOf, restoreProgress, overrule, canOverrule, wrongAnswer, stats, month, missed, nextTip, pause, isFirstRun, markHatched, welcomeStep, setWelcomeStep, openBadges, forget, reset, inTour: () => inTour };
 }

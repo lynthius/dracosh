@@ -25,10 +25,11 @@ const args = (value) => value.trim().split(/\s+/).slice(1).join(" ");
 // Answer line with a movable cursor (←/→, Ctrl+A/E). Typing "/" opens a command palette:
 // ↑/↓ choose, Tab completes, Enter runs.
 // `commandOnly` is the between-questions variant: it starts at "/" and Esc or erasing the "/" closes it.
-// `plain` is a text field with no commands at all ("and/or" is just text there).
+// `plain` is a text field with no commands at all ("and/or" is just text there); `escLeaves`: Esc leaves
+// it at once, typed text and all, instead of clearing it first (a name being changed, a path).
 // `onChange` hears every edit; `onRecall` is ↑ on an empty plain field (/add brings back the last card);
 // `onPaste` takes a paste of several lines, as it came (/add reviews them as cards); anything else is typed in.
-export function AnswerInput({ onSubmit, onCommand, onExit, onEdit, onCancel, onChange, onRecall, onPaste, commands = COMMANDS, initial = "", commandOnly = false, plain = false }) {
+export function AnswerInput({ onSubmit, onCommand, onExit, onEdit, onCancel, onChange, onRecall, onPaste, commands = COMMANDS, initial = "", commandOnly = false, plain = false, escLeaves = false }) {
   const [value, setValue] = useState(initial);
   const [cursor, setCursor] = useState(initial.length);
   const [selected, setSelected] = useState(0);
@@ -54,7 +55,7 @@ export function AnswerInput({ onSubmit, onCommand, onExit, onEdit, onCancel, onC
   usePaste(paste);
 
   useInput((input, key) => {
-    if (key.escape) return commandOnly ? onCancel() : value ? edit("") : onExit();
+    if (key.escape) return commandOnly ? onCancel() : value && !escLeaves ? edit("") : onExit();
     if (key.return) {
       // no command starts like this: on a card it's simply the answer (some answers begin with "/")
       if (!isCommand || (!matches.length && !commandOnly)) return onSubmit(value);
