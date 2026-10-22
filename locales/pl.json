@@ -82,8 +82,12 @@
     "title": "Ustawienia",
     "rows": {
       "language": {
-        "label": "Język",
+        "label": "Język aplikacji",
         "hint": "język Dracosha; samouczek też się przełączy"
+      },
+      "homeLanguage": {
+        "label": "Twój język",
+        "hint": "język, którym mówisz: po nim widać, która strona karty jest dla ciebie nowa"
       },
       "rhythm": {
         "label": "Rytm",
@@ -142,7 +146,9 @@
       "session": "sesja",
       "session-10": "sesja · 10 kart",
       "session-20": "sesja · 20 kart"
-    }
+    },
+    "notSet": "nie wybrano",
+    "homeTitle": "Jakim językiem mówisz?"
   },
   "count": {
     "cards": {
@@ -294,7 +300,8 @@
     "languagesNow": "Wygląda na: {pair}. Jeśli nie, popraw w /decks →.",
     "languagesSoon": "Języki: rozpoznam po kilku kartach",
     "learningLine": "Język nauki: {language}",
-    "learningGuess": "to tylko domysł: → zmień"
+    "learningGuess": "to tylko domysł: → zmień",
+    "lineHintFor": "przód = tył, np. {example}  ·  albo wklej całą listę"
   },
   "quiz": {
     "youWrote": "twoja odpowiedź: ",
@@ -714,7 +721,7 @@
     "hatched": "Twój smok się wykluł!",
     "line": "Odpowiadaj na karty, żeby był szczęśliwy. Rośnie razem z twoją serią.",
     "keysSkip": "dowolny klawisz, żeby pominąć",
-    "keysStart": "dowolny klawisz, żeby zacząć"
+    "keysStart": "dowolny klawisz, żeby kontynuować"
   },
   "evolution": {
     "evolved": "Twój towarzysz ewoluował: {name}!",
@@ -1010,6 +1017,10 @@
       "hatch": {
         "label": "Wykluwanie",
         "hint": "wstęp przy pierwszym uruchomieniu"
+      },
+      "welcome": {
+        "label": "Powitanie",
+        "hint": "języki i sposób na start"
       },
       "mascot": {
         "label": "Laboratorium maskotki",
@@ -1448,5 +1459,38 @@
     "badUrl": "DRACOSH_ANKI_URL to nie adres, którego Dracosh może użyć ({detail}): powinien wyglądać jak http://127.0.0.1:8765.",
     "noDeck": "W Anki nie ma już talii „{detail}”.",
     "notImported": "Anki nie przyjęło kart: nic nie zostało wysłane."
+  },
+  "welcome": {
+    "languageTitle": "W jakim języku ma mówić Dracosh?",
+    "languageNote": "Kilka krótkich pytań i zaczynamy. Język możesz później zmienić w /settings.",
+    "homeTitle": "Jakim językiem mówisz?",
+    "homeNote": "Dzięki temu Dracosh odróżni nowe słowa od ich tłumaczeń.",
+    "learningTitle": "Jakiego języka się uczysz?",
+    "learningNote": "Na początek wybierz jeden; talie w innych językach dodasz w każdej chwili. Nie uczysz się języka? Wybierz „Czegoś innego” na końcu listy.",
+    "notLanguage": "Czegoś innego (definicje, fakty…)",
+    "startTitle": "Od czego zaczynamy?",
+    "startNote": "Możesz to później zmienić: /decks przełącza talie w każdej chwili.",
+    "start": {
+      "tour": "Pokaż, jak to działa",
+      "tourNote": {
+        "one": "{count} krótka karta o tym, jak działa Dracosh",
+        "few": "{count} krótkie karty o tym, jak działa Dracosh",
+        "many": "{count} krótkich kart o tym, jak działa Dracosh",
+        "other": "{count} krótkiej karty o tym, jak działa Dracosh"
+      },
+      "words": {
+        "one": "Zacznij od {count} codziennego słowa",
+        "few": "Zacznij od {count} codziennych słów",
+        "many": "Zacznij od {count} codziennych słów",
+        "other": "Zacznij od {count} codziennego słowa"
+      },
+      "wordsNote": "{language} → {home}",
+      "own": "Stwórz własną talię",
+      "ownNote": "wpisz albo wklej swoje karty",
+      "noWords": "Gotowe słowa są dostępne w tych językach: {languages}. Język {language} ich jeszcze nie ma, więc zacznij od własnej talii.",
+      "noWordsHome": "Gotowe słowa są dla par z tych języków: {languages}. Język {language} jeszcze do nich nie należy, więc zacznij od własnej talii."
+    },
+    "firstWordsDeck": "{language}: pierwsze słowa",
+    "suggested": "propozycja"
   }
 }

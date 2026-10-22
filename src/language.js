@@ -264,15 +264,20 @@ const SAMPLE_CARDS = 200; // enough to tell, and cheap to read before every ques
 const SAMPLE_LENGTH = 300; // characters of each side of a card: long answers say no more
 
 // What a person's own language seems to be, from outside the deck → [{ code, sure }], likeliest first: the
-// one most of their other language decks share (sure), then Dracosh's language and the system's, which
-// are only hints (plenty of people run both in English and speak something else)
-export function homeLanguages({ others = [], ui = language(), system = systemLocale() } = {}) {
+// one they said they speak (`own`) and the one most of their other language decks share (both sure),
+// then Dracosh's language and the system's, which are only hints (plenty of people run both in English
+// and speak something else)
+export function homeLanguages({ others = [], ui = language(), system = systemLocale(), own = ownLanguage } = {}) {
   const counts = new Map();
   for (const pair of others) for (const code of new Set([pair.front, pair.back].filter(isKnown))) counts.set(code, (counts.get(code) ?? 0) + 1);
-  const shared = [...counts].filter(([, n]) => n >= 2 && n > others.length / 2).sort((a, b) => b[1] - a[1]).map(([code]) => code);
-  const hints = [ui, system].filter((code) => code && !shared.includes(code));
-  return [...shared.map((code) => ({ code, sure: true })), ...[...new Set(hints)].map((code) => ({ code, sure: false }))];
+  const shared = [...counts].filter(([, n]) => n >= 2 && n > others.length / 2).sort((a, b) => b[1] - a[1]).map(([code]) => code).filter((code) => code !== own);
+  const hints = [ui, system].filter((code) => code && code !== own && !shared.includes(code));
+  return [...(own ? [own] : []), ...shared].map((code) => ({ code, sure: true })).concat([...new Set(hints)].map((code) => ({ code, sure: false })));
 }
+
+// the language you said you speak (the welcome, /settings): sure, ahead of any guess
+let ownLanguage = null;
+export const setOwnLanguage = (code) => (ownLanguage = code ?? null);
 const systemLocale = () => {
   const set = [process.env.LC_ALL, process.env.LC_MESSAGES, process.env.LANG].find((v) => v && !/^(C|POSIX)\b/i.test(v));
   return (set ?? Intl.DateTimeFormat().resolvedOptions().locale).slice(0, 2).toLowerCase();

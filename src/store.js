@@ -119,8 +119,14 @@ export const loadSettingsRaw = async () => {
   return isObject(raw) ? raw : {};
 };
 
-// merges into what's on disk, so a one-off CLI flag never gets persisted by accident
-export async function patchSettings(patch) {
-  const current = await loadSettingsRaw();
-  await writeJson(SETTINGS_FILE, { ...current, ...patch });
+// merges into what's on disk, so a one-off CLI flag never gets persisted by accident. One patch at a
+// time: two read before either wrote would leave out the first one's change.
+let patching = Promise.resolve();
+export function patchSettings(patch) {
+  const next = patching.then(async () => {
+    const current = await loadSettingsRaw();
+    await writeJson(SETTINGS_FILE, { ...current, ...patch });
+  });
+  patching = next.catch(() => {});
+  return next;
 }

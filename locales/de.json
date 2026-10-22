@@ -82,8 +82,12 @@
     "title": "Einstellungen",
     "rows": {
       "language": {
-        "label": "Sprache",
+        "label": "App-Sprache",
         "hint": "die Sprache von Dracosh; die Tour wechselt mit"
+      },
+      "homeLanguage": {
+        "label": "Deine Sprache",
+        "hint": "die Sprache, die du sprichst: daran sieht Dracosh, welche Kartenseite für dich neu ist"
       },
       "rhythm": {
         "label": "Rhythmus",
@@ -142,7 +146,9 @@
       "session": "Sitzung",
       "session-10": "Sitzung · 10 Karten",
       "session-20": "Sitzung · 20 Karten"
-    }
+    },
+    "notSet": "nicht gewählt",
+    "homeTitle": "Welche Sprache sprichst du?"
   },
   "count": {
     "cards": {
@@ -278,7 +284,8 @@
     "languagesNow": "Sieht nach {pair} aus. Falls nicht, in /decks → korrigieren.",
     "languagesSoon": "Sprachen: erkenne ich nach ein paar Karten",
     "learningLine": "Lernsprache: {language}",
-    "learningGuess": "nur geraten: → ändern"
+    "learningGuess": "nur geraten: → ändern",
+    "lineHintFor": "Vorderseite = Rückseite, z. B. {example}  ·  oder füg eine ganze Liste ein"
   },
   "quiz": {
     "youWrote": "deine Antwort: ",
@@ -645,7 +652,7 @@
     "hatched": "Dein Drache ist geschlüpft!",
     "line": "Beantworte Karten, damit er glücklich bleibt. Er wächst mit deiner Serie.",
     "keysSkip": "beliebige Taste zum Überspringen",
-    "keysStart": "beliebige Taste zum Starten"
+    "keysStart": "beliebige Taste zum Weitermachen"
   },
   "evolution": {
     "evolved": "Dein Begleiter hat sich entwickelt: {name}!",
@@ -933,6 +940,10 @@
       "hatch": {
         "label": "Schlüpfen",
         "hint": "das Intro beim ersten Start"
+      },
+      "welcome": {
+        "label": "Willkommen",
+        "hint": "Sprachen und der Einstieg"
       },
       "mascot": {
         "label": "Maskottchen-Labor",
@@ -1327,5 +1338,34 @@
     "badUrl": "DRACOSH_ANKI_URL ist keine Adresse, die Dracosh nutzen kann ({detail}): Sie sieht aus wie http://127.0.0.1:8765.",
     "noDeck": "Anki hat keinen Stapel „{detail}“ mehr.",
     "notImported": "Anki hat die Karten nicht angenommen: Nichts wurde gesendet."
+  },
+  "welcome": {
+    "languageTitle": "In welcher Sprache soll Dracosh sprechen?",
+    "languageNote": "Ein paar kurze Fragen, dann geht's los. Die Sprache kannst du später in /settings ändern.",
+    "homeTitle": "Welche Sprache sprichst du?",
+    "homeNote": "So kann Dracosh neue Wörter von ihren Übersetzungen unterscheiden.",
+    "learningTitle": "Welche Sprache lernst du?",
+    "learningNote": "Wähl für den Anfang eine; Decks in anderen Sprachen kannst du jederzeit hinzufügen. Du lernst keine Sprache? Wähl „Etwas anderes“ am Ende der Liste.",
+    "notLanguage": "Etwas anderes (Definitionen, Fakten …)",
+    "startTitle": "Wie möchtest du anfangen?",
+    "startNote": "Du kannst das später ändern: /decks wechselt jederzeit das Deck.",
+    "start": {
+      "tour": "Zeig mir, wie es geht",
+      "tourNote": {
+        "one": "{count} kurze Karte dazu, wie Dracosh funktioniert",
+        "other": "{count} kurze Karten dazu, wie Dracosh funktioniert"
+      },
+      "words": {
+        "one": "Mit {count} Alltagswort anfangen",
+        "other": "Mit {count} Alltagswörtern anfangen"
+      },
+      "wordsNote": "{language} → {home}",
+      "own": "Eigenes Deck anlegen",
+      "ownNote": "Karten eintippen oder einfügen",
+      "noWords": "Fertige Wörter gibt es für {languages}. Für {language} legst du ein eigenes Deck an.",
+      "noWordsHome": "Fertige Wörter gibt es für Paare aus diesen Sprachen: {languages}. {language} ist noch nicht dabei, also fang mit einem eigenen Deck an."
+    },
+    "firstWordsDeck": "{language}: erste Wörter",
+    "suggested": "Vorschlag"
   }
 }

@@ -187,6 +187,12 @@ test("the hatching intro plays only on a brand-new state, and only once", async 
   await session.markHatched();
   assert.equal(session.isFirstRun(), false);
   assert.equal(saves.at(-1).hatched, true);
+  assert.equal(session.welcomeStep(), "language", "the welcome follows, from its first step");
+  await session.setWelcomeStep("start");
+  assert.equal(saves.at(-1).welcome, "start", "kept, so a welcome left halfway goes on there");
+  await session.setWelcomeStep(null);
+  assert.equal(session.welcomeStep(), null);
+  assert.equal("welcome" in saves.at(-1), false);
 
   const veteran = setup();
   const q = await veteran.session.next();

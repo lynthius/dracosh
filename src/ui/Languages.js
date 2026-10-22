@@ -128,40 +128,79 @@ export function LanguagePicker({ deck, sample, languages, learning = null, home,
     `;
 
   const example = sample ? cutToWidth(side === "front" ? sample.front : sample.back.join(" / "), 24) : "";
-  const top = Math.max(0, Math.min(selected - Math.floor(SHOWN / 2), options.length - SHOWN));
   const noteOf = (code) => {
     if (code === UNKNOWN) return t("languages.mixedNote");
     if (code !== languages[side]) return "";
     return languages.guessed ? t("languages.guessed") : t("languages.current");
   };
+  return html`<${LanguageList} title=${t(side === "front" ? "languages.frontQuestion" : "languages.backQuestion", { deck })} note=${example && t("languages.example", { sample: example })} query=${query} options=${options} selected=${selected} noteOf=${noteOf} />`;
+}
+
+// the search and its list, as both pickers show them; `nameOf` names an option (a language by default)
+// `step`: where in a series of questions this one is ("2/4"), said in the key hints
+function LanguageList({ title, note, query, options, selected, noteOf, noMatch = options.length === 0, step = "", nameOf = (code) => (code === UNKNOWN ? t("languages.mixed") : languageName(code)) }) {
+  const panel = usePanelWidth();
+  const top = Math.max(0, Math.min(selected - Math.floor(SHOWN / 2), options.length - SHOWN));
   return html`
     <${Fragment}>
       <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.accent} paddingX=${2} width=${panel}>
-        <${Text} bold color=${theme.accent}>${t(side === "front" ? "languages.frontQuestion" : "languages.backQuestion", { deck })}<//>
-        ${example && html`<${Text} dimColor>${t("languages.example", { sample: example })}<//>`}
+        <${Text} bold color=${theme.accent}>${title}<//>
+        ${note && html`<${Text} dimColor>${note}<//>`}
         <${Box} marginTop=${1}>
           <${Box} flexShrink=${0}><${Text} dimColor>${t("languages.search")} <//><//>
           <${Text} wrap="truncate-start">${query}<//>
           <${Box} flexShrink=${0}><${Text} inverse> <//><//>
         <//>
         <${Box} flexDirection="column">
-          ${options.length === 0 && html`<${Text} dimColor wrap="truncate-end">${t("languages.noMatch", { query: cutToWidth(query, 20) })}<//>`}
+          ${noMatch && html`<${Text} dimColor wrap="truncate-end">${t("languages.noMatch", { query: cutToWidth(query, 20) })}<//>`}
           <${Text} dimColor>${top > 0 ? "  ↑" : " "}<//>
           ${options.slice(top, top + SHOWN).map((code, i) => {
             const on = top + i === selected;
-            const name = code === UNKNOWN ? t("languages.mixed") : languageName(code);
-            const note = noteOf(code);
+            const extra = noteOf(code);
             return html`
               <${Box} key=${code}>
-                <${Box} flexShrink=${0}><${Text} color=${on ? theme.accent : undefined} bold=${on}>${on ? "❯" : " "} ${name}<//><//>
-                ${note && html`<${Text} dimColor wrap="truncate-end">  ${note}<//>`}
+                <${Box} flexShrink=${0}><${Text} color=${on ? theme.accent : undefined} bold=${on}>${on ? "❯" : " "} ${nameOf(code)}<//><//>
+                ${extra && html`<${Text} dimColor wrap="truncate-end">  ${extra}<//>`}
               <//>
             `;
           })}
           <${Text} dimColor>${top + SHOWN < options.length ? "  ↓" : " "}<//>
         <//>
       <//>
-      <${Box} paddingX=${1}><${KeyHints} text=${t("keyHints.languagePick")} /><//>
+      <${Box} paddingX=${1}><${KeyHints} text=${step ? `${step} · ${t("keyHints.languagePick")}` : t("keyHints.languagePick")} /><//>
     <//>
   `;
+}
+
+// One language, asked with a search (the welcome, /settings): `current` selected to begin with, and
+// marked `currentNote` ("current", or "suggested" for a guess); `exclude` left out. `other`: a last
+// option for "none of these" (UNKNOWN), named so and always there, whatever is typed. → onPick(code);
+// Esc clears the search, then goes back (onBack).
+export function LanguageSearch({ title, note, current = null, currentNote = t("languages.current"), exclude = [], other = null, step = "", onPick, onBack }) {
+  const listFor = (text) => [...matching(text, [current]).filter((code) => code !== UNKNOWN && !exclude.includes(code)), ...(other ? [UNKNOWN] : [])];
+  const [query, setQuery] = useState("");
+  const options = listFor(query);
+  const startAt = (list) => Math.max(0, current ? list.indexOf(current) : 0);
+  const [selected, setSelected] = useState(() => startAt(options));
+
+  function search(text) {
+    setQuery(text);
+    setSelected(text ? 0 : startAt(listFor(text)));
+  }
+
+  useInput((input, key) => {
+    if (key.escape || key.leftArrow) return query ? search("") : onBack?.();
+    if (key.return) return options[selected] && onPick(options[selected]);
+    if (key.upArrow) return setSelected((i) => Math.max(0, i - 1));
+    if (key.downArrow) return setSelected((i) => Math.max(0, Math.min(options.length - 1, i + 1)));
+    if (key.backspace || key.delete) return query && search(query.slice(0, -1));
+    if (key.ctrl && input === "u") return search("");
+    const text = input.replace(/[\u0000-\u001f\u007f]/g, "");
+    if (text && !key.ctrl && !key.meta) search(query + text);
+  });
+
+  const nameOf = (code) => (code === UNKNOWN ? other : languageName(code));
+  const noteOf = (code) => (code === current ? currentNote : "");
+  const noMatch = Boolean(query) && options.every((code) => code === UNKNOWN) && !(other && look(other).includes(look(query.trim())));
+  return html`<${LanguageList} title=${title} note=${note} query=${query} options=${options} selected=${selected} noteOf=${noteOf} nameOf=${nameOf} noMatch=${noMatch} step=${step} />`;
 }

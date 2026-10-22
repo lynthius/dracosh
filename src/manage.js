@@ -1,9 +1,10 @@
-import { t } from "./i18n.js";
+import { language as uiLanguage, t } from "./i18n.js";
 import { backupNow } from "./backup.js";
 import { seedLibrary } from "./starter.js";
 import { gapsOf } from "./cardline.js";
 import { addCard, cardsOf, createDeck, emptyLibrary, findDeck, findDuplicate, removeDeck, setDirections as setLibraryDirections, setLanguages as setLibraryLanguages, typedSides, updateCard } from "./library.js";
-import { deckLanguages, homeLanguages, learningSide } from "./language.js";
+import { firstWords } from "./firstwords.js";
+import { deckLanguages, homeLanguages, languageName, learningSide } from "./language.js";
 import { itemKey } from "./scheduler.js";
 import { loadLibrary, saveLibrary } from "./store.js";
 
@@ -78,6 +79,32 @@ export function libraryActions({ load = loadLibrary, save = saveLibrary, backup 
         removed = removeDeck(library, tour.id);
       }
       const deck = createDeck(library, { name, languages: null, directions: "forward" });
+      await save(library);
+      return { deck, removed };
+    },
+
+    // The welcome's deck of first words: the new word shown, yours typed (/decks can add the other way);
+    // like a deck of your own, it replaces the tour.
+    // Taken again (a welcome done twice), the deck made then is the one. → { deck, removed }
+    async startFirstWords({ home, learning }) {
+      const library = await load();
+      const language = languageName(learning);
+      const name = t("welcome.firstWordsDeck", { language: language.charAt(0).toLocaleUpperCase(uiLanguage()) + language.slice(1) });
+      const pair = (deck) => deck.firstWords && deck.languages?.front === learning && deck.languages?.back === home;
+      const existing = library.decks.find(pair);
+      if (existing) return { deck: existing, removed: [] };
+      // a deck of yours with that name keeps it: these get a number ("German: first words 2")
+      let named = name;
+      for (let n = 2; findDeck(library, named); n++) named = `${name} ${n}`;
+      const tour = library.decks.find((d) => d.tour);
+      let removed = [];
+      if (tour) {
+        await backup("before-delete");
+        removed = removeDeck(library, tour.id);
+      }
+      const deck = createDeck(library, { name: named, languages: { front: learning, back: home }, directions: "forward" });
+      deck.firstWords = true;
+      for (const fields of firstWords(home, learning)) addCard(library, deck.id, fields);
       await save(library);
       return { deck, removed };
     },
@@ -207,4 +234,4 @@ export function libraryActions({ load = loadLibrary, save = saveLibrary, backup 
 
 // the app's own: reads and writes ~/.dracosh
 const actions = libraryActions();
-export const { allDecks, ownDecks, startDeck, setDirections, languagesOf, setLanguages, setLearning, existingDeck, existingCard, addCardTo, addCardsTo, updateCardIn, matchTourLanguage, backupBeforeReset, resetLibrary } = actions;
+export const { allDecks, ownDecks, startDeck, startFirstWords, setDirections, languagesOf, setLanguages, setLearning, existingDeck, existingCard, addCardTo, addCardsTo, updateCardIn, matchTourLanguage, backupBeforeReset, resetLibrary } = actions;

@@ -6,7 +6,7 @@ import { test } from "node:test";
 
 // HOME is read when the module loads, so point it at a temp folder first (each test file runs in its own process)
 process.env.DRACOSH_HOME = mkdtempSync(join(tmpdir(), "dracosh-"));
-const { loadState, saveState } = await import("../src/store.js");
+const { loadSettingsRaw, loadState, patchSettings, saveState } = await import("../src/store.js");
 
 test("many saves in quick succession all succeed and the last one wins", async () => {
   const state = { version: 1, items: {}, newToday: { date: "", count: 0 }, n: 0 };
@@ -25,4 +25,10 @@ test("a save snapshots the state at the moment it is called", async () => {
   state.n = 2; // changed after the call, before the write happened
   await pending;
   assert.equal((await loadState()).n, 1);
+});
+
+test("settings changed several times in a row keep every change", async () => {
+  await Promise.all([patchSettings({ language: "pl" }), patchSettings({ homeLanguage: "pl" }), patchSettings({ learningLanguage: "en" })]);
+  const saved = await loadSettingsRaw();
+  assert.deepEqual([saved.language, saved.homeLanguage, saved.learningLanguage], ["pl", "pl", "en"]);
 });

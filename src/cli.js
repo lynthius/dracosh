@@ -9,6 +9,7 @@ import { language, setLanguage, t } from "./i18n.js";
 import { BACKUP_DIR, dailyBackup, listBackups, restoreBackup, saveUpgraded } from "./backup.js";
 import { ensureProgress, snapshot } from "./progress.js";
 import { intervalDays, MASTERED_DAYS } from "./scheduler.js";
+import { setOwnLanguage } from "./language.js";
 import { createSession } from "./session.js";
 import { DEFAULTS, formatInterval, normalizeSettings } from "./settings.js";
 import { seedLibrary } from "./starter.js";
@@ -112,7 +113,9 @@ async function restore(choice, { yes }) {
 }
 
 async function main() {
-  setLanguage(normalizeSettings(await loadSettingsRaw().catch(() => ({}))).language);
+  const early = normalizeSettings(await loadSettingsRaw().catch(() => ({})));
+  setLanguage(early.language);
+  setOwnLanguage(early.homeLanguage);
   const { values, positionals } = parseArgs({
     allowPositionals: true,
     options: {

@@ -82,8 +82,12 @@
     "title": "Settings",
     "rows": {
       "language": {
-        "label": "Language",
+        "label": "App language",
         "hint": "the language Dracosh speaks; the tour switches too"
+      },
+      "homeLanguage": {
+        "label": "Your language",
+        "hint": "the language you speak: it tells which side of a card is new to you"
       },
       "rhythm": {
         "label": "Rhythm",
@@ -142,7 +146,9 @@
       "session": "session",
       "session-10": "session · 10 cards",
       "session-20": "session · 20 cards"
-    }
+    },
+    "notSet": "not set",
+    "homeTitle": "Which language do you speak?"
   },
   "count": {
     "cards": {
@@ -275,7 +281,8 @@
     "languagesNow": "Looks like {pair}. If not, fix it in /decks →.",
     "languagesSoon": "Languages: I'll tell after a few cards",
     "learningLine": "Learning: {language}",
-    "learningGuess": "that is a guess: → to change it"
+    "learningGuess": "that is a guess: → to change it",
+    "lineHintFor": "front = back, like {example}  ·  or paste a whole list"
   },
   "quiz": {
     "youWrote": "you wrote ",
@@ -633,7 +640,7 @@
     "hatched": "Your dragon has hatched!",
     "line": "Answer cards to keep it happy. It grows with your streak.",
     "keysSkip": "any key to skip",
-    "keysStart": "any key to start"
+    "keysStart": "any key to continue"
   },
   "evolution": {
     "evolved": "Your companion evolved: {name}!",
@@ -915,6 +922,10 @@
       "hatch": {
         "label": "Hatching",
         "hint": "the first-launch intro"
+      },
+      "welcome": {
+        "label": "Welcome",
+        "hint": "languages and a way to start"
       },
       "mascot": {
         "label": "Mascot lab",
@@ -1310,5 +1321,34 @@
     "badUrl": "DRACOSH_ANKI_URL isn't an address Dracosh can use ({detail}): it looks like http://127.0.0.1:8765.",
     "noDeck": "Anki has no deck \"{detail}\" any more.",
     "notImported": "Anki didn't take the cards: nothing was sent."
+  },
+  "welcome": {
+    "languageTitle": "Which language should Dracosh speak?",
+    "languageNote": "A few quick questions, then you start. You can change the language later in /settings.",
+    "homeTitle": "Which language do you speak?",
+    "homeNote": "So Dracosh can tell new words from their translations.",
+    "learningTitle": "Which language are you learning?",
+    "learningNote": "Pick one to start with; you can add decks in other languages any time. Not learning a language? Pick “Something else” at the end.",
+    "notLanguage": "Something else (definitions, facts…)",
+    "startTitle": "How do you want to start?",
+    "startNote": "You can change this later: /decks switches decks any time.",
+    "start": {
+      "tour": "Show me how it works",
+      "tourNote": {
+        "one": "{count} short card on how Dracosh works",
+        "other": "{count} short cards on how Dracosh works"
+      },
+      "words": {
+        "one": "Start with {count} everyday word",
+        "other": "Start with {count} everyday words"
+      },
+      "wordsNote": "{language} → {home}",
+      "own": "Make my own deck",
+      "ownNote": "type or paste your cards",
+      "noWords": "Ready-made words come in {languages}. For {language}, make a deck of your own.",
+      "noWordsHome": "Ready-made words are for pairs of these: {languages}. {language} isn't one yet, so start with a deck of your own."
+    },
+    "firstWordsDeck": "{language}: first words",
+    "suggested": "suggested"
   }
 }

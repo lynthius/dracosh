@@ -292,8 +292,17 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
   // the hatching intro plays once ever: on a brand-new state that has never answered anything
   const isFirstRun = () => !state.hatched && Object.keys(state.items).length === 0;
 
+  // the welcome follows the hatching (languages, then a way to start); `welcome` is its step to come
+  // back to, so a welcome left halfway goes on there next time
   async function markHatched() {
     state.hatched = true;
+    state.welcome = "language";
+    await save(state);
+  }
+  const welcomeStep = () => state.welcome ?? null;
+  async function setWelcomeStep(step) {
+    if (step) state.welcome = step;
+    else delete state.welcome;
     await save(state);
   }
 
@@ -315,5 +324,5 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
     await settleDay(); // nothing askable after all (a direction switched off): the quiet stretch goes on
   }
 
-  return { totals, next, answer, workAdded, reveal, selfGrade, setDirections, forgetKeys, overrule, canOverrule, wrongAnswer, stats, month, missed, nextTip, pause, isFirstRun, markHatched, openBadges, forget, reset, inTour: () => inTour };
+  return { totals, next, answer, workAdded, reveal, selfGrade, setDirections, forgetKeys, overrule, canOverrule, wrongAnswer, stats, month, missed, nextTip, pause, isFirstRun, markHatched, welcomeStep, setWelcomeStep, openBadges, forget, reset, inTour: () => inTour };
 }

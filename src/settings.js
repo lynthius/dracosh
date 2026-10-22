@@ -1,6 +1,6 @@
 import { LANGUAGES, systemLanguage, t } from "./i18n.js";
 
-export const DEFAULTS = { everyMs: 600_000, rhythm: "minutes", sound: true, speak: false, volume: 0.5, dailyGoal: 20, tips: "sometimes", quiet: null, skipWeekends: true, deck: null };
+export const DEFAULTS = { everyMs: 600_000, rhythm: "minutes", sound: true, speak: false, volume: 0.5, dailyGoal: 20, tips: "sometimes", quiet: null, skipWeekends: true, deck: null, homeLanguage: null, learningLanguage: null };
 
 export const INTERVALS = [60_000, 120_000, 300_000, 600_000, 900_000, 1_200_000, 1_800_000, 2_700_000, 3_600_000];
 export const GOALS = [5, 10, 15, 20, 25, 30, 40, 50, 75, 100, 150, 200];
@@ -25,6 +25,7 @@ const normalizeTips = (value) => (value === true ? "always" : value === false ? 
 const isHour = (v) => Number.isInteger(v) && v >= 0 && v <= 23;
 
 const isNumber = (v) => typeof v === "number" && Number.isFinite(v);
+const isLanguage = (v) => typeof v === "string" && /^[a-z]{2,3}$/.test(v);
 
 // settings.json is hand-editable, so anything invalid falls back to the default instead of crashing
 export function normalizeSettings(raw = {}) {
@@ -40,6 +41,9 @@ export function normalizeSettings(raw = {}) {
     skipWeekends: typeof raw.skipWeekends === "boolean" ? raw.skipWeekends : DEFAULTS.skipWeekends,
     quiet: raw.quiet && isHour(raw.quiet.from) && isHour(raw.quiet.to) ? { from: raw.quiet.from, to: raw.quiet.to } : null,
     deck: typeof raw.deck === "string" && raw.deck.trim() ? raw.deck : null, // picked in /decks; null = your first deck
+    // the language you speak and the one you're learning, from the welcome (codes; null: not said)
+    homeLanguage: isLanguage(raw.homeLanguage) ? raw.homeLanguage : null,
+    learningLanguage: isLanguage(raw.learningLanguage) ? raw.learningLanguage : null,
     language: typeof raw.language === "string" && Object.hasOwn(LANGUAGES, raw.language) ? raw.language : systemLanguage() // until picked in /settings, the system's
   };
 }

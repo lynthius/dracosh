@@ -29,7 +29,7 @@ It's made for people who live in a terminal or spend most of the day at a comput
 - A pixel dragon that hatches from an egg, evolves over a year of streaks, blinks, and falls asleep if you ignore it
 - 8-bit sound effects, generated from code
 - Now and then, a short tip about Dracosh while you wait for the next card
-- Speaks English, Polish, German, French and Ukrainian: it follows your system's language, and `/settings` switches it
+- Speaks English, Polish, German, French and Ukrainian: the first start asks which one, and `/settings` switches it
 
 ## Install
 
@@ -39,7 +39,13 @@ You need Node 22.15 or newer.
 npm install -g dracosh
 ```
 
-A fresh install starts with a short "Getting started" deck, in the app's language: a tour where every card tells you what to type and shows you one more thing Dracosh can do. When you're through, `/add` starts your own deck and the tour makes room for it. Already have cards somewhere else? See [Import and export](#import-and-export).
+On the first start the dragon hatches, and Dracosh asks three things: the language it should speak, the language you speak and the one you're learning. Then you pick how to begin:
+
+- a short tour, where every card tells you what to type and shows you one more thing Dracosh can do
+- 30 everyday words in the language you're learning, which you translate into yours (for any pair of English, Polish, German, French, Ukrainian, Spanish and Italian)
+- a deck of your own, in `/add`
+
+The first words or a deck of your own take the tour's place. Already have cards somewhere else? See [Import and export](#import-and-export).
 
 Want a look first? `dracosh --preview` shows every screen and animation on made-up data.
 
@@ -65,7 +71,7 @@ Type the answer and press Enter. Not sure, or the answer is a whole sentence? Pr
 | `/decks` | switch to another deck (Dracosh remembers it), start a new one, or press → to change how a deck is asked and which languages it's in |
 | `/hint` | reveal one more letter |
 | `/correct` | your answer was right after all; after a yes it's accepted from now on |
-| `/settings` | language, rhythm (a card every few minutes, or a study session), interval, daily goal, sound, pronunciation, quiet hours, weekends, tips, and a reset |
+| `/settings` | the app's language, the language you speak, rhythm (a card every few minutes, or a study session), interval, daily goal, sound, pronunciation, quiet hours, weekends, tips, and a reset |
 | `/stats` | streak and a calendar of your month |
 | `/badges` | all badges and how to get them |
 | `/companion` | your dragon, its element and the forms ahead |
@@ -164,7 +170,7 @@ The other languages live next to it in `locales/`, the tour included. `npm test`
 
 Coming next, roughly in this order:
 
-- Decks and cards in the app: browse, edit and delete with undo, plus a welcome flow for new users.
+- Decks and cards in the app: browse, edit and delete with undo, and `/import` without leaving the quiz.
 - Optional AI help for writing cards, with your own API key or a local model.
 - Linux and Windows, pronunciation there included.
 
