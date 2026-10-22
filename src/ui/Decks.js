@@ -92,7 +92,7 @@ export function Decks({ current, mix = null, actions, onPick, onPractise, onNew,
     const next = now.includes(deck.name) ? now.filter((name) => name !== deck.name) : [...now, deck.name];
     if (!next.length) return setMessage(t("decks.onlyOne", { deck: deck.name }));
     const main = next.includes(current) ? current : next[0];
-    onPractise({ deck: main, mix: next.length >= 2 ? (next.length === own.length && mix === "all" ? "all" : next) : null });
+    onPractise({ deck: main, mix: next.length >= 2 ? (next.length === own.length ? "all" : next) : null }); // every deck marked: all of them, new ones too
     setMessage(next.length >= 2 ? t("decks.togetherNow", { count: next.length }) : t("decks.aloneNow", { deck: next[0] }));
   }
 

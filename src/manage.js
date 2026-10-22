@@ -311,7 +311,11 @@ export function libraryActions({ load = loadLibrary, save = saveLibrary, backup 
       const tour = library.decks.find((d) => d.tour && d !== deck);
       const removed = tour ? removeDeck(library, tour.id) : [];
       await save(library);
-      return { deck: deck.name, cards: entry.cards.length, kind: entry.kind ?? "deck", skipped, progress: entry.progress ?? {}, removed };
+      // the progress of the cards that came back (one left in the trash keeps its own there)
+      const back = new Set(entry.cards.map((card) => card.id));
+      const mine = (object = {}) => Object.fromEntries(Object.entries(object).filter(([key]) => back.has(key.slice(0, key.lastIndexOf(":")))));
+      const progress = { items: mine(entry.progress?.items), accepted: mine(entry.progress?.accepted), dormant: (entry.progress?.dormant ?? []).filter((key) => back.has(key.slice(0, key.lastIndexOf(":")))) };
+      return { deck: deck.name, cards: entry.cards.length, kind: entry.kind ?? "deck", skipped, progress, removed };
     },
 
     // /import: what a file's cards would do to the library now (see planImport); `source` is { text, list }

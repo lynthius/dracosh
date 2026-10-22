@@ -1,14 +1,19 @@
+import { useRef } from "react";
 import { Box, useInput } from "ink";
 import { t } from "../i18n.js";
 import { cellWidth, html, Text, theme, usePanelWidth } from "./kit.js";
 
 // A question's answers as a list: ↑/↓ and Enter, a number, or an option's own keys ("t|y" in Polish).
 // Each option: { label, note?, key?, danger? }; `danger` paints it red while it's chosen.
+const SETTLE_MS = 300; // a pick right after the list appears is the second half of the Enter before it
+
 export function Choice({ options, selected, onMove, onPick, onCancel }) {
+  const shownAt = useRef(Date.now());
   useInput((input, key) => {
     if (key.escape) return onCancel?.();
     if (key.upArrow) return onMove(Math.max(0, selected - 1));
     if (key.downArrow) return onMove(Math.min(options.length - 1, selected + 1));
+    if (Date.now() - shownAt.current < SETTLE_MS && (key.return || /^\d$/.test(input))) return;
     if (key.return) return onPick(selected);
     const index = options.findIndex((o, i) => input === String(i + 1) || (o.key && o.key.split("|").includes(input.toLowerCase())));
     if (index >= 0) onPick(index);

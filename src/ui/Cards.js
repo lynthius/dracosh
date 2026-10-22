@@ -40,7 +40,8 @@ export function Cards({ deck, actions, onDeleted, onRestored, onEdited, onAdd, o
 
   const found = (cards ?? []).filter((card) => matches(card, query));
   // the rows: bring back the card just deleted, add cards (with no search), then the cards found
-  const rows = [...(undo ? [{ undo: true }] : []), ...(query ? [] : [{ add: true }]), ...found];
+  // (both only with no search: Enter on what's found never brings a card back by accident)
+  const rows = [...(undo && !query ? [{ undo: true }] : []), ...(query ? [] : [{ add: true }]), ...found];
 
   async function run(work) {
     if (busy.current) return;
@@ -77,7 +78,7 @@ export function Cards({ deck, actions, onDeleted, onRestored, onEdited, onAdd, o
       setOpen(null);
       setUndo({ entry, card });
       setQuery(""); // the whole list again, the way back on top
-      setSelected(0);
+      setSelected(2); // on the cards, past the way back and + Add cards: a second Enter can't undo it
       setMessage(t("cards.deleted", { card: cutToWidth(lineOf(card), 40), days: TRASH_DAYS }));
       changed.current = true;
       await load();

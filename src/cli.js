@@ -186,7 +186,7 @@ async function main() {
   };
 
   // the session summary screen stays on screen after exit, so nothing more to print here
-  const app = render(React.createElement(App, { session, deck: deck.name, initialSettings: { ...settings, mix }, alerts, persistSettings, library: manage, onSwitchDeck: (name) => (active = name), onMix: (decks) => (mix = decks) }));
+  const app = render(React.createElement(App, { session, deck: deck.name, initialSettings: settings, initialMix: mix, alerts, persistSettings, library: manage, onSwitchDeck: (name) => (active = name), onMix: (decks) => (mix = decks) }));
   await app.waitUntilExit();
 }
 

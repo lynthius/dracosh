@@ -79,7 +79,14 @@ export const TRASH_DAYS = 30;
 const DAY = 24 * 60 * 60 * 1000;
 function cleanTrash(trash) {
   if (!Array.isArray(trash)) return [];
-  return trash.filter((entry) => entry && isText(entry.id) && Number.isFinite(entry.deletedAt) && validDeck(entry.deck) && Array.isArray(entry.cards) && entry.cards.every(validCard));
+  const object = (value) => (value && typeof value === "object" && !Array.isArray(value) ? value : {});
+  return trash
+    .filter((entry) => entry && isText(entry.id) && Number.isFinite(entry.deletedAt) && validDeck(entry.deck) && Array.isArray(entry.cards) && entry.cards.every(validCard))
+    .map((entry) => {
+      // progress edited into something odd comes back as none, not as garbage in the quiz's state
+      const progress = object(entry.progress);
+      return { ...entry, progress: { items: object(progress.items), accepted: object(progress.accepted), dormant: Array.isArray(progress.dormant) ? progress.dormant.filter(isText) : [] } };
+    });
 }
 
 // a deck into the trash, with its cards and their `progress` (as the session gave it) → the entry
@@ -156,11 +163,13 @@ export function restoreDeck(library, entryId) {
   }
   let name = entry.deck.name;
   for (let n = 2; findDeck(library, name); n++) name = `${Array.from(entry.deck.name).slice(0, MAX_DECK_NAME - String(n).length - 1).join("")} ${n}`;
-  const deck = { ...entry.deck, name };
+  // its id may be taken by now (cards of it brought back first came in a deck of their own): a new one
+  const id = library.decks.some((d) => d.id === entry.deck.id) ? newId("d") : entry.deck.id;
+  const deck = { ...entry.deck, id, name };
   library.decks.push(deck);
-  library.cards.push(...entry.cards);
+  library.cards.push(...entry.cards.map((card) => Object.assign(card, { deckId: id })));
   // a deck merged into another takes its cards back from there, the ones still in it
-  const merged = entry.merged && new Set(entry.merged.cardIds);
+  const merged = Array.isArray(entry.merged?.cardIds) && new Set(entry.merged.cardIds);
   const taken = merged ? library.cards.filter((card) => merged.has(card.id) && card.deckId === entry.merged.into) : [];
   for (const card of taken) card.deckId = deck.id;
   library.trash = library.trash.filter((each) => each !== entry);

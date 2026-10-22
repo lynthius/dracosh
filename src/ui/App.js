@@ -214,13 +214,14 @@ function TipBox({ tip, width }) {
 
 // `library` holds the /add actions (src/manage.js) and `onSwitchDeck` points the session at another
 // deck; the preview gallery passes neither.
-export function App({ session, deck: initialDeck, initialSettings, alerts, persistSettings, onExit, library, onSwitchDeck, onMix }) {
+// `initialMix`: the decks practised together this run (null with --deck, while settings keep the saved ones)
+export function App({ session, deck: initialDeck, initialSettings, initialMix, alerts, persistSettings, onExit, library, onSwitchDeck, onMix }) {
   const { exit: exitApp } = useApp();
   const exit = onExit ?? exitApp; // the preview gallery runs the quiz as a scene and takes quitting back to its menu
   const { stdout } = useStdout();
   const [settings, setSettings] = useState(initialSettings);
   const [deck, setDeck] = useState(initialDeck);
-  const [mix, setMix] = useState(initialSettings.mix ?? null); // decks practised together: "all", or their names
+  const [mix, setMix] = useState(initialMix !== undefined ? initialMix : (initialSettings.mix ?? null)); // decks practised together: "all", or their names
   const [addNew, setAddNew] = useState(false); // /add opened from "+ New deck" in /decks
   const [cardsDeck, setCardsDeck] = useState(null); // the deck /cards shows (one of several practised together)
   const [addInto, setAddInto] = useState(null); // /add from /cards: straight into that deck
@@ -625,12 +626,21 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
   async function deleteDeck(name) {
     const done = await library.deleteDeck(name, session.progressOf);
     await session.forget(done.cardIds);
+    keepSavedMix((names) => names.filter((each) => each !== name));
     if (Array.isArray(mix) && mix.includes(name)) {
       const left = mix.filter((each) => each !== name);
       practise({ deck: name === deck ? left[0] : deck, mix: left.length >= 2 ? left : null });
     } else if (name === deck) followDeck(done.next);
-    else if (phase === "empty") ask();
+    else if (phase === "empty" || mix === "all" || question?.label === name) ask(); // its card may be the one on screen
     return done;
+  }
+
+  // the decks saved to practise together when this run practises others (--deck): kept in step too
+  function keepSavedMix(change) {
+    const saved = settingsRef.current.mix;
+    if (!Array.isArray(saved) || saved === mix) return;
+    const next = [...new Set(change(saved))];
+    changeSettings({ mix: next.length >= 2 ? next : null });
   }
 
   // a deck back from the trash, with its progress; the tour gives way to it
@@ -640,7 +650,7 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
     if (back.removed.length) await session.forget(back.removed);
     await session.workAdded();
     if (back.removed.length || (back.kind === "deck" && phase === "empty")) followDeck(back.deck);
-    else if (phase === "empty" && back.deck === deck) ask();
+    else if (phase === "empty") ask();
     return back;
   }
 
@@ -670,6 +680,7 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
   }
 
   function deckRenamed(from, to) {
+    keepSavedMix((names) => names.map((name) => (name === from ? to : name)));
     if (Array.isArray(mix) && mix.includes(from)) {
       const renamed = mix.map((name) => (name === from ? to : name));
       onMix?.(renamed);
@@ -714,7 +725,9 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
     const tour = await library.resetLibrary();
     onSwitchDeck?.(tour);
     setDeck(tour);
-    changeSettings({ deck: null });
+    onMix?.(null);
+    setMix(null);
+    changeSettings({ deck: null, mix: null });
     setScreen("hatch");
     ask();
   }
