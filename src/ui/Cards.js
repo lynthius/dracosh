@@ -143,7 +143,7 @@ export function Cards({ deck, actions, onDeleted, onRestored, onEdited, onAdd, o
       t("cards.editTitle", { deck }),
       html`
         <${Box} flexDirection="column" marginTop=${1}>
-          <${Text} dimColor>${t("add.fields.line.hint")}<//>
+          <${Text} dimColor>${t("cards.editHint")}<//>
           <${Box} marginTop=${1}><${AnswerInput} plain escLeaves cardLine initial=${formatLine(open.card)} onSubmit=${(text) => edit(open.card, text)} onExit=${() => setOpen((o) => ({ ...o, step: "menu" }))} onChange=${() => setError("")} /><//>
         <//>
       `,
@@ -163,7 +163,7 @@ export function Cards({ deck, actions, onDeleted, onRestored, onEdited, onAdd, o
       html`
         <${Box} flexDirection="column">
           <${Text} dimColor>${t("cards.deleteNote", { days: TRASH_DAYS })}<//>
-          <${Box} marginTop=${1}><${Choice} options=${[{ label: t("decks.deleteYes"), danger: true }, { label: t("decks.deleteNo") }]} selected=${open.selected} onMove=${(i) => setOpen((o) => ({ ...o, selected: i }))} onPick=${(i) => (i === 0 ? remove(open.card) : setOpen((o) => ({ ...o, step: "menu", selected: 2 })))} onCancel=${() => setOpen((o) => ({ ...o, step: "menu", selected: 2 }))} /><//>
+          <${Box} marginTop=${1}><${Choice} options=${[{ label: t("decks.deleteYes"), danger: true }, { label: t("cards.deleteNo") }]} selected=${open.selected} onMove=${(i) => setOpen((o) => ({ ...o, selected: i }))} onPick=${(i) => (i === 0 ? remove(open.card) : setOpen((o) => ({ ...o, step: "menu", selected: 2 })))} onCancel=${() => setOpen((o) => ({ ...o, step: "menu", selected: 2 }))} /><//>
         <//>
       `,
       choiceHints("cancel"),
@@ -209,4 +209,27 @@ export function Cards({ deck, actions, onDeleted, onRestored, onEdited, onAdd, o
     `,
     t("keyHints.cards")
   );
+}
+
+// /cards while several decks are practised together: which deck's cards (`mix`: "all" or names)
+export function CardsDeckPick({ actions, mix, current, onPick, onClose }) {
+  const panel = usePanelWidth();
+  const [decks, setDecks] = useState(null);
+  const [selected, setSelected] = useState(0);
+  useEffect(() => {
+    actions.ownDecks().then((own) => {
+      const list = mix === "all" ? own : own.filter((d) => mix.includes(d.name));
+      setDecks(list);
+      setSelected(Math.max(0, list.findIndex((d) => d.name === current)));
+    }, () => setDecks([]));
+  }, []);
+  return html`
+    <${Fragment}>
+      <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.accent} paddingX=${2} width=${panel}>
+        <${Text} bold color=${theme.accent}>${t("cards.whichDeck")}<//>
+        ${decks && html`<${Box} marginTop=${1}><${Choice} options=${decks.map((d) => ({ label: d.name, note: t("count.cards", { count: d.cards }) }))} selected=${selected} onMove=${setSelected} onPick=${(i) => onPick(decks[i].name)} onCancel=${onClose} /><//>`}
+      <//>
+      <${Box} paddingX=${1}><${KeyHints} text=${choiceHints("back")} /><//>
+    <//>
+  `;
 }

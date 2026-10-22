@@ -249,6 +249,12 @@ test("/decks → Merge: the cards move with their progress, the emptied deck goe
   const [entry] = await trash();
   assert.deepEqual([entry.name, entry.cards], ["From", 1]);
 
+  const undone = await restoreFromTrash(entry.id);
+  assert.equal(undone.deck, "From");
+  assert.deepEqual((await cardsIn("From")).map((c) => c.front).sort(), ["dom", "las"], "undoing a merge takes the moved cards back");
+  assert.deepEqual((await cardsIn("Into")).map((c) => c.front), ["dom"]);
+  await mergeDecks("From", "Into");
+
   const [las] = (await cardsIn("Into")).filter((c) => c.front === "las");
   await deleteCards("Into", [las.id]);
   const [cardEntry] = await trash();

@@ -159,9 +159,13 @@ export function restoreDeck(library, entryId) {
   const deck = { ...entry.deck, name };
   library.decks.push(deck);
   library.cards.push(...entry.cards);
+  // a deck merged into another takes its cards back from there, the ones still in it
+  const merged = entry.merged && new Set(entry.merged.cardIds);
+  const taken = merged ? library.cards.filter((card) => merged.has(card.id) && card.deckId === entry.merged.into) : [];
+  for (const card of taken) card.deckId = deck.id;
   library.trash = library.trash.filter((each) => each !== entry);
   if (!library.trash.length) delete library.trash;
-  return { deck, entry, skipped: 0 };
+  return { deck, entry: { ...entry, cards: [...entry.cards, ...taken] }, skipped: 0 };
 }
 
 // A deck's new name: not empty, not too long, and not another deck's → the deck

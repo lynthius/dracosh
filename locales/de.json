@@ -5,7 +5,7 @@
     "import": "Karten aus Anki, einer CSV- oder Textdatei importieren",
     "cards": "Karten des Stapels durchsuchen, korrigieren, verschieben oder löschen",
     "decks": "Stapel wechseln oder einen neuen anlegen",
-    "trash": "Gelöschte Stapel: einen zurückholen",
+    "trash": "Gelöschte Stapel und Karten: zurückholen",
     "settings": "Sprache, Rhythmus, Intervall, Ruhezeiten, Ton, Ziel, Tipps",
     "stats": "Serie, Monatskalender und Abzeichen im Überblick",
     "badges": "Alle Abzeichen und wie man sie freischaltet",
@@ -86,9 +86,10 @@
     "rename": "enter speichern · esc abbrechen",
     "undo": "u rückgängig",
     "trash": "↑/↓ wählen · enter zurückholen · esc zurück",
-    "decksTogether": "Leertaste zusammen · → Einstellungen · {choose}",
+    "decksTogether": "Leertaste zusammen üben · → Einstellungen · {choose}",
     "cards": "tippen zum Suchen · ↑/↓ wählen · enter öffnen · esc zurück",
-    "tabPart": "Tab nächster Teil"
+    "tabPart": "Tab nächster Teil",
+    "decksMixing": "Leertaste dazu/weg · enter nur dieser Stapel · → Einstellungen · esc fertig"
   },
   "settings": {
     "title": "Einstellungen",
@@ -237,7 +238,7 @@
     "deleteNote": "Er kommt mit seinem Fortschritt in den Papierkorb: /trash holt ihn {days} Tage lang zurück.",
     "deleteYes": "Löschen",
     "deleteNo": "Behalten",
-    "deleted": "„{deck}“ gelöscht. u holt ihn sofort zurück, /trash {days} Tage lang.",
+    "deleted": "„{deck}“ gelöscht. Drück u, um ihn zurückzuholen, oder find ihn {days} Tage lang in /trash.",
     "restored": "„{deck}“ ist zurück, mit seinem Fortschritt.",
     "allLabel": "Alle Stapel",
     "mixLabel": {
@@ -253,16 +254,19 @@
     "mergeRow": "Mit anderem Stapel zusammenführen",
     "mergeTitle": "„{deck}“ zusammenführen mit …",
     "mergeQuestion": "{cards} aus „{from}“ nach „{into}“ verschieben?",
-    "mergeNote": "Ihr Fortschritt kommt mit. „{from}“ kommt {days} Tage in den Papierkorb, mit allen Karten, die der andere Stapel schon hat.",
+    "mergeNote": "Ihr Fortschritt kommt mit. „{from}“ kommt {days} Tage in den Papierkorb, mit allen Karten, die „{into}“ schon hat.",
     "mergeYes": "Zusammenführen",
     "merged": {
       "one": "1 Karte aus „{from}“ nach „{into}“ verschoben.",
       "other": "{count} Karten aus „{from}“ nach „{into}“ verschoben."
     },
     "mergedLeft": {
-      "one": "1 war schon da: Sie liegt mit dem Stapel im Papierkorb.",
-      "other": "{count} waren schon da: Sie liegen mit dem Stapel im Papierkorb."
-    }
+      "one": "1 war schon da: sie liegt mit dem Stapel im Papierkorb.",
+      "other": "{count} waren schon da: sie liegen mit dem Stapel im Papierkorb."
+    },
+    "onlyOne": "„{deck}“ ist der einzige geübte Stapel. Markier mit der Leertaste einen weiteren, um ihn dazuzunehmen.",
+    "mergeNo": "Nicht zusammenführen",
+    "mergeLanguages": "Achtung: „{from}“ ist {fromPair}, „{into}“ ist {intoPair}."
   },
   "add": {
     "fields": {
@@ -1469,18 +1473,18 @@
   },
   "trash": {
     "title": "Papierkorb",
-    "note": "Gelöschte Stapel bleiben hier {days} Tage, mit ihrem Fortschritt.",
+    "note": "Gelöschte Stapel und Karten bleiben hier {days} Tage, mit ihrem Fortschritt.",
     "row": "{cards} · gelöscht am {deleted} · bis {until}",
     "empty": "Der Papierkorb ist leer.",
     "restored": "„{deck}“ ist zurück, mit seinem Fortschritt.",
-    "cardsRow": "aus {deck} · gelöscht am {deleted} · bis {until}",
+    "cardsRow": "aus „{deck}“ · gelöscht am {deleted} · bis {until}",
     "cardsRestored": {
       "one": "1 Karte ist zurück in „{deck}“.",
       "other": "{count} Karten sind zurück in „{deck}“."
     },
     "skipped": {
-      "one": "1 bleibt im Papierkorb: „{deck}“ hat jetzt eine Karte mit ihrer Vorderseite.",
-      "other": "{count} bleiben im Papierkorb: der Stapel hat jetzt Karten mit ihren Vorderseiten."
+      "one": "1 bleibt im Papierkorb: Der Stapel hat schon eine Karte mit derselben Vorderseite.",
+      "other": "{count} bleiben im Papierkorb: Der Stapel hat schon Karten mit denselben Vorderseiten."
     }
   },
   "cards": {
@@ -1489,24 +1493,27 @@
       "other": "{deck} · {count} Karten"
     },
     "addRow": "+ Karten hinzufügen",
-    "undoRow": "↶ {card} zurückholen",
+    "undoRow": "↶ „{card}“ zurückholen",
     "editRow": "Korrigieren",
     "moveRow": "In einen anderen Stapel verschieben",
     "deleteRow": "Löschen",
     "editTitle": "Karte korrigieren · {deck}",
-    "moveTitle": "{card} verschieben nach …",
-    "deleteQuestion": "Die Karte {card} löschen?",
+    "moveTitle": "„{card}“ verschieben nach …",
+    "deleteQuestion": "Die Karte „{card}“ löschen?",
     "deleteNote": "Sie kommt mit ihrem Fortschritt in den Papierkorb: /trash holt sie {days} Tage lang zurück.",
-    "deleted": "Karte {card} gelöscht. Sie bleibt {days} Tage im Papierkorb.",
-    "restored": "Die Karte {card} ist zurück.",
-    "moved": "Karte {card} nach „{deck}“ verschoben.",
+    "deleted": "Karte „{card}“ gelöscht. Sie bleibt {days} Tage im Papierkorb.",
+    "restored": "Die Karte „{card}“ ist zurück.",
+    "moved": "Karte „{card}“ nach „{deck}“ verschoben.",
     "alreadyThere": "„{deck}“ hat schon eine Karte mit dieser Vorderseite.",
-    "noOtherDeck": "Du hast keinen anderen Stapel, in den sie könnte.",
+    "noOtherDeck": "Du hast keinen anderen Stapel, in den du sie verschieben kannst.",
     "noMatch": "Keine Karte passt zu „{query}“.",
     "found": {
       "one": "1 Karte gefunden",
       "other": "{count} Karten gefunden"
     },
-    "tourNot": "Die Karten der Tour lassen sich nicht ändern. /add legt einen eigenen Stapel an."
+    "tourNot": "Die Karten der Tour lassen sich nicht ändern. /add legt einen eigenen Stapel an.",
+    "editHint": "Vorderseite = Rückseite; andere Antwort // Beispiel",
+    "whichDeck": "Karten welches Stapels?",
+    "deleteNo": "Behalten"
   }
 }

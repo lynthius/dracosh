@@ -5,7 +5,7 @@
     "import": "Import cards from Anki, a CSV or a text file",
     "cards": "Browse, search, fix, move or delete the deck's cards",
     "decks": "Switch to another deck, or start a new one",
-    "trash": "Decks you deleted: bring one back",
+    "trash": "Deleted decks and cards: bring them back",
     "settings": "Language, rhythm, interval, quiet hours, sound, goal, tips",
     "stats": "Streak, month calendar and badges summary",
     "badges": "All badges and what unlocks them",
@@ -86,9 +86,10 @@
     "rename": "enter save · esc cancel",
     "undo": "u undo",
     "trash": "↑/↓ choose · enter bring back · esc back",
-    "decksTogether": "space together · → settings · {choose}",
+    "decksTogether": "space practise together · → settings · {choose}",
     "cards": "type to search · ↑/↓ choose · enter open · esc back",
-    "tabPart": "tab next part"
+    "tabPart": "tab next part",
+    "decksMixing": "space add/remove · enter only this deck · → settings · esc done"
   },
   "settings": {
     "title": "Settings",
@@ -234,7 +235,7 @@
     "deleteNote": "It goes to the trash with its progress: /trash brings it back for {days} days.",
     "deleteYes": "Delete",
     "deleteNo": "Keep it",
-    "deleted": "Deleted \"{deck}\". u brings it back now, /trash for {days} days.",
+    "deleted": "Deleted \"{deck}\". Press u to bring it back, or find it in /trash for {days} days.",
     "restored": "\"{deck}\" is back, with its progress.",
     "allLabel": "All decks",
     "mixLabel": {
@@ -249,8 +250,8 @@
     "aloneNow": "Practising only \"{deck}\" now.",
     "mergeRow": "Merge into another deck",
     "mergeTitle": "Merge \"{deck}\" into…",
-    "mergeQuestion": "Move {cards} of \"{from}\" into \"{into}\"?",
-    "mergeNote": "Their progress comes along. \"{from}\" goes to the trash for {days} days, with any card the other deck has already.",
+    "mergeQuestion": "Move {cards} from \"{from}\" into \"{into}\"?",
+    "mergeNote": "Their progress comes along. \"{from}\" goes to the trash for {days} days, along with any cards \"{into}\" already has.",
     "mergeYes": "Merge",
     "merged": {
       "one": "Moved 1 card from \"{from}\" into \"{into}\".",
@@ -259,7 +260,10 @@
     "mergedLeft": {
       "one": "1 was there already: it's in the trash with the deck.",
       "other": "{count} were there already: they're in the trash with the deck."
-    }
+    },
+    "onlyOne": "\"{deck}\" is the only deck practised. Mark another one with space to add it.",
+    "mergeNo": "Don't merge",
+    "mergeLanguages": "Careful: \"{from}\" is {fromPair}, \"{into}\" is {intoPair}."
   },
   "add": {
     "fields": {
@@ -1452,18 +1456,18 @@
   },
   "trash": {
     "title": "Trash",
-    "note": "Deleted decks stay here for {days} days, with their progress.",
-    "row": "{cards} · deleted {deleted} · until {until}",
+    "note": "Deleted decks and cards stay here for {days} days, with their progress.",
+    "row": "{cards} · deleted {deleted} · kept until {until}",
     "empty": "The trash is empty.",
     "restored": "\"{deck}\" is back, with its progress.",
-    "cardsRow": "from {deck} · deleted {deleted} · until {until}",
+    "cardsRow": "from \"{deck}\" · deleted {deleted} · kept until {until}",
     "cardsRestored": {
       "one": "1 card is back in \"{deck}\".",
       "other": "{count} cards are back in \"{deck}\"."
     },
     "skipped": {
-      "one": "1 stays in the trash: \"{deck}\" has a card with its front now.",
-      "other": "{count} stay in the trash: the deck has cards with their fronts now."
+      "one": "1 stays in the trash: the deck already has a card with the same front.",
+      "other": "{count} stay in the trash: the deck already has cards with the same fronts."
     }
   },
   "cards": {
@@ -1472,17 +1476,17 @@
       "other": "{deck} · {count} cards"
     },
     "addRow": "+ Add cards",
-    "undoRow": "↶ Bring back {card}",
+    "undoRow": "↶ Bring back \"{card}\"",
     "editRow": "Fix",
     "moveRow": "Move to another deck",
     "deleteRow": "Delete",
     "editTitle": "Fix a card · {deck}",
-    "moveTitle": "Move {card} to…",
-    "deleteQuestion": "Delete the card {card}?",
+    "moveTitle": "Move \"{card}\" to…",
+    "deleteQuestion": "Delete the card \"{card}\"?",
     "deleteNote": "It goes to the trash with its progress: /trash brings it back for {days} days.",
-    "deleted": "Deleted the card {card}. It's in the trash for {days} days.",
-    "restored": "The card {card} is back.",
-    "moved": "Moved the card {card} to \"{deck}\".",
+    "deleted": "Deleted the card \"{card}\". It's in the trash for {days} days.",
+    "restored": "The card \"{card}\" is back.",
+    "moved": "Moved the card \"{card}\" to \"{deck}\".",
     "alreadyThere": "\"{deck}\" has a card with this front already.",
     "noOtherDeck": "You have no other deck to move it to.",
     "noMatch": "No card matches \"{query}\".",
@@ -1490,6 +1494,9 @@
       "one": "1 card found",
       "other": "{count} cards found"
     },
-    "tourNot": "The tour's cards can't be changed. /add starts a deck of your own."
+    "tourNot": "The tour's cards can't be changed. /add starts a deck of your own.",
+    "editHint": "front = back; other answer // example",
+    "whichDeck": "Which deck's cards?",
+    "deleteNo": "Keep it"
   }
 }

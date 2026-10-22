@@ -288,6 +288,7 @@ export function libraryActions({ load = loadLibrary, save = saveLibrary, backup 
 
     // /decks → Merge: every card of one deck into another, after a backup; the emptied deck goes to the
     // trash with the cards the other deck had already (same front), and their progress.
+    // Brought back from the trash, it takes the moved cards back with it.
     // → { moved, left: card ids that went to the trash with the deck, entry }
     async mergeDecks(fromName, intoName, progressOf = () => ({})) {
       await backup("before-delete");
@@ -296,6 +297,7 @@ export function libraryActions({ load = loadLibrary, save = saveLibrary, backup 
       const into = await deckNamed(library, intoName);
       const { moved, duplicates } = moveLibraryCards(library, cardsOf(library, from.id).map((card) => card.id), into.id);
       const entry = trashDeck(library, from.id, { progress: progressOf(duplicates) });
+      entry.merged = { into: into.id, cardIds: moved }; // u (or /trash) takes them back out
       await save(library);
       return { moved, left: duplicates, entry: entry.id };
     },

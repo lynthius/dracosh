@@ -32,7 +32,7 @@ import { Decks } from "./Decks.js";
 import { Choice, choiceHints } from "./Choice.js";
 import { elementName } from "../progress.js";
 import { Trash } from "./Trash.js";
-import { Cards } from "./Cards.js";
+import { Cards, CardsDeckPick } from "./Cards.js";
 import { Reset } from "./Reset.js";
 import { Help } from "./Help.js";
 import { Missed } from "./Missed.js";
@@ -222,6 +222,7 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
   const [deck, setDeck] = useState(initialDeck);
   const [mix, setMix] = useState(initialSettings.mix ?? null); // decks practised together: "all", or their names
   const [addNew, setAddNew] = useState(false); // /add opened from "+ New deck" in /decks
+  const [cardsDeck, setCardsDeck] = useState(null); // the deck /cards shows (one of several practised together)
   const [addInto, setAddInto] = useState(null); // /add from /cards: straight into that deck
   const [addSuggest, setAddSuggest] = useState(null); // /add from the welcome: a name and an example in your pair
   const [importFrom, setImportFrom] = useState(null); // "welcome" when /import was picked there: cancelling goes back
@@ -436,7 +437,7 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
     if (name === "/help") return setScreen("help");
     if (name === "/add") return library ? (setAddNew(false), setScreen("add")) : setNotice(t("quiz.previewNoAdd"));
     if (name === "/import") return library ? (setImportFrom(null), setScreen("import")) : setNotice(t("quiz.previewNoImport"));
-    if (name === "/cards") return !library ? setNotice(t("quiz.previewNoDecks")) : question?.tour || empty?.tour ? setNotice(t("cards.tourNot")) : setScreen("cards");
+    if (name === "/cards") return !library ? setNotice(t("quiz.previewNoDecks")) : !mix && (question?.tour || empty?.tour) ? setNotice(t("cards.tourNot")) : mix ? setScreen("cards-pick") : (setCardsDeck(deck), setScreen("cards"));
     if (name === "/trash") return library ? setScreen("trash") : setNotice(t("quiz.previewNoDecks"));
     if (name === "/decks") return library ? setScreen("decks") : setNotice(t("quiz.previewNoDecks"));
     if (name === "/hint" && phase === "asking") return setHintLevel((level) => level + 1);
@@ -645,7 +646,7 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
 
   // /cards → Delete: the cards and their progress into the trash
   async function deleteCards(cardIds) {
-    const done = await library.deleteCards(deck, cardIds, session.progressOf);
+    const done = await library.deleteCards(cardsDeck ?? deck, cardIds, session.progressOf);
     await session.forget(cardIds);
     return done;
   }
@@ -815,9 +816,10 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
           await session.workAdded();
           if (phase === "asking" && question && cardIds.includes(question.word.noteId)) ask(); // the open card follows the new way at once
         }} onLanguages=${(name) => name === deck && phase === "asking" && ask()} onPick=${switchDeck} onNew=${() => (setAddNew(true), setScreen("add"))} onDeleted=${deleteDeck} onRestored=${restoreDeck} onRenamed=${deckRenamed} onMerged=${mergeDecks} onClose=${() => setScreen("quiz")} />`}
-        ${screen === "cards" && html`<${Cards} deck=${deck} actions=${library} onDeleted=${deleteCards} onRestored=${restoreDeck} onEdited=${(keys) => session.forgetKeys(keys)} onAdd=${() => (setAddNew(false), setAddInto(deck), setScreen("add"))} onClose=${cardsClosed} />`}
+        ${screen === "cards" && html`<${Cards} deck=${cardsDeck ?? deck} actions=${library} onDeleted=${deleteCards} onRestored=${restoreDeck} onEdited=${(keys) => session.forgetKeys(keys)} onAdd=${() => (setAddNew(false), setAddInto(cardsDeck ?? deck), setScreen("add"))} onClose=${cardsClosed} />`}
+        ${screen === "cards-pick" && html`<${CardsDeckPick} actions=${library} mix=${mix} current=${deck} onPick=${(name) => (setCardsDeck(name), setScreen("cards"))} onClose=${() => setScreen("quiz")} />`}
         ${screen === "trash" && html`<${Trash} actions=${library} onRestore=${restoreDeck} onClose=${() => setScreen("quiz")} />`}
-        ${!["settings", "reset", "home-language", "dragon-look", "import", "add", "decks", "trash", "cards"].includes(screen) &&
+        ${!["settings", "reset", "home-language", "dragon-look", "import", "add", "decks", "trash", "cards", "cards-pick"].includes(screen) &&
           html`
               <${Fragment}>
               ${question &&

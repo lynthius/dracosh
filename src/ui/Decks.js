@@ -90,7 +90,7 @@ export function Decks({ current, mix = null, actions, onPick, onPractise, onNew,
     setMessage("");
     const now = practised.filter((name) => own.some((d) => d.name === name));
     const next = now.includes(deck.name) ? now.filter((name) => name !== deck.name) : [...now, deck.name];
-    if (!next.length) return;
+    if (!next.length) return setMessage(t("decks.onlyOne", { deck: deck.name }));
     const main = next.includes(current) ? current : next[0];
     onPractise({ deck: main, mix: next.length >= 2 ? (next.length === own.length && mix === "all" ? "all" : next) : null });
     setMessage(next.length >= 2 ? t("decks.togetherNow", { count: next.length }) : t("decks.aloneNow", { deck: next[0] }));
@@ -248,6 +248,9 @@ export function Decks({ current, mix = null, actions, onPick, onPractise, onNew,
       <//>
     `;
 
+  // two decks whose cards are in other languages: merging them is likely a slip
+  const differ = (a, b) => [a, b].every((d) => isKnown(d.languages.front) && isKnown(d.languages.back)) && (a.languages.front !== b.languages.front || a.languages.back !== b.languages.back);
+
   if (merging) {
     const { deck } = merging;
     const others = own.filter((d) => d.name !== deck.name);
@@ -266,8 +269,9 @@ export function Decks({ current, mix = null, actions, onPick, onPractise, onNew,
       <${Fragment}>
         <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.warn} paddingX=${2} width=${panel}>
           <${Text} bold color=${theme.warn}>${t("decks.mergeQuestion", { from: deck.name, into: merging.into.name, cards: t("count.cards", { count: deck.cards }) })}<//>
-          <${Text} dimColor>${t("decks.mergeNote", { from: deck.name, days: TRASH_DAYS })}<//>
-          <${Box} marginTop=${1}><${Choice} options=${[{ label: t("decks.mergeYes") }, { label: t("decks.deleteNo") }]} selected=${merging.selected} onMove=${(selected) => setMerging((m) => ({ ...m, selected }))} onPick=${(i) => (i === 0 ? merge(deck, merging.into) : back())} onCancel=${() => setMerging((m) => ({ ...m, into: null, selected: 0 }))} /><//>
+          <${Text} dimColor>${t("decks.mergeNote", { from: deck.name, into: merging.into.name, days: TRASH_DAYS })}<//>
+          ${differ(deck, merging.into) && html`<${Text} color=${theme.warn}>${t("decks.mergeLanguages", { from: deck.name, into: merging.into.name, fromPair: pairText(deck.languages), intoPair: pairText(merging.into.languages) })}<//>`}
+          <${Box} marginTop=${1}><${Choice} options=${[{ label: t("decks.mergeYes") }, { label: t("decks.mergeNo") }]} selected=${merging.selected} onMove=${(selected) => setMerging((m) => ({ ...m, selected }))} onPick=${(i) => (i === 0 ? merge(deck, merging.into) : back())} onCancel=${() => setMerging((m) => ({ ...m, into: null, selected: 0 }))} /><//>
         <//>
         <${Box} paddingX=${1}><${KeyHints} text=${choiceHints("back")} /><//>
       <//>
@@ -305,7 +309,7 @@ export function Decks({ current, mix = null, actions, onPick, onPractise, onNew,
                 { label: t("decks.languagesRow"), note: pairText(deck.languages) + guessedNote },
                 ...(deck.learning ? [{ label: t("decks.learningRow"), note: languageName(deck.learning.lang) + (deck.learning.sure ? "" : ` · ${t("languages.guessShort")}`) }] : []),
                 ...(deck.languages.guessed ? [] : [{ label: t("decks.detectRow") }]),
-                { label: t("decks.renameRow"), note: deck.name },
+                { label: t("decks.renameRow") },
                 ...(own.length >= 2 ? [{ label: t("decks.mergeRow") }] : []),
                 { label: t("decks.deleteRow"), note: t("count.cards", { count: deck.cards }), danger: true }
               ]}
@@ -336,7 +340,7 @@ export function Decks({ current, mix = null, actions, onPick, onPractise, onNew,
     `;
   }
 
-  const mixing = own.length >= 2 && (mix !== null || practised.length > 1); // the marks show once decks are practised together
+  const mixing = own.length >= 2; // with two decks or more, each shows whether it's practised (space)
   // a deck's languages show in the list once the cards tell at least one
   const languagesNote = (d) => (d.tour || !d.cards ? "" : d.learning ? t("decks.learningShort", { language: languageName(d.learning.lang) }) : isKnown(d.languages.front) && isKnown(d.languages.back) ? pairText(d.languages) : "");
 
@@ -363,7 +367,7 @@ export function Decks({ current, mix = null, actions, onPick, onPractise, onNew,
         ${message && html`<${Box} marginTop=${1}><${Text} color=${theme.good}>${message}<//><//>`}
         ${error && html`<${Box} marginTop=${1}><${Text} color=${theme.bad}>${error}<//><//>`}
       <//>
-      <${Box} paddingX=${1}><${KeyHints} text=${(undo ? `${t("keyHints.undo")} · ` : "") + (decks?.[picked] && !decks[picked].tour ? t(own.length >= 2 ? "keyHints.decksTogether" : "keyHints.decks", { choose: choiceHints() }) : choiceHints())} /><//>
+      <${Box} paddingX=${1}><${KeyHints} text=${(undo ? `${t("keyHints.undo")} · ` : "") + (decks?.[picked] && !decks[picked].tour ? (mix ? t("keyHints.decksMixing") : t(own.length >= 2 ? "keyHints.decksTogether" : "keyHints.decks", { choose: choiceHints() })) : choiceHints())} /><//>
     <//>
   `;
 }

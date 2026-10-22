@@ -5,7 +5,7 @@
     "import": "Importer des cartes depuis Anki, un CSV ou un fichier texte",
     "cards": "Parcourir, chercher, corriger, déplacer ou supprimer les cartes du paquet",
     "decks": "Passer à un autre paquet, ou en créer un",
-    "trash": "Paquets supprimés : en récupérer un",
+    "trash": "Paquets et cartes supprimés : les récupérer",
     "settings": "Langue, rythme, intervalle, heures calmes, son, objectif, astuces",
     "stats": "Série, calendrier du mois et résumé des badges",
     "badges": "Tous les badges et comment les débloquer",
@@ -84,11 +84,12 @@
     "importDone": "entrée continuer",
     "importName": "entrée continuer · échap retour",
     "rename": "entrée enregistrer · échap annuler",
-    "undo": "u annuler",
+    "undo": "u récupérer",
     "trash": "↑/↓ choisir · entrée récupérer · échap retour",
-    "decksTogether": "espace ensemble · → réglages · {choose}",
+    "decksTogether": "espace réviser ensemble · → réglages · {choose}",
     "cards": "tape pour chercher · ↑/↓ choisir · entrée ouvrir · échap retour",
-    "tabPart": "tab partie suivante"
+    "tabPart": "tab partie suivante",
+    "decksMixing": "espace ajouter/retirer · entrée seulement ce paquet · → réglages · échap terminé"
   },
   "settings": {
     "title": "Réglages",
@@ -237,11 +238,11 @@
     "deleteRow": "Supprimer",
     "renameTitle": "Nouveau nom pour « {deck} »",
     "renamed": "« {from} » s'appelle maintenant « {to} ».",
-    "deleteQuestion": "Supprimer le paquet « {deck} » et ses {cards} ?",
+    "deleteQuestion": "Supprimer le paquet « {deck} » ({cards}) ?",
     "deleteNote": "Il va à la corbeille avec sa progression : /trash le récupère pendant {days} jours.",
     "deleteYes": "Supprimer",
     "deleteNo": "Le garder",
-    "deleted": "« {deck} » supprimé. u le récupère tout de suite, /trash pendant {days} jours.",
+    "deleted": "« {deck} » supprimé. Appuie sur u pour le récupérer, ou retrouve-le dans /trash pendant {days} jours.",
     "restored": "« {deck} » est de retour, avec sa progression.",
     "allLabel": "Tous les paquets",
     "mixLabel": {
@@ -259,7 +260,7 @@
     "mergeRow": "Fusionner avec un autre paquet",
     "mergeTitle": "Fusionner « {deck} » avec…",
     "mergeQuestion": "Déplacer {cards} de « {from} » vers « {into} » ?",
-    "mergeNote": "Leur progression suit. « {from} » va à la corbeille pendant {days} jours, avec les cartes que l'autre paquet a déjà.",
+    "mergeNote": "Leur progression suit. « {from} » va à la corbeille pendant {days} jours, avec les cartes que « {into} » a déjà.",
     "mergeYes": "Fusionner",
     "merged": {
       "one": "{count} carte déplacée de « {from} » vers « {into} ».",
@@ -270,7 +271,10 @@
       "one": "{count} y était déjà : elle est dans la corbeille avec le paquet.",
       "many": "{count} y étaient déjà : elles sont dans la corbeille avec le paquet.",
       "other": "{count} y étaient déjà : elles sont dans la corbeille avec le paquet."
-    }
+    },
+    "onlyOne": "« {deck} » est le seul paquet révisé. Marque-en un autre avec espace pour l'ajouter.",
+    "mergeNo": "Ne pas fusionner",
+    "mergeLanguages": "Attention : « {from} » est en {fromPair}, « {into} » en {intoPair}."
   },
   "add": {
     "fields": {
@@ -1552,20 +1556,20 @@
   },
   "trash": {
     "title": "Corbeille",
-    "note": "Les paquets supprimés restent ici {days} jours, avec leur progression.",
+    "note": "Les paquets et cartes supprimés restent ici {days} jours, avec leur progression.",
     "row": "{cards} · supprimé le {deleted} · jusqu'au {until}",
     "empty": "La corbeille est vide.",
     "restored": "« {deck} » est de retour, avec sa progression.",
-    "cardsRow": "de {deck} · supprimée le {deleted} · jusqu'au {until}",
+    "cardsRow": "de « {deck} » · supprimé le {deleted} · jusqu'au {until}",
     "cardsRestored": {
       "one": "{count} carte est de retour dans « {deck} ».",
       "many": "{count} cartes sont de retour dans « {deck} ».",
       "other": "{count} cartes sont de retour dans « {deck} »."
     },
     "skipped": {
-      "one": "{count} reste dans la corbeille : « {deck} » a maintenant une carte avec son recto.",
-      "many": "{count} restent dans la corbeille : le paquet a maintenant des cartes avec leur recto.",
-      "other": "{count} restent dans la corbeille : le paquet a maintenant des cartes avec leur recto."
+      "one": "{count} reste dans la corbeille : le paquet a déjà une carte avec ce recto.",
+      "many": "{count} restent dans la corbeille : le paquet a déjà des cartes avec ces rectos.",
+      "other": "{count} restent dans la corbeille : le paquet a déjà des cartes avec ces rectos."
     }
   },
   "cards": {
@@ -1575,17 +1579,17 @@
       "other": "{deck} · {count} cartes"
     },
     "addRow": "+ Ajouter des cartes",
-    "undoRow": "↶ Récupérer {card}",
+    "undoRow": "↶ Récupérer « {card} »",
     "editRow": "Corriger",
     "moveRow": "Déplacer vers un autre paquet",
     "deleteRow": "Supprimer",
     "editTitle": "Corriger une carte · {deck}",
-    "moveTitle": "Déplacer {card} vers…",
-    "deleteQuestion": "Supprimer la carte {card} ?",
+    "moveTitle": "Déplacer « {card} » vers…",
+    "deleteQuestion": "Supprimer la carte « {card} » ?",
     "deleteNote": "Elle va à la corbeille avec sa progression : /trash la récupère pendant {days} jours.",
-    "deleted": "Carte {card} supprimée. Elle reste {days} jours dans la corbeille.",
-    "restored": "La carte {card} est de retour.",
-    "moved": "Carte {card} déplacée vers « {deck} ».",
+    "deleted": "Carte « {card} » supprimée. Elle reste {days} jours dans la corbeille.",
+    "restored": "La carte « {card} » est de retour.",
+    "moved": "Carte « {card} » déplacée vers « {deck} ».",
     "alreadyThere": "« {deck} » a déjà une carte avec ce recto.",
     "noOtherDeck": "Tu n'as pas d'autre paquet où la déplacer.",
     "noMatch": "Aucune carte ne correspond à « {query} ».",
@@ -1594,6 +1598,9 @@
       "many": "{count} cartes trouvées",
       "other": "{count} cartes trouvées"
     },
-    "tourNot": "Les cartes de la visite ne se modifient pas. /add crée ton propre paquet."
+    "tourNot": "Les cartes de la visite ne se modifient pas. /add crée ton propre paquet.",
+    "editHint": "recto = verso ; autre réponse // exemple",
+    "whichDeck": "Les cartes de quel paquet ?",
+    "deleteNo": "La garder"
   }
 }

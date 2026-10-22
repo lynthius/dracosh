@@ -5,7 +5,7 @@
     "import": "Importuj karty z Anki, pliku CSV albo tekstowego",
     "cards": "Przeglądaj, szukaj, poprawiaj, przenoś i usuwaj karty talii",
     "decks": "Przełącz się na inną talię albo stwórz nową",
-    "trash": "Usunięte talie: przywróć którąś",
+    "trash": "Usunięte talie i karty: przywróć je",
     "settings": "Język, rytm, interwał, godziny ciszy, dźwięk, cel, porady",
     "stats": "Seria, kalendarz miesiąca i podsumowanie odznak",
     "badges": "Wszystkie odznaki i co je odblokowuje",
@@ -86,9 +86,10 @@
     "rename": "enter zapisz · esc anuluj",
     "undo": "u cofnij",
     "trash": "↑/↓ wybierz · enter przywróć · esc wstecz",
-    "decksTogether": "spacja razem · → ustawienia · {choose}",
+    "decksTogether": "spacja ćwicz razem · → ustawienia · {choose}",
     "cards": "pisz, by szukać · ↑/↓ wybierz · enter otwórz · esc wstecz",
-    "tabPart": "tab następna część"
+    "tabPart": "tab następna część",
+    "decksMixing": "spacja dodaj/usuń · enter tylko ta talia · → ustawienia · esc gotowe"
   },
   "settings": {
     "title": "Ustawienia",
@@ -242,11 +243,11 @@
     "renameTitle": "Nowa nazwa dla „{deck}”",
     "renamed": "„{from}” nazywa się teraz „{to}”.",
     "deleteQuestion": "Usunąć talię „{deck}” ({cards})?",
-    "deleteNote": "Trafi do kosza razem z postępem: /trash przywraca ją przez {days} dni.",
+    "deleteNote": "Trafi do kosza razem z postępem. Przez {days} dni przywrócisz ją z /trash.",
     "deleteYes": "Usuń",
     "deleteNo": "Zostaw",
-    "deleted": "Usunięto „{deck}”. u przywraca ją od razu, /trash przez {days} dni.",
-    "restored": "„{deck}” wróciła razem z postępem.",
+    "deleted": "Usunięto „{deck}”. Naciśnij u, żeby ją przywrócić, albo znajdź ją w /trash przez {days} dni.",
+    "restored": "Talia „{deck}” wróciła razem z postępem.",
     "allLabel": "Wszystkie talie",
     "mixLabel": {
       "one": "{count} talia",
@@ -257,15 +258,15 @@
     "allRow": "Wszystkie talie",
     "togetherNow": {
       "one": "Ćwiczysz razem {count} talię.",
-      "few": "Ćwiczysz razem {count} talie: ich karty przychodzą na przemian.",
-      "many": "Ćwiczysz razem {count} talii: ich karty przychodzą na przemian.",
-      "other": "Ćwiczysz razem {count} talii: ich karty przychodzą na przemian."
+      "few": "Ćwiczysz razem {count} talie: ich karty są wymieszane.",
+      "many": "Ćwiczysz razem {count} talii: ich karty są wymieszane.",
+      "other": "Ćwiczysz razem {count} talii: ich karty są wymieszane."
     },
     "aloneNow": "Teraz tylko „{deck}”.",
-    "mergeRow": "Połącz z inną talią",
-    "mergeTitle": "Połącz „{deck}” z…",
-    "mergeQuestion": "Przenieść {cards} z „{from}” do „{into}”?",
-    "mergeNote": "Postęp idzie razem z nimi. „{from}” trafi do kosza na {days} dni, razem z kartami, które druga talia już ma.",
+    "mergeRow": "Dołącz do innej talii",
+    "mergeTitle": "Dołącz „{deck}” do…",
+    "mergeQuestion": "Przenieść karty z „{from}” do „{into}” ({cards})?",
+    "mergeNote": "Postęp idzie razem z nimi. „{from}” trafi do kosza na {days} dni, razem z kartami, które „{into}” już ma.",
     "mergeYes": "Połącz",
     "merged": {
       "one": "Przeniesiono 1 kartę z „{from}” do „{into}”.",
@@ -276,9 +277,12 @@
     "mergedLeft": {
       "one": "1 już tam była: czeka w koszu razem z talią.",
       "few": "{count} już tam były: czekają w koszu razem z talią.",
-      "many": "{count} już tam było: czekają w koszu razem z talią.",
-      "other": "{count} już tam było: czekają w koszu razem z talią."
-    }
+      "many": "{count} już tam było: czeka w koszu razem z talią.",
+      "other": "{count} już tam było: czeka w koszu razem z talią."
+    },
+    "onlyOne": "Ćwiczysz tylko „{deck}”. Zaznacz spacją inną talię, żeby ją dodać.",
+    "mergeNo": "Nie łącz",
+    "mergeLanguages": "Uwaga: „{from}” to {fromPair}, a „{into}” to {intoPair}."
   },
   "add": {
     "fields": {
@@ -1610,11 +1614,11 @@
   },
   "trash": {
     "title": "Kosz",
-    "note": "Usunięte talie czekają tu {days} dni, razem z postępem.",
+    "note": "Usunięte talie i karty czekają tu {days} dni, razem z postępem.",
     "row": "{cards} · usunięta {deleted} · do {until}",
     "empty": "Kosz jest pusty.",
-    "restored": "„{deck}” wróciła razem z postępem.",
-    "cardsRow": "z {deck} · usunięta {deleted} · do {until}",
+    "restored": "Talia „{deck}” wróciła razem z postępem.",
+    "cardsRow": "z „{deck}” · usunięto {deleted} · do {until}",
     "cardsRestored": {
       "one": "1 karta wróciła do „{deck}”.",
       "few": "{count} karty wróciły do „{deck}”.",
@@ -1622,10 +1626,10 @@
       "other": "{count} karty wróciło do „{deck}”."
     },
     "skipped": {
-      "one": "1 zostaje w koszu: „{deck}” ma teraz kartę z tym przodem.",
-      "few": "{count} zostają w koszu: talia ma teraz karty z tymi przodami.",
-      "many": "{count} zostaje w koszu: talia ma teraz karty z tymi przodami.",
-      "other": "{count} zostaje w koszu: talia ma teraz karty z tymi przodami."
+      "one": "1 zostaje w koszu: talia ma już kartę z tym samym przodem.",
+      "few": "{count} zostają w koszu: talia ma już karty z tymi samymi przodami.",
+      "many": "{count} zostaje w koszu: talia ma już karty z tymi samymi przodami.",
+      "other": "{count} zostaje w koszu: talia ma już karty z tymi samymi przodami."
     }
   },
   "cards": {
@@ -1636,17 +1640,17 @@
       "other": "{deck} · {count} karty"
     },
     "addRow": "+ Dodaj karty",
-    "undoRow": "↶ Przywróć {card}",
+    "undoRow": "↶ Przywróć „{card}”",
     "editRow": "Popraw",
     "moveRow": "Przenieś do innej talii",
     "deleteRow": "Usuń",
     "editTitle": "Popraw kartę · {deck}",
-    "moveTitle": "Przenieś {card} do…",
-    "deleteQuestion": "Usunąć kartę {card}?",
+    "moveTitle": "Przenieś „{card}” do…",
+    "deleteQuestion": "Usunąć kartę „{card}”?",
     "deleteNote": "Trafi do kosza razem z postępem: /trash przywraca ją przez {days} dni.",
-    "deleted": "Usunięto kartę {card}. Czeka w koszu {days} dni.",
-    "restored": "Karta {card} wróciła.",
-    "moved": "Przeniesiono kartę {card} do „{deck}”.",
+    "deleted": "Usunięto kartę „{card}”. Czeka w koszu {days} dni.",
+    "restored": "Karta „{card}” wróciła.",
+    "moved": "Przeniesiono kartę „{card}” do „{deck}”.",
     "alreadyThere": "W „{deck}” jest już karta z tym przodem.",
     "noOtherDeck": "Nie masz innej talii, do której można ją przenieść.",
     "noMatch": "Żadna karta nie pasuje do „{query}”.",
@@ -1656,6 +1660,9 @@
       "many": "Znaleziono {count} kart",
       "other": "Znaleziono {count} karty"
     },
-    "tourNot": "Kart wycieczki nie da się zmieniać. /add zaczyna twoją własną talię."
+    "tourNot": "Kart samouczka nie da się zmieniać. /add zaczyna twoją własną talię.",
+    "editHint": "przód = tył; inna odpowiedź // przykład",
+    "whichDeck": "Karty której talii?",
+    "deleteNo": "Zostaw"
   }
 }
