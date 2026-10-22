@@ -75,20 +75,26 @@ function AccentedAnswers({ expected, given, closest }) {
   });
 }
 
+// "The card comes back in a few minutes, not in 2 days." Two months and more are said in months.
+const comesBack = (days) => (days < 1 ? t("quiz.almost.soon") : days < 60 ? t("quiz.almost.days", { count: days }) : t("quiz.almost.months", { count: Math.round(days / 30) }));
+const heldText = (held) => (comesBack(held.days) === comesBack(held.would) ? null : t("quiz.almost.held", { now: comesBack(held.days), would: comesBack(held.would) }));
+
 function Verdict({ outcome, question }) {
   const wrong = outcome.result === "wrong";
   const showDiff = outcome.closest && outcome.given && !outcome.overruled && (wrong || outcome.result === "typo");
+  // a typo, an "almost" or a hint: the card comes back sooner, said on a line of its own
+  const held = outcome.held ? heldText(outcome.held) : null;
   return html`
     <${Box} flexDirection="column">
       <${Text} color=${wrong ? theme.bad : theme.good} bold>${wrong ? "✗" : "✓"} ${outcome.result === "accent" || outcome.result === "umlaut" || outcome.result === "article-umlaut" ? html`<${AccentedAnswers} expected=${question.expected} given=${outcome.given} closest=${outcome.closest} />` : question.expected.join(" / ")}${outcome.result === "typo" ? t("quiz.closeEnough") : ""}<//>
-      ${ALMOST.includes(outcome.result) &&
-      html`<${Text} color=${theme.warn}>${t(`quiz.almost.${outcome.result}`)}${outcome.held ? ` ${t("quiz.almost.held", { now: t("quiz.almost.days", { count: outcome.held.days }), would: t("quiz.almost.days", { count: outcome.held.would }) })}` : ""}<//>`}
+      ${ALMOST.includes(outcome.result) && html`<${Text} color=${theme.warn}>${t(`quiz.almost.${outcome.result}`)}<//>`}
       ${showDiff && html`<${AnswerDiff} given=${outcome.given} closest=${outcome.closest} />`}
       ${question.word.example && html`<${Box} marginTop=${1}>${question.tour ? html`<${Marked} dimColor text=${question.word.example} />` : html`<${Text} dimColor italic>“${question.word.example}”<//>`}<//>`}
-      ${(outcome.hinted || outcome.overruled) &&
+      ${(outcome.hinted || outcome.overruled || held) &&
       html`
         <${Box} marginTop=${1} flexDirection="column">
           ${outcome.hinted && html`<${Text} dimColor>${t("quiz.hintUsed")}<//>`}
+          ${held && html`<${Text} dimColor>${held}<//>`}
           ${outcome.overruled && html`<${Text} color=${theme.good}>${t("quiz.countedCorrect")}${question.tour ? "" : t("quiz.acceptedFromNow", { answer: outcome.accepted })}<//>`}
         <//>
       `}

@@ -1,6 +1,6 @@
 {
   "commands": {
-    "hint": "Révéler une lettre (la carte ne monte pas de boîte)",
+    "hint": "Révéler une lettre (la carte revient plus tôt)",
     "add": "Ajouter des cartes à un paquet, ou en créer un",
     "decks": "Passer à un autre paquet, ou en créer un",
     "settings": "Langue, rythme, intervalle, heures calmes, son, objectif, astuces",
@@ -36,8 +36,8 @@
       "gradeWhat": "une fois la réponse affichée : je ne savais pas (ou Échap) / je savais"
     },
     "how": {
-      "boxes": "Une bonne réponse fait passer la carte dans une boîte plus lointaine : elle revient après {first}, puis {last} jours. Une erreur la renvoie dans la première boîte.",
-      "typos": "Une seule lettre fausse dans un mot assez long compte quand même, et tu vois la bonne orthographe.",
+      "spacing": "Chaque carte a son propre espacement : mieux tu la connais, plus elle attend, de quelques jours à plusieurs mois. Une erreur la fait revenir 10 minutes plus tard.",
+      "typos": "Une seule lettre fausse dans un mot assez long compte quand même, et tu vois la bonne orthographe. La carte revient alors un peu plus tôt, comme avec un indice.",
       "streak": "Atteins ton objectif du jour pour garder ta série ; un jour où tu as fait toutes les cartes disponibles compte aussi. Ton dragon grandit avec ta meilleure série.",
       "freezes": "Un gel couvre un jour manqué. Tu commences avec {max} et tu en récupères un chaque semaine, {max} au maximum.",
       "cards": "Dans /add, une ligne fait une carte : cat = chat; minou // exemple. Les accolades font un trou à remplir : I {{look forward}} to it."
@@ -291,7 +291,7 @@
   "quiz": {
     "youWrote": "ta réponse : ",
     "closeEnough": "  (assez proche)",
-    "hintUsed": "indice utilisé · la carte reste dans sa boîte",
+    "hintUsed": "indice utilisé",
     "countedCorrect": "comptée comme juste",
     "acceptedFromNow": " · « {answer} » est accepté désormais",
     "tip": "astuce · {cat}",
@@ -347,11 +347,17 @@
       "article": "Presque : attention à l’article.",
       "umlaut": "Presque : attention au tréma (ä, ö, ü) ; ae, oe, ue marchent aussi.",
       "article-umlaut": "Presque : attention à l’article et au tréma ; ae, oe, ue marchent aussi.",
-      "held": "La carte revient {now}, pas {would}.",
+      "held": "La carte reviendra {now}, et non {would}.",
+      "soon": "dans quelques minutes",
       "days": {
         "one": "demain",
         "many": "dans {count} jours",
         "other": "dans {count} jours"
+      },
+      "months": {
+        "one": "dans environ un mois",
+        "many": "dans environ {count} mois",
+        "other": "dans environ {count} mois"
       }
     }
   },
@@ -752,7 +758,7 @@
       "cardDeck": "une carte dans un paquet qui n'existe pas",
       "cardIds": "deux cartes avec le même identifiant",
       "noProgress": "aucune progression dedans",
-      "progressEntry": "une carte sans boîte ni date",
+      "progressEntry": "une carte sans date de révision",
       "streak": "la série et les badges sont illisibles"
     },
     "slashSwitch": "Il faudrait taper « {text} », et dans le quiz / ouvre les commandes. Modifie d'abord cette carte."
@@ -778,7 +784,7 @@
         "many": "{count} cartes révisées, {correct}/{total} justes ({percent} %)",
         "other": "{count} cartes révisées, {correct}/{total} justes ({percent} %)"
       },
-      "box": "boîte {box} ({days} j) : {count}"
+      "spread": "en apprentissage : {learning} · moins d'une semaine : {week} · moins d'un mois : {month} · un mois ou plus : {mastered}"
     },
     "data": {
       "where": "Dracosh garde tout dans {home}",
@@ -815,7 +821,8 @@
         "before-reset": "avant réinit.",
         "before-delete": "avant suppression",
         "before-restore": "avant restauration",
-        "before-import": "avant import"
+        "before-import": "avant import",
+        "before-upgrade": "avant mise à jour"
       }
     },
     "backups": {
@@ -855,17 +862,17 @@
       "cat": "Cartes",
       "text": "Une seule lettre fausse dans un mot assez long compte quand même comme juste. Dracosh te montre la bonne orthographe."
     },
-    "cards-boxes": {
+    "cards-spacing": {
       "cat": "Cartes",
-      "text": "Une bonne réponse envoie la carte dans une boîte plus lointaine : elle revient après 1, 3, 7, 14, puis 30 jours."
+      "text": "Chaque carte a son propre espacement : une carte bien connue attend des semaines, une plus difficile revient plus tôt."
     },
     "cards-miss": {
       "cat": "Cartes",
-      "text": "Une carte ratée retourne dans la première boîte et revient quelques minutes plus tard, jusqu'à ce qu'elle rentre."
+      "text": "Une carte ratée revient quelques minutes plus tard, jusqu'à ce qu'elle rentre."
     },
     "cards-hint": {
       "cat": "Cartes",
-      "text": "Tu sèches sur une carte ? /hint révèle une lettre de plus. La carte compte, mais reste dans sa boîte."
+      "text": "Tu sèches sur une carte ? /hint révèle une lettre de plus. La carte compte, mais revient plus tôt."
     },
     "cards-correct": {
       "cat": "Cartes",
@@ -1070,14 +1077,14 @@
           "4",
           "quatre"
         ],
-        "example": "Chaque bonne réponse envoie la carte dans une boîte plus lointaine, donc tu la vois de moins en moins souvent."
+        "example": "Chaque bonne réponse éloigne la carte, alors tu la vois de moins en moins souvent."
       },
       {
         "front": "Tu sèches ? Tape `/hint` et appuie sur Entrée : la réponse apparaît lettre par lettre. Essaie, puis tape `pomme`",
         "back": [
           "pomme"
         ],
-        "example": "Une réponse avec indice compte, mais la carte reste dans sa boîte pour l'instant."
+        "example": "Une réponse avec indice compte, mais la carte revient plus tôt."
       },
       {
         "front": "Quel est le nom secret de ton dragon ? Personne ne le sait, alors trompe-toi exprès et tape `chien`",

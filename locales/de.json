@@ -1,6 +1,6 @@
 {
   "commands": {
-    "hint": "Noch einen Buchstaben (die Karte steigt nicht auf)",
+    "hint": "Noch einen Buchstaben (die Karte kommt früher wieder)",
     "add": "Karten hinzufügen oder einen neuen Stapel anlegen",
     "decks": "Stapel wechseln oder einen neuen anlegen",
     "settings": "Sprache, Rhythmus, Intervall, Ruhezeiten, Ton, Ziel, Tipps",
@@ -36,8 +36,8 @@
       "gradeWhat": "nach dem Zeigen: wusste ich nicht (oder Esc) / wusste ich"
     },
     "how": {
-      "boxes": "Eine richtige Antwort schiebt die Karte in ein späteres Fach: Sie kommt nach {first}, dann nach {last} Tagen wieder. Ein Fehler schickt sie zurück ins erste Fach.",
-      "typos": "Ein falscher Buchstabe in einem längeren Wort zählt trotzdem, und du siehst die richtige Schreibweise.",
+      "spacing": "Jede Karte bekommt ihren eigenen Abstand: Je besser du sie kannst, desto länger wartet sie, von Tagen bis zu Monaten. Ein Fehler holt sie nach 10 Minuten zurück.",
+      "typos": "Ein falscher Buchstabe in einem längeren Wort zählt trotzdem, und du siehst die richtige Schreibweise. Die Karte kommt dann etwas früher wieder, wie nach einem Hinweis.",
       "streak": "Erreiche dein Tagesziel, um deine Serie zu halten; ein Tag, an dem du alle verfügbaren Karten geschafft hast, zählt auch. Dein Drache wächst mit deiner längsten Serie.",
       "freezes": "Ein Freeze rettet einen verpassten Tag. Du startest mit {max} und bekommst jede Woche einen zurück, höchstens {max}.",
       "cards": "In /add ist eine Zeile eine Karte: cat = Katze; Mieze // Beispiel. Geschweifte Klammern erzeugen eine Lücke: I {{look forward}} to it."
@@ -283,7 +283,7 @@
   "quiz": {
     "youWrote": "deine Antwort: ",
     "closeEnough": "  (nah genug)",
-    "hintUsed": "mit Hinweis · die Karte bleibt in ihrem Fach",
+    "hintUsed": "mit Hinweis",
     "countedCorrect": "als richtig gezählt",
     "acceptedFromNow": " · „{answer}“ zählt ab jetzt auch",
     "tip": "Tipp · {cat}",
@@ -338,9 +338,14 @@
       "umlaut": "Fast: achte auf den Umlaut (ä, ö, ü); ae, oe, ue gehen auch.",
       "article-umlaut": "Fast: achte auf Artikel und Umlaut; ae, oe, ue gehen auch.",
       "held": "Die Karte kommt {now} wieder, nicht {would}.",
+      "soon": "in ein paar Minuten",
       "days": {
         "one": "morgen",
         "other": "in {count} Tagen"
+      },
+      "months": {
+        "one": "in etwa einem Monat",
+        "other": "in etwa {count} Monaten"
       }
     }
   },
@@ -708,7 +713,7 @@
       "cardDeck": "eine Karte in einem Stapel, den es nicht gibt",
       "cardIds": "zwei Karten mit derselben ID",
       "noProgress": "kein Fortschritt darin",
-      "progressEntry": "eine Karte ohne Fach oder Datum",
+      "progressEntry": "eine Karte ohne Wiederholungstermin",
       "streak": "Serie und Abzeichen sind nicht lesbar"
     },
     "slashSwitch": "„{text}“ müsste getippt werden, und im Quiz öffnet / die Befehle. Ändere zuerst diese Karte."
@@ -732,7 +737,7 @@
         "one": "{count} Karte geübt, {correct}/{total} richtig ({percent} %)",
         "other": "{count} Karten geübt, {correct}/{total} richtig ({percent} %)"
       },
-      "box": "Fach {box} ({days} T.): {count}"
+      "spread": "in der Lernphase: {learning} · unter einer Woche: {week} · unter einem Monat: {month} · ab einem Monat: {mastered}"
     },
     "data": {
       "where": "Dracosh speichert alles in {home}",
@@ -769,7 +774,8 @@
         "before-reset": "vor Reset",
         "before-delete": "vor Löschen",
         "before-restore": "vor Wiederherstellen",
-        "before-import": "vor Import"
+        "before-import": "vor Import",
+        "before-upgrade": "vor Update"
       }
     },
     "backups": {
@@ -808,17 +814,17 @@
       "cat": "Karten",
       "text": "Ein falscher Buchstabe in einem längeren Wort zählt trotzdem als richtig. Dracosh zeigt dir die richtige Schreibweise."
     },
-    "cards-boxes": {
+    "cards-spacing": {
       "cat": "Karten",
-      "text": "Eine richtige Antwort schiebt eine Karte in ein späteres Fach: Sie kommt nach 1, 3, 7, 14, dann 30 Tagen wieder."
+      "text": "Jede Karte bekommt ihren eigenen Abstand: Kannst du sie gut, wartet sie Wochen; eine knifflige kommt früher wieder."
     },
     "cards-miss": {
       "cat": "Karten",
-      "text": "Eine falsch beantwortete Karte geht zurück ins erste Fach und kommt nach wenigen Minuten wieder, bis sie sitzt."
+      "text": "Eine falsch beantwortete Karte kommt nach wenigen Minuten wieder, bis sie sitzt."
     },
     "cards-hint": {
       "cat": "Karten",
-      "text": "Hängst du fest? /hint zeigt noch einen Buchstaben. Die Karte zählt, bleibt aber in ihrem Fach."
+      "text": "Hängst du fest? /hint zeigt noch einen Buchstaben. Die Karte zählt, kommt aber früher wieder."
     },
     "cards-correct": {
       "cat": "Karten",
@@ -1022,14 +1028,14 @@
           "4",
           "vier"
         ],
-        "example": "Jede richtige Antwort schiebt eine Karte in ein späteres Fach, also siehst du sie immer seltener."
+        "example": "Jede richtige Antwort schiebt eine Karte weiter hinaus, so siehst du sie immer seltener."
       },
       {
         "front": "Du hängst fest? Tippe `/hint` und drück Enter, dann erscheint die Antwort Buchstabe für Buchstabe. Probier's, dann tippe `Apfel`",
         "back": [
           "Apfel"
         ],
-        "example": "Eine Antwort mit Hinweis zählt, aber die Karte bleibt vorerst in ihrem Fach."
+        "example": "Eine Antwort mit Hinweis zählt, aber die Karte kommt früher wieder."
       },
       {
         "front": "Wie lautet der geheime Name deines Drachen? Niemand weiß es, also antworte hier absichtlich falsch und tippe `Hund`",

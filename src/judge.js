@@ -124,7 +124,7 @@ function spelledAnyWay(answer, candidate, lang) {
 }
 
 // German umlauts and articles are what a learner has to get right: an answer without them still counts,
-// but as "almost" (the card doesn't move up)
+// but as "almost" (the card comes back sooner)
 const NO_GENDER = new Set(["to", "att", "at", "å"]); // infinitive markers
 // elided or plural articles that don't show the gender, per language
 const NO_GENDER_SHOWN = { fr: new Set(["l'", "les", "des", "de l'"]), it: new Set(["l'"]), ca: new Set(["l'"]) };

@@ -1,9 +1,8 @@
 import { dateLocale, t } from "./i18n.js";
 import { addDays, dayKey, daysBetween, weekStart } from "./dates.js";
-import { BOX_INTERVALS_DAYS } from "./scheduler.js";
+import { isMastered } from "./scheduler.js";
 
 export const MAX_FREEZES = 2;
-const MAX_BOX = BOX_INTERVALS_DAYS.length;
 const AT_RISK_HOUR = 19;
 const COMEBACK_AFTER_DAYS = 5;
 const MISSED_KEEP_DAYS = 14;
@@ -260,13 +259,14 @@ for (const badge of BADGES) {
 // progress is kept per card and direction ("id:en-pl"); badges count cards
 const cardOf = (key) => key.slice(0, key.lastIndexOf(":"));
 
-// a card is mastered once every direction it's asked in has reached the last box; a direction its deck
+// a card is mastered once every direction it's asked in waits a month or more between reviews (see
+// isMastered); a direction its deck
 // no longer asks (`dormant`, kept for when it's turned back on) doesn't hold it back
 function masteredCards(items, dormant = []) {
   const resting = new Set(dormant);
   items = items.filter(([key]) => !resting.has(key));
   const byCard = new Map();
-  for (const [key, entry] of items) byCard.set(cardOf(key), (byCard.get(cardOf(key)) ?? true) && entry.box === MAX_BOX);
+  for (const [key, entry] of items) byCard.set(cardOf(key), (byCard.get(cardOf(key)) ?? true) && isMastered(entry));
   return [...byCard.values()].filter(Boolean).length;
 }
 

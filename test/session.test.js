@@ -53,7 +53,7 @@ test("answer grades, persists and tracks the combo", async () => {
   assert.equal(good.result, "exact");
   assert.equal(good.combo, 1);
   assert.equal(saves.length, 1);
-  assert.equal(Object.values(state.items)[0].box, 1);
+  assert.equal(Object.values(state.items)[0].phase, "review", "a new card answered right waits a couple of days");
 
   const q2 = await session.next();
   const bad = await session.answer(q2, "zzzzzz");
@@ -90,7 +90,7 @@ test("/correct overrules a wrong answer and remembers it for that card", async (
   assert.equal(session.stats().today.correct, 1);
 
   const key = Object.keys(state.items)[0];
-  assert.equal(state.items[key].box, 1);
+  assert.equal(state.items[key].phase, "review");
   assert.equal(state.items[key].wrong, 0); // as if the answer had been right from the start
   assert.equal(state.items[key].correct, 1);
   assert.deepEqual(state.accepted[key], ["zupelnie inna odpowiedz"]);
@@ -129,19 +129,41 @@ test("wrong answers are logged for /missed, and /correct removes the entry", asy
   assert.equal(missed.items.length, 0);
 });
 
-test("a hinted correct answer does not move the card up", async () => {
+test("a hinted correct answer counts, but the card comes back sooner, and says when", async () => {
   const { session, state } = setup();
   const q = await session.next();
   const result = await session.answer(q, q.expected[0], { hinted: true });
   assert.equal(result.result, "exact");
   assert.equal(result.hinted, true);
+  assert.deepEqual(result.held, { days: 0, would: 2 }, "later today, not in 2 days");
   const key = Object.keys(state.items)[0];
-  assert.equal(state.items[key].box, 1);
+  assert.equal(state.items[key].phase, "learning");
+  assert.equal(state.items[key].correct, 1);
 
   const q2 = { ...q };
   const again = await session.answer(q2, q.expected[0]);
   assert.equal(again.hinted, false);
-  assert.equal(state.items[key].box, 2);
+  assert.equal(again.held, null);
+  assert.equal(state.items[key].phase, "review");
+});
+
+test("a typo or an \"almost\" counts as right, but like a hint the card comes back sooner", async () => {
+  const words = [{ noteId: "h", word: "pies", translations: ["der Hund"], example: "" }];
+  const answer = async (text) => {
+    const state = { items: {}, newToday: { date: "", count: 0 } };
+    const session = createSession({ loadWords: async () => ({ words, deck: { name: "German", languages: { front: "pl", back: "de" }, learning: { lang: "de" }, directions: "forward" } }), state, getSettings: () => DEFAULTS, save: async () => {}, now: () => NOON });
+    const outcome = await session.answer(await session.next(), text);
+    return { ...outcome, entry: Object.values(state.items)[0] };
+  };
+  const clean = await answer("der Hund");
+  assert.equal(clean.held, null);
+  const typo = await answer("der Hunf");
+  assert.equal(typo.result, "typo");
+  assert.ok(typo.held && typo.entry.due < clean.entry.due, "a typo: sooner");
+  const almost = await answer("Hund");
+  assert.equal(almost.result, "article");
+  assert.ok(almost.held && almost.entry.due < clean.entry.due, "an article left out: sooner");
+  assert.equal(almost.entry.correct, 1);
 });
 
 test("/pause takes a short break or days off, lists them and turns them off", async () => {
@@ -191,12 +213,13 @@ test("a progress reset starts the game over and keeps what you know; everything 
 
   await session.reset("progress");
   assert.equal(state.progress, undefined);
-  assert.equal(Object.keys(state.items).length, 1, "the card keeps its box");
+  assert.equal(Object.keys(state.items).length, 1, "the card keeps its schedule");
   assert.equal(session.stats().badges.filter((b) => b.unlockedOn).length, 0);
 
   state.hatched = true;
   await session.reset("everything");
   assert.deepEqual(state.items, {});
+  assert.equal(state.version, 2, "a fresh state of this version, not one to upgrade");
   assert.equal(session.isFirstRun(), true, "the egg hatches again");
 });
 
@@ -222,7 +245,7 @@ test("when everything for today is done, the day counts as the goal; a missed ca
 test("just opening Dracosh with nothing due makes a rest day, never a goal", async () => {
   const clock = NOON;
   const one = [{ noteId: "c1", word: "kot", translations: ["cat"], example: "" }];
-  const state = { items: { "c1:en-pl": { box: 3, due: clock + 3 * 86_400_000, seen: 3, correct: 3, wrong: 0, streak: 3 } }, newToday: { date: "", count: 0 } };
+  const state = { items: { "c1:en-pl": { phase: "review", due: clock + 3 * 86_400_000, seen: 3, correct: 3, wrong: 0, streak: 3 } }, newToday: { date: "", count: 0 } };
   const session = createSession({ loadWords: async () => ({ words: one, deck: { name: "Polish", directions: "forward" } }), state, getSettings: () => DEFAULTS, save: async () => {}, now: () => clock });
   const empty = await session.next().catch((err) => err);
   assert.deepEqual(empty.cheers, []);
@@ -234,7 +257,7 @@ test("a deck that's done doesn't settle the day while another deck still has car
   const clock = NOON;
   const done = { words: [{ noteId: "a", word: "kot", translations: ["cat"], example: "" }], deck: { name: "Done", directions: "forward" } };
   const busy = { words: [{ noteId: "b", word: "pies", translations: ["dog"], example: "" }], deck: { name: "Busy", directions: "forward" } };
-  const state = { items: { "a:en-pl": { box: 3, due: clock + 86_400_000 * 3, seen: 1, correct: 1, wrong: 0, streak: 1 }, "b:en-pl": { box: 1, due: clock - 1000, seen: 1, correct: 1, wrong: 0, streak: 1 } }, newToday: { date: "", count: 0 } };
+  const state = { items: { "a:en-pl": { phase: "review", due: clock + 86_400_000 * 3, seen: 1, correct: 1, wrong: 0, streak: 1 }, "b:en-pl": { phase: "review", due: clock - 1000, seen: 1, correct: 1, wrong: 0, streak: 1 } }, newToday: { date: "", count: 0 } };
   const session = createSession({ loadWords: async () => done, loadAllWords: async () => [done, busy], state, getSettings: () => DEFAULTS, save: async () => {}, now: () => clock });
   const empty = await session.next().catch((err) => err);
   assert.deepEqual(empty.cheers, []);
@@ -274,27 +297,28 @@ test("revealing writes nothing; 'knew it' then counts exactly like a typed right
   assert.equal(result.self, true);
   assert.equal(result.result, "exact");
   const entry = (state) => Object.values(state.items)[0];
-  assert.equal(entry(self.state).box, entry(typed.state).box, "same box");
+  assert.deepEqual(entry(self.state), entry(typed.state), "the same schedule");
   assert.deepEqual(self.session.totals, typed.session.totals, "same totals and combo");
   assert.deepEqual(self.session.stats().today, typed.session.stats().today, "same daily goal progress");
 });
 
-test("'didn't know' is a miss: back to the first box, listed in /missed, nothing to /correct", async () => {
+test("'didn't know' is a miss: back in 10 minutes, listed in /missed, nothing to /correct", async () => {
   const { session, state } = setup();
   const q = await session.next();
   const result = await session.selfGrade(q, false);
   assert.equal(result.result, "wrong");
-  assert.equal(Object.values(state.items)[0].box, 1);
+  assert.equal(Object.values(state.items)[0].due, NOON + 10 * 60_000);
   assert.equal(session.totals.combo, 0);
   assert.equal(session.missed(0).items?.length ?? session.missed(0).length, 1);
   assert.equal(session.canOverrule(), false);
 });
 
-test("a hint before revealing keeps the card in its box, as with a typed answer", async () => {
+test("a hint before revealing brings the card back sooner, as with a typed answer", async () => {
   const { session, state } = setup();
   const q = await session.next();
-  await session.selfGrade(q, true, { hinted: true });
-  assert.equal(Object.values(state.items)[0].box, 1);
+  const result = await session.selfGrade(q, true, { hinted: true });
+  assert.equal(Object.values(state.items)[0].phase, "learning");
+  assert.deepEqual(result.held, { days: 0, would: 2 });
 });
 
 test("a cloze card is asked one gap at a time, with the others filled in and the back as a hint", async () => {
@@ -336,18 +360,19 @@ test("a deck asked one way never asks the other, and switching it later without 
 
 test("a direction the deck no longer asks doesn't stop a card from being mastered, and comes back when asked again", async () => {
   const { session, state } = setup();
-  state.items = { "1:en-pl": { box: 5, due: NOON + 1e9 }, "1:pl-en": { box: 1, due: NOON - 1 } };
+  const month = { phase: "review", last: NOON - 1, due: NOON + 40 * 86_400_000, seen: 6, correct: 6, wrong: 0, streak: 6, stability: 40, difficulty: 3 };
+  state.items = { "1:en-pl": month, "1:pl-en": { ...month, due: NOON - 1, last: NOON - 2 * 86_400_000 } };
   assert.equal(session.stats().mastered, 0);
   await session.setDirections([1], "forward");
   assert.equal(session.stats().mastered, 1);
-  assert.equal(state.items["1:pl-en"].box, 1, "its progress stays");
+  assert.equal(state.items["1:pl-en"].due, NOON - 1, "its progress stays");
   await session.setDirections([1], "both");
   assert.equal(session.stats().mastered, 0);
 });
 
 test("a gap removed from a cloze card takes its progress with it", async () => {
   const { session, state } = setup();
-  state.items = { "z:c1": { box: 2 }, "z:c2": { box: 3 } };
+  state.items = { "z:c1": { phase: "review" }, "z:c2": { phase: "review" } };
   await session.forgetKeys(["z:c2"]);
   assert.deepEqual(Object.keys(state.items), ["z:c1"]);
 });
@@ -374,4 +399,26 @@ test("pronunciation reads the side in the language you're learning, and nothing 
   assert.deepEqual(toSpeak(card, "dog"), { text: "cat", lang: "en" });
   const cloze = { direction: "c1", answerLanguage: "pl", promptLanguage: "en", learningLanguage: "en", expected: ["kot"], prompt: "Mój ____ śpi", word: { word: "Mój {{kot}} śpi" } };
   assert.equal(toSpeak(cloze), null, "a gapped sentence isn't read");
+});
+
+test("a tour card never comes back, so a hint there says nothing about when", async () => {
+  const words = [{ noteId: "t", word: "Type apple", translations: ["apple"], example: "" }];
+  const state = { items: {}, newToday: { date: "", count: 0 } };
+  const session = createSession({ loadWords: async () => ({ words, deck: { name: "Getting started", tour: true } }), state, getSettings: () => DEFAULTS, save: async () => {}, now: () => NOON });
+  const q = await session.next();
+  assert.equal(q.tour, true);
+  const result = await session.answer(q, "apple", { hinted: true });
+  assert.equal(result.hinted, true);
+  assert.equal(result.held, null);
+});
+
+test("a small difference isn't worth a line: only minutes against days, or a real gap", async () => {
+  const { grade, Rating } = await import("../src/scheduler.js");
+  let entry = grade(undefined, Rating.Good, NOON);
+  for (let i = 0; i < 6; i++) entry = grade(entry, Rating.Good, entry.due);
+  const words = [{ noteId: "1", word: "kot", translations: ["cat"], example: "" }];
+  const state = { items: { "1:en-pl": entry }, newToday: { date: "", count: 0 } };
+  const session = createSession({ loadWords: async () => ({ words, deck: { name: "Polish", directions: "forward" } }), state, getSettings: () => DEFAULTS, save: async () => {}, now: () => entry.due });
+  const result = await session.answer(await session.next(), "cat", { hinted: true });
+  assert.ok(result.held === null || (result.held.would - result.held.days >= 2 && result.held.would >= result.held.days * 1.25), JSON.stringify(result.held));
 });

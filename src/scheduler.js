@@ -1,12 +1,19 @@
+import { createEmptyCard, fsrs, Rating } from "ts-fsrs";
 import { dayKey } from "./dates.js";
 
 const MINUTE = 60_000;
 const DAY = 24 * 60 * MINUTE;
 
-// Leitner boxes: a correct answer moves the card one box up; a miss sends it back to box 1
-export const BOX_INTERVALS_DAYS = [1, 3, 7, 14, 30];
+// Each card's next review comes from FSRS (the open-source scheduler Anki offers too): it keeps an estimate of how
+// well you know the card (stability, in days, and difficulty, 1 to 10) and asks it again when
+// you're about to forget it, at 90% recall. A miss brings the card back in 10 minutes, and a new card
+// answered right waits a couple of days.
+const scheduler = fsrs({ request_retention: 0.9, learning_steps: ["10m"], relearning_steps: ["10m"], enable_fuzz: true });
 export const RELEARN_DELAY = 10 * MINUTE;
 export const NEW_PER_DAY = 20;
+// a card waiting a month or more between reviews is one you know
+export const MASTERED_DAYS = 30;
+export { Rating };
 
 export const DIRECTIONS = ["en-pl", "pl-en"];
 export const itemKey = (noteId, direction) => `${noteId}:${direction}`;
@@ -17,10 +24,11 @@ export function newToday(state, now) {
 
 // A review is waiting for the whole day it falls due, from midnight: a card answered at 17:00 yesterday
 // can be done this morning. But never sooner than half a day after it was answered, so a sitting across
-// midnight doesn't ask it again minutes later. A card just missed (streak 0) comes back at its minute.
+// midnight doesn't ask it again minutes later. A card still being learned (just missed, or new) comes
+// back at its minute.
 const MIN_GAP = 12 * 60 * MINUTE;
 export function readyAt(entry) {
-  if (!entry.streak) return entry.due;
+  if (entry.phase !== "review") return entry.due;
   const day = new Date(entry.due);
   day.setHours(0, 0, 0, 0);
   return Math.min(entry.due, Math.max(day.getTime(), (entry.last ?? 0) + MIN_GAP));
@@ -51,8 +59,8 @@ function pickDue(due, now, random) {
 }
 
 // What to ask next: a due review or a new card (up to the daily cap), mixed at random; null when there
-// is nothing to do right now. Cards are never asked before they're due: answering early would move them
-// up the boxes without the spacing that makes them stick. Never the same note twice in a row while
+// is nothing to do right now. Cards are never asked before they're due: answering early would count
+// as knowing them without the spacing that makes them stick. Never the same note twice in a row while
 // anything else is waiting. A `tour` deck is different: each card is asked once, in deck order, and
 // never comes back as a review. A word's own `directions` (a cloze card's gaps) replace the deck's.
 export function pickNext({ words, state, now = Date.now(), lastNoteId = null, directions = DIRECTIONS, tour = false, random = Math.random }) {
@@ -92,15 +100,99 @@ export function startOfTomorrow(now) {
   return date.getTime();
 }
 
-export function grade(entry, correct, now = Date.now(), { hinted = false } = {}) {
-  const prev = entry ?? { box: 0, seen: 0, correct: 0, wrong: 0, streak: 0 };
-  if (correct) {
-    // right after a miss the card starts over at box 1 (back tomorrow) instead of skipping ahead
-    const relearning = prev.seen > 0 && prev.streak === 0;
-    const box = hinted || relearning ? Math.max(prev.box, 1) : Math.min(prev.box + 1, BOX_INTERVALS_DAYS.length);
-    return { ...prev, box, due: daysLater(now, BOX_INTERVALS_DAYS[box - 1]), seen: prev.seen + 1, correct: prev.correct + 1, streak: prev.streak + 1, last: now };
-  }
-  return { ...prev, box: 1, due: now + RELEARN_DELAY, seen: prev.seen + 1, wrong: prev.wrong + 1, streak: 0, last: now };
+// How an answer rates for FSRS: a miss or "didn't know" is Again; right, but with a hint, a typo or
+// "almost" (an article, an umlaut), is Hard; right is Good. Easy isn't used: typing it is the test.
+export const ratingFor = ({ correct, hinted = false, almost = false }) => (!correct ? Rating.Again : hinted || almost ? Rating.Hard : Rating.Good);
+
+// a card's progress, as kept in state.json: the answers so far (seen, correct, wrong, streak), when it
+// was last answered and is next due, and FSRS's memory of it
+const PHASES = ["new", "learning", "review", "relearning"]; // FSRS's State, by number
+const round = (value) => Math.round(value * 10_000) / 10_000;
+
+function toCard(entry, now) {
+  if (!entry) return createEmptyCard(new Date(now));
+  return {
+    due: new Date(entry.due),
+    stability: entry.stability,
+    difficulty: entry.difficulty,
+    elapsed_days: 0,
+    scheduled_days: intervalDays(entry),
+    learning_steps: entry.step ?? 0,
+    reps: entry.seen,
+    lapses: entry.lapses ?? 0,
+    state: PHASES.indexOf(entry.phase),
+    last_review: new Date(entry.last)
+  };
+}
+
+// → the card's progress after an answer rated `rating` (see ratingFor) at `now`
+export function grade(entry, rating, now = Date.now()) {
+  const prev = entry ?? { seen: 0, correct: 0, wrong: 0, streak: 0 };
+  // While a card is being learned, Hard repeats the step instead of moving on. Anki leaves that to
+  // you, but here a typo or a hint every time would keep the card at 15 minutes all day: the second
+  // right answer in a row (streak > 0 while still learning) moves it on, as Good does.
+  if (rating === Rating.Hard && entry && entry.phase !== "review" && entry.streak > 0) rating = Rating.Good;
+  // a clock set back since the last answer: FSRS can't answer before that, so it's taken as then
+  now = Math.max(now, entry?.last ?? now);
+  const { card } = scheduler.next(toCard(entry, now), new Date(now), rating);
+  const correct = rating !== Rating.Again;
+  const phase = PHASES[card.state];
+  // a review lands at the same time of day, so a day with a clock change is still one day
+  const due = phase === "review" ? daysLater(now, card.scheduled_days) : card.due.getTime();
+  return {
+    due,
+    last: now,
+    seen: prev.seen + 1,
+    correct: prev.correct + (correct ? 1 : 0),
+    wrong: prev.wrong + (correct ? 0 : 1),
+    streak: correct ? prev.streak + 1 : 0,
+    phase,
+    step: card.learning_steps,
+    stability: round(card.stability),
+    difficulty: round(card.difficulty),
+    lapses: card.lapses,
+    box: boxFor(phase === "review" ? card.scheduled_days : 0)
+  };
+}
+
+// Dracosh 0.5 and older read a Leitner `box` on every card before they look at the file's version, so
+// one is kept, close to the interval: an older Dracosh then says the file is from a newer version
+// instead of calling it damaged. Nothing here reads it.
+const boxFor = (days) => Math.max(1, BOX_DAYS.filter((each) => each <= days).length);
+
+// the days between the last answer and the next review (0 while it's still being learned)
+export const intervalDays = (entry) => (entry.phase === "review" ? Math.max(0, Math.round((entry.due - entry.last) / DAY)) : 0);
+export const isMastered = (entry) => intervalDays(entry) >= MASTERED_DAYS;
+
+// Progress from Dracosh 0.5 and older, kept in Leitner boxes (1 to 5: 1, 3, 7, 14 and 30 days), as
+// FSRS's memory of it. A box's interval is what the card was last trusted with, so it becomes the
+// stability; the share of misses sets the difficulty, between FSRS's first guess after "Good" and
+// after "Again". A card just missed (streak 0) is still relearning. Its due date stays.
+const BOX_DAYS = [1, 3, 7, 14, 30];
+export function fromBox(entry) {
+  const level = Math.min(Math.max(Math.round(entry.box) || 1, 1), BOX_DAYS.length);
+  const days = BOX_DAYS[level - 1];
+  // a count that isn't a number (a hand-edited file) is taken as none
+  const count = (value) => (Number.isFinite(value) && value > 0 ? Math.floor(value) : 0);
+  const [seen, correct, wrong, streak] = [count(entry.seen), count(entry.correct), count(entry.wrong), count(entry.streak)];
+  const missed = Math.min(wrong / Math.max(seen, 1), 1);
+  const [easy, hard] = [scheduler.init_difficulty(Rating.Good), scheduler.init_difficulty(Rating.Again)];
+  // never answered after it's due: FSRS counts the days between the two
+  const last = Number.isFinite(entry.last) ? Math.min(entry.last, entry.due) : entry.due - days * DAY;
+  return {
+    ...entry,
+    seen,
+    correct,
+    wrong,
+    streak,
+    last,
+    phase: !streak && seen > 0 ? "relearning" : "review",
+    step: 0,
+    stability: days,
+    difficulty: round(easy + (hard - easy) * missed),
+    lapses: wrong,
+    box: level
+  };
 }
 
 export function describeDue(entry, now = Date.now()) {
