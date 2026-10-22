@@ -3,6 +3,7 @@
     "hint": "Odsłoń kolejną literę (karta wróci wcześniej)",
     "add": "Dodaj karty do talii albo stwórz nową",
     "import": "Importuj karty z Anki, pliku CSV albo tekstowego",
+    "cards": "Przeglądaj, szukaj, poprawiaj, przenoś i usuwaj karty talii",
     "decks": "Przełącz się na inną talię albo stwórz nową",
     "trash": "Usunięte talie: przywróć którąś",
     "settings": "Język, rytm, interwał, godziny ciszy, dźwięk, cel, porady",
@@ -85,7 +86,8 @@
     "rename": "enter zapisz · esc anuluj",
     "undo": "u cofnij",
     "trash": "↑/↓ wybierz · enter przywróć · esc wstecz",
-    "decksTogether": "spacja razem · → ustawienia · {choose}"
+    "decksTogether": "spacja razem · → ustawienia · {choose}",
+    "cards": "pisz, by szukać · ↑/↓ wybierz · enter otwórz · esc wstecz"
   },
   "settings": {
     "title": "Ustawienia",
@@ -249,7 +251,24 @@
       "many": "Ćwiczysz razem {count} talii: ich karty przychodzą na przemian.",
       "other": "Ćwiczysz razem {count} talii: ich karty przychodzą na przemian."
     },
-    "aloneNow": "Teraz tylko „{deck}”."
+    "aloneNow": "Teraz tylko „{deck}”.",
+    "mergeRow": "Połącz z inną talią",
+    "mergeTitle": "Połącz „{deck}” z…",
+    "mergeQuestion": "Przenieść {cards} z „{from}” do „{into}”?",
+    "mergeNote": "Postęp idzie razem z nimi. „{from}” trafi do kosza na {days} dni, razem z kartami, które druga talia już ma.",
+    "mergeYes": "Połącz",
+    "merged": {
+      "one": "Przeniesiono 1 kartę z „{from}” do „{into}”.",
+      "few": "Przeniesiono {count} karty z „{from}” do „{into}”.",
+      "many": "Przeniesiono {count} kart z „{from}” do „{into}”.",
+      "other": "Przeniesiono {count} karty z „{from}” do „{into}”."
+    },
+    "mergedLeft": {
+      "one": "1 już tam była: czeka w koszu razem z talią.",
+      "few": "{count} już tam były: czekają w koszu razem z talią.",
+      "many": "{count} już tam było: czekają w koszu razem z talią.",
+      "other": "{count} już tam było: czekają w koszu razem z talią."
+    }
   },
   "add": {
     "fields": {
@@ -1584,6 +1603,49 @@
     "note": "Usunięte talie czekają tu {days} dni, razem z postępem.",
     "row": "{cards} · usunięta {deleted} · do {until}",
     "empty": "Kosz jest pusty.",
-    "restored": "„{deck}” wróciła razem z postępem."
+    "restored": "„{deck}” wróciła razem z postępem.",
+    "cardsRow": "z {deck} · usunięta {deleted} · do {until}",
+    "cardsRestored": {
+      "one": "1 karta wróciła do „{deck}”.",
+      "few": "{count} karty wróciły do „{deck}”.",
+      "many": "{count} kart wróciło do „{deck}”.",
+      "other": "{count} karty wróciło do „{deck}”."
+    },
+    "skipped": {
+      "one": "1 zostaje w koszu: „{deck}” ma teraz kartę z tym przodem.",
+      "few": "{count} zostają w koszu: talia ma teraz karty z tymi przodami.",
+      "many": "{count} zostaje w koszu: talia ma teraz karty z tymi przodami.",
+      "other": "{count} zostaje w koszu: talia ma teraz karty z tymi przodami."
+    }
+  },
+  "cards": {
+    "title": {
+      "one": "{deck} · {count} karta",
+      "few": "{deck} · {count} karty",
+      "many": "{deck} · {count} kart",
+      "other": "{deck} · {count} karty"
+    },
+    "addRow": "+ Dodaj karty",
+    "undoRow": "↶ Przywróć {card}",
+    "editRow": "Popraw",
+    "moveRow": "Przenieś do innej talii",
+    "deleteRow": "Usuń",
+    "editTitle": "Popraw kartę · {deck}",
+    "moveTitle": "Przenieś {card} do…",
+    "deleteQuestion": "Usunąć kartę {card}?",
+    "deleteNote": "Trafi do kosza razem z postępem: /trash przywraca ją przez {days} dni.",
+    "deleted": "Usunięto kartę {card}. Czeka w koszu {days} dni.",
+    "restored": "Karta {card} wróciła.",
+    "moved": "Przeniesiono kartę {card} do „{deck}”.",
+    "alreadyThere": "W „{deck}” jest już karta z tym przodem.",
+    "noOtherDeck": "Nie masz innej talii, do której można ją przenieść.",
+    "noMatch": "Żadna karta nie pasuje do „{query}”.",
+    "found": {
+      "one": "Znaleziono 1 kartę",
+      "few": "Znaleziono {count} karty",
+      "many": "Znaleziono {count} kart",
+      "other": "Znaleziono {count} karty"
+    },
+    "tourNot": "Kart wycieczki nie da się zmieniać. /add zaczyna twoją własną talię."
   }
 }

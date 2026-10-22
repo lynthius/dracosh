@@ -16,7 +16,7 @@ const DIRECTIONS = ["forward", "backward", "both"];
 // ({ cardIds, next }) and `onRestored`({ deck, progress, removed }) let the app follow (progress, the
 // deck practised); `onRenamed`(from, to) too. Space marks decks to practise together (`mix`: "all" or
 // their names, set with `onPractise`({ deck, mix })), and "All decks" takes every deck of yours.
-export function Decks({ current, mix = null, actions, onPick, onPractise, onNew, onClose, onDirections, onLanguages, onDeleted, onRestored, onRenamed }) {
+export function Decks({ current, mix = null, actions, onPick, onPractise, onNew, onClose, onDirections, onLanguages, onDeleted, onRestored, onRenamed, onMerged }) {
   const panel = usePanelWidth();
   const [decks, setDecks] = useState(null);
   const [picked, setPicked] = useState(0);
@@ -26,6 +26,7 @@ export function Decks({ current, mix = null, actions, onPick, onPractise, onNew,
   const [naming, setNaming] = useState(null); // the deck whose languages are being picked
   const [renaming, setRenaming] = useState(null); // the deck being renamed
   const [deleting, setDeleting] = useState(null); // { deck, selected }: Delete, asked first
+  const [merging, setMerging] = useState(null); // { deck, into, selected }: Merge into another deck, then asked
   const [undo, setUndo] = useState(null); // { entry, name }: the deck just deleted, u brings it back
   const saving = useRef(false);
   const [message, setMessage] = useState("");
@@ -44,17 +45,17 @@ export function Decks({ current, mix = null, actions, onPick, onPractise, onNew,
 
   useInput((input, key) => {
     if (!decks?.length && (key.escape || input === "q")) onClose();
-    const listing = !menu && !setting && !naming && !renaming && !deleting && !saving.current;
+    const listing = !menu && !setting && !naming && !renaming && !deleting && !merging && !saving.current;
     if (input === "u" && undo && listing) return restore();
     const deck = decks?.[picked];
     if (input === " " && listing && deck && !deck.tour && own.length >= 2) return together(deck);
     // → into a deck's settings, ← back out of them (Esc works too)
-    if (key.leftArrow && !naming && !renaming && !deleting) {
+    if (key.leftArrow && !naming && !renaming && !deleting && !merging) {
       if (setting) return setSetting(null);
       if (menu) return setMenu(null);
     }
     // not while a change is still being saved: the menu would show the deck as it was
-    if (key.rightArrow && !menu && !setting && !naming && !renaming && !deleting && !saving.current && deck && !deck.tour) {
+    if (key.rightArrow && !menu && !setting && !naming && !renaming && !deleting && !merging && !saving.current && deck && !deck.tour) {
       setMessage("");
       setUndo(null);
       setMenu({ deck, selected: 0 });
@@ -96,7 +97,7 @@ export function Decks({ current, mix = null, actions, onPick, onPractise, onNew,
   }
 
   // the menu stays underneath: Esc in the direction or language picker comes back to it
-  const menuRows = (deck) => ["ask", "languages", ...(deck.learning ? ["learning"] : []), ...(deck.languages.guessed ? [] : ["detect"]), "rename", "delete"];
+  const menuRows = (deck) => ["ask", "languages", ...(deck.learning ? ["learning"] : []), ...(deck.languages.guessed ? [] : ["detect"]), "rename", ...(own.length >= 2 ? ["merge"] : []), "delete"];
   function openSetting(index) {
     const { deck } = menu;
     setMenu((m) => ({ ...m, selected: index })); // coming back, the cursor is on the row you opened
@@ -106,6 +107,7 @@ export function Decks({ current, mix = null, actions, onPick, onPractise, onNew,
     if (row === "learning") return setNaming({ ...deck, only: "learning" });
     if (row === "rename") return setRenaming(deck);
     if (row === "delete") return setDeleting({ deck, selected: 1 }); // Cancel first: Enter by habit keeps the deck
+    if (row === "merge") return setMerging({ deck, into: null, selected: 0 });
     setLanguages(null, deck); // detect them from the cards again
   }
 
@@ -137,6 +139,23 @@ export function Decks({ current, mix = null, actions, onPick, onPractise, onNew,
       setUndo({ entry: done.entry, name: deck.name });
       await reload(done.next === deck.name ? null : current === deck.name ? done.next : current);
       setMessage(t("decks.deleted", { deck: deck.name, days: TRASH_DAYS }));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      saving.current = false;
+    }
+  }
+
+  async function merge(from, into) {
+    if (saving.current) return;
+    saving.current = true;
+    setMerging(null);
+    setMenu(null);
+    try {
+      const done = await onMerged(from.name, into.name);
+      setUndo({ entry: done.entry, name: from.name });
+      await reload(into.name);
+      setMessage(t("decks.merged", { from: from.name, into: into.name, count: done.moved.length }) + (done.left.length ? ` ${t("decks.mergedLeft", { count: done.left.length })}` : ""));
     } catch (err) {
       setError(err.message);
     } finally {
@@ -229,6 +248,32 @@ export function Decks({ current, mix = null, actions, onPick, onPractise, onNew,
       <//>
     `;
 
+  if (merging) {
+    const { deck } = merging;
+    const others = own.filter((d) => d.name !== deck.name);
+    const back = () => setMerging(null);
+    if (!merging.into)
+      return html`
+        <${Fragment}>
+          <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.accent} paddingX=${2} width=${panel}>
+            <${Text} bold color=${theme.accent}>${t("decks.mergeTitle", { deck: deck.name })}<//>
+            <${Box} marginTop=${1}><${Choice} options=${others.map((d) => ({ label: d.name, note: t("count.cards", { count: d.cards }) }))} selected=${merging.selected} onMove=${(selected) => setMerging((m) => ({ ...m, selected }))} onPick=${(i) => setMerging((m) => ({ ...m, into: others[i], selected: 1 }))} onCancel=${back} /><//>
+          <//>
+          <${Box} paddingX=${1}><${KeyHints} text=${choiceHints("back")} /><//>
+        <//>
+      `;
+    return html`
+      <${Fragment}>
+        <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.warn} paddingX=${2} width=${panel}>
+          <${Text} bold color=${theme.warn}>${t("decks.mergeQuestion", { from: deck.name, into: merging.into.name, cards: t("count.cards", { count: deck.cards }) })}<//>
+          <${Text} dimColor>${t("decks.mergeNote", { from: deck.name, days: TRASH_DAYS })}<//>
+          <${Box} marginTop=${1}><${Choice} options=${[{ label: t("decks.mergeYes") }, { label: t("decks.deleteNo") }]} selected=${merging.selected} onMove=${(selected) => setMerging((m) => ({ ...m, selected }))} onPick=${(i) => (i === 0 ? merge(deck, merging.into) : back())} onCancel=${() => setMerging((m) => ({ ...m, into: null, selected: 0 }))} /><//>
+        <//>
+        <${Box} paddingX=${1}><${KeyHints} text=${choiceHints("back")} /><//>
+      <//>
+    `;
+  }
+
   if (deleting) {
     const { deck } = deleting;
     return html`
@@ -261,6 +306,7 @@ export function Decks({ current, mix = null, actions, onPick, onPractise, onNew,
                 ...(deck.learning ? [{ label: t("decks.learningRow"), note: languageName(deck.learning.lang) + (deck.learning.sure ? "" : ` · ${t("languages.guessShort")}`) }] : []),
                 ...(deck.languages.guessed ? [] : [{ label: t("decks.detectRow") }]),
                 { label: t("decks.renameRow"), note: deck.name },
+                ...(own.length >= 2 ? [{ label: t("decks.mergeRow") }] : []),
                 { label: t("decks.deleteRow"), note: t("count.cards", { count: deck.cards }), danger: true }
               ]}
               selected=${menu.selected}

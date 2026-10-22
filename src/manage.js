@@ -2,7 +2,7 @@ import { language as uiLanguage, t } from "./i18n.js";
 import { backupNow } from "./backup.js";
 import { seedLibrary } from "./starter.js";
 import { gapsOf } from "./cardline.js";
-import { addCard, cardsOf, createDeck, emptyLibrary, emptyOldTrash, findDeck, findDuplicate, removeDeck, renameDeck as renameLibraryDeck, restoreDeck, setDirections as setLibraryDirections, setLanguages as setLibraryLanguages, trashDeck, trashedUntil, typedSides, updateCard } from "./library.js";
+import { addCard, cardsOf, createDeck, emptyLibrary, emptyOldTrash, findDeck, findDuplicate, moveCards as moveLibraryCards, removeDeck, renameDeck as renameLibraryDeck, restoreDeck, trashCards, setDirections as setLibraryDirections, setLanguages as setLibraryLanguages, trashDeck, trashedUntil, typedSides, updateCard } from "./library.js";
 import { firstWords } from "./firstwords.js";
 import { applyImport, planImport } from "./importer.js";
 import { deckLanguages, homeLanguages, languageName, learningSide } from "./language.js";
@@ -244,11 +244,60 @@ export function libraryActions({ load = loadLibrary, save = saveLibrary, backup 
       return { entry: entry.id, cardIds, next: next.name };
     },
 
-    // /trash: what's in it, newest first; anything there longer than the trash keeps it goes now
+    // /trash: what's in it, newest first; anything there longer than the trash keeps it goes now.
+    // `card`: a deleted card's front and back, when that's what the entry holds (one card)
     async trash() {
       const library = await load();
       if (emptyOldTrash(library)) await save(library);
-      return (library.trash ?? []).toReversed().map((entry) => ({ id: entry.id, name: entry.deck.name, cards: entry.cards.length, deletedAt: entry.deletedAt, until: trashedUntil(entry) }));
+      return (library.trash ?? []).toReversed().map((entry) => ({
+        id: entry.id,
+        kind: entry.kind ?? "deck",
+        name: entry.deck.name,
+        cards: entry.cards.length,
+        card: entry.kind === "cards" && entry.cards.length === 1 ? { front: entry.cards[0].front, back: entry.cards[0].back, cloze: entry.cards[0].cloze } : null,
+        deletedAt: entry.deletedAt,
+        until: trashedUntil(entry)
+      }));
+    },
+
+    // /cards: a deck's cards as they are now, in the order they were added
+    async cardsIn(deckName) {
+      const library = await load();
+      return cardsOf(library, (await deckNamed(library, deckName)).id).map(({ id, front, back, example, cloze }) => ({ id, front, back, example: example ?? "", cloze: Boolean(cloze) }));
+    },
+
+    // /cards → Delete: into the trash with their progress (`progressOf`, from the session); the deck stays,
+    // even empty. No backup: the trash keeps them, and a backup for every card would push the others out.
+    // → { entry }
+    async deleteCards(deckName, cardIds, progressOf = () => ({})) {
+      const library = await load();
+      await deckNamed(library, deckName);
+      const entry = trashCards(library, cardIds, { progress: progressOf(cardIds) });
+      await save(library);
+      return { entry: entry.id };
+    },
+
+    // /cards → Move: into another deck of yours, progress and all → { moved, duplicates } (card ids)
+    async moveCards(fromName, cardIds, toName) {
+      const library = await load();
+      await deckNamed(library, fromName);
+      const result = moveLibraryCards(library, cardIds, (await deckNamed(library, toName)).id);
+      if (result.moved.length) await save(library);
+      return result;
+    },
+
+    // /decks → Merge: every card of one deck into another, after a backup; the emptied deck goes to the
+    // trash with the cards the other deck had already (same front), and their progress.
+    // → { moved, left: card ids that went to the trash with the deck, entry }
+    async mergeDecks(fromName, intoName, progressOf = () => ({})) {
+      await backup("before-delete");
+      const library = await load();
+      const from = await deckNamed(library, fromName);
+      const into = await deckNamed(library, intoName);
+      const { moved, duplicates } = moveLibraryCards(library, cardsOf(library, from.id).map((card) => card.id), into.id);
+      const entry = trashDeck(library, from.id, { progress: progressOf(duplicates) });
+      await save(library);
+      return { moved, left: duplicates, entry: entry.id };
     },
 
     // A deck back from the trash (/trash, or u right after deleting it). Like a deck of your own, it takes
@@ -256,11 +305,11 @@ export function libraryActions({ load = loadLibrary, save = saveLibrary, backup 
     // session, and the tour's cards that went
     async restoreFromTrash(entryId) {
       const library = await load();
-      const { deck, entry } = restoreDeck(library, entryId);
-      const tour = library.decks.find((d) => d.tour);
+      const { deck, entry, skipped } = restoreDeck(library, entryId);
+      const tour = library.decks.find((d) => d.tour && d !== deck);
       const removed = tour ? removeDeck(library, tour.id) : [];
       await save(library);
-      return { deck: deck.name, progress: entry.progress ?? {}, removed };
+      return { deck: deck.name, cards: entry.cards.length, kind: entry.kind ?? "deck", skipped, progress: entry.progress ?? {}, removed };
     },
 
     // /import: what a file's cards would do to the library now (see planImport); `source` is { text, list }
@@ -297,4 +346,4 @@ export function libraryActions({ load = loadLibrary, save = saveLibrary, backup 
 
 // the app's own: reads and writes ~/.dracosh
 const actions = libraryActions();
-export const { allDecks, ownDecks, startDeck, startFirstWords, setDirections, languagesOf, setLanguages, setLearning, existingDeck, existingCard, addCardTo, addCardsTo, updateCardIn, previewImport, importCards, renameDeck, deleteDeck, trash, restoreFromTrash, matchTourLanguage, backupBeforeReset, resetLibrary } = actions;
+export const { allDecks, ownDecks, startDeck, startFirstWords, setDirections, languagesOf, setLanguages, setLearning, existingDeck, existingCard, addCardTo, addCardsTo, updateCardIn, previewImport, importCards, renameDeck, deleteDeck, trash, restoreFromTrash, cardsIn, deleteCards, moveCards, mergeDecks, matchTourLanguage, backupBeforeReset, resetLibrary } = actions;

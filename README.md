@@ -70,8 +70,9 @@ Type the answer and press Enter. Not sure, or the answer is a whole sentence? Pr
 | --- | --- |
 | `/add` | add cards to one of your decks, or start a new deck (one line per card, ↑ fixes the last one) |
 | `/import` | import cards from an Anki package, a CSV or a text file: type its path or drag the file in |
-| `/decks` | switch to another deck (Dracosh remembers it), practise several together (space marks them, or pick All decks), start a new one, or press → to change how a deck is asked, which languages it's in, its name, or to delete it |
-| `/trash` | decks you deleted, kept for 30 days with their progress: Enter brings one back (right after deleting, u in `/decks` does too) |
+| `/decks` | switch to another deck (Dracosh remembers it), practise several together (space marks them, or pick All decks), start a new one, or press → to change how a deck is asked, which languages it's in, its name, to merge it into another, or to delete it |
+| `/cards` | the deck's cards: type to search, Enter to fix a card, move it to another deck or delete it |
+| `/trash` | decks and cards you deleted, kept for 30 days with their progress: Enter brings one back |
 | `/hint` | reveal one more letter |
 | `/correct` | your answer was right after all; after a yes it's accepted from now on |
 | `/settings` | the app's language, the language you speak, rhythm (a card every few minutes, or a study session), interval, daily goal, sound, pronunciation, quiet hours, weekends, tips, and a reset |
@@ -175,7 +176,6 @@ The other languages live next to it in `locales/`, the tour included. `npm test`
 
 Coming next, roughly in this order:
 
-- Decks and cards in the app: browse, edit and delete with undo.
 - Optional AI help for writing cards, with your own API key or a local model.
 - Linux and Windows, pronunciation there included.
 

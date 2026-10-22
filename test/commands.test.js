@@ -15,7 +15,7 @@ test("'/' lists every command and a prefix narrows the list", () => {
 
 test("the menu only offers commands that make sense right now", () => {
   const names = (opts) => commandsFor(opts).map((c) => c.name);
-  const common = ["/add", "/import", "/decks", "/trash", "/settings", "/stats", "/badges", "/companion", "/missed", "/pause"];
+  const common = ["/add", "/import", "/cards", "/decks", "/trash", "/settings", "/stats", "/badges", "/companion", "/missed", "/pause"];
   assert.deepEqual(names({ phase: "asking" }), ["/hint", ...common, "/help", "/quit"]);
   assert.deepEqual(names({ phase: "waiting" }), [...common, "/help", "/quit"]);
   assert.deepEqual(names({ phase: "waiting", canOverrule: true }), ["/correct", ...common, "/help", "/quit"]);

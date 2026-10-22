@@ -24,7 +24,7 @@ export function Choice({ options, selected, onMove, onPick, onCancel }) {
         const on = i === selected;
         const color = on ? (o.danger ? theme.bad : theme.accent) : undefined;
         return html`
-          <${Box} key=${o.label} flexDirection=${stacked ? "column" : "row"}>
+          <${Box} key=${`${i}:${o.label}`} flexDirection=${stacked ? "column" : "row"}>
             <${Box} flexShrink=${0}><${Text} color=${color} bold=${on}>${on ? "❯" : " "} ${i + 1}. ${stacked ? o.label : o.label + " ".repeat(width - cellWidth(o.label))}<//><//>
             ${o.note && html`<${Box} marginLeft=${stacked ? 5 : 0}><${Text} dimColor>${o.note}<//><//>`}
           <//>

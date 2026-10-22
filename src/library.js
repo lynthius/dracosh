@@ -71,8 +71,9 @@ export function upgradeLibrary(raw) {
   return { version: LIBRARY_VERSION, decks: decks.map((deck) => ({ ...deck, languages: tidy(deck.languages) })), cards, ...(trash.length && { trash }) };
 }
 
-// The trash: decks deleted in the last TRASH_DAYS, each with its cards and their progress, so it can
-// come back whole (/trash). An entry that doesn't hold a deck and its cards is dropped: there'd be
+// The trash: decks and cards deleted in the last TRASH_DAYS, each with their progress, so they can come
+// back whole (/trash). A deck's entry holds the deck and all its cards; deleted cards (`kind: "cards"`)
+// hold the deck they were in, as it was, to go back into. An entry that doesn't hold a deck and its cards is dropped: there'd be
 // nothing to bring back.
 export const TRASH_DAYS = 30;
 const DAY = 24 * 60 * 60 * 1000;
@@ -92,6 +93,39 @@ export function trashDeck(library, deckId, { progress = {}, now = Date.now() } =
   return entry;
 }
 
+// cards of one deck into the trash, with their `progress` → the entry
+export function trashCards(library, cardIds, { progress = {}, now = Date.now() } = {}) {
+  const ids = new Set(cardIds);
+  const cards = library.cards.filter((card) => ids.has(card.id));
+  if (!cards.length) throw new Error("Those cards don't exist.");
+  const deck = library.decks.find((d) => d.id === cards[0].deckId);
+  if (cards.some((card) => card.deckId !== deck.id)) throw new Error("Cards of one deck at a time.");
+  library.cards = library.cards.filter((card) => !ids.has(card.id));
+  const entry = { id: newId("t"), kind: "cards", deletedAt: now, deck: { ...deck }, cards, progress };
+  library.trash = [...(library.trash ?? []), entry];
+  return entry;
+}
+
+// Cards into another deck, their progress with them; one whose front is in that deck already stays
+// → { moved, duplicates }: card ids
+export function moveCards(library, cardIds, toDeckId) {
+  const target = library.decks.find((d) => d.id === toDeckId);
+  if (!target) throw new Error("That deck doesn't exist.");
+  const index = frontIndex(library, toDeckId);
+  const moved = [];
+  const duplicates = [];
+  for (const card of library.cards.filter((each) => cardIds.includes(each.id) && each.deckId !== toDeckId)) {
+    if (index.has(frontKey(card.front))) {
+      duplicates.push(card.id);
+      continue;
+    }
+    card.deckId = toDeckId;
+    index.set(frontKey(card.front), card);
+    moved.push(card.id);
+  }
+  return { moved, duplicates };
+}
+
 // the entries older than TRASH_DAYS go for good → whether any did
 export function emptyOldTrash(library, now = Date.now()) {
   const kept = (library.trash ?? []).filter((entry) => now - entry.deletedAt < TRASH_DAYS * DAY);
@@ -103,11 +137,23 @@ export function emptyOldTrash(library, now = Date.now()) {
 
 export const trashedUntil = (entry) => entry.deletedAt + TRASH_DAYS * DAY;
 
-// A deck back from the trash, under its own name, or numbered when a deck has it now ("Spanish 2")
-// → { deck, entry }
+// A deck back from the trash, under its own name, or numbered when a deck has it now ("Spanish 2").
+// Deleted cards go back into their deck, if it's still there (a card whose front it has now stays in
+// the trash: `skipped`), or come back in a deck of their own. → { deck, entry, skipped }
 export function restoreDeck(library, entryId) {
   const entry = (library.trash ?? []).find((each) => each.id === entryId);
   if (!entry) throw new Error(t("errors.notInTrash"));
+  const home = entry.kind === "cards" && library.decks.find((d) => d.id === entry.deck.id);
+  if (home) {
+    const index = frontIndex(library, home.id);
+    const back = entry.cards.filter((card) => !index.has(frontKey(card.front)));
+    const skipped = entry.cards.filter((card) => !back.includes(card));
+    library.cards.push(...back);
+    if (skipped.length) entry.cards = skipped;
+    else library.trash = library.trash.filter((each) => each !== entry);
+    if (!library.trash.length) delete library.trash;
+    return { deck: home, entry: { ...entry, cards: back }, skipped: skipped.length };
+  }
   let name = entry.deck.name;
   for (let n = 2; findDeck(library, name); n++) name = `${Array.from(entry.deck.name).slice(0, MAX_DECK_NAME - String(n).length - 1).join("")} ${n}`;
   const deck = { ...entry.deck, name };
@@ -115,7 +161,7 @@ export function restoreDeck(library, entryId) {
   library.cards.push(...entry.cards);
   library.trash = library.trash.filter((each) => each !== entry);
   if (!library.trash.length) delete library.trash;
-  return { deck, entry };
+  return { deck, entry, skipped: 0 };
 }
 
 // A deck's new name: not empty, not too long, and not another deck's → the deck

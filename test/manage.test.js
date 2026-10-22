@@ -7,7 +7,7 @@ import { test } from "node:test";
 process.env.DRACOSH_HOME = mkdtempSync(join(tmpdir(), "dracosh-"));
 const { loadLibrary, saveLibrary } = await import("../src/store.js");
 const { seedLibrary, STARTER_DECK } = await import("../src/starter.js");
-const { addCardTo, addCardsTo, allDecks, existingCard, languagesOf, ownDecks, setDirections, setLanguages, startDeck, startFirstWords, updateCardIn, previewImport, importCards, deleteDeck, restoreFromTrash, renameDeck, trash } = await import("../src/manage.js");
+const { addCardTo, addCardsTo, allDecks, existingCard, languagesOf, ownDecks, setDirections, setLanguages, startDeck, startFirstWords, updateCardIn, previewImport, importCards, deleteDeck, restoreFromTrash, renameDeck, trash, cardsIn, deleteCards, mergeDecks } = await import("../src/manage.js");
 const { listBackups } = await import("../src/backup.js");
 const { loadWords } = await import("../src/words.js");
 const { createSession } = await import("../src/session.js");
@@ -234,4 +234,25 @@ test("/decks → Delete: a backup, the deck and its progress into the trash; the
   assert.deepEqual((await loadLibrary()).decks.map((d) => d.name), ["Solo"]);
   assert.deepEqual(await trash(), []);
   assert.equal((await renameDeck("Solo", "Duo")).name, "Duo");
+});
+
+test("/decks → Merge: the cards move with their progress, the emptied deck goes to the trash with what was there", async () => {
+  await startDeck({ name: "Into" });
+  await addCardTo("Into", { front: "dom", back: ["house"] });
+  await startDeck({ name: "From" });
+  await addCardTo("From", { front: "dom", back: ["home"] });
+  await addCardTo("From", { front: "las", back: ["forest"] });
+  const done = await mergeDecks("From", "Into", (ids) => ({ items: Object.fromEntries(ids.map((id) => [`${id}:en-pl`, { due: 1 }])) }));
+  assert.equal(done.moved.length, 1);
+  assert.equal(done.left.length, 1);
+  assert.deepEqual((await cardsIn("Into")).map((c) => c.front).sort(), ["dom", "las"]);
+  const [entry] = await trash();
+  assert.deepEqual([entry.name, entry.cards], ["From", 1]);
+
+  const [las] = (await cardsIn("Into")).filter((c) => c.front === "las");
+  await deleteCards("Into", [las.id]);
+  const [cardEntry] = await trash();
+  assert.deepEqual([cardEntry.kind, cardEntry.card.front], ["cards", "las"]);
+  const back = await restoreFromTrash(cardEntry.id);
+  assert.deepEqual([back.kind, back.deck, back.cards], ["cards", "Into", 1]);
 });

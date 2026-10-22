@@ -165,3 +165,32 @@ test("a deleted deck waits in the trash with its cards and progress, and comes b
   assert.throws(() => renameDeck(library, other.id, "verbs"), /already a deck/);
   assert.equal(renameDeck(library, other.id, "español").name, "español", "its own name in other letters is fine");
 });
+
+test("cards move between decks unless the front is there already; deleted cards go back into their deck", async () => {
+  const { addCard, createDeck, emptyLibrary, moveCards, removeDeck, restoreDeck, trashCards } = await import("../src/library.js");
+  const library = emptyLibrary();
+  const a = createDeck(library, { name: "A" });
+  const b = createDeck(library, { name: "B" });
+  const { card: dog } = addCard(library, a.id, { front: "pies", back: ["dog"] });
+  const { card: cat } = addCard(library, a.id, { front: "kot", back: ["cat"] });
+  addCard(library, b.id, { front: "Kot!", back: ["cat"] });
+  assert.deepEqual(moveCards(library, [dog.id, cat.id], b.id), { moved: [dog.id], duplicates: [cat.id] }, "the same front, punctuation aside, stays");
+  assert.equal(dog.deckId, b.id);
+
+  const entry = trashCards(library, [cat.id], { progress: { items: { x: 1 } } });
+  assert.equal(library.cards.some((c) => c.id === cat.id), false);
+  assert.equal(entry.kind, "cards");
+  const back = restoreDeck(library, entry.id);
+  assert.deepEqual([back.deck.id, back.skipped], [a.id, 0], "into its own deck");
+  assert.equal(library.cards.find((c) => c.id === cat.id).deckId, a.id);
+
+  const again = trashCards(library, [cat.id]);
+  addCard(library, a.id, { front: "kot", back: ["kitty"] });
+  assert.equal(restoreDeck(library, again.id).skipped, 1, "its front is taken now: it stays in the trash");
+  assert.equal(library.trash.length, 1);
+
+  removeDeck(library, a.id);
+  const alone = restoreDeck(library, again.id);
+  assert.equal(alone.deck.name, "A", "its deck is gone: it comes back in a deck of its own");
+  assert.deepEqual(library.cards.filter((c) => c.deckId === alone.deck.id).map((c) => c.id), [cat.id]);
+});

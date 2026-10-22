@@ -3,6 +3,7 @@
     "hint": "Révéler une lettre (la carte revient plus tôt)",
     "add": "Ajouter des cartes à un paquet, ou en créer un",
     "import": "Importer des cartes depuis Anki, un CSV ou un fichier texte",
+    "cards": "Parcourir, chercher, corriger, déplacer ou supprimer les cartes du paquet",
     "decks": "Passer à un autre paquet, ou en créer un",
     "trash": "Paquets supprimés : en récupérer un",
     "settings": "Langue, rythme, intervalle, heures calmes, son, objectif, astuces",
@@ -85,7 +86,8 @@
     "rename": "entrée enregistrer · échap annuler",
     "undo": "u annuler",
     "trash": "↑/↓ choisir · entrée récupérer · échap retour",
-    "decksTogether": "espace ensemble · → réglages · {choose}"
+    "decksTogether": "espace ensemble · → réglages · {choose}",
+    "cards": "tape pour chercher · ↑/↓ choisir · entrée ouvrir · échap retour"
   },
   "settings": {
     "title": "Réglages",
@@ -243,7 +245,22 @@
       "many": "Tu révises {count} paquets ensemble : leurs cartes arrivent mélangées.",
       "other": "Tu révises {count} paquets ensemble : leurs cartes arrivent mélangées."
     },
-    "aloneNow": "Seulement « {deck} » maintenant."
+    "aloneNow": "Seulement « {deck} » maintenant.",
+    "mergeRow": "Fusionner avec un autre paquet",
+    "mergeTitle": "Fusionner « {deck} » avec…",
+    "mergeQuestion": "Déplacer {cards} de « {from} » vers « {into} » ?",
+    "mergeNote": "Leur progression suit. « {from} » va à la corbeille pendant {days} jours, avec les cartes que l'autre paquet a déjà.",
+    "mergeYes": "Fusionner",
+    "merged": {
+      "one": "{count} carte déplacée de « {from} » vers « {into} ».",
+      "many": "{count} cartes déplacées de « {from} » vers « {into} ».",
+      "other": "{count} cartes déplacées de « {from} » vers « {into} »."
+    },
+    "mergedLeft": {
+      "one": "{count} y était déjà : elle est dans la corbeille avec le paquet.",
+      "many": "{count} y étaient déjà : elles sont dans la corbeille avec le paquet.",
+      "other": "{count} y étaient déjà : elles sont dans la corbeille avec le paquet."
+    }
   },
   "add": {
     "fields": {
@@ -1528,6 +1545,45 @@
     "note": "Les paquets supprimés restent ici {days} jours, avec leur progression.",
     "row": "{cards} · supprimé le {deleted} · jusqu'au {until}",
     "empty": "La corbeille est vide.",
-    "restored": "« {deck} » est de retour, avec sa progression."
+    "restored": "« {deck} » est de retour, avec sa progression.",
+    "cardsRow": "de {deck} · supprimée le {deleted} · jusqu'au {until}",
+    "cardsRestored": {
+      "one": "{count} carte est de retour dans « {deck} ».",
+      "many": "{count} cartes sont de retour dans « {deck} ».",
+      "other": "{count} cartes sont de retour dans « {deck} »."
+    },
+    "skipped": {
+      "one": "{count} reste dans la corbeille : « {deck} » a maintenant une carte avec son recto.",
+      "many": "{count} restent dans la corbeille : le paquet a maintenant des cartes avec leur recto.",
+      "other": "{count} restent dans la corbeille : le paquet a maintenant des cartes avec leur recto."
+    }
+  },
+  "cards": {
+    "title": {
+      "one": "{deck} · {count} carte",
+      "many": "{deck} · {count} cartes",
+      "other": "{deck} · {count} cartes"
+    },
+    "addRow": "+ Ajouter des cartes",
+    "undoRow": "↶ Récupérer {card}",
+    "editRow": "Corriger",
+    "moveRow": "Déplacer vers un autre paquet",
+    "deleteRow": "Supprimer",
+    "editTitle": "Corriger une carte · {deck}",
+    "moveTitle": "Déplacer {card} vers…",
+    "deleteQuestion": "Supprimer la carte {card} ?",
+    "deleteNote": "Elle va à la corbeille avec sa progression : /trash la récupère pendant {days} jours.",
+    "deleted": "Carte {card} supprimée. Elle reste {days} jours dans la corbeille.",
+    "restored": "La carte {card} est de retour.",
+    "moved": "Carte {card} déplacée vers « {deck} ».",
+    "alreadyThere": "« {deck} » a déjà une carte avec ce recto.",
+    "noOtherDeck": "Tu n'as pas d'autre paquet où la déplacer.",
+    "noMatch": "Aucune carte ne correspond à « {query} ».",
+    "found": {
+      "one": "{count} carte trouvée",
+      "many": "{count} cartes trouvées",
+      "other": "{count} cartes trouvées"
+    },
+    "tourNot": "Les cartes de la visite ne se modifient pas. /add crée ton propre paquet."
   }
 }

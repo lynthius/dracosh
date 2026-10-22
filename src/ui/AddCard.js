@@ -62,7 +62,8 @@ function withRepeats(items) {
 // deck's first card it asks which way the deck is asked. A pasted list opens a review first.
 // `actions` reads and writes the library; `startNew` skips the deck list ("+ New deck" in /decks).
 // `suggest` (from the welcome): { name, example }, a deck name to start from and a card in your pair.
-export function AddCard({ current, actions, onDone, startNew = false, suggest = null }) {
+// `into`: straight to adding cards to this deck (+ Add cards in /cards).
+export function AddCard({ current, actions, onDone, startNew = false, suggest = null, into = null }) {
   const panel = usePanelWidth();
   const [step, setStep] = useState("loading"); // loading | pick | deck | line | back | direction | review | fix | saving
   const [decks, setDecks] = useState([]);
@@ -91,6 +92,8 @@ export function AddCard({ current, actions, onDone, startNew = false, suggest = 
         setPicked(Math.max(0, own.findIndex((d) => d.name === current)));
         setStep(own.length && !startNew ? "pick" : "deck");
         if (suggest?.name && (startNew || !own.length)) clearField(suggest.name);
+        const given = into && own.findIndex((d) => d.name === into);
+        if (given >= 0) pickDeck(given, own);
       },
       (err) => setError(err.message)
     );
@@ -265,10 +268,10 @@ export function AddCard({ current, actions, onDone, startNew = false, suggest = 
     clearField(formatLine(last));
   }
 
-  function pickDeck(index) {
-    if (index === decks.length) return setStep("deck");
-    setDeck({ name: decks[index].name, directions: decks[index].directions, isNew: false });
-    actions.languagesOf(decks[index].name).then((found) => (shownPair.current = pairText(found)), () => {});
+  function pickDeck(index, list = decks) {
+    if (index === list.length) return setStep("deck");
+    setDeck({ name: list[index].name, directions: list[index].directions, isNew: false });
+    actions.languagesOf(list[index].name).then((found) => (shownPair.current = pairText(found)), () => {});
     clearField();
     setStep("line");
   }
