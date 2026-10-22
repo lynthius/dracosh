@@ -84,7 +84,8 @@
     "importName": "enter weiter · esc zurück",
     "rename": "enter speichern · esc abbrechen",
     "undo": "u rückgängig",
-    "trash": "↑/↓ wählen · enter zurückholen · esc zurück"
+    "trash": "↑/↓ wählen · enter zurückholen · esc zurück",
+    "decksTogether": "Leertaste zusammen · → Einstellungen · {choose}"
   },
   "settings": {
     "title": "Einstellungen",
@@ -225,7 +226,18 @@
     "deleteYes": "Löschen",
     "deleteNo": "Behalten",
     "deleted": "„{deck}“ gelöscht. u holt ihn sofort zurück, /trash {days} Tage lang.",
-    "restored": "„{deck}“ ist zurück, mit seinem Fortschritt."
+    "restored": "„{deck}“ ist zurück, mit seinem Fortschritt.",
+    "allLabel": "Alle Stapel",
+    "mixLabel": {
+      "one": "{count} Stapel",
+      "other": "{count} Stapel"
+    },
+    "allRow": "Alle Stapel",
+    "togetherNow": {
+      "one": "Du übst {count} Stapel zusammen.",
+      "other": "Du übst {count} Stapel zusammen: ihre Karten kommen gemischt."
+    },
+    "aloneNow": "Jetzt nur noch „{deck}“."
   },
   "add": {
     "fields": {

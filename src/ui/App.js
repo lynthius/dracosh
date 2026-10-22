@@ -195,12 +195,13 @@ function TipBox({ tip, width }) {
 
 // `library` holds the /add actions (src/manage.js) and `onSwitchDeck` points the session at another
 // deck; the preview gallery passes neither.
-export function App({ session, deck: initialDeck, initialSettings, alerts, persistSettings, onExit, library, onSwitchDeck }) {
+export function App({ session, deck: initialDeck, initialSettings, alerts, persistSettings, onExit, library, onSwitchDeck, onMix }) {
   const { exit: exitApp } = useApp();
   const exit = onExit ?? exitApp; // the preview gallery runs the quiz as a scene and takes quitting back to its menu
   const { stdout } = useStdout();
   const [settings, setSettings] = useState(initialSettings);
   const [deck, setDeck] = useState(initialDeck);
+  const [mix, setMix] = useState(initialSettings.mix ?? null); // decks practised together: "all", or their names
   const [addNew, setAddNew] = useState(false); // /add opened from "+ New deck" in /decks
   const [addSuggest, setAddSuggest] = useState(null); // /add from the welcome: a name and an example in your pair
   const [importFrom, setImportFrom] = useState(null); // "welcome" when /import was picked there: cancelling goes back
@@ -602,7 +603,10 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
   async function deleteDeck(name) {
     const done = await library.deleteDeck(name, session.progressOf);
     await session.forget(done.cardIds);
-    if (name === deck) followDeck(done.next);
+    if (Array.isArray(mix) && mix.includes(name)) {
+      const left = mix.filter((each) => each !== name);
+      practise({ deck: name === deck ? left[0] : deck, mix: left.length >= 2 ? left : null });
+    } else if (name === deck) followDeck(done.next);
     else if (phase === "empty") ask();
     return done;
   }
@@ -618,6 +622,12 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
   }
 
   function deckRenamed(from, to) {
+    if (Array.isArray(mix) && mix.includes(from)) {
+      const renamed = mix.map((name) => (name === from ? to : name));
+      onMix?.(renamed);
+      setMix(renamed);
+      changeSettings({ mix: renamed });
+    }
     if (from !== deck) return;
     onSwitchDeck?.(to);
     setDeck(to);
@@ -627,12 +637,22 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
   // /decks and a first deck from /add: quiz another deck from now on, and remember it
   function switchDeck(name) {
     setScreen("quiz");
-    if (name === deck) return;
-    onSwitchDeck?.(name);
-    setDeck(name);
-    changeSettings({ deck: name });
+    if (name === deck && !mix) return;
+    practise({ deck: name, mix: null });
+  }
+
+  // what the quiz asks from now on: one deck, or several together (`mix`: "all" or names), remembered
+  function practise({ deck: name = deck, mix: together }) {
+    onMix?.(together);
+    setMix(together);
+    if (name !== deck) {
+      onSwitchDeck?.(name);
+      setDeck(name);
+    }
+    changeSettings({ deck: name, mix: together });
     ask();
   }
+  const deckLabel = mix === "all" ? t("decks.allLabel") : mix ? t("decks.mixLabel", { count: mix.length }) : deck;
 
   // Reset (from /settings), after a backup. Everything brings back the tour and the hatching egg.
   async function reset(scope) {
@@ -734,14 +754,14 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
 
   return html`
     <${Box} flexDirection="column" marginY=${1}>
-      <${Header} deck=${deck} everyMs=${settings.everyMs} rhythm=${settings.rhythm} wordCount=${question?.wordCount ?? empty?.count} stats=${stats} combo=${session.totals.combo} face=${face} event=${petEvent} tick=${tick} asleep=${asleep} />
+      <${Header} deck=${deckLabel} everyMs=${settings.everyMs} rhythm=${settings.rhythm} wordCount=${question?.wordCount ?? empty?.count} stats=${stats} combo=${session.totals.combo} face=${face} event=${petEvent} tick=${tick} asleep=${asleep} />
       <${Box} marginTop=${1} flexDirection="column">
         ${screen === "settings" && html`<${Settings} settings=${settings} startRow=${settingsRow.current} onRow=${(row) => (settingsRow.current = row)} onChange=${changeSettings} onClose=${() => setScreen("quiz")} onAction=${library ? (row) => setScreen(row === "reset" ? "reset" : "home-language") : null} />`}
         ${screen === "home-language" && html`<${LanguageSearch} title=${t("settings.homeTitle")} note=${t("welcome.homeNote")} current=${settings.homeLanguage ?? settings.language} currentNote=${settings.homeLanguage ? t("languages.current") : t("welcome.suggested")} onBack=${() => setScreen("settings")} onPick=${(code) => (changeSettings({ homeLanguage: code }), setScreen("settings"))} />`}
         ${screen === "reset" && html`<${Reset} stats=${stats} actions=${library} onConfirm=${reset} onClose=${() => setScreen("settings")} />`}
         ${screen === "import" && html`<${ImportScreen} actions=${library} fromWelcome=${importFrom === "welcome"} onDone=${importDone} onCancel=${importCancelled} />`}
         ${screen === "add" && html`<${AddCard} current=${deck} actions=${library} onDone=${addDone} startNew=${addNew} suggest=${addSuggest} />`}
-        ${screen === "decks" && html`<${Decks} current=${deck} actions=${library} onDirections=${async (cardIds, directions) => {
+        ${screen === "decks" && html`<${Decks} current=${deck} mix=${mix} onPractise=${practise} actions=${library} onDirections=${async (cardIds, directions) => {
           await session.setDirections(cardIds, directions);
           await session.workAdded();
           if (phase === "asking" && question && cardIds.includes(question.word.noteId)) ask(); // the open card follows the new way at once
@@ -766,7 +786,7 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
                   <//>
                 <//>
               `}
-              ${phase === "empty" && html`<${EmptyDeck} deck=${deck} ...${empty} now=${now} width=${width} />`}
+              ${phase === "empty" && html`<${EmptyDeck} deck=${deckLabel} ...${empty} now=${now} width=${width} />`}
               ${confetti && html`<${Confetti} width=${width} onDone=${() => setConfetti(false)} />`}
               ${outcome?.cheers?.length > 0 && html`<${Cheers} cheers=${outcome.cheers} play=${alerts.play} />`}
               ${phase === "waiting" && tip && html`<${TipBox} tip=${tip} width=${width} />`}

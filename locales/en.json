@@ -84,7 +84,8 @@
     "importName": "enter continue · esc back",
     "rename": "enter save · esc cancel",
     "undo": "u undo",
-    "trash": "↑/↓ choose · enter bring back · esc back"
+    "trash": "↑/↓ choose · enter bring back · esc back",
+    "decksTogether": "space together · → settings · {choose}"
   },
   "settings": {
     "title": "Settings",
@@ -222,7 +223,18 @@
     "deleteYes": "Delete",
     "deleteNo": "Keep it",
     "deleted": "Deleted \"{deck}\". u brings it back now, /trash for {days} days.",
-    "restored": "\"{deck}\" is back, with its progress."
+    "restored": "\"{deck}\" is back, with its progress.",
+    "allLabel": "All decks",
+    "mixLabel": {
+      "one": "{count} deck",
+      "other": "{count} decks"
+    },
+    "allRow": "All decks",
+    "togetherNow": {
+      "one": "Practising {count} deck together.",
+      "other": "Practising {count} decks together: their cards come mixed."
+    },
+    "aloneNow": "Practising only \"{deck}\" now."
   },
   "add": {
     "fields": {

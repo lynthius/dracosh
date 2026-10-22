@@ -84,7 +84,8 @@
     "importName": "entrée continuer · échap retour",
     "rename": "entrée enregistrer · échap annuler",
     "undo": "u annuler",
-    "trash": "↑/↓ choisir · entrée récupérer · échap retour"
+    "trash": "↑/↓ choisir · entrée récupérer · échap retour",
+    "decksTogether": "espace ensemble · → réglages · {choose}"
   },
   "settings": {
     "title": "Réglages",
@@ -229,7 +230,20 @@
     "deleteYes": "Supprimer",
     "deleteNo": "Le garder",
     "deleted": "« {deck} » supprimé. u le récupère tout de suite, /trash pendant {days} jours.",
-    "restored": "« {deck} » est de retour, avec sa progression."
+    "restored": "« {deck} » est de retour, avec sa progression.",
+    "allLabel": "Tous les paquets",
+    "mixLabel": {
+      "one": "{count} paquet",
+      "many": "{count} paquets",
+      "other": "{count} paquets"
+    },
+    "allRow": "Tous les paquets",
+    "togetherNow": {
+      "one": "Tu révises {count} paquet ensemble.",
+      "many": "Tu révises {count} paquets ensemble : leurs cartes arrivent mélangées.",
+      "other": "Tu révises {count} paquets ensemble : leurs cartes arrivent mélangées."
+    },
+    "aloneNow": "Seulement « {deck} » maintenant."
   },
   "add": {
     "fields": {

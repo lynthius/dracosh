@@ -84,7 +84,8 @@
     "importName": "enter dalej · esc wstecz",
     "rename": "enter zapisz · esc anuluj",
     "undo": "u cofnij",
-    "trash": "↑/↓ wybierz · enter przywróć · esc wstecz"
+    "trash": "↑/↓ wybierz · enter przywróć · esc wstecz",
+    "decksTogether": "spacja razem · → ustawienia · {choose}"
   },
   "settings": {
     "title": "Ustawienia",
@@ -233,7 +234,22 @@
     "deleteYes": "Usuń",
     "deleteNo": "Zostaw",
     "deleted": "Usunięto „{deck}”. u przywraca ją od razu, /trash przez {days} dni.",
-    "restored": "„{deck}” wróciła razem z postępem."
+    "restored": "„{deck}” wróciła razem z postępem.",
+    "allLabel": "Wszystkie talie",
+    "mixLabel": {
+      "one": "{count} talia",
+      "few": "{count} talie",
+      "many": "{count} talii",
+      "other": "{count} talii"
+    },
+    "allRow": "Wszystkie talie",
+    "togetherNow": {
+      "one": "Ćwiczysz razem {count} talię.",
+      "few": "Ćwiczysz razem {count} talie: ich karty przychodzą na przemian.",
+      "many": "Ćwiczysz razem {count} talii: ich karty przychodzą na przemian.",
+      "other": "Ćwiczysz razem {count} talii: ich karty przychodzą na przemian."
+    },
+    "aloneNow": "Teraz tylko „{deck}”."
   },
   "add": {
     "fields": {

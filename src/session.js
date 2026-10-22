@@ -98,6 +98,7 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
     }
     lastNoteId = item.word.noteId;
     lastWrong = null;
+    const from = item.word.deck ?? deck; // decks practised together: the card's own deck
 
     const forward = item.direction === "en-pl";
     const gap = item.direction.startsWith("c") ? Number(item.direction.slice(1)) - 1 : null;
@@ -110,15 +111,15 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
     return {
       word: item.word,
       direction: item.direction,
-      label: labelOf(deck),
+      label: labelOf(from),
       prompt,
       expected,
       // a cloze card's back is a hint under the sentence ("Cieszę się na to")
       context: gap !== null ? item.word.translations.join(" / ") : "",
       // what the answer is written in, when the deck's languages are known: its own spellings count
-      answerLanguage: (forward ? deck?.languages?.back : deck?.languages?.front) ?? null,
-      promptLanguage: (forward ? deck?.languages?.front : deck?.languages?.back) ?? null,
-      learningLanguage: deck?.learning?.lang ?? null,
+      answerLanguage: (forward ? from?.languages?.back : from?.languages?.front) ?? null,
+      promptLanguage: (forward ? from?.languages?.front : from?.languages?.back) ?? null,
+      learningLanguage: from?.learning?.lang ?? null,
       wordCount: words.length,
       tour: Boolean(deck?.tour) // the tour marks what to type with `backticks`
     };

@@ -14,8 +14,9 @@ const DIRECTIONS = ["forward", "backward", "both"];
 // "+ New deck" starts one (`onNew`). → on a deck of yours: which way it's asked, its languages, its
 // name, and Delete: asked first, then into the trash, and u brings it straight back. `onDeleted`
 // ({ cardIds, next }) and `onRestored`({ deck, progress, removed }) let the app follow (progress, the
-// deck practised); `onRenamed`(from, to) too.
-export function Decks({ current, actions, onPick, onNew, onClose, onDirections, onLanguages, onDeleted, onRestored, onRenamed }) {
+// deck practised); `onRenamed`(from, to) too. Space marks decks to practise together (`mix`: "all" or
+// their names, set with `onPractise`({ deck, mix })), and "All decks" takes every deck of yours.
+export function Decks({ current, mix = null, actions, onPick, onPractise, onNew, onClose, onDirections, onLanguages, onDeleted, onRestored, onRenamed }) {
   const panel = usePanelWidth();
   const [decks, setDecks] = useState(null);
   const [picked, setPicked] = useState(0);
@@ -43,8 +44,10 @@ export function Decks({ current, actions, onPick, onNew, onClose, onDirections, 
 
   useInput((input, key) => {
     if (!decks?.length && (key.escape || input === "q")) onClose();
-    if (input === "u" && undo && !menu && !setting && !naming && !renaming && !deleting && !saving.current) return restore();
+    const listing = !menu && !setting && !naming && !renaming && !deleting && !saving.current;
+    if (input === "u" && undo && listing) return restore();
     const deck = decks?.[picked];
+    if (input === " " && listing && deck && !deck.tour && own.length >= 2) return together(deck);
     // → into a deck's settings, ← back out of them (Esc works too)
     if (key.leftArrow && !naming && !renaming && !deleting) {
       if (setting) return setSetting(null);
@@ -75,6 +78,21 @@ export function Decks({ current, actions, onPick, onNew, onClose, onDirections, 
     } finally {
       saving.current = false;
     }
+  }
+
+  // your decks, and the ones practised now: every one for "all", the marked ones, or the one deck
+  const own = (decks ?? []).filter((d) => !d.tour);
+  const practised = mix === "all" ? own.map((d) => d.name) : mix ?? [current];
+
+  // space on a deck: in or out of the decks practised together (one left is that deck alone)
+  function together(deck) {
+    setMessage("");
+    const now = practised.filter((name) => own.some((d) => d.name === name));
+    const next = now.includes(deck.name) ? now.filter((name) => name !== deck.name) : [...now, deck.name];
+    if (!next.length) return;
+    const main = next.includes(current) ? current : next[0];
+    onPractise({ deck: main, mix: next.length >= 2 ? (next.length === own.length && mix === "all" ? "all" : next) : null });
+    setMessage(next.length >= 2 ? t("decks.togetherNow", { count: next.length }) : t("decks.aloneNow", { deck: next[0] }));
   }
 
   // the menu stays underneath: Esc in the direction or language picker comes back to it
@@ -272,6 +290,7 @@ export function Decks({ current, actions, onPick, onNew, onClose, onDirections, 
     `;
   }
 
+  const mixing = own.length >= 2 && (mix !== null || practised.length > 1); // the marks show once decks are practised together
   // a deck's languages show in the list once the cards tell at least one
   const languagesNote = (d) => (d.tour || !d.cards ? "" : d.learning ? t("decks.learningShort", { language: languageName(d.learning.lang) }) : isKnown(d.languages.front) && isKnown(d.languages.back) ? pairText(d.languages) : "");
 
@@ -283,10 +302,14 @@ export function Decks({ current, actions, onPick, onNew, onClose, onDirections, 
         html`
           <${Box} marginTop=${1}>
             <${Choice}
-              options=${[...decks.map((d) => ({ label: d.name, note: [t("count.cards", { count: d.cards }), languagesNote(d), d.tour && t("decks.tour"), d.name === current && t("decks.now")].filter(Boolean).join(" · ") })), { label: t("decks.newDeck") }]}
+              options=${[
+                ...decks.map((d) => ({ label: `${mixing ? (practised.includes(d.name) ? "■ " : "□ ") : ""}${d.name}`, note: [t("count.cards", { count: d.cards }), languagesNote(d), d.tour && t("decks.tour"), !mix && d.name === current && t("decks.now")].filter(Boolean).join(" · ") })),
+                ...(own.length >= 2 ? [{ label: t("decks.allRow"), note: [t("count.decks", { count: own.length }), mix === "all" && t("decks.now")].filter(Boolean).join(" · ") }] : []),
+                { label: t("decks.newDeck") }
+              ]}
               selected=${picked}
               onMove=${setPicked}
-              onPick=${(i) => (i === decks.length ? onNew() : onPick(decks[i].name))}
+              onPick=${(i) => (i === decks.length && own.length >= 2 ? (onPractise({ deck: current, mix: "all" }), onClose()) : i >= decks.length ? onNew() : onPick(decks[i].name))}
               onCancel=${onClose}
             />
           <//>
@@ -294,7 +317,7 @@ export function Decks({ current, actions, onPick, onNew, onClose, onDirections, 
         ${message && html`<${Box} marginTop=${1}><${Text} color=${theme.good}>${message}<//><//>`}
         ${error && html`<${Box} marginTop=${1}><${Text} color=${theme.bad}>${error}<//><//>`}
       <//>
-      <${Box} paddingX=${1}><${KeyHints} text=${(undo ? `${t("keyHints.undo")} · ` : "") + (decks?.[picked] && !decks[picked].tour ? t("keyHints.decks", { choose: choiceHints() }) : choiceHints())} /><//>
+      <${Box} paddingX=${1}><${KeyHints} text=${(undo ? `${t("keyHints.undo")} · ` : "") + (decks?.[picked] && !decks[picked].tour ? t(own.length >= 2 ? "keyHints.decksTogether" : "keyHints.decks", { choose: choiceHints() }) : choiceHints())} /><//>
     <//>
   `;
 }

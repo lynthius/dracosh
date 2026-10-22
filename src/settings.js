@@ -1,6 +1,6 @@
 import { LANGUAGES, systemLanguage, t } from "./i18n.js";
 
-export const DEFAULTS = { everyMs: 600_000, rhythm: "minutes", sound: true, speak: false, volume: 0.5, dailyGoal: 20, tips: "sometimes", quiet: null, skipWeekends: true, deck: null, homeLanguage: null, learningLanguage: null };
+export const DEFAULTS = { everyMs: 600_000, rhythm: "minutes", sound: true, speak: false, volume: 0.5, dailyGoal: 20, tips: "sometimes", quiet: null, skipWeekends: true, deck: null, mix: null, homeLanguage: null, learningLanguage: null };
 
 export const INTERVALS = [60_000, 120_000, 300_000, 600_000, 900_000, 1_200_000, 1_800_000, 2_700_000, 3_600_000];
 export const GOALS = [5, 10, 15, 20, 25, 30, 40, 50, 75, 100, 150, 200];
@@ -41,6 +41,8 @@ export function normalizeSettings(raw = {}) {
     skipWeekends: typeof raw.skipWeekends === "boolean" ? raw.skipWeekends : DEFAULTS.skipWeekends,
     quiet: raw.quiet && isHour(raw.quiet.from) && isHour(raw.quiet.to) ? { from: raw.quiet.from, to: raw.quiet.to } : null,
     deck: typeof raw.deck === "string" && raw.deck.trim() ? raw.deck : null, // picked in /decks; null = your first deck
+    // decks practised together (/decks, space): "all" of yours, or two or more by name; null = only `deck`
+    mix: raw.mix === "all" ? "all" : Array.isArray(raw.mix) && raw.mix.filter((name) => typeof name === "string" && name.trim()).length >= 2 ? raw.mix.filter((name) => typeof name === "string" && name.trim()) : null,
     // the language you speak and the one you're learning, from the welcome (codes; null: not said)
     homeLanguage: isLanguage(raw.homeLanguage) ? raw.homeLanguage : null,
     learningLanguage: isLanguage(raw.learningLanguage) ? raw.learningLanguage : null,
