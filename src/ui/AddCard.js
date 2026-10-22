@@ -92,7 +92,7 @@ export function AddCard({ current, actions, onDone, startNew = false, suggest = 
         setPicked(Math.max(0, own.findIndex((d) => d.name === current)));
         setStep(own.length && !startNew ? "pick" : "deck");
         if (suggest?.name && (startNew || !own.length)) clearField(suggest.name);
-        const given = into && own.findIndex((d) => d.name === into);
+        const given = into ? own.findIndex((d) => d.name === into) : -1;
         if (given >= 0) pickDeck(given, own);
       },
       (err) => setError(err.message)
@@ -432,6 +432,7 @@ export function AddCard({ current, actions, onDone, startNew = false, suggest = 
                 onExit=${back}
                 onChange=${onType}
                 onRecall=${step === "line" ? recall : undefined}
+                cardLine=${step === "line" || step === "fix"}
                 onPaste=${step === "line" ? openPaste : undefined}
               />
             <//>
@@ -526,11 +527,7 @@ export function AddCard({ current, actions, onDone, startNew = false, suggest = 
                 ? t("keyHints.pasteFix")
                 : step === "back"
                   ? t("keyHints.addBack")
-                  : step === "line" && editing
-                    ? t("keyHints.addFixing")
-                    : step === "line" && added.length
-                      ? t("keyHints.addMore")
-                      : t("keyHints.addFirst")}
+                  : `${t("keyHints.tabPart")} · ${editing ? t("keyHints.addFixing") : added.length ? t("keyHints.addMore") : t("keyHints.addFirst")}`}
         />
       <//>
     <//>

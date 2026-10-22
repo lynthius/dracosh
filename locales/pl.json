@@ -87,7 +87,8 @@
     "undo": "u cofnij",
     "trash": "↑/↓ wybierz · enter przywróć · esc wstecz",
     "decksTogether": "spacja razem · → ustawienia · {choose}",
-    "cards": "pisz, by szukać · ↑/↓ wybierz · enter otwórz · esc wstecz"
+    "cards": "pisz, by szukać · ↑/↓ wybierz · enter otwórz · esc wstecz",
+    "tabPart": "tab następna część"
   },
   "settings": {
     "title": "Ustawienia",

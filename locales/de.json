@@ -87,7 +87,8 @@
     "undo": "u rückgängig",
     "trash": "↑/↓ wählen · enter zurückholen · esc zurück",
     "decksTogether": "Leertaste zusammen · → Einstellungen · {choose}",
-    "cards": "tippen zum Suchen · ↑/↓ wählen · enter öffnen · esc zurück"
+    "cards": "tippen zum Suchen · ↑/↓ wählen · enter öffnen · esc zurück",
+    "tabPart": "Tab nächster Teil"
   },
   "settings": {
     "title": "Einstellungen",

@@ -144,10 +144,10 @@ export function Cards({ deck, actions, onDeleted, onRestored, onEdited, onAdd, o
       html`
         <${Box} flexDirection="column" marginTop=${1}>
           <${Text} dimColor>${t("add.fields.line.hint")}<//>
-          <${Box} marginTop=${1}><${AnswerInput} plain escLeaves initial=${formatLine(open.card)} onSubmit=${(text) => edit(open.card, text)} onExit=${() => setOpen((o) => ({ ...o, step: "menu" }))} onChange=${() => setError("")} /><//>
+          <${Box} marginTop=${1}><${AnswerInput} plain escLeaves cardLine initial=${formatLine(open.card)} onSubmit=${(text) => edit(open.card, text)} onExit=${() => setOpen((o) => ({ ...o, step: "menu" }))} onChange=${() => setError("")} /><//>
         <//>
       `,
-      t("keyHints.addFixing")
+      `${t("keyHints.tabPart")} · ${t("keyHints.addFixing")}`
     );
 
   if (open?.step === "move")

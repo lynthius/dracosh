@@ -87,7 +87,8 @@
     "undo": "u annuler",
     "trash": "↑/↓ choisir · entrée récupérer · échap retour",
     "decksTogether": "espace ensemble · → réglages · {choose}",
-    "cards": "tape pour chercher · ↑/↓ choisir · entrée ouvrir · échap retour"
+    "cards": "tape pour chercher · ↑/↓ choisir · entrée ouvrir · échap retour",
+    "tabPart": "tab partie suivante"
   },
   "settings": {
     "title": "Réglages",
