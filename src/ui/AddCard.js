@@ -17,11 +17,11 @@ const SHOWN_CARDS = 5; // the cards added so far, newest last
 const PASTE_ROWS = 8; // rows of a pasted list on screen at once
 const answers = (back) => back.join(" / ");
 
-// How a card will be asked in a deck, for the line under the field: "kot → ?  you type cat / kitty"
+// How a card will be asked: a cloze's gaps under the field, and a new deck's way once picked
+// ("kot → ?  you type cat / kitty")
 function askedAs(fields, directions) {
   if (fields.cloze) return t("add.preview.cloze", { prompt: blankGap(fields.front, 0) + (fields.back.length ? ` (${answers(fields.back)})` : ""), count: gapsOf(fields.front).length });
   const [front, back] = [fields.front, answers(fields.back)];
-  if (!directions) return t("add.preview.pair", { front, back });
   if (directions === "backward") return t("add.preview.asks", { prompt: back, answer: front });
   const forward = t("add.preview.asks", { prompt: front, answer: back });
   return directions === "both" ? t("add.preview.both", { forward, backward: t("add.preview.asks", { prompt: back, answer: front }) }) : forward;
@@ -299,7 +299,7 @@ export function AddCard({ current, actions, onDone, startNew = false, suggest = 
     try {
       await inTurn(() => actions.setDirections(deck.name, chosen));
       setDeck((d) => ({ ...d, directions: chosen, isNew: false }));
-      setMessage(t("add.directionSet", { how: askedAs(sample, chosen).replace("\n", "  ·  ") })); // one line in a sentence
+      setMessage(t("add.directionSet", { how: askedAs(sample, chosen) }));
     } catch (err) {
       setError(err.message);
     }
@@ -402,8 +402,9 @@ export function AddCard({ current, actions, onDone, startNew = false, suggest = 
   const fieldLabel = step === "deck" ? "deck" : step === "back" ? "back" : step === "line" || step === "fix" ? "line" : null;
   // with a suggestion on screen, the card it would make (Tab takes it)
   const parsed = step === "line" && typed.trim() ? parseLine(typed + help.ghost) : null;
-  // while AI help works on the back, it's said instead of "Enter, then the back"
-  const preview = !parsed ? null : parsed.cloze || parsed.back.length ? askedAs(parsed, deck.isNew ? null : deck.directions) : parsed.hasBack || help.status ? null : t("add.preview.noBack");
+  // only what isn't plain from the line itself: a cloze's gaps, or how a lone front goes on (unless AI
+  // help is busy with its back)
+  const preview = !parsed ? null : parsed.cloze ? askedAs(parsed, null) : parsed.back.length || parsed.hasBack || help.status ? null : t("add.preview.noBack");
   const shownPaste = pasted ? withRepeats(pasted.items) : [];
   const ready = shownPaste.filter((item) => !item.dropped && !item.issue).length;
   const narrow = panel < 60;
@@ -443,7 +444,7 @@ export function AddCard({ current, actions, onDone, startNew = false, suggest = 
                 ghost=${help.ghost}
               />
             <//>
-            ${help.status && html`<${Box} paddingLeft=${2}><${Text} color=${help.problem ? theme.warn : theme.accent}>✦ ${help.spinner ? `${help.spinner} ` : ""}${help.status}<//><//>`}
+            ${help.status && html`<${Box} paddingLeft=${2}><${Text} color=${help.problem ? theme.warn : theme.accent}>${help.spinner ?? "✦"} ${help.status}<//><//>`}
             ${preview && html`<${Box} paddingLeft=${2}><${Text} dimColor>${preview}<//><//>`}
             ${duplicate && step === "line" && html`<${Box} paddingLeft=${2}><${Text} color=${theme.warn}>${t("add.duplicateCard", { front: duplicate.front, deck: deck.name })}<//><//>`}
           <//>

@@ -309,9 +309,8 @@
     "needFront": "Une carte a besoin d'un recto.",
     "needBack": "Une carte a besoin d'une réponse.",
     "preview": {
-      "pair": "{front} = {back}  ·  ensuite, tu choisis le sens des questions",
       "asks": "{prompt} → ?  tu tapes {answer}",
-      "both": "{forward}\n{backward}",
+      "both": "{forward}  ·  {backward}",
       "cloze": {
         "one": "{prompt}  ·  1 trou",
         "many": "{prompt}  ·  {count} trous",

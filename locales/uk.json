@@ -317,9 +317,8 @@
     "needFront": "Картці потрібна лицьова сторона.",
     "needBack": "Картці потрібна відповідь.",
     "preview": {
-      "pair": "{front} = {back}  ·  після цієї картки обереш, як питати",
       "asks": "{prompt} → ?  вводиш {answer}",
-      "both": "{forward}\n{backward}",
+      "both": "{forward}  ·  {backward}",
       "cloze": {
         "one": "{prompt}  ·  1 пропуск",
         "few": "{prompt}  ·  {count} пропуски",

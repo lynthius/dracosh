@@ -317,9 +317,8 @@
     "needFront": "Karta potrzebuje przodu.",
     "needBack": "Karta potrzebuje odpowiedzi.",
     "preview": {
-      "pair": "{front} = {back}  ·  po tej karcie wybierzesz, jak pytać",
       "asks": "{prompt} → ?  wpisujesz {answer}",
-      "both": "{forward}\n{backward}",
+      "both": "{forward}  ·  {backward}",
       "cloze": {
         "one": "{prompt}  ·  1 luka",
         "few": "{prompt}  ·  {count} luki",

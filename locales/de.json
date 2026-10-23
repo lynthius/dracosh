@@ -301,9 +301,8 @@
     "needFront": "Eine Karte braucht eine Vorderseite.",
     "needBack": "Eine Karte braucht eine Antwort.",
     "preview": {
-      "pair": "{front} = {back}  ·  danach wählst du, wie gefragt wird",
       "asks": "{prompt} → ?  du tippst {answer}",
-      "both": "{forward}\n{backward}",
+      "both": "{forward}  ·  {backward}",
       "cloze": {
         "one": "{prompt}  ·  1 Lücke",
         "other": "{prompt}  ·  {count} Lücken"

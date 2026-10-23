@@ -298,9 +298,8 @@
     "needFront": "A card needs a front.",
     "needBack": "A card needs an answer.",
     "preview": {
-      "pair": "{front} = {back}  ·  you'll pick how it's asked after this card",
       "asks": "{prompt} → ?  you type {answer}",
-      "both": "{forward}\n{backward}",
+      "both": "{forward}  ·  {backward}",
       "cloze": {
         "one": "{prompt}  ·  1 gap",
         "other": "{prompt}  ·  {count} gaps"
