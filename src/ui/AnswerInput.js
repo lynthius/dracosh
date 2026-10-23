@@ -43,8 +43,9 @@ export function nextPart(value, cursor) {
 }
 
 // `cardLine`: the field holds a card line ("front = back // example"), and Tab goes to its next part,
-// adding the " = " or " // " that starts it
-export function AnswerInput({ onSubmit, onCommand, onExit, onEdit, onCancel, onChange, onRecall, onPaste, commands = COMMANDS, initial = "", commandOnly = false, plain = false, escLeaves = false, cardLine = false }) {
+// adding the " = " or " // " that starts it. `secret`: shown as dots (an API key). `ghost`: a suggestion
+// shown dimmed after the text while the cursor is at its end; Tab or → takes it in (`onGhost` hears that)
+export function AnswerInput({ onSubmit, onCommand, onExit, onEdit, onCancel, onChange, onRecall, onPaste, commands = COMMANDS, initial = "", commandOnly = false, plain = false, escLeaves = false, cardLine = false, secret = false, ghost = "", onGhost }) {
   const [value, setValue] = useState(initial);
   const [cursor, setCursor] = useState(initial.length);
   const [selected, setSelected] = useState(0);
@@ -78,6 +79,11 @@ export function AnswerInput({ onSubmit, onCommand, onExit, onEdit, onCancel, onC
       edit("");
       return onCommand(matches[pick]?.name ?? token, rest.join(" "));
     }
+    const atEnd = cursor === value.length;
+    if (ghost && atEnd && (key.tab || key.rightArrow)) {
+      edit(value + ghost);
+      return onGhost?.();
+    }
     if (key.tab && cardLine) {
       if (!value.trim()) return;
       const next = nextPart(value, cursor);
@@ -102,14 +108,15 @@ export function AnswerInput({ onSubmit, onCommand, onExit, onEdit, onCancel, onC
     if (input) paste(input);
   });
 
-  const before = value.slice(0, cursor);
-  const at = value[cursor] ?? " ";
-  const after = value.slice(cursor + 1);
+  const shown = secret ? "•".repeat(value.length) : value;
+  const before = shown.slice(0, cursor);
+  const at = shown[cursor] ?? " ";
+  const after = shown.slice(cursor + 1);
   return html`
     <${Box} flexDirection="column">
       <${Box}>
         <${Box} flexShrink=${0}><${Text} color=${theme.accent}>❯ <//><//>
-        <${Text}>${before}<${Text} inverse>${at}<//>${after}<//>
+        <${Text}>${before}${ghost && cursor === value.length ? html`<${Text} dimColor><${Text} inverse>${ghost[0]}<//>${ghost.slice(1)}<//>` : html`<${Text} inverse>${at}<//>`}${after}<//>
       <//>
       ${matches.length > 0 && html`<${Palette} matches=${matches} selected=${pick} />`}
       ${isCommand && matches.length === 0 && html`<${Box} marginTop=${1}>${commandOnly ? html`<${Text} color=${theme.bad}>${t("input.unknownCommand")}<//>` : html`<${Text} dimColor>${t("input.notACommand")}<//>`}<//>`}

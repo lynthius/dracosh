@@ -88,7 +88,9 @@
     "trash": "↑/↓ choose · enter bring back · esc back",
     "decksTogether": "space practise together · → settings · {choose}",
     "cards": "type to search · ↑/↓ choose · enter open · esc back",
+    "modelPick": "type to search · ↑/↓ choose · enter confirm · esc back",
     "tabPart": "tab next part",
+    "takeSuggestion": "tab or → take the suggestion",
     "decksMixing": "space add/remove · enter only this deck · → settings · esc done"
   },
   "settings": {
@@ -101,6 +103,10 @@
       "homeLanguage": {
         "label": "Your language",
         "hint": "the language you speak: it tells which side of a card is new to you"
+      },
+      "ai": {
+        "label": "AI help",
+        "hint": "suggestions while you add cards, from your API key or a model on this computer"
       },
       "rhythm": {
         "label": "Rhythm",
@@ -341,7 +347,11 @@
     "languagesSoon": "Languages: I'll tell after a few cards",
     "learningLine": "Learning: {language}",
     "learningGuess": "that is a guess: → to change it",
-    "lineHintFor": "front = back, like {example}  ·  or paste a whole list"
+    "lineHintFor": "front = back, like {example}  ·  or paste a whole list",
+    "ai": {
+      "suggested": "✦ suggested by {provider}",
+      "thinking": "✦ {provider} is thinking…"
+    }
   },
   "quiz": {
     "youWrote": "you wrote ",
@@ -1498,5 +1508,63 @@
     "editHint": "front = back; other answer // example",
     "whichDeck": "Which deck's cards?",
     "deleteNo": "Keep it"
+  },
+  "ai": {
+    "customName": "Other",
+    "title": "AI help",
+    "note": "Optional: AI suggests translations and examples while you add cards. Only the card you're writing and a few from the same deck are sent.",
+    "now": "Now: {label}",
+    "current": "current",
+    "turnOff": "Turn AI off",
+    "turnedOff": "AI help is off. Saved keys stay: to remove one, pick its provider here again.",
+    "providers": {
+      "anthropic": "Claude models, your API key",
+      "openai": "GPT models, your API key",
+      "openrouter": "many models with one key",
+      "ollama": "free, runs on this computer",
+      "lmstudio": "free, runs on this computer",
+      "custom": "any OpenAI-compatible address"
+    },
+    "urlTitle": "Server address",
+    "urlNote": "The address of an OpenAI-compatible API, for example http://localhost:8080/v1",
+    "badUrl": "That isn't an address: it should start with http:// or https://",
+    "keyTitle": "{provider} API key",
+    "keyTitleCustom": "API key (only if the server needs one)",
+    "keyNote": "Get a key at {site}; the provider bills you for what you use. Paste it here: it's kept in your Dracosh folder, readable by you only, and never goes into backups or exports. Or set {env} in your shell instead.",
+    "keyOptional": "If the server asks for a key, paste it; otherwise press Enter.",
+    "needKey": "Paste the key first (Esc goes back).",
+    "keepKey": "Use the saved key",
+    "newKey": "Paste a new key",
+    "forgetKey": "Forget the saved key",
+    "keyForgotten": "The saved key ({provider}) is gone.",
+    "keyFromEnv": "Using the key from {env}.",
+    "localNote": "Models available at {url}. A small model without thinking answers fastest.",
+    "modelNote": "A small, fast model is enough and costs little.",
+    "noModels": "No models to pick: type a model's name.",
+    "noModelsLocal": "No models downloaded yet. Ollama: run ollama pull llama3.2 in a terminal; LM Studio: download one in the app. Then come back here.",
+    "modelTitle": "Which model?",
+    "loadingModels": "Getting the models ({provider})…",
+    "typeModel": "Type a model name…",
+    "modelNameNote": "The model's name as {provider} writes it.",
+    "needModel": "Type the model's name first (Esc goes back).",
+    "checking": "Checking {label}…",
+    "ready": "AI help is on: ✦ {label}",
+    "failedTitle": "{label} isn't working",
+    "tryAgain": "Try again",
+    "otherModel": "Pick another model",
+    "otherKey": "Use another key",
+    "errors": {
+      "noKey": "No {provider} key yet: add one in /settings → AI help, or set {env}.",
+      "badKey": "{provider} didn't accept the key. Check it, or paste a new one.",
+      "noModel": "{provider} has no model called {model}.",
+      "noApi": "Nothing at {url} answers like an OpenAI-compatible API: check the address (often it ends in /v1).",
+      "rateLimit": "{provider} says too many requests: wait a moment and try again.",
+      "offline": "Can't reach {provider} ({url}). Are you online?",
+      "offlineLocal": "Nothing answers at {url}: is {provider} running?",
+      "timeout": "{provider} took too long to answer.",
+      "server": "{provider} had a problem on its side ({status}). Try again later.",
+      "failed": "{provider} refused the request ({status}): {detail}",
+      "notJson": "the answer wasn't JSON"
+    }
   }
 }

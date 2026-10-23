@@ -88,7 +88,9 @@
     "trash": "↑/↓ choisir · entrée récupérer · échap retour",
     "decksTogether": "espace réviser ensemble · → réglages · {choose}",
     "cards": "tape pour chercher · ↑/↓ choisir · entrée ouvrir · échap retour",
+    "modelPick": "tape pour chercher · ↑/↓ choisir · entrée valider · échap retour",
     "tabPart": "tab partie suivante",
+    "takeSuggestion": "tab ou → prendre la suggestion",
     "decksMixing": "espace ajouter/retirer · entrée seulement ce paquet · → réglages · échap terminé"
   },
   "settings": {
@@ -101,6 +103,10 @@
       "homeLanguage": {
         "label": "Ta langue",
         "hint": "la langue que tu parles : elle indique quel côté d'une carte est nouveau pour toi"
+      },
+      "ai": {
+        "label": "Aide IA",
+        "hint": "des suggestions quand tu ajoutes des cartes, avec ta clé API ou un modèle sur cet ordinateur"
       },
       "rhythm": {
         "label": "Rythme",
@@ -356,7 +362,11 @@
     "languagesSoon": "Langues : je les reconnaîtrai après quelques cartes",
     "learningLine": "Langue apprise : {language}",
     "learningGuess": "ce n’est qu’une supposition : → modifier",
-    "lineHintFor": "recto = verso, par ex. {example}  ·  ou colle une liste entière"
+    "lineHintFor": "recto = verso, par ex. {example}  ·  ou colle une liste entière",
+    "ai": {
+      "suggested": "✦ suggestion de {provider}",
+      "thinking": "✦ {provider} réfléchit…"
+    }
   },
   "quiz": {
     "youWrote": "ta réponse : ",
@@ -1602,5 +1612,63 @@
     "editHint": "recto = verso ; autre réponse // exemple",
     "whichDeck": "Les cartes de quel paquet ?",
     "deleteNo": "La garder"
+  },
+  "ai": {
+    "customName": "Autre",
+    "title": "Aide IA",
+    "note": "Facultatif : l'IA propose des traductions et des exemples quand tu ajoutes des cartes. Seules la carte en cours et quelques cartes du même paquet sont envoyées.",
+    "now": "Actuellement : {label}",
+    "current": "actuel",
+    "turnOff": "Désactiver l'IA",
+    "turnedOff": "L'aide IA est désactivée. Les clés enregistrées restent : pour en supprimer une, choisis à nouveau son fournisseur ici.",
+    "providers": {
+      "anthropic": "modèles Claude, ta clé API",
+      "openai": "modèles GPT, ta clé API",
+      "openrouter": "beaucoup de modèles avec une seule clé",
+      "ollama": "gratuit, tourne sur cet ordinateur",
+      "lmstudio": "gratuit, tourne sur cet ordinateur",
+      "custom": "toute adresse compatible OpenAI"
+    },
+    "urlTitle": "Adresse du serveur",
+    "urlNote": "L'adresse d'une API compatible OpenAI, par exemple http://localhost:8080/v1",
+    "badUrl": "Ce n'est pas une adresse : elle doit commencer par http:// ou https://",
+    "keyTitle": "Clé API {provider}",
+    "keyTitleCustom": "Clé API (seulement si le serveur en demande une)",
+    "keyNote": "Crée une clé sur {site} ; le fournisseur te facture l'utilisation. Colle-la ici : elle reste dans ton dossier Dracosh, lisible par ton compte uniquement, et n'est jamais incluse dans les sauvegardes ni les exports. Tu peux aussi définir {env} dans ton shell.",
+    "keyOptional": "Si le serveur demande une clé, colle-la ; sinon, appuie sur Entrée.",
+    "needKey": "Colle d'abord la clé (Échap pour revenir).",
+    "keepKey": "Utiliser la clé enregistrée",
+    "newKey": "Coller une nouvelle clé",
+    "forgetKey": "Supprimer la clé enregistrée",
+    "keyForgotten": "La clé enregistrée ({provider}) est supprimée.",
+    "keyFromEnv": "Clé lue dans {env}.",
+    "localNote": "Modèles disponibles sur {url}. Un petit modèle sans réflexion répond le plus vite.",
+    "modelNote": "Un petit modèle rapide suffit et coûte peu.",
+    "noModels": "Aucun modèle à choisir : saisis le nom d'un modèle.",
+    "noModelsLocal": "Aucun modèle téléchargé pour l'instant. Ollama : lance ollama pull llama3.2 dans un terminal ; LM Studio : télécharge-en un dans l'application. Puis reviens ici.",
+    "modelTitle": "Quel modèle ?",
+    "loadingModels": "Récupération des modèles ({provider})…",
+    "typeModel": "Saisir un nom de modèle…",
+    "modelNameNote": "Le nom du modèle, tel que {provider} l'écrit.",
+    "needModel": "Saisis d'abord le nom du modèle (Échap pour revenir).",
+    "checking": "Vérification de {label}…",
+    "ready": "Aide IA activée : ✦ {label}",
+    "failedTitle": "{label} ne fonctionne pas",
+    "tryAgain": "Réessayer",
+    "otherModel": "Choisir un autre modèle",
+    "otherKey": "Utiliser une autre clé",
+    "errors": {
+      "noKey": "Pas encore de clé {provider} : ajoute-en une dans /settings → Aide IA, ou définis {env}.",
+      "badKey": "{provider} n'a pas accepté la clé. Vérifie-la ou colles-en une nouvelle.",
+      "noModel": "{provider} n'a pas de modèle nommé {model}.",
+      "noApi": "Rien à {url} ne répond comme une API compatible OpenAI : vérifie l'adresse (elle finit souvent par /v1).",
+      "rateLimit": "{provider} signale trop de requêtes : patiente un peu et réessaie.",
+      "offline": "Impossible de joindre {provider} ({url}). Es-tu en ligne ?",
+      "offlineLocal": "Rien ne répond à {url} : {provider} est-il lancé ?",
+      "timeout": "{provider} a mis trop de temps à répondre.",
+      "server": "{provider} a un problème de son côté ({status}). Réessaie plus tard.",
+      "failed": "{provider} a refusé la requête ({status}) : {detail}",
+      "notJson": "la réponse n'était pas du JSON"
+    }
   }
 }

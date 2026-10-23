@@ -26,6 +26,7 @@ import { Evolution } from "./Evolution.js";
 import { Hatch } from "./Hatch.js";
 import { LanguageSearch } from "./Languages.js";
 import { Welcome } from "./Welcome.js";
+import { AiSetup } from "./Ai.js";
 import { AddCard } from "./AddCard.js";
 import { ImportScreen } from "./Import.js";
 import { Decks } from "./Decks.js";
@@ -818,12 +819,13 @@ export function App({ session, deck: initialDeck, initialSettings, initialMix, a
     <${Box} flexDirection="column" marginY=${1}>
       <${Header} deck=${deckLabel} everyMs=${settings.everyMs} rhythm=${settings.rhythm} wordCount=${question?.wordCount ?? empty?.count} stats=${stats} combo=${session.totals.combo} face=${face} event=${petEvent} tick=${tick} asleep=${asleep} />
       <${Box} marginTop=${1} flexDirection="column">
-        ${screen === "settings" && html`<${Settings} settings=${settings} element=${stats.companion.element} startRow=${settingsRow.current} onRow=${(row) => (settingsRow.current = row)} onChange=${changeSettings} onClose=${() => setScreen("quiz")} onAction=${library ? (row) => setScreen({ reset: "reset", homeLanguage: "home-language", dragonLook: "dragon-look" }[row]) : null} />`}
+        ${screen === "settings" && html`<${Settings} settings=${settings} element=${stats.companion.element} startRow=${settingsRow.current} onRow=${(row) => (settingsRow.current = row)} onChange=${changeSettings} onClose=${() => setScreen("quiz")} onAction=${library ? (row) => setScreen({ reset: "reset", homeLanguage: "home-language", dragonLook: "dragon-look", ai: "ai" }[row]) : null} />`}
         ${screen === "dragon-look" && html`<${DragonLook} element=${stats.companion.element} onConfirm=${() => session.defaultLook().then(() => (setScreen("settings"), setNotice(t("settings.lookDropped")))).catch((err) => setProblem(err.message))} onClose=${() => setScreen("settings")} />`}
         ${screen === "home-language" && html`<${LanguageSearch} title=${t("settings.homeTitle")} note=${t("welcome.homeNote")} current=${settings.homeLanguage ?? settings.language} currentNote=${settings.homeLanguage ? t("languages.current") : t("welcome.suggested")} onBack=${() => setScreen("settings")} onPick=${(code) => (changeSettings({ homeLanguage: code }), setScreen("settings"))} />`}
+        ${screen === "ai" && html`<${AiSetup} current=${settings.ai} onSave=${(ai) => changeSettings({ ai })} onClose=${(said) => (setScreen("settings"), said && setNotice(said))} />`}
         ${screen === "reset" && html`<${Reset} stats=${stats} actions=${library} onConfirm=${reset} onClose=${() => setScreen("settings")} />`}
         ${screen === "import" && html`<${ImportScreen} actions=${library} fromWelcome=${importFrom === "welcome"} onDone=${importDone} onCancel=${importCancelled} />`}
-        ${screen === "add" && html`<${AddCard} current=${deck} actions=${library} onDone=${addDone} startNew=${addNew} suggest=${addSuggest} into=${addInto} />`}
+        ${screen === "add" && html`<${AddCard} current=${deck} actions=${library} ai=${settings.ai} onDone=${addDone} startNew=${addNew} suggest=${addSuggest} into=${addInto} />`}
         ${screen === "decks" && html`<${Decks} current=${deck} mix=${mix} onPractise=${practise} actions=${library} onDirections=${async (cardIds, directions) => {
           await session.setDirections(cardIds, directions);
           await session.workAdded();
@@ -832,7 +834,7 @@ export function App({ session, deck: initialDeck, initialSettings, initialMix, a
         ${screen === "cards" && html`<${Cards} deck=${cardsDeck ?? deck} actions=${library} onDeleted=${deleteCards} onRestored=${restoreDeck} onEdited=${(keys) => session.forgetKeys(keys)} onAdd=${() => (setAddNew(false), setAddInto(cardsDeck ?? deck), setScreen("add"))} onClose=${cardsClosed} />`}
         ${screen === "cards-pick" && html`<${CardsDeckPick} actions=${library} mix=${mix} current=${deck} onPick=${(name) => (setCardsDeck(name), setScreen("cards"))} onClose=${() => setScreen("quiz")} />`}
         ${screen === "trash" && html`<${Trash} actions=${library} onRestore=${restoreDeck} onClose=${() => setScreen("quiz")} />`}
-        ${!["settings", "reset", "home-language", "dragon-look", "import", "add", "decks", "trash", "cards", "cards-pick"].includes(screen) &&
+        ${!["settings", "ai", "reset", "home-language", "dragon-look", "import", "add", "decks", "trash", "cards", "cards-pick"].includes(screen) &&
           html`
               <${Fragment}>
               ${question &&

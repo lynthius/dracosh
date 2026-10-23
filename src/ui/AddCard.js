@@ -6,6 +6,8 @@ import { readCardList } from "../cardlist.js";
 import { frontKey } from "../judge.js";
 import { isKnown, languageName } from "../language.js";
 import { LanguagePicker, pairText } from "./Languages.js";
+import { providerName } from "../ai.js";
+import { suggestCard } from "../assist.js";
 import { AnswerInput } from "./AnswerInput.js";
 import { Choice, choiceHints } from "./Choice.js";
 import { t } from "../i18n.js";
@@ -62,8 +64,9 @@ function withRepeats(items) {
 // deck's first card it asks which way the deck is asked. A pasted list opens a review first.
 // `actions` reads and writes the library; `startNew` skips the deck list ("+ New deck" in /decks).
 // `suggest` (from the welcome): { name, example }, a deck name to start from and a card in your pair.
-// `into`: straight to adding cards to this deck (+ Add cards in /cards).
-export function AddCard({ current, actions, onDone, startNew = false, suggest = null, into = null }) {
+// `into`: straight to adding cards to this deck (+ Add cards in /cards). `ai`: settings.ai, for
+// suggestions while a card is typed (null: none).
+export function AddCard({ current, actions, onDone, startNew = false, suggest = null, into = null, ai = null }) {
   const panel = usePanelWidth();
   const [step, setStep] = useState("loading"); // loading | pick | deck | line | back | direction | review | fix | saving
   const [decks, setDecks] = useState([]);
@@ -84,6 +87,7 @@ export function AddCard({ current, actions, onDone, startNew = false, suggest = 
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const lookup = useRef(0);
+  const help = useAssist({ ai, actions, deck, step, typed, draft, added });
 
   useEffect(() => {
     actions.ownDecks().then(
@@ -396,7 +400,8 @@ export function AddCard({ current, actions, onDone, startNew = false, suggest = 
   const title =
     step === "pick" ? t("add.titlePick") : step === "deck" ? t(decks.length ? "add.titleNew" : "add.titleFirst") : step === "review" || step === "fix" ? t("add.paste.title", { deck: deck.name }) : t("add.titleCard", { deck: deck?.name ?? "" });
   const fieldLabel = step === "deck" ? "deck" : step === "back" ? "back" : step === "line" || step === "fix" ? "line" : null;
-  const parsed = step === "line" && typed.trim() ? parseLine(typed) : null;
+  // with a suggestion on screen, the card it would make (Tab takes it)
+  const parsed = step === "line" && typed.trim() ? parseLine(typed + help.ghost) : null;
   const preview = !parsed ? null : parsed.cloze || parsed.back.length ? askedAs(parsed, deck.isNew ? null : deck.directions) : parsed.hasBack ? null : t("add.preview.noBack");
   const shownPaste = pasted ? withRepeats(pasted.items) : [];
   const ready = shownPaste.filter((item) => !item.dropped && !item.issue).length;
@@ -434,8 +439,10 @@ export function AddCard({ current, actions, onDone, startNew = false, suggest = 
                 onRecall=${step === "line" ? recall : undefined}
                 cardLine=${step === "line" || step === "fix"}
                 onPaste=${step === "line" ? openPaste : undefined}
+                ghost=${help.ghost}
               />
             <//>
+            ${help.status && html`<${Box} paddingLeft=${2}><${Text} color=${help.problem ? theme.warn : undefined} dimColor=${!help.problem}>${help.status}<//><//>`}
             ${preview && html`<${Box} paddingLeft=${2}><${Text} dimColor>${preview}<//><//>`}
             ${duplicate && step === "line" && html`<${Box} paddingLeft=${2}><${Text} color=${theme.warn}>${t("add.duplicateCard", { front: duplicate.front, deck: deck.name })}<//><//>`}
           <//>
@@ -526,10 +533,74 @@ export function AddCard({ current, actions, onDone, startNew = false, suggest = 
               : step === "fix"
                 ? t("keyHints.pasteFix")
                 : step === "back"
-                  ? t("keyHints.addBack")
-                  : `${t("keyHints.tabPart")} · ${editing ? t("keyHints.addFixing") : added.length ? t("keyHints.addMore") : t("keyHints.addFirst")}`}
+                  ? (help.ghost ? `${t("keyHints.takeSuggestion")} · ` : "") + t("keyHints.addBack")
+                  : `${help.ghost ? t("keyHints.takeSuggestion") : t("keyHints.tabPart")} · ${editing ? t("keyHints.addFixing") : added.length ? t("keyHints.addMore") : t("keyHints.addFirst")}`}
         />
       <//>
     <//>
   `;
+}
+
+const PAUSE_MS = 350; // typing stops this long before a suggestion is asked for
+const STOPPING = new Set(["noKey", "badKey", "noModel", "offline", "offlineLocal"]); // no point asking again in this /add
+
+// Suggestions for the card being typed: once its front is followed by " = " (or on the back's own
+// field), the model is asked for the back and an example, shown dimmed after what's typed (`ghost`).
+// It goes away as soon as the typing no longer matches it; every key cancels a request in flight.
+// → { ghost, status, problem }
+function useAssist({ ai, actions, deck, step, typed, draft, added }) {
+  const [answers, setAnswers] = useState({}); // front → suggestion line ("" for nothing usable)
+  const [asking, setAsking] = useState(null); // the front asked about now
+  const [problem, setProblem] = useState("");
+  const context = useRef(null); // { deck, languages, cards } of the deck being added to
+  const stopped = useRef(false);
+
+  // what's typed → the front to ask about, and the text the suggestion follows
+  const target = (() => {
+    if (!ai || !deck || stopped.current) return null;
+    if (step === "back" && draft && !draft.cloze && !typed.includes(" // ")) return { front: draft.front, base: "" };
+    if (step !== "line") return null;
+    const at = typed.indexOf(" = ");
+    if (at < 1 || typed.includes(" // ") || typed.indexOf(" = ", at + 3) >= 0) return null;
+    const fields = parseLine(typed.slice(0, at));
+    return fields.front && !fields.cloze ? { front: fields.front, base: typed.slice(0, at + 3) } : null;
+  })();
+  const front = target?.front ?? null;
+
+  useEffect(() => {
+    if (!front || front in answers) return;
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      setAsking(front);
+      try {
+        if (context.current?.deck !== deck.name) {
+          const [languages, cards] = await Promise.all([actions.languagesOf(deck.name).catch(() => ({})), actions.cardsIn(deck.name).catch(() => [])]);
+          context.current = { deck: deck.name, languages, cards };
+        }
+        const cards = [...context.current.cards, ...added];
+        const found = await suggestCard(ai, { front, languages: context.current.languages, cards, signal: controller.signal });
+        setProblem("");
+        setAnswers((all) => ({ ...all, [front]: found ? found.back.join("; ") + (found.example ? ` // ${found.example}` : "") : "" }));
+      } catch (err) {
+        if (controller.signal.aborted) return;
+        if (STOPPING.has(err.code)) stopped.current = true;
+        setProblem(err.message);
+      } finally {
+        setAsking((now) => (now === front ? null : now));
+      }
+    }, PAUSE_MS);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [front, deck?.name]);
+
+  if (!ai) return { ghost: "", status: "", problem: false };
+  const line = target && answers[target.front] ? target.base + answers[target.front] : "";
+  const ghost = line && line.length > typed.length && line.toLowerCase().startsWith(typed.toLowerCase()) ? line.slice(typed.length) : "";
+  const name = providerName(ai.provider);
+  if (problem) return { ghost, status: `✦ ${problem}`, problem: true };
+  if (ghost) return { ghost, status: t("add.ai.suggested", { provider: name }), problem: false };
+  if (front && asking === front) return { ghost, status: t("add.ai.thinking", { provider: name }), problem: false };
+  return { ghost, status: "", problem: false };
 }

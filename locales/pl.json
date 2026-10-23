@@ -88,7 +88,9 @@
     "trash": "↑/↓ wybierz · enter przywróć · esc wstecz",
     "decksTogether": "spacja ćwicz razem · → ustawienia · {choose}",
     "cards": "pisz, by szukać · ↑/↓ wybierz · enter otwórz · esc wstecz",
+    "modelPick": "pisz, by szukać · ↑/↓ wybierz · enter potwierdź · esc wstecz",
     "tabPart": "tab następna część",
+    "takeSuggestion": "tab lub → weź podpowiedź",
     "decksMixing": "spacja dodaj/usuń · enter tylko ta talia · → ustawienia · esc gotowe"
   },
   "settings": {
@@ -101,6 +103,10 @@
       "homeLanguage": {
         "label": "Twój język",
         "hint": "język, którym mówisz: po nim widać, która strona karty jest dla ciebie nowa"
+      },
+      "ai": {
+        "label": "Pomoc AI",
+        "hint": "podpowiedzi przy dodawaniu kart, z twojego klucza API albo z modelu na tym komputerze"
       },
       "rhythm": {
         "label": "Rytm",
@@ -368,7 +374,11 @@
     "languagesSoon": "Języki: rozpoznam po kilku kartach",
     "learningLine": "Język nauki: {language}",
     "learningGuess": "to tylko domysł: → zmień",
-    "lineHintFor": "przód = tył, np. {example}  ·  albo wklej całą listę"
+    "lineHintFor": "przód = tył, np. {example}  ·  albo wklej całą listę",
+    "ai": {
+      "suggested": "✦ podpowiedź: {provider}",
+      "thinking": "✦ {provider} myśli…"
+    }
   },
   "quiz": {
     "youWrote": "twoja odpowiedź: ",
@@ -1664,5 +1674,63 @@
     "editHint": "przód = tył; inna odpowiedź // przykład",
     "whichDeck": "Karty której talii?",
     "deleteNo": "Zostaw"
+  },
+  "ai": {
+    "customName": "Inny",
+    "title": "Pomoc AI",
+    "note": "Opcjonalnie: AI podpowiada tłumaczenia i przykłady przy dodawaniu kart. Wysyłana jest tylko pisana karta i kilka kart z tej samej talii.",
+    "now": "Teraz: {label}",
+    "current": "obecny",
+    "turnOff": "Wyłącz AI",
+    "turnedOff": "Pomoc AI wyłączona. Zapisane klucze zostają: żeby usunąć klucz, wybierz tu ponownie jego dostawcę.",
+    "providers": {
+      "anthropic": "modele Claude, własny klucz API",
+      "openai": "modele GPT, własny klucz API",
+      "openrouter": "wiele modeli na jednym kluczu",
+      "ollama": "za darmo, działa na tym komputerze",
+      "lmstudio": "za darmo, działa na tym komputerze",
+      "custom": "dowolny adres zgodny z OpenAI"
+    },
+    "urlTitle": "Adres serwera",
+    "urlNote": "Adres API zgodnego z OpenAI, np. http://localhost:8080/v1",
+    "badUrl": "To nie jest adres: musi zaczynać się od http:// albo https://",
+    "keyTitle": "Klucz API: {provider}",
+    "keyTitleCustom": "Klucz API (tylko jeśli serwer go wymaga)",
+    "keyNote": "Klucz utworzysz na {site}; dostawca rozlicza cię za użycie. Wklej go tutaj: zostaje w folderze Dracosha, dostępny tylko dla ciebie, i nigdy nie trafia do kopii zapasowych ani eksportu. Możesz też zamiast tego ustawić {env} w powłoce.",
+    "keyOptional": "Jeśli serwer wymaga klucza, wklej go; jeśli nie, naciśnij Enter.",
+    "needKey": "Najpierw wklej klucz (Esc wraca).",
+    "keepKey": "Użyj zapisanego klucza",
+    "newKey": "Wklej nowy klucz",
+    "forgetKey": "Usuń zapisany klucz",
+    "keyForgotten": "Zapisany klucz ({provider}) usunięty.",
+    "keyFromEnv": "Klucz ze zmiennej {env}.",
+    "localNote": "Modele dostępne pod {url}. Najszybciej odpowiada mały model bez myślenia.",
+    "modelNote": "Wystarczy mały, szybki model: kosztuje grosze.",
+    "noModels": "Brak modeli do wyboru: wpisz nazwę modelu.",
+    "noModelsLocal": "Nie ma jeszcze pobranych modeli. Ollama: uruchom w terminalu ollama pull llama3.2; LM Studio: pobierz model w aplikacji. Potem wróć tutaj.",
+    "modelTitle": "Który model?",
+    "loadingModels": "Pobieranie listy modeli ({provider})…",
+    "typeModel": "Wpisz nazwę modelu…",
+    "modelNameNote": "Nazwa modelu w takiej postaci, jak podaje ją {provider}.",
+    "needModel": "Najpierw wpisz nazwę modelu (Esc wraca).",
+    "checking": "Sprawdzam {label}…",
+    "ready": "Pomoc AI włączona: ✦ {label}",
+    "failedTitle": "{label} nie działa",
+    "tryAgain": "Spróbuj jeszcze raz",
+    "otherModel": "Wybierz inny model",
+    "otherKey": "Użyj innego klucza",
+    "errors": {
+      "noKey": "Brak klucza ({provider}): dodaj go w /settings → Pomoc AI albo ustaw {env}.",
+      "badKey": "{provider} nie przyjmuje klucza. Sprawdź go albo wklej nowy.",
+      "noModel": "{provider} nie ma modelu {model}.",
+      "noApi": "Pod {url} nic nie odpowiada jak API zgodne z OpenAI: sprawdź adres (często kończy się na /v1).",
+      "rateLimit": "{provider}: za dużo zapytań. Odczekaj chwilę i spróbuj ponownie.",
+      "offline": "Brak połączenia z {provider} ({url}). Czy jest internet?",
+      "offlineLocal": "Pod {url} nic nie odpowiada: czy {provider} działa?",
+      "timeout": "{provider} zbyt długo nie odpowiada.",
+      "server": "Problem po stronie {provider} ({status}). Spróbuj później.",
+      "failed": "{provider} odrzuca zapytanie ({status}): {detail}",
+      "notJson": "odpowiedź nie była w formacie JSON"
+    }
   }
 }

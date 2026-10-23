@@ -1,6 +1,7 @@
+import { normalizeAi } from "./ai.js";
 import { LANGUAGES, systemLanguage, t } from "./i18n.js";
 
-export const DEFAULTS = { everyMs: 600_000, rhythm: "minutes", sound: true, speak: false, volume: 0.5, dailyGoal: 20, tips: "sometimes", quiet: null, skipWeekends: true, deck: null, mix: null, homeLanguage: null, learningLanguage: null };
+export const DEFAULTS = { everyMs: 600_000, rhythm: "minutes", sound: true, speak: false, volume: 0.5, dailyGoal: 20, tips: "sometimes", quiet: null, skipWeekends: true, deck: null, mix: null, homeLanguage: null, learningLanguage: null, ai: null };
 
 export const INTERVALS = [60_000, 120_000, 300_000, 600_000, 900_000, 1_200_000, 1_800_000, 2_700_000, 3_600_000];
 export const GOALS = [5, 10, 15, 20, 25, 30, 40, 50, 75, 100, 150, 200];
@@ -46,6 +47,7 @@ export function normalizeSettings(raw = {}) {
     // the language you speak and the one you're learning, from the welcome (codes; null: not said)
     homeLanguage: isLanguage(raw.homeLanguage) ? raw.homeLanguage : null,
     learningLanguage: isLanguage(raw.learningLanguage) ? raw.learningLanguage : null,
+    ai: normalizeAi(raw.ai), // AI help (/settings): provider, model and address; the key is kept apart
     language: typeof raw.language === "string" && Object.hasOwn(LANGUAGES, raw.language) ? raw.language : systemLanguage() // until picked in /settings, the system's
   };
 }

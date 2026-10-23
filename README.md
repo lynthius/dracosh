@@ -18,6 +18,7 @@ It's made for people who live in a terminal or spend most of the day at a comput
 - Add cards, start decks and switch between them right in the app (`/add`, `/decks`)
 - One line is a card: `el gato = the cat; the kitty // Mi gato duerme.` (`;` separates right answers, `//` adds an example). Paste a whole list, or rows copied from a spreadsheet, and check it before it's saved
 - Import cards from Anki and Quizlet exports, a spreadsheet's CSV or a plain text list, and export them as an Anki deck package, for a spreadsheet or as a text file you can edit (or have an AI assistant write); you see what changes before anything is saved
+- Optional AI help in `/add`: type `pies = ` and a suggested answer and example appear dimmed, Tab takes them. Works with your Anthropic, OpenAI or OpenRouter key, or free with a local model in Ollama or LM Studio
 - Each deck is asked the way you pick after its first card: front → back, back → front, or both ways; change it any time in `/decks`
 - Pronunciation, if you turn it on in `/settings`: once the answer is out, the word in the language you're learning in that deck is read aloud with a macOS voice (other systems later); decks in one language, like definitions, stay quiet
 - Dracosh works out which languages a deck is in (Spanish → English, say) and which of the two you're learning, from the cards, the deck's name and your other decks, whatever language you use Dracosh in, and says when it's only a guess; set either in `/decks` when it can't tell or guesses wrong
@@ -75,7 +76,7 @@ Type the answer and press Enter. Not sure, or the answer is a whole sentence? Pr
 | `/trash` | decks and cards you deleted, kept for 30 days with their progress: Enter brings one back |
 | `/hint` | reveal one more letter |
 | `/correct` | your answer was right after all; after a yes it's accepted from now on |
-| `/settings` | the app's language, the language you speak, rhythm (a card every few minutes, or a study session), interval, daily goal, sound, pronunciation, quiet hours, weekends, tips, the dragon's look once the die gave it an element, and a reset |
+| `/settings` | the app's language, the language you speak, AI help (optional), rhythm (a card every few minutes, or a study session), interval, daily goal, sound, pronunciation, quiet hours, weekends, tips, the dragon's look once the die gave it an element, and a reset |
 | `/stats` | streak and a calendar of your month |
 | `/badges` | all badges and how to get them |
 | `/companion` | your dragon, its element and the forms ahead |
@@ -85,6 +86,12 @@ Type the answer and press Enter. Not sure, or the answer is a whole sentence? Pr
 | `/quit` | quit (you'll get a short session summary) |
 
 They're slash commands because "pause" and "quit" are perfectly good English answers.
+
+## AI help
+
+Optional, and everything works without it. Turn it on in `/settings` → AI help: pick Anthropic, OpenAI, OpenRouter, Ollama, LM Studio or any other OpenAI-compatible address, paste a key (local models need none), pick a model, and Dracosh checks that they work together before saving anything.
+
+Then, in `/add`, type a word and ` = ` (`pies = `): a suggested answer and an example sentence appear dimmed after it. Tab or → takes the suggestion, typing on ignores it, and Enter saves only what's in the field. Only the word you typed and a few cards of the same deck are sent, so a request costs very little; a small model is plenty. To keep cards in your own words, the suggestion completes what you start and never adds cards by itself.
 
 ## Import and export
 
@@ -154,7 +161,7 @@ Fix the lines it lists, and tell me the command to import it for real.
 
 ## Your data
 
-Everything stays on your machine, in `~/.dracosh`; `dracosh --data` shows what's there. Progress is saved after every answer, so you can quit any time. One quiz runs at a time: a second window on the same data is refused, so the two can't overwrite each other's progress. The first start of each day also saves a backup of your cards, progress and settings to `~/.dracosh/backups` (the last 7 are kept); `dracosh restore` brings one back, and backs up what you have first, so a restore can be undone too. To start over, `/settings` → Reset clears your progress only (badges, streak, the dragon) or everything; a backup is made first. Decks and cards you delete wait in `/trash` for 30 days, with their progress. To move to another computer, `dracosh export everything.json` there and `dracosh import everything.json` here; to use Dracosh on two computers at once, put that folder somewhere synced and point `DRACOSH_HOME` at it.
+Everything stays on your machine, in `~/.dracosh`; `dracosh --data` shows what's there. Progress is saved after every answer, so you can quit any time. One quiz runs at a time: a second window on the same data is refused, so the two can't overwrite each other's progress. The first start of each day also saves a backup of your cards, progress and settings to `~/.dracosh/backups` (the last 7 are kept); `dracosh restore` brings one back, and backs up what you have first, so a restore can be undone too. To start over, `/settings` → Reset clears your progress only (badges, streak, the dragon) or everything; a backup is made first. Decks and cards you delete wait in `/trash` for 30 days, with their progress. An API key for AI help is kept in `~/.dracosh/keys.json`, readable by you only, and never goes into a backup or an export; a key in `ANTHROPIC_API_KEY`, `OPENAI_API_KEY` or `OPENROUTER_API_KEY` is used instead when it's set. To move to another computer, `dracosh export everything.json` there and `dracosh import everything.json` here; to use Dracosh on two computers at once, put that folder somewhere synced and point `DRACOSH_HOME` at it.
 
 Uninstalling Dracosh (`npm uninstall -g dracosh`) leaves `~/.dracosh` as it is, so installing it again brings everything back. To remove your data too, delete that folder.
 

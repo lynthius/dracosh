@@ -88,7 +88,9 @@
     "trash": "↑/↓ wählen · enter zurückholen · esc zurück",
     "decksTogether": "Leertaste zusammen üben · → Einstellungen · {choose}",
     "cards": "tippen zum Suchen · ↑/↓ wählen · enter öffnen · esc zurück",
+    "modelPick": "tippen zum Suchen · ↑/↓ wählen · enter bestätigen · esc zurück",
     "tabPart": "Tab nächster Teil",
+    "takeSuggestion": "Tab oder → Vorschlag übernehmen",
     "decksMixing": "Leertaste dazu/weg · enter nur dieser Stapel · → Einstellungen · esc fertig"
   },
   "settings": {
@@ -101,6 +103,10 @@
       "homeLanguage": {
         "label": "Deine Sprache",
         "hint": "die Sprache, die du sprichst: daran sieht Dracosh, welche Kartenseite für dich neu ist"
+      },
+      "ai": {
+        "label": "KI-Hilfe",
+        "hint": "Vorschläge beim Hinzufügen von Karten, mit deinem API-Schlüssel oder einem Modell auf diesem Computer"
       },
       "rhythm": {
         "label": "Rhythmus",
@@ -344,7 +350,11 @@
     "languagesSoon": "Sprachen: erkenne ich nach ein paar Karten",
     "learningLine": "Lernsprache: {language}",
     "learningGuess": "nur geraten: → ändern",
-    "lineHintFor": "Vorderseite = Rückseite, z. B. {example}  ·  oder füg eine ganze Liste ein"
+    "lineHintFor": "Vorderseite = Rückseite, z. B. {example}  ·  oder füg eine ganze Liste ein",
+    "ai": {
+      "suggested": "✦ Vorschlag von {provider}",
+      "thinking": "✦ {provider} denkt nach…"
+    }
   },
   "quiz": {
     "youWrote": "deine Antwort: ",
@@ -1515,5 +1525,63 @@
     "editHint": "Vorderseite = Rückseite; andere Antwort // Beispiel",
     "whichDeck": "Karten welches Stapels?",
     "deleteNo": "Behalten"
+  },
+  "ai": {
+    "customName": "Andere",
+    "title": "KI-Hilfe",
+    "note": "Optional: Die KI schlägt beim Hinzufügen von Karten Übersetzungen und Beispiele vor. Gesendet werden nur die Karte, die du gerade schreibst, und einige aus demselben Stapel.",
+    "now": "Jetzt: {label}",
+    "current": "aktuell",
+    "turnOff": "KI ausschalten",
+    "turnedOff": "KI-Hilfe ist aus. Gespeicherte Schlüssel bleiben: Um einen zu löschen, wähle hier wieder seinen Anbieter.",
+    "providers": {
+      "anthropic": "Claude-Modelle, eigener API-Schlüssel",
+      "openai": "GPT-Modelle, eigener API-Schlüssel",
+      "openrouter": "viele Modelle mit einem Schlüssel",
+      "ollama": "kostenlos, läuft auf diesem Computer",
+      "lmstudio": "kostenlos, läuft auf diesem Computer",
+      "custom": "jede OpenAI-kompatible Adresse"
+    },
+    "urlTitle": "Serveradresse",
+    "urlNote": "Die Adresse einer OpenAI-kompatiblen API, z. B. http://localhost:8080/v1",
+    "badUrl": "Das ist keine Adresse: Sie muss mit http:// oder https:// beginnen.",
+    "keyTitle": "API-Schlüssel für {provider}",
+    "keyTitleCustom": "API-Schlüssel (nur falls der Server einen verlangt)",
+    "keyNote": "Einen Schlüssel bekommst du auf {site}; der Anbieter berechnet dir die Nutzung. Füge ihn hier ein: Er bleibt in deinem Dracosh-Ordner, nur für dich lesbar, und landet nie in Sicherungen oder Exporten. Alternativ setzt du {env} in deiner Shell.",
+    "keyOptional": "Falls der Server einen Schlüssel verlangt, füge ihn ein, sonst drücke Enter.",
+    "needKey": "Füge zuerst den Schlüssel ein (Esc geht zurück).",
+    "keepKey": "Gespeicherten Schlüssel verwenden",
+    "newKey": "Neuen Schlüssel einfügen",
+    "forgetKey": "Gespeicherten Schlüssel löschen",
+    "keyForgotten": "Der gespeicherte Schlüssel ({provider}) ist gelöscht.",
+    "keyFromEnv": "Schlüssel aus {env}.",
+    "localNote": "Verfügbare Modelle unter {url}. Ein kleines Modell ohne Denkphase antwortet am schnellsten.",
+    "modelNote": "Ein kleines, schnelles Modell reicht und kostet wenig.",
+    "noModels": "Keine Modelle zur Auswahl: Gib den Namen eines Modells ein.",
+    "noModelsLocal": "Noch keine Modelle heruntergeladen. Ollama: Führe ollama pull llama3.2 im Terminal aus; LM Studio: Lade eines in der App herunter. Dann komm hierher zurück.",
+    "modelTitle": "Welches Modell?",
+    "loadingModels": "Modelle werden geladen ({provider})…",
+    "typeModel": "Modellnamen eingeben…",
+    "modelNameNote": "Der Name des Modells, wie {provider} ihn schreibt.",
+    "needModel": "Gib zuerst den Modellnamen ein (Esc geht zurück).",
+    "checking": "Prüfe {label}…",
+    "ready": "KI-Hilfe ist an: ✦ {label}",
+    "failedTitle": "{label} funktioniert nicht",
+    "tryAgain": "Noch einmal versuchen",
+    "otherModel": "Anderes Modell wählen",
+    "otherKey": "Anderen Schlüssel verwenden",
+    "errors": {
+      "noKey": "Noch kein Schlüssel für {provider}: Füge ihn unter /settings → KI-Hilfe hinzu oder setze {env}.",
+      "badKey": "{provider} hat den Schlüssel nicht angenommen. Prüfe ihn oder füge einen neuen ein.",
+      "noModel": "{provider} hat kein Modell namens {model}.",
+      "noApi": "Unter {url} antwortet keine OpenAI-kompatible API: Prüfe die Adresse (oft endet sie auf /v1).",
+      "rateLimit": "{provider} meldet zu viele Anfragen: Warte kurz und versuche es erneut.",
+      "offline": "{provider} ist nicht erreichbar ({url}). Bist du online?",
+      "offlineLocal": "Unter {url} antwortet nichts: Läuft {provider}?",
+      "timeout": "{provider} hat zu lange für die Antwort gebraucht.",
+      "server": "{provider} hat ein Problem auf seiner Seite ({status}). Versuche es später noch einmal.",
+      "failed": "{provider} hat die Anfrage abgelehnt ({status}): {detail}",
+      "notJson": "die Antwort war kein JSON"
+    }
   }
 }
