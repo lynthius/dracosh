@@ -444,7 +444,7 @@ export function AddCard({ current, actions, onDone, startNew = false, suggest = 
                 ghost=${help.ghost}
               />
             <//>
-            ${help.status && html`<${Box} paddingLeft=${2}><${Text} color=${help.problem ? theme.warn : theme.accent}>${help.spinner ?? "✦"} ${help.status}<//><//>`}
+            ${help.status && html`<${Box} paddingLeft=${2} marginTop=${1}><${Text} color=${help.problem ? theme.warn : theme.accent}>${help.spinner ?? "✦"} ${help.status}<//><//>`}
             ${preview && html`<${Box} paddingLeft=${2}><${Text} dimColor>${preview}<//><//>`}
             ${duplicate && step === "line" && html`<${Box} paddingLeft=${2}><${Text} color=${theme.warn}>${t("add.duplicateCard", { front: duplicate.front, deck: deck.name })}<//><//>`}
           <//>
