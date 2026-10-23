@@ -285,7 +285,7 @@
       },
       "line": {
         "label": "Neue Karte",
-        "hint": "Vorderseite = Rückseite, z. B. cat = Katze; Mieze // Beispiel  ·  oder füg eine ganze Liste ein"
+        "hint": "Vorderseite = Rückseite, z. B. cat = Katze; Mieze // Beispiel"
       },
       "back": {
         "label": "Rückseite",
@@ -352,12 +352,13 @@
     "languagesSoon": "Sprachen: erkenne ich nach ein paar Karten",
     "learningLine": "Lernsprache: {language}",
     "learningGuess": "nur geraten: → ändern",
-    "lineHintFor": "Vorderseite = Rückseite, z. B. {example}  ·  oder füg eine ganze Liste ein",
+    "lineHintFor": "Vorderseite = Rückseite, z. B. {example}",
+    "pasteHint": "oder füg eine ganze Liste auf einmal ein",
     "ai": {
       "suggested": "Vorschlag von {provider}",
       "thinking": "{provider} schreibt einen Vorschlag…",
       "example": "Beispielsatz von {provider}",
-      "listHint": "✦ ?20 Wörter für die Küche: die KI schlägt eine Liste vor",
+      "listHint": "✦ oder frag die KI nach Karten: beginn mit ?, z. B. ?Küchenwörter",
       "listTitle": "✦ Karten von der KI · {deck}",
       "writing": "{provider} schreibt… bisher {count}",
       "listSummary": {

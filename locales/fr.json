@@ -293,7 +293,7 @@
       },
       "line": {
         "label": "Nouvelle carte",
-        "hint": "recto = verso, par ex. cat = chat; minou // My cat sleeps.  ·  ou colle une liste entière"
+        "hint": "Écris recto = verso, par ex. cat = chat; minou // My cat sleeps."
       },
       "back": {
         "label": "Verso",
@@ -364,12 +364,13 @@
     "languagesSoon": "Langues : je les reconnaîtrai après quelques cartes",
     "learningLine": "Langue apprise : {language}",
     "learningGuess": "ce n’est qu’une supposition : → modifier",
-    "lineHintFor": "recto = verso, par ex. {example}  ·  ou colle une liste entière",
+    "lineHintFor": "Écris recto = verso, par ex. {example}",
+    "pasteHint": "ou colle une liste entière d'un coup",
     "ai": {
       "suggested": "suggestion de {provider}",
       "thinking": "{provider} écrit une suggestion…",
       "example": "phrase d'exemple de {provider}",
-      "listHint": "✦ ?20 mots pour la cuisine : l'IA propose une liste",
+      "listHint": "✦ ou demande à l'IA : commence par ?, par ex. ?mots de cuisine",
       "listTitle": "✦ Cartes de l'IA · {deck}",
       "writing": "{provider} écrit… {count} pour l'instant",
       "listSummary": {

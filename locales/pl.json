@@ -301,7 +301,7 @@
       },
       "line": {
         "label": "Nowa karta",
-        "hint": "przód = tył, np. cat = kot; kotek // My cat sleeps.  ·  albo wklej całą listę"
+        "hint": "Wpisz przód = tył, np. cat = kot; kotek // My cat sleeps."
       },
       "back": {
         "label": "Tył",
@@ -376,12 +376,13 @@
     "languagesSoon": "Języki: rozpoznam po kilku kartach",
     "learningLine": "Język nauki: {language}",
     "learningGuess": "to tylko domysł: → zmień",
-    "lineHintFor": "przód = tył, np. {example}  ·  albo wklej całą listę",
+    "lineHintFor": "Wpisz przód = tył, np. {example}",
+    "pasteHint": "albo wklej całą listę naraz",
     "ai": {
       "suggested": "podpowiedź: {provider}",
       "thinking": "{provider} pisze podpowiedź…",
       "example": "przykładowe zdanie: {provider}",
-      "listHint": "✦ ?20 słówek o kuchni: AI zaproponuje listę",
+      "listHint": "✦ albo poproś AI o karty: zacznij od ?, np. ?słówka z kuchni",
       "listTitle": "✦ Karty od AI · {deck}",
       "writing": "{provider} pisze… na razie {count}",
       "listSummary": {

@@ -490,6 +490,7 @@ export function AddCard({ current, actions, onDone, startNew = false, suggest = 
           <${Box} flexDirection="column" marginTop=${1}>
             <${Text} bold>${t(`add.fields.${fieldLabel}.label`)}<//>
             <${Text} dimColor>${fieldLabel === "line" && suggest?.example ? t("add.lineHintFor", { example: suggest.example }) : t(`add.fields.${fieldLabel}.hint`)}<//>
+            ${fieldLabel === "line" && html`<${Text} dimColor>${t("add.pasteHint")}<//>`}
             ${ai && step === "line" && !editing && html`<${Text} color=${theme.accent} dimColor>${t("add.ai.listHint")}<//>`}
             <${Box} marginTop=${1}>
               <${AnswerInput}
