@@ -319,7 +319,7 @@
     "preview": {
       "pair": "{front} = {back}  ·  po tej karcie wybierzesz, jak pytać",
       "asks": "{prompt} → ?  wpisujesz {answer}",
-      "both": "{forward}  ·  {backward}",
+      "both": "{forward}\n{backward}",
       "cloze": {
         "one": "{prompt}  ·  1 luka",
         "few": "{prompt}  ·  {count} luki",
@@ -376,8 +376,9 @@
     "learningGuess": "to tylko domysł: → zmień",
     "lineHintFor": "przód = tył, np. {example}  ·  albo wklej całą listę",
     "ai": {
-      "suggested": "✦ podpowiedź: {provider}",
-      "thinking": "✦ {provider} myśli…"
+      "suggested": "podpowiedź: {provider}",
+      "thinking": "{provider} pisze podpowiedź…",
+      "example": "przykładowe zdanie: {provider}"
     }
   },
   "quiz": {

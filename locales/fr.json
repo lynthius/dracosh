@@ -311,7 +311,7 @@
     "preview": {
       "pair": "{front} = {back}  ·  ensuite, tu choisis le sens des questions",
       "asks": "{prompt} → ?  tu tapes {answer}",
-      "both": "{forward}  ·  {backward}",
+      "both": "{forward}\n{backward}",
       "cloze": {
         "one": "{prompt}  ·  1 trou",
         "many": "{prompt}  ·  {count} trous",
@@ -364,8 +364,9 @@
     "learningGuess": "ce n’est qu’une supposition : → modifier",
     "lineHintFor": "recto = verso, par ex. {example}  ·  ou colle une liste entière",
     "ai": {
-      "suggested": "✦ suggestion de {provider}",
-      "thinking": "✦ {provider} réfléchit…"
+      "suggested": "suggestion de {provider}",
+      "thinking": "{provider} écrit une suggestion…",
+      "example": "phrase d'exemple de {provider}"
     }
   },
   "quiz": {

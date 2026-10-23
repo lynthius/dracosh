@@ -303,7 +303,7 @@
     "preview": {
       "pair": "{front} = {back}  ·  danach wählst du, wie gefragt wird",
       "asks": "{prompt} → ?  du tippst {answer}",
-      "both": "{forward}  ·  {backward}",
+      "both": "{forward}\n{backward}",
       "cloze": {
         "one": "{prompt}  ·  1 Lücke",
         "other": "{prompt}  ·  {count} Lücken"
@@ -352,8 +352,9 @@
     "learningGuess": "nur geraten: → ändern",
     "lineHintFor": "Vorderseite = Rückseite, z. B. {example}  ·  oder füg eine ganze Liste ein",
     "ai": {
-      "suggested": "✦ Vorschlag von {provider}",
-      "thinking": "✦ {provider} denkt nach…"
+      "suggested": "Vorschlag von {provider}",
+      "thinking": "{provider} schreibt einen Vorschlag…",
+      "example": "Beispielsatz von {provider}"
     }
   },
   "quiz": {

@@ -299,7 +299,7 @@ export function AddCard({ current, actions, onDone, startNew = false, suggest = 
     try {
       await inTurn(() => actions.setDirections(deck.name, chosen));
       setDeck((d) => ({ ...d, directions: chosen, isNew: false }));
-      setMessage(t("add.directionSet", { how: askedAs(sample, chosen) }));
+      setMessage(t("add.directionSet", { how: askedAs(sample, chosen).replace("\n", "  ·  ") })); // one line in a sentence
     } catch (err) {
       setError(err.message);
     }
@@ -402,7 +402,8 @@ export function AddCard({ current, actions, onDone, startNew = false, suggest = 
   const fieldLabel = step === "deck" ? "deck" : step === "back" ? "back" : step === "line" || step === "fix" ? "line" : null;
   // with a suggestion on screen, the card it would make (Tab takes it)
   const parsed = step === "line" && typed.trim() ? parseLine(typed + help.ghost) : null;
-  const preview = !parsed ? null : parsed.cloze || parsed.back.length ? askedAs(parsed, deck.isNew ? null : deck.directions) : parsed.hasBack ? null : t("add.preview.noBack");
+  // while AI help works on the back, it's said instead of "Enter, then the back"
+  const preview = !parsed ? null : parsed.cloze || parsed.back.length ? askedAs(parsed, deck.isNew ? null : deck.directions) : parsed.hasBack || help.status ? null : t("add.preview.noBack");
   const shownPaste = pasted ? withRepeats(pasted.items) : [];
   const ready = shownPaste.filter((item) => !item.dropped && !item.issue).length;
   const narrow = panel < 60;
@@ -442,7 +443,7 @@ export function AddCard({ current, actions, onDone, startNew = false, suggest = 
                 ghost=${help.ghost}
               />
             <//>
-            ${help.status && html`<${Box} paddingLeft=${2}><${Text} color=${help.problem ? theme.warn : undefined} dimColor=${!help.problem}>${help.status}<//><//>`}
+            ${help.status && html`<${Box} paddingLeft=${2}><${Text} color=${help.problem ? theme.warn : theme.accent}>✦ ${help.spinner ? `${help.spinner} ` : ""}${help.status}<//><//>`}
             ${preview && html`<${Box} paddingLeft=${2}><${Text} dimColor>${preview}<//><//>`}
             ${duplicate && step === "line" && html`<${Box} paddingLeft=${2}><${Text} color=${theme.warn}>${t("add.duplicateCard", { front: duplicate.front, deck: deck.name })}<//><//>`}
           <//>
@@ -542,17 +543,19 @@ export function AddCard({ current, actions, onDone, startNew = false, suggest = 
 }
 
 const PAUSE_MS = 350; // typing stops this long before a suggestion is asked for
+const SPIN = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
 const STOPPING = new Set(["noKey", "badKey", "noModel", "offline", "offlineLocal"]); // no point asking again in this /add
 
 // Suggestions for the card being typed: once its front is followed by " = " (or on the back's own
 // field), the model is asked for the back and an example, shown dimmed after what's typed (`ghost`).
 // It goes away as soon as the typing no longer matches it; every key cancels a request in flight.
-// → { ghost, status, problem }
+// The ghost is one part at a time: Tab takes the back, then the example. → { ghost, status, spinner, problem }
 function useAssist({ ai, actions, deck, step, typed, draft, added }) {
   const [answers, setAnswers] = useState({}); // front → suggestion line ("" for nothing usable)
   const [asking, setAsking] = useState(null); // the front asked about now
   const [problem, setProblem] = useState("");
   const context = useRef(null); // { deck, languages, cards } of the deck being added to
+  const [spin, setSpin] = useState(0);
   const stopped = useRef(false);
 
   // what's typed → the front to ask about, and the text the suggestion follows
@@ -595,12 +598,21 @@ function useAssist({ ai, actions, deck, step, typed, draft, added }) {
     };
   }, [front, deck?.name]);
 
+  const waiting = Boolean(ai && front && asking === front);
+  useEffect(() => {
+    if (!waiting) return;
+    const timer = setInterval(() => setSpin((n) => n + 1), 100);
+    return () => clearInterval(timer);
+  }, [waiting]);
+
   if (!ai) return { ghost: "", status: "", problem: false };
   const line = target && answers[target.front] ? target.base + answers[target.front] : "";
-  const ghost = line && line.length > typed.length && line.toLowerCase().startsWith(typed.toLowerCase()) ? line.slice(typed.length) : "";
+  const rest = line && line.length > typed.length && line.toLowerCase().startsWith(typed.toLowerCase()) ? line.slice(typed.length) : "";
+  const cut = rest.indexOf(" // ");
+  const ghost = cut > 0 ? rest.slice(0, cut) : rest; // the back first; its example once the back is in
   const name = providerName(ai.provider);
-  if (problem) return { ghost, status: `✦ ${problem}`, problem: true };
-  if (ghost) return { ghost, status: t("add.ai.suggested", { provider: name }), problem: false };
-  if (front && asking === front) return { ghost, status: t("add.ai.thinking", { provider: name }), problem: false };
+  if (problem) return { ghost, status: problem, problem: true };
+  if (ghost) return { ghost, status: t(ghost.startsWith(" // ") ? "add.ai.example" : "add.ai.suggested", { provider: name }), problem: false };
+  if (waiting) return { ghost, status: t("add.ai.thinking", { provider: name }), spinner: SPIN[spin % SPIN.length], problem: false };
   return { ghost, status: "", problem: false };
 }

@@ -63,15 +63,19 @@ async function openAdd() {
   };
 }
 
-test("after the front and ' = ', the suggestion shows dimmed and Tab takes it", async () => {
+test("after the front and ' = ', the back shows dimmed; Tab takes it, then the example", async () => {
   requests = [];
   const add = await openAdd();
   await add.type("pies = ", 700);
-  assert.match(add.screen(), /pies = dog \/\/ Mój pies śpi\./);
-  assert.match(add.screen(), /✦ suggested by Ollama/);
+  assert.match(add.screen(), /pies = dog\s/);
+  assert.doesNotMatch(add.screen(), /Mój pies/, "the example waits for its turn");
+  assert.match(add.screen(), /✦ suggestion from Ollama/);
   assert.equal(requests.length, 1);
   assert.match(requests[0].messages[1].content, /"front":"kot"/);
   assert.match(requests[0].messages[1].content, /Front: pies$/);
+  await add.type("\t");
+  assert.match(add.screen(), /pies = dog \/\/ Mój pies śpi\./);
+  assert.match(add.screen(), /✦ example sentence from Ollama/);
   await add.type("\t");
   await add.type("\r", 100);
   assert.deepEqual(add.saved.map(({ front, back, example }) => ({ front, back, example })), [{ front: "pies", back: ["dog"], example: "Mój pies śpi." }]);

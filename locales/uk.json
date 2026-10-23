@@ -319,7 +319,7 @@
     "preview": {
       "pair": "{front} = {back}  ·  після цієї картки обереш, як питати",
       "asks": "{prompt} → ?  вводиш {answer}",
-      "both": "{forward}  ·  {backward}",
+      "both": "{forward}\n{backward}",
       "cloze": {
         "one": "{prompt}  ·  1 пропуск",
         "few": "{prompt}  ·  {count} пропуски",
@@ -376,8 +376,9 @@
     "learningGuess": "це лише здогадка: → змінити",
     "lineHintFor": "лицьова = зворот, напр. {example}  ·  або встав цілий список",
     "ai": {
-      "suggested": "✦ підказка: {provider}",
-      "thinking": "✦ {provider} думає…"
+      "suggested": "підказка: {provider}",
+      "thinking": "{provider} пише підказку…",
+      "example": "приклад речення: {provider}"
     }
   },
   "quiz": {
