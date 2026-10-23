@@ -282,7 +282,7 @@
       },
       "line": {
         "label": "New card",
-        "hint": "Type front = back, like kot = cat; kitty // Mój kot śpi."
+        "hint": "kot = cat; kitty // Mój kot śpi."
       },
       "back": {
         "label": "Back",
@@ -349,13 +349,17 @@
     "languagesSoon": "Languages: I'll tell after a few cards",
     "learningLine": "Learning: {language}",
     "learningGuess": "that is a guess: → to change it",
-    "lineHintFor": "Type front = back, like {example}",
-    "pasteHint": "or paste a whole list at once",
+    "ways": {
+      "type": "Type",
+      "paste": "Paste",
+      "pasteWhat": "a whole list, one card per line",
+      "ai": "Ask AI",
+      "aiExample": "?kitchen words"
+    },
     "ai": {
       "suggested": "suggestion from {provider}",
       "thinking": "{provider} is writing a suggestion…",
       "example": "example sentence from {provider}",
-      "listHint": "✦ or ask AI for cards: start with ?, like ?kitchen words",
       "listTitle": "✦ Cards from AI · {deck}",
       "writing": "{provider} is writing… {count} so far",
       "listSummary": {

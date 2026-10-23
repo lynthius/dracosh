@@ -301,7 +301,7 @@
       },
       "line": {
         "label": "Нова картка",
-        "hint": "Пиши: лицьова = зворот, напр. cat = кіт; котик // My cat sleeps."
+        "hint": "cat = кіт; котик // My cat sleeps."
       },
       "back": {
         "label": "Зворот",
@@ -376,13 +376,17 @@
     "languagesSoon": "Мови: визначу після кількох карток",
     "learningLine": "Мова навчання: {language}",
     "learningGuess": "це лише здогадка: → змінити",
-    "lineHintFor": "Пиши: лицьова = зворот, напр. {example}",
-    "pasteHint": "або встав цілий список одразу",
+    "ways": {
+      "type": "Напиши",
+      "paste": "Встав",
+      "pasteWhat": "цілий список, одна картка в рядку",
+      "ai": "Спитай ШІ",
+      "aiExample": "?слова про кухню"
+    },
     "ai": {
       "suggested": "підказка: {provider}",
       "thinking": "{provider} пише підказку…",
       "example": "приклад речення: {provider}",
-      "listHint": "✦ або попроси ШІ про картки: почни з ?, напр. ?слова про кухню",
       "listTitle": "✦ Картки від ШІ · {deck}",
       "writing": "{provider} пише… поки що {count}",
       "listSummary": {

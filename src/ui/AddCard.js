@@ -11,7 +11,7 @@ import { suggestCard, suggestCards } from "../assist.js";
 import { AnswerInput } from "./AnswerInput.js";
 import { Choice, choiceHints } from "./Choice.js";
 import { t } from "../i18n.js";
-import { cutToWidth, html, KeyHints, Text, theme, usePanelWidth } from "./kit.js";
+import { cellWidth, cutToWidth, html, KeyHints, Text, theme, usePanelWidth } from "./kit.js";
 
 const SHOWN_CARDS = 5; // the cards added so far, newest last
 const PASTE_ROWS = 8; // rows of a pasted list on screen at once
@@ -66,6 +66,28 @@ function withRepeats(items) {
 // `suggest` (from the welcome): { name, example }, a deck name to start from and a card in your pair.
 // `into`: straight to adding cards to this deck (+ Add cards in /cards). `ai`: settings.ai, for
 // suggestions while a card is typed (null: none).
+// the ways to add a card, a name and what to type side by side
+function Ways({ example, ai }) {
+  const rows = [
+    { name: t("add.ways.type"), what: example, typed: true },
+    { name: t("add.ways.paste"), what: t("add.ways.pasteWhat") },
+    ai && { name: `✦ ${t("add.ways.ai")}`, what: t("add.ways.aiExample"), typed: true, color: theme.accent }
+  ].filter(Boolean);
+  const width = Math.max(...rows.map((row) => cellWidth(row.name))) + 3;
+  return html`
+    <${Box} flexDirection="column" marginTop=${1}>
+      ${rows.map(
+        (row) => html`
+          <${Box} key=${row.name}>
+            <${Box} width=${width} flexShrink=${0}><${Text} color=${row.color} dimColor=${!row.color}>${row.name}<//><//>
+            <${Text} wrap="truncate-end" color=${row.typed ? row.color : undefined} dimColor=${!row.typed}>${row.what}<//>
+          <//>
+        `
+      )}
+    <//>
+  `;
+}
+
 export function AddCard({ current, actions, onDone, startNew = false, suggest = null, into = null, ai = null }) {
   const panel = usePanelWidth();
   const [step, setStep] = useState("loading"); // loading | pick | deck | line | back | direction | review | fix | saving
@@ -489,9 +511,9 @@ export function AddCard({ current, actions, onDone, startNew = false, suggest = 
         html`
           <${Box} flexDirection="column" marginTop=${1}>
             <${Text} bold>${t(`add.fields.${fieldLabel}.label`)}<//>
-            <${Text} dimColor>${fieldLabel === "line" && suggest?.example ? t("add.lineHintFor", { example: suggest.example }) : t(`add.fields.${fieldLabel}.hint`)}<//>
-            ${fieldLabel === "line" && html`<${Text} dimColor>${t("add.pasteHint")}<//>`}
-            ${ai && step === "line" && !editing && html`<${Text} color=${theme.accent} dimColor>${t("add.ai.listHint")}<//>`}
+            ${fieldLabel === "line"
+              ? html`<${Ways} example=${suggest?.example || t("add.fields.line.hint")} ai=${ai && !editing} />`
+              : html`<${Text} dimColor>${t(`add.fields.${fieldLabel}.hint`)}<//>`}
             <${Box} marginTop=${1}>
               <${AnswerInput}
                 key=${`${fieldLabel}-${field.key}`}
