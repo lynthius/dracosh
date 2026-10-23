@@ -150,3 +150,33 @@ test("the tour doesn't use up the daily cap on new cards", async () => {
   assert.equal(Object.keys(state.items).length, 1);
   assert.equal(newToday(state, Date.now()), 0);
 });
+
+test("decks practised together: their cards mixed, each asked as its own deck asks", async () => {
+  const { emptyLibrary } = await import("../src/library.js");
+  const library = emptyLibrary();
+  seedLibrary(library);
+  const de = createDeck(library, { name: "German", languages: { front: "de", back: "pl" }, directions: "forward" });
+  const es = createDeck(library, { name: "Spanish", languages: { front: "es", back: "pl" }, directions: "both" });
+  addCard(library, de.id, { front: "der Hund", back: ["pies"] });
+  addCard(library, es.id, { front: "el gato", back: ["kot"] });
+  await saveLibrary(library);
+
+  const { words, deck } = await loadWords(["German", "spanish", "Gone"]);
+  assert.deepEqual(deck.mixed, ["German", "Spanish"], "a deck that's gone is left out");
+  assert.deepEqual(words.map((w) => [w.word, w.deck.name, w.directions]), [["der Hund", "German", ["en-pl"]], ["el gato", "Spanish", ["en-pl", "pl-en"]]]);
+  assert.deepEqual((await loadWords("all")).deck.mixed, ["German", "Spanish"], "all of yours, not the tour");
+  assert.equal((await loadWords(["German", "Gone"])).deck.name, "German", "one left: that deck alone");
+
+  const state = { items: {}, newToday: { date: "", count: 0 } };
+  const session = createSession({ loadWords: () => loadWords(["German", "Spanish"]), state, getSettings: () => DEFAULTS, save: async () => {} });
+  const seen = new Map();
+  for (let i = 0; i < 6; i++) {
+    const q = await session.next().catch((err) => (err.empty ? null : Promise.reject(err)));
+    if (!q) break;
+    seen.set(q.word.word, q);
+    await session.answer(q, q.expected[0]);
+  }
+  assert.equal(seen.get("der Hund").label, "German", "the card shows its own deck");
+  assert.equal(seen.get("der Hund").learningLanguage, "de");
+  assert.equal(seen.get("el gato").answerLanguage === "pl" || seen.get("el gato").answerLanguage === "es", true);
+});

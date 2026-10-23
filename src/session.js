@@ -1,7 +1,7 @@
 import { t as say } from "./i18n.js"; // `t` and `text` are taken here (the clock, an answer)
 import { blankGap, plainFront } from "./cardline.js";
 import { ALMOST, closestCandidate, judge } from "./judge.js";
-import { addVacation, applyAnswer, applyCaughtUp, markWorkWaiting, applyOverrule, calendarMonth, cancelVacations, ensureProgress, markBadgesSeen, missedOn, recordMiss, snapshot, undoMiss, unseenBadges, vacationInfo } from "./progress.js";
+import { addVacation, applyAnswer, applyCaughtUp, markWorkWaiting, applyOverrule, calendarMonth, cancelVacations, dropElement, ensureProgress, markBadgesSeen, missedOn, recordMiss, snapshot, undoMiss, unseenBadges, vacationInfo } from "./progress.js";
 import { describeDue, grade, intervalDays, itemKey, nextDueAt, pickNext, Rating, ratingFor, startOfTomorrow } from "./scheduler.js";
 import { recordAnswer, saveState, STATE_VERSION } from "./store.js";
 import { createTipDeck } from "./tips.js";
@@ -98,6 +98,7 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
     }
     lastNoteId = item.word.noteId;
     lastWrong = null;
+    const from = item.word.deck ?? deck; // decks practised together: the card's own deck
 
     const forward = item.direction === "en-pl";
     const gap = item.direction.startsWith("c") ? Number(item.direction.slice(1)) - 1 : null;
@@ -110,15 +111,15 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
     return {
       word: item.word,
       direction: item.direction,
-      label: labelOf(deck),
+      label: labelOf(from),
       prompt,
       expected,
       // a cloze card's back is a hint under the sentence ("Cieszę się na to")
       context: gap !== null ? item.word.translations.join(" / ") : "",
       // what the answer is written in, when the deck's languages are known: its own spellings count
-      answerLanguage: (forward ? deck?.languages?.back : deck?.languages?.front) ?? null,
-      promptLanguage: (forward ? deck?.languages?.front : deck?.languages?.back) ?? null,
-      learningLanguage: deck?.learning?.lang ?? null,
+      answerLanguage: (forward ? from?.languages?.back : from?.languages?.front) ?? null,
+      promptLanguage: (forward ? from?.languages?.front : from?.languages?.back) ?? null,
+      learningLanguage: from?.learning?.lang ?? null,
       wordCount: words.length,
       tour: Boolean(deck?.tour) // the tour marks what to type with `backticks`
     };
@@ -253,6 +254,23 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
     await save(state);
   }
 
+  // the progress of these cards, as the trash keeps it with a deleted deck: how well each direction is
+  // known, answers you declared right, directions resting
+  function progressOf(cardIds) {
+    const ids = new Set(cardIds);
+    const mine = (key) => ids.has(key.slice(0, key.lastIndexOf(":")));
+    const pick = (object) => Object.fromEntries(Object.entries(object ?? {}).filter(([key]) => mine(key)));
+    return structuredClone({ items: pick(state.items), accepted: pick(state.accepted), dormant: (state.dormant ?? []).filter(mine) });
+  }
+
+  // a deck back from the trash: its progress with it
+  async function restoreProgress({ items = {}, accepted = {}, dormant = [] } = {}) {
+    Object.assign(state.items, items);
+    if (Object.keys(accepted).length) state.accepted = { ...state.accepted, ...accepted };
+    if (dormant.length) state.dormant = [...new Set([...(state.dormant ?? []), ...dormant])];
+    await save(state);
+  }
+
   // A deck is asked another way now (/decks): the directions it no longer asks rest. Their progress stays
   // for when they're back, but doesn't count against mastering the card.
   async function setDirections(cardIds, directions) {
@@ -292,8 +310,22 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
   // the hatching intro plays once ever: on a brand-new state that has never answered anything
   const isFirstRun = () => !state.hatched && Object.keys(state.items).length === 0;
 
+  // the welcome follows the hatching (languages, then a way to start); `welcome` is its step to come
+  // back to, so a welcome left halfway goes on there next time
   async function markHatched() {
     state.hatched = true;
+    state.welcome = "language";
+    await save(state);
+  }
+  const welcomeStep = () => state.welcome ?? null;
+  async function setWelcomeStep(step) {
+    if (step) state.welcome = step;
+    else delete state.welcome;
+    await save(state);
+  }
+
+  async function defaultLook() {
+    dropElement(state, now());
     await save(state);
   }
 
@@ -315,5 +347,5 @@ export function createSession({ loadWords, loadAllWords, state, getSettings, sav
     await settleDay(); // nothing askable after all (a direction switched off): the quiet stretch goes on
   }
 
-  return { totals, next, answer, workAdded, reveal, selfGrade, setDirections, forgetKeys, overrule, canOverrule, wrongAnswer, stats, month, missed, nextTip, pause, isFirstRun, markHatched, openBadges, forget, reset, inTour: () => inTour };
+  return { totals, next, answer, workAdded, reveal, selfGrade, setDirections, forgetKeys, progressOf, restoreProgress, overrule, canOverrule, wrongAnswer, stats, month, missed, nextTip, pause, isFirstRun, markHatched, welcomeStep, setWelcomeStep, openBadges, defaultLook, forget, reset, inTour: () => inTour };
 }

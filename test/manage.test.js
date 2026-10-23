@@ -7,7 +7,7 @@ import { test } from "node:test";
 process.env.DRACOSH_HOME = mkdtempSync(join(tmpdir(), "dracosh-"));
 const { loadLibrary, saveLibrary } = await import("../src/store.js");
 const { seedLibrary, STARTER_DECK } = await import("../src/starter.js");
-const { addCardTo, addCardsTo, allDecks, existingCard, languagesOf, ownDecks, setDirections, setLanguages, startDeck, updateCardIn } = await import("../src/manage.js");
+const { addCardTo, addCardsTo, allDecks, existingCard, languagesOf, ownDecks, setDirections, setLanguages, startDeck, startFirstWords, updateCardIn, previewImport, importCards, deleteDeck, restoreFromTrash, renameDeck, trash, cardsIn, deleteCards, mergeDecks } = await import("../src/manage.js");
 const { listBackups } = await import("../src/backup.js");
 const { loadWords } = await import("../src/words.js");
 const { createSession } = await import("../src/session.js");
@@ -157,4 +157,108 @@ test("a deck's languages are guessed from its cards until you set them; null goe
   await assert.rejects(setLanguages("Niemiecki", { front: ["de"], back: "pl" }), "only a code, never something that reads like one");
   assert.deepEqual(noHome(await setLanguages("Niemiecki", { front: "DE", back: " pl " })), { front: "de", back: "pl", guessed: false, learning: { side: "back", lang: "pl", sure: true } });
   assert.equal((await setLanguages("Niemiecki", null)).guessed, true);
+});
+
+test("the welcome's first words: a deck for the pair, the new word shown, in place of the tour", async () => {
+  const library = await loadLibrary();
+  library.decks = [];
+  library.cards = [];
+  seedLibrary(library);
+  await saveLibrary(library);
+  const tourIds = library.cards.map((c) => c.id);
+
+  const { deck, removed } = await startFirstWords({ home: "pl", learning: "de" });
+  assert.deepEqual(removed.sort(), [...tourIds].sort());
+  assert.equal(deck.name, "German: first words");
+  const after = await loadLibrary();
+  const mine = after.decks.find((d) => d.name === deck.name);
+  assert.deepEqual(mine.languages, { front: "de", back: "pl" });
+  assert.equal(mine.directions, "forward", "the word you're learning shown, yours typed");
+  const cards = after.cards.filter((c) => c.deckId === mine.id);
+  assert.equal(cards.length, 30);
+  assert.deepEqual(cards.find((c) => c.front === "das Ei").back, ["jajko", "jajo"]);
+  assert.equal(after.decks.some((d) => d.tour), false);
+  assert.equal((await languagesOf(deck.name)).learning.lang, "de");
+
+  const again = await startFirstWords({ home: "pl", learning: "de" });
+  assert.equal(again.deck.id, mine.id, "taken twice: the same deck, not a copy");
+  assert.equal((await loadLibrary()).cards.length, 30);
+
+  const own = await loadLibrary();
+  own.decks.push({ id: "dmine", name: "Spanish: first words", type: "translation", languages: null, directions: "forward", created: 1 });
+  await saveLibrary(own);
+  const spanish = await startFirstWords({ home: "pl", learning: "es" });
+  assert.equal(spanish.deck.name, "Spanish: first words 2", "a deck of yours with that name stays yours");
+  assert.equal((await loadLibrary()).cards.filter((c) => c.deckId === spanish.deck.id).length, 30);
+});
+
+test("/import: a preview changes nothing, the import takes a backup and adds to a deck of yours", async () => {
+  const before = await loadLibrary();
+  const target = before.decks.find((d) => !d.tour);
+  const count = before.cards.filter((c) => c.deckId === target.id).length;
+  const source = { text: "Stadt = miasto\nHund = pies\n", list: null };
+  const choices = { deckName: target.name, directions: {}, split: false };
+  const plan = await previewImport(source, choices);
+  assert.equal(plan.decks[0].cards, count, "a deck there already says how many cards it has");
+  assert.deepEqual(plan.decks[0].items.map((item) => item.kind), ["new", "new"]);
+  assert.equal((await loadLibrary()).cards.length, before.cards.length, "a preview saves nothing");
+
+  const backups = (await listBackups()).length;
+  const result = await importCards(source, choices);
+  assert.equal(result.added, 2);
+  assert.equal(result.backedUp, true);
+  assert.equal((await listBackups()).length, backups + 1);
+  assert.equal((await loadLibrary()).cards.filter((c) => c.deckId === target.id).length, count + 2);
+});
+
+test("/decks → Delete: a backup, the deck and its progress into the trash; the last deck leaves the tour", async () => {
+  const library = await loadLibrary();
+  library.decks = [];
+  library.cards = [];
+  delete library.trash;
+  await saveLibrary(library);
+  await startDeck({ name: "Solo" });
+  const { card } = await addCardTo("Solo", { front: "kot", back: ["cat"] });
+  const done = await deleteDeck("Solo", (ids) => ({ items: { [`${ids[0]}:en-pl`]: { due: 5 } } }));
+  assert.deepEqual(done.cardIds, [card.id]);
+  assert.equal(done.next, STARTER_DECK, "nothing left: the tour is back");
+  const [newest] = await listBackups();
+  assert.deepEqual([newest.reason, newest.cards], ["before-delete", 1], "backed up with the deck still in it");
+  const [entry] = await trash();
+  assert.deepEqual([entry.name, entry.cards], ["Solo", 1]);
+
+  const back = await restoreFromTrash(entry.id);
+  assert.equal(back.deck, "Solo");
+  assert.deepEqual(back.progress.items, { [`${card.id}:en-pl`]: { due: 5 } });
+  assert.ok(back.removed.length > 0, "the tour gives way to it again");
+  assert.deepEqual((await loadLibrary()).decks.map((d) => d.name), ["Solo"]);
+  assert.deepEqual(await trash(), []);
+  assert.equal((await renameDeck("Solo", "Duo")).name, "Duo");
+});
+
+test("/decks → Merge: the cards move with their progress, the emptied deck goes to the trash with what was there", async () => {
+  await startDeck({ name: "Into" });
+  await addCardTo("Into", { front: "dom", back: ["house"] });
+  await startDeck({ name: "From" });
+  await addCardTo("From", { front: "dom", back: ["home"] });
+  await addCardTo("From", { front: "las", back: ["forest"] });
+  const done = await mergeDecks("From", "Into", (ids) => ({ items: Object.fromEntries(ids.map((id) => [`${id}:en-pl`, { due: 1 }])) }));
+  assert.equal(done.moved.length, 1);
+  assert.equal(done.left.length, 1);
+  assert.deepEqual((await cardsIn("Into")).map((c) => c.front).sort(), ["dom", "las"]);
+  const [entry] = await trash();
+  assert.deepEqual([entry.name, entry.cards], ["From", 1]);
+
+  const undone = await restoreFromTrash(entry.id);
+  assert.equal(undone.deck, "From");
+  assert.deepEqual((await cardsIn("From")).map((c) => c.front).sort(), ["dom", "las"], "undoing a merge takes the moved cards back");
+  assert.deepEqual((await cardsIn("Into")).map((c) => c.front), ["dom"]);
+  await mergeDecks("From", "Into");
+
+  const [las] = (await cardsIn("Into")).filter((c) => c.front === "las");
+  await deleteCards("Into", [las.id]);
+  const [cardEntry] = await trash();
+  assert.deepEqual([cardEntry.kind, cardEntry.card.front], ["cards", "las"]);
+  const back = await restoreFromTrash(cardEntry.id);
+  assert.deepEqual([back.kind, back.deck, back.cards], ["cards", "Into", 1]);
 });

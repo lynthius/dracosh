@@ -2,7 +2,10 @@
   "commands": {
     "hint": "Noch einen Buchstaben (die Karte kommt früher wieder)",
     "add": "Karten hinzufügen oder einen neuen Stapel anlegen",
+    "import": "Karten aus Anki, einer CSV- oder Textdatei importieren",
+    "cards": "Karten des Stapels durchsuchen, korrigieren, verschieben oder löschen",
     "decks": "Stapel wechseln oder einen neuen anlegen",
+    "trash": "Gelöschte Stapel und Karten: zurückholen",
     "settings": "Sprache, Rhythmus, Intervall, Ruhezeiten, Ton, Ziel, Tipps",
     "stats": "Serie, Monatskalender und Abzeichen im Überblick",
     "badges": "Alle Abzeichen und wie man sie freischaltet",
@@ -76,14 +79,28 @@
     "addName": "enter anlegen · esc abbrechen",
     "confirm": "{yes} ja · {no} nein",
     "languagePick": "tippen zum Suchen · ↑/↓ wählen · enter bestätigen · ← zurück",
-    "choiceLeft": "{choose} · ← zurück"
+    "choiceLeft": "{choose} · ← zurück",
+    "importPath": "enter Datei lesen · esc abbrechen",
+    "importDone": "enter weiter",
+    "importName": "enter weiter · esc zurück",
+    "rename": "enter speichern · esc abbrechen",
+    "undo": "u rückgängig",
+    "trash": "↑/↓ wählen · enter zurückholen · esc zurück",
+    "decksTogether": "Leertaste zusammen üben · → Einstellungen · {choose}",
+    "cards": "tippen zum Suchen · ↑/↓ wählen · enter öffnen · esc zurück",
+    "tabPart": "Tab nächster Teil",
+    "decksMixing": "Leertaste dazu/weg · enter nur dieser Stapel · → Einstellungen · esc fertig"
   },
   "settings": {
     "title": "Einstellungen",
     "rows": {
       "language": {
-        "label": "Sprache",
+        "label": "App-Sprache",
         "hint": "die Sprache von Dracosh; die Tour wechselt mit"
+      },
+      "homeLanguage": {
+        "label": "Deine Sprache",
+        "hint": "die Sprache, die du sprichst: daran sieht Dracosh, welche Kartenseite für dich neu ist"
       },
       "rhythm": {
         "label": "Rhythmus",
@@ -121,6 +138,10 @@
         "label": "Ruhezeiten",
         "hint": "in diesen Stunden keine Fragen, Töne oder Hinweise"
       },
+      "dragonLook": {
+        "label": "Aussehen des Drachen",
+        "hint": "sein Element vom Würfel; Enter holt den grünen Standarddrachen zurück"
+      },
       "reset": {
         "label": "Zurücksetzen",
         "hint": "neu anfangen: nur der Fortschritt oder alles (vorher wird gesichert)"
@@ -142,7 +163,14 @@
       "session": "Sitzung",
       "session-10": "Sitzung · 10 Karten",
       "session-20": "Sitzung · 20 Karten"
-    }
+    },
+    "notSet": "nicht gewählt",
+    "homeTitle": "Welche Sprache sprichst du?",
+    "lookQuestion": "Zurück zum grünen Standarddrachen?",
+    "lookNote": "Sein Element ({element}) ist dann für immer weg: Der Würfel rollt nie wieder.",
+    "lookYes": "Standardaussehen",
+    "lookNo": "Element behalten",
+    "lookDropped": "Dein Drache sieht wieder aus wie am Anfang."
   },
   "count": {
     "cards": {
@@ -201,7 +229,44 @@
     "languagesRow": "Sprachen",
     "detectRow": "Aus den Karten erkennen",
     "learningRow": "Lernsprache",
-    "learningShort": "Lernsprache: {language}"
+    "learningShort": "Lernsprache: {language}",
+    "renameRow": "Umbenennen",
+    "deleteRow": "Löschen",
+    "renameTitle": "Neuer Name für „{deck}“",
+    "renamed": "„{from}“ heißt jetzt „{to}“.",
+    "deleteQuestion": "Den Stapel „{deck}“ mit {cards} löschen?",
+    "deleteNote": "Er kommt mit seinem Fortschritt in den Papierkorb: /trash holt ihn {days} Tage lang zurück.",
+    "deleteYes": "Löschen",
+    "deleteNo": "Behalten",
+    "deleted": "„{deck}“ gelöscht. Drück u, um ihn zurückzuholen, oder find ihn {days} Tage lang in /trash.",
+    "restored": "„{deck}“ ist zurück, mit seinem Fortschritt.",
+    "allLabel": "Alle Stapel",
+    "mixLabel": {
+      "one": "{count} Stapel",
+      "other": "{count} Stapel"
+    },
+    "allRow": "Alle Stapel",
+    "togetherNow": {
+      "one": "Du übst {count} Stapel zusammen.",
+      "other": "Du übst {count} Stapel zusammen: ihre Karten kommen gemischt."
+    },
+    "aloneNow": "Jetzt nur noch „{deck}“.",
+    "mergeRow": "Mit anderem Stapel zusammenführen",
+    "mergeTitle": "„{deck}“ zusammenführen mit …",
+    "mergeQuestion": "{cards} aus „{from}“ nach „{into}“ verschieben?",
+    "mergeNote": "Ihr Fortschritt kommt mit. „{from}“ kommt {days} Tage in den Papierkorb, mit allen Karten, die „{into}“ schon hat.",
+    "mergeYes": "Zusammenführen",
+    "merged": {
+      "one": "1 Karte aus „{from}“ nach „{into}“ verschoben.",
+      "other": "{count} Karten aus „{from}“ nach „{into}“ verschoben."
+    },
+    "mergedLeft": {
+      "one": "1 war schon da: sie liegt mit dem Stapel im Papierkorb.",
+      "other": "{count} waren schon da: sie liegen mit dem Stapel im Papierkorb."
+    },
+    "onlyOne": "„{deck}“ ist der einzige geübte Stapel. Markier mit der Leertaste einen weiteren, um ihn dazuzunehmen.",
+    "mergeNo": "Nicht zusammenführen",
+    "mergeLanguages": "Achtung: „{from}“ ist {fromPair}, „{into}“ ist {intoPair}."
   },
   "add": {
     "fields": {
@@ -278,7 +343,8 @@
     "languagesNow": "Sieht nach {pair} aus. Falls nicht, in /decks → korrigieren.",
     "languagesSoon": "Sprachen: erkenne ich nach ein paar Karten",
     "learningLine": "Lernsprache: {language}",
-    "learningGuess": "nur geraten: → ändern"
+    "learningGuess": "nur geraten: → ändern",
+    "lineHintFor": "Vorderseite = Rückseite, z. B. {example}  ·  oder füg eine ganze Liste ein"
   },
   "quiz": {
     "youWrote": "deine Antwort: ",
@@ -347,7 +413,8 @@
         "one": "in etwa einem Monat",
         "other": "in etwa {count} Monaten"
       }
-    }
+    },
+    "previewNoImport": "Die Vorschau kann keine Karten importieren; starte dafür dracosh."
   },
   "dragon": {
     "stages": {
@@ -645,7 +712,7 @@
     "hatched": "Dein Drache ist geschlüpft!",
     "line": "Beantworte Karten, damit er glücklich bleibt. Er wächst mit deiner Serie.",
     "keysSkip": "beliebige Taste zum Überspringen",
-    "keysStart": "beliebige Taste zum Starten"
+    "keysStart": "beliebige Taste zum Weitermachen"
   },
   "evolution": {
     "evolved": "Dein Begleiter hat sich entwickelt: {name}!",
@@ -716,7 +783,8 @@
       "progressEntry": "eine Karte ohne Wiederholungstermin",
       "streak": "Serie und Abzeichen sind nicht lesbar"
     },
-    "slashSwitch": "„{text}“ müsste getippt werden, und im Quiz öffnet / die Befehle. Ändere zuerst diese Karte."
+    "slashSwitch": "„{text}“ müsste getippt werden, und im Quiz öffnet / die Befehle. Ändere zuerst diese Karte.",
+    "notInTrash": "Dieser Stapel ist nicht mehr im Papierkorb."
   },
   "cli": {
     "help": "Dracosh: ein Vokabel- und Quiztrainer für dein Terminal\n\nAufruf: dracosh [Optionen]\n        dracosh import <Datei|->  Karten aus einer Datei hinzufügen (.txt, .csv, .tsv, ein Anki-Paket .apkg oder .colpkg, Textexporte aus Anki oder Quizlet, eine .json-Sicherung), oder „-“ für die Standardeingabe\n        dracosh export <Datei>    deine Stapel als .apkg (Anki), .txt, .tsv, .csv oder .json (alles) speichern\n        dracosh restore [Nummer]  deine Sicherungen auflisten oder eine zurückholen\n\n  --deck <Name>    diesen Stapel abfragen, nur dieses Mal (sonst den in /decks gewählten)\n                   bei import und export: der Stapel zum Füllen oder Speichern\n  --every <Zeit>   Abstand zwischen Fragen: 30s, 10m, 1h (Standard: {interval})\n  --no-sound       Töne ausschalten\n  --volume <0-1>   Lautstärke (Standard: {volume})\n  --stats          Fortschritt ausgeben und beenden\n  --data           zeigen, wo Karten, Fortschritt und Sicherungen liegen\n  --preview        alle Animationen und Bildschirme mit erfundenen Daten ansehen (nichts wird gespeichert)\n  --update         import: vorhandene Karten übernehmen die Antworten aus der Datei (sonst wird gefragt)\n  --split          import: eine Antwort mit mehreren („cat, kitty“) wird zu einzelnen Antworten\n  --separator <s>  import: was die Spalten trennt: tab, comma, semicolon, pipe, colon, space oder ein Zeichen\n  --encoding <e>   import: eine Datei, die nicht UTF-8 ist, z. B. windows-1252\n  --anki           Import oder Export: direkt aus einem laufenden Anki oder hinein (Erweiterung AnkiConnect)\n  -y, --yes        Import, Export oder Wiederherstellen ohne Nachfrage\n  -h, --help       diese Hilfe zeigen\n\nOptionen ändern deine gespeicherten Einstellungen nur für diesen Start. Die gespeicherten änderst du in /settings.\n\nWährenddessen: Enter schickt ab (leer zeigt es die Antwort, dann 1 oder 2), „/“ öffnet das Befehlsmenü (/add, /decks, /settings, /stats, /help…),\nEsc beendet (löscht vorher die Eingabe). Strg+C geht auch.\nZwischen Karten: Enter fragt sofort die nächste, q beendet. /help erklärt den Rest.",
@@ -933,6 +1001,10 @@
       "hatch": {
         "label": "Schlüpfen",
         "hint": "das Intro beim ersten Start"
+      },
+      "welcome": {
+        "label": "Willkommen",
+        "hint": "Sprachen und der Einstieg"
       },
       "mascot": {
         "label": "Maskottchen-Labor",
@@ -1327,5 +1399,121 @@
     "badUrl": "DRACOSH_ANKI_URL ist keine Adresse, die Dracosh nutzen kann ({detail}): Sie sieht aus wie http://127.0.0.1:8765.",
     "noDeck": "Anki hat keinen Stapel „{detail}“ mehr.",
     "notImported": "Anki hat die Karten nicht angenommen: Nichts wurde gesendet."
+  },
+  "welcome": {
+    "languageTitle": "In welcher Sprache soll Dracosh sprechen?",
+    "languageNote": "Ein paar kurze Fragen, dann geht's los. Die Sprache kannst du später in /settings ändern.",
+    "homeTitle": "Welche Sprache sprichst du?",
+    "homeNote": "So kann Dracosh neue Wörter von ihren Übersetzungen unterscheiden.",
+    "learningTitle": "Welche Sprache lernst du?",
+    "learningNote": "Wähl für den Anfang eine; Stapel in anderen Sprachen kannst du jederzeit hinzufügen. Du lernst keine Sprache? Wähl „Etwas anderes“ am Ende der Liste.",
+    "notLanguage": "Etwas anderes (Definitionen, Fakten …)",
+    "startTitle": "Wie möchtest du anfangen?",
+    "startNote": "Du kannst das später ändern: /decks wechselt jederzeit den Stapel.",
+    "start": {
+      "words": {
+        "one": "Mit {count} Alltagswort anfangen",
+        "other": "Mit {count} Alltagswörtern anfangen"
+      },
+      "wordsNote": "{language} → {home}",
+      "tour": "Zeig mir, wie es geht",
+      "tourNote": {
+        "one": "{count} kurze Karte dazu, wie Dracosh funktioniert",
+        "other": "{count} kurze Karten dazu, wie Dracosh funktioniert"
+      },
+      "import": "Ich habe schon Karten",
+      "importNote": "aus Anki, einer CSV- oder Textdatei",
+      "own": "Eigenen Stapel anlegen",
+      "ownNote": "Karten eintippen oder einfügen",
+      "noWords": "Fertige Wörter gibt es für {languages}. Für {language} legst du einen eigenen Stapel an.",
+      "noWordsHome": "Fertige Wörter gibt es für Paare aus diesen Sprachen: {languages}. {language} ist noch nicht dabei, also fang mit einem eigenen Stapel an."
+    },
+    "firstWordsDeck": "{language}: erste Wörter",
+    "suggested": "Vorschlag"
+  },
+  "importScreen": {
+    "title": "Karten importieren",
+    "pathLabel": "Welche Datei?",
+    "pathHint": "Ein Anki-Paket (.apkg), eine CSV- oder Textdatei. Zieh die Datei hierher, um ihren Pfad einzufügen.",
+    "needPath": "Gib den Pfad der Datei ein oder zieh sie hierher.",
+    "reading": "Datei wird gelesen…",
+    "deckLabel": "In welchen Stapel sollen diese Karten?",
+    "splitYes": "Ja, jede ist eine richtige Antwort",
+    "splitNo": "Nein, so lassen, wie sie sind",
+    "add": {
+      "one": "1 Karte hinzufügen",
+      "other": "{count} Karten hinzufügen"
+    },
+    "addUpdate": {
+      "one": "{cards} hinzufügen und 1 aktualisieren",
+      "other": "{cards} hinzufügen und {count} aktualisieren"
+    },
+    "update": {
+      "one": "1 Karte aktualisieren",
+      "other": "{count} Karten aktualisieren"
+    },
+    "cancel": "Abbrechen, nichts ändern",
+    "changedNote": "Eine aktualisierte Karte übernimmt die Antworten aus der Datei und behält ihren Fortschritt.",
+    "saving": "Wird gespeichert…",
+    "practise": "Als Nächstes: {deck}.",
+    "backup": "Das ist eine vollständige Dracosh-Sicherung. Schließ Dracosh und hol sie zurück mit: dracosh import {file}",
+    "notUtf8": "{file} ist nicht als UTF-8 gespeichert. Speichere die Datei als UTF-8 (in Excel: CSV UTF-8) oder importiere sie mit dracosh import, der Befehl liest auch andere Kodierungen (--encoding).",
+    "newDeck": "Neuer Stapel: {deck}",
+    "otherName": "Anderer Name …",
+    "fromFile": "Aus der Datei:",
+    "slashLeft": {
+      "one": "1 Karte wurde ausgelassen: eine Antwort zum Eintippen beginnt mit /.",
+      "other": "{count} Karten wurden ausgelassen: eine Antwort zum Eintippen beginnt mit /."
+    },
+    "undo": "Rückgängig machen: Dracosh beenden, dann dracosh restore 1 ausführen (die eben angelegte Sicherung).",
+    "close": "Schließen",
+    "problemLine": "Zeile {line}: {text}  ({issue})",
+    "problemNote": "{text}  ({issue})",
+    "empty": "Diese Datei enthält keine Karten."
+  },
+  "trash": {
+    "title": "Papierkorb",
+    "note": "Gelöschte Stapel und Karten bleiben hier {days} Tage, mit ihrem Fortschritt.",
+    "row": "{cards} · gelöscht am {deleted} · bis {until}",
+    "empty": "Der Papierkorb ist leer.",
+    "restored": "„{deck}“ ist zurück, mit seinem Fortschritt.",
+    "cardsRow": "aus „{deck}“ · gelöscht am {deleted} · bis {until}",
+    "cardsRestored": {
+      "one": "1 Karte ist zurück in „{deck}“.",
+      "other": "{count} Karten sind zurück in „{deck}“."
+    },
+    "skipped": {
+      "one": "1 bleibt im Papierkorb: Der Stapel hat schon eine Karte mit derselben Vorderseite.",
+      "other": "{count} bleiben im Papierkorb: Der Stapel hat schon Karten mit denselben Vorderseiten."
+    }
+  },
+  "cards": {
+    "title": {
+      "one": "{deck} · {count} Karte",
+      "other": "{deck} · {count} Karten"
+    },
+    "addRow": "+ Karten hinzufügen",
+    "undoRow": "↶ „{card}“ zurückholen",
+    "editRow": "Korrigieren",
+    "moveRow": "In einen anderen Stapel verschieben",
+    "deleteRow": "Löschen",
+    "editTitle": "Karte korrigieren · {deck}",
+    "moveTitle": "„{card}“ verschieben nach …",
+    "deleteQuestion": "Die Karte „{card}“ löschen?",
+    "deleteNote": "Sie kommt mit ihrem Fortschritt in den Papierkorb: /trash holt sie {days} Tage lang zurück.",
+    "deleted": "Karte „{card}“ gelöscht. Sie bleibt {days} Tage im Papierkorb.",
+    "restored": "Die Karte „{card}“ ist zurück.",
+    "moved": "Karte „{card}“ nach „{deck}“ verschoben.",
+    "alreadyThere": "„{deck}“ hat schon eine Karte mit dieser Vorderseite.",
+    "noOtherDeck": "Du hast keinen anderen Stapel, in den du sie verschieben kannst.",
+    "noMatch": "Keine Karte passt zu „{query}“.",
+    "found": {
+      "one": "1 Karte gefunden",
+      "other": "{count} Karten gefunden"
+    },
+    "tourNot": "Die Karten der Tour lassen sich nicht ändern. /add legt einen eigenen Stapel an.",
+    "editHint": "Vorderseite = Rückseite; andere Antwort // Beispiel",
+    "whichDeck": "Karten welches Stapels?",
+    "deleteNo": "Behalten"
   }
 }

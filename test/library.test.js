@@ -133,3 +133,75 @@ test("languages that aren't a pair at all are guessed again, never a damaged lib
     assert.equal(upgradeLibrary({ version: 2, decks: [{ id: "d1", name: "X", languages }], cards: [] }).decks[0].languages, null);
   }
 });
+
+test("a deleted deck waits in the trash with its cards and progress, and comes back whole", async () => {
+  const { addCard, createDeck, emptyLibrary, emptyOldTrash, removeDeck, renameDeck, restoreDeck, trashCards, trashDeck, upgradeLibrary, TRASH_DAYS } = await import("../src/library.js");
+  const library = emptyLibrary();
+  const deck = createDeck(library, { name: "Spanish" });
+  const { card } = addCard(library, deck.id, { front: "perro", back: ["dog"] });
+  const progress = { items: { [`${card.id}:en-pl`]: { due: 1 } } };
+  const entry = trashDeck(library, deck.id, { progress, now: 1000 });
+  assert.deepEqual([library.decks.length, library.cards.length, library.trash.length], [0, 0, 1]);
+  const saved = upgradeLibrary(JSON.parse(JSON.stringify(library))).trash;
+  assert.deepEqual([saved[0].id, saved[0].cards, saved[0].progress.items], [entry.id, library.trash[0].cards, progress.items], "the trash is saved with the library");
+  const odd = upgradeLibrary({ ...JSON.parse(JSON.stringify(library)), trash: [{ ...library.trash[0], progress: { items: [1], dormant: "abc" } }] }).trash[0].progress;
+  assert.deepEqual(odd, { items: {}, accepted: {}, dormant: [] }, "progress edited into something odd comes back as none");
+
+  createDeck(library, { name: "spanish" });
+  const { deck: back, entry: from } = restoreDeck(library, entry.id);
+  assert.equal(back.name, "Spanish 2", "a deck with its name now: numbered");
+  assert.equal(back.id, deck.id);
+  assert.deepEqual(library.cards.map((c) => c.id), [card.id]);
+  assert.deepEqual(from.progress, progress);
+  assert.equal("trash" in library, false);
+  assert.throws(() => restoreDeck(library, entry.id), /isn't in the trash/);
+  const card2 = addCard(library, back.id, { front: "gato", back: ["cat"] }).card;
+  const cardsEntry = trashCards(library, [card2.id]);
+  const deckEntry = trashDeck(library, back.id);
+  restoreDeck(library, cardsEntry.id); // its deck is gone: it comes back in one of its own, under the old id
+  const again = restoreDeck(library, deckEntry.id).deck;
+  assert.notEqual(again.id, back.id, "the old id is taken now: a new one");
+  assert.ok(library.cards.filter((c) => c.deckId === again.id).length === 1);
+  removeDeck(library, again.id);
+
+  trashDeck(library, back.id, { now: 0 });
+  assert.equal(emptyOldTrash(library, (TRASH_DAYS - 1) * 86_400_000), false);
+  assert.equal(emptyOldTrash(library, TRASH_DAYS * 86_400_000), true, "kept for TRASH_DAYS, then gone");
+  assert.equal("trash" in library, false);
+
+  const other = library.decks[0];
+  assert.throws(() => renameDeck(library, other.id, " "), /needs a name/);
+  assert.equal(renameDeck(library, other.id, " Español ").name, "Español");
+  createDeck(library, { name: "Verbs" });
+  assert.throws(() => renameDeck(library, other.id, "verbs"), /already a deck/);
+  assert.equal(renameDeck(library, other.id, "español").name, "español", "its own name in other letters is fine");
+});
+
+test("cards move between decks unless the front is there already; deleted cards go back into their deck", async () => {
+  const { addCard, createDeck, emptyLibrary, moveCards, removeDeck, restoreDeck, trashCards } = await import("../src/library.js");
+  const library = emptyLibrary();
+  const a = createDeck(library, { name: "A" });
+  const b = createDeck(library, { name: "B" });
+  const { card: dog } = addCard(library, a.id, { front: "pies", back: ["dog"] });
+  const { card: cat } = addCard(library, a.id, { front: "kot", back: ["cat"] });
+  addCard(library, b.id, { front: "Kot!", back: ["cat"] });
+  assert.deepEqual(moveCards(library, [dog.id, cat.id], b.id), { moved: [dog.id], duplicates: [cat.id] }, "the same front, punctuation aside, stays");
+  assert.equal(dog.deckId, b.id);
+
+  const entry = trashCards(library, [cat.id], { progress: { items: { x: 1 } } });
+  assert.equal(library.cards.some((c) => c.id === cat.id), false);
+  assert.equal(entry.kind, "cards");
+  const back = restoreDeck(library, entry.id);
+  assert.deepEqual([back.deck.id, back.skipped], [a.id, 0], "into its own deck");
+  assert.equal(library.cards.find((c) => c.id === cat.id).deckId, a.id);
+
+  const again = trashCards(library, [cat.id]);
+  addCard(library, a.id, { front: "kot", back: ["kitty"] });
+  assert.equal(restoreDeck(library, again.id).skipped, 1, "its front is taken now: it stays in the trash");
+  assert.equal(library.trash.length, 1);
+
+  removeDeck(library, a.id);
+  const alone = restoreDeck(library, again.id);
+  assert.equal(alone.deck.name, "A", "its deck is gone: it comes back in a deck of its own");
+  assert.deepEqual(library.cards.filter((c) => c.deckId === alone.deck.id).map((c) => c.id), [cat.id]);
+});

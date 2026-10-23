@@ -382,3 +382,12 @@ test("a change that turns out to add no work (a direction switched off) leaves t
   markQuiet(progress, "2026-09-02", "2026-09-05"); // …and the day is settled again: nothing to do after all
   assert.deepEqual(progress.quietDays, [{ from: "2026-09-02", until: "2026-09-05" }]);
 });
+
+test("the default look takes the element away for good: the die never rolls again", async () => {
+  const { dropElement, ensureProgress } = await import("../src/progress.js");
+  const state = { items: {} };
+  const progress = ensureProgress(state);
+  Object.assign(progress, { element: "ice", elementRoll: { face: 4, on: "2026-10-01" } });
+  dropElement(state);
+  assert.deepEqual([progress.element, progress.elementRoll, progress.elementDropped], [undefined, undefined, true]);
+});

@@ -1,9 +1,11 @@
-import { t } from "./i18n.js";
+import { language as uiLanguage, t } from "./i18n.js";
 import { backupNow } from "./backup.js";
 import { seedLibrary } from "./starter.js";
 import { gapsOf } from "./cardline.js";
-import { addCard, cardsOf, createDeck, emptyLibrary, findDeck, findDuplicate, removeDeck, setDirections as setLibraryDirections, setLanguages as setLibraryLanguages, typedSides, updateCard } from "./library.js";
-import { deckLanguages, homeLanguages, learningSide } from "./language.js";
+import { addCard, cardsOf, createDeck, emptyLibrary, emptyOldTrash, findDeck, findDuplicate, moveCards as moveLibraryCards, removeDeck, renameDeck as renameLibraryDeck, restoreDeck, trashCards, setDirections as setLibraryDirections, setLanguages as setLibraryLanguages, trashDeck, trashedUntil, typedSides, updateCard } from "./library.js";
+import { firstWords } from "./firstwords.js";
+import { applyImport, planImport } from "./importer.js";
+import { deckLanguages, homeLanguages, languageName, learningSide } from "./language.js";
 import { itemKey } from "./scheduler.js";
 import { loadLibrary, saveLibrary } from "./store.js";
 
@@ -78,6 +80,32 @@ export function libraryActions({ load = loadLibrary, save = saveLibrary, backup 
         removed = removeDeck(library, tour.id);
       }
       const deck = createDeck(library, { name, languages: null, directions: "forward" });
+      await save(library);
+      return { deck, removed };
+    },
+
+    // The welcome's deck of first words: the new word shown, yours typed (/decks can add the other way);
+    // like a deck of your own, it replaces the tour.
+    // Taken again (a welcome done twice), the deck made then is the one. → { deck, removed }
+    async startFirstWords({ home, learning }) {
+      const library = await load();
+      const language = languageName(learning);
+      const name = t("welcome.firstWordsDeck", { language: language.charAt(0).toLocaleUpperCase(uiLanguage()) + language.slice(1) });
+      const pair = (deck) => deck.firstWords && deck.languages?.front === learning && deck.languages?.back === home;
+      const existing = library.decks.find(pair);
+      if (existing) return { deck: existing, removed: [] };
+      // a deck of yours with that name keeps it: these get a number ("German: first words 2")
+      let named = name;
+      for (let n = 2; findDeck(library, named); n++) named = `${name} ${n}`;
+      const tour = library.decks.find((d) => d.tour);
+      let removed = [];
+      if (tour) {
+        await backup("before-delete");
+        removed = removeDeck(library, tour.id);
+      }
+      const deck = createDeck(library, { name: named, languages: { front: learning, back: home }, directions: "forward" });
+      deck.firstWords = true;
+      for (const fields of firstWords(home, learning)) addCard(library, deck.id, fields);
       await save(library);
       return { deck, removed };
     },
@@ -192,6 +220,123 @@ export function libraryActions({ load = loadLibrary, save = saveLibrary, backup 
       return { from, to: library.decks.find((d) => d.tour).name };
     },
 
+    // /decks → Rename → the deck as it's called now
+    async renameDeck(oldName, newName) {
+      const library = await load();
+      const deck = renameLibraryDeck(library, (await deckNamed(library, oldName)).id, newName);
+      await save(library);
+      return deck;
+    },
+
+    // /decks → Delete, confirmed: a backup, then the deck goes to the trash with its cards and their
+    // progress (`progressOf(cardIds)`, from the session). The last deck leaves the tour in its place.
+    // → { entry, cardIds, next }: the trash entry, the cards gone (their progress goes from the
+    // session too) and the deck to practise if this one was it
+    async deleteDeck(name, progressOf = () => ({})) {
+      await backup("before-delete");
+      const library = await load();
+      const deck = await deckNamed(library, name);
+      const cardIds = cardsOf(library, deck.id).map((card) => card.id);
+      const entry = trashDeck(library, deck.id, { progress: progressOf(cardIds) });
+      if (!library.decks.length) seedLibrary(library);
+      await save(library);
+      const next = library.decks.find((d) => !d.tour) ?? library.decks[0];
+      return { entry: entry.id, cardIds, next: next.name };
+    },
+
+    // /trash: what's in it, newest first; anything there longer than the trash keeps it goes now.
+    // `card`: a deleted card's front and back, when that's what the entry holds (one card)
+    async trash() {
+      const library = await load();
+      if (emptyOldTrash(library)) await save(library);
+      return (library.trash ?? []).toReversed().map((entry) => ({
+        id: entry.id,
+        kind: entry.kind ?? "deck",
+        name: entry.deck.name,
+        cards: entry.cards.length,
+        card: entry.kind === "cards" && entry.cards.length === 1 ? { front: entry.cards[0].front, back: entry.cards[0].back, cloze: entry.cards[0].cloze } : null,
+        deletedAt: entry.deletedAt,
+        until: trashedUntil(entry)
+      }));
+    },
+
+    // /cards: a deck's cards as they are now, in the order they were added
+    async cardsIn(deckName) {
+      const library = await load();
+      return cardsOf(library, (await deckNamed(library, deckName)).id).map(({ id, front, back, example, cloze }) => ({ id, front, back, example: example ?? "", cloze: Boolean(cloze) }));
+    },
+
+    // /cards → Delete: into the trash with their progress (`progressOf`, from the session); the deck stays,
+    // even empty. No backup: the trash keeps them, and a backup for every card would push the others out.
+    // → { entry }
+    async deleteCards(deckName, cardIds, progressOf = () => ({})) {
+      const library = await load();
+      await deckNamed(library, deckName);
+      const entry = trashCards(library, cardIds, { progress: progressOf(cardIds) });
+      await save(library);
+      return { entry: entry.id };
+    },
+
+    // /cards → Move: into another deck of yours, progress and all → { moved, duplicates } (card ids)
+    async moveCards(fromName, cardIds, toName) {
+      const library = await load();
+      await deckNamed(library, fromName);
+      const result = moveLibraryCards(library, cardIds, (await deckNamed(library, toName)).id);
+      if (result.moved.length) await save(library);
+      return result;
+    },
+
+    // /decks → Merge: every card of one deck into another, after a backup; the emptied deck goes to the
+    // trash with the cards the other deck had already (same front), and their progress.
+    // Brought back from the trash, it takes the moved cards back with it.
+    // → { moved, left: card ids that went to the trash with the deck, entry }
+    async mergeDecks(fromName, intoName, progressOf = () => ({})) {
+      await backup("before-delete");
+      const library = await load();
+      const from = await deckNamed(library, fromName);
+      const into = await deckNamed(library, intoName);
+      const { moved, duplicates } = moveLibraryCards(library, cardsOf(library, from.id).map((card) => card.id), into.id);
+      const entry = trashDeck(library, from.id, { progress: progressOf(duplicates) });
+      entry.merged = { into: into.id, cardIds: moved }; // u (or /trash) takes them back out
+      await save(library);
+      return { moved, left: duplicates, entry: entry.id };
+    },
+
+    // A deck back from the trash (/trash, or u right after deleting it). Like a deck of your own, it takes
+    // the tour's place. → { deck, progress, removed }: its name now, the progress to give back to the
+    // session, and the tour's cards that went
+    async restoreFromTrash(entryId) {
+      const library = await load();
+      const { deck, entry, skipped } = restoreDeck(library, entryId);
+      const tour = library.decks.find((d) => d.tour && d !== deck);
+      const removed = tour ? removeDeck(library, tour.id) : [];
+      await save(library);
+      // the progress of the cards that came back (one left in the trash keeps its own there)
+      const back = new Set(entry.cards.map((card) => card.id));
+      const mine = (object = {}) => Object.fromEntries(Object.entries(object).filter(([key]) => back.has(key.slice(0, key.lastIndexOf(":")))));
+      const progress = { items: mine(entry.progress?.items), accepted: mine(entry.progress?.accepted), dormant: (entry.progress?.dormant ?? []).filter((key) => back.has(key.slice(0, key.lastIndexOf(":")))) };
+      return { deck: deck.name, cards: entry.cards.length, kind: entry.kind ?? "deck", skipped, progress, removed };
+    },
+
+    // /import: what a file's cards would do to the library now (see planImport); `source` is { text, list }
+    // (each deck there already says how many cards it holds: `cards`)
+    async previewImport(source, choices) {
+      const library = await load();
+      const plan = planImport(library, source.text, { ...choices, list: source.list });
+      return { ...plan, decks: plan.decks.map((deck) => ({ ...deck, cards: deck.deck ? cardsOf(library, deck.deck.id).length : 0 })) };
+    },
+
+    // /import, carried out: a backup first, then the plan made again on the library as it is now (another
+    // window may have changed it). `update`: the changed cards take the file's version. → applyImport's
+    // result, and whether a backup was taken (none on a library with nothing in it yet)
+    async importCards(source, choices, { update = false } = {}) {
+      const backedUp = Boolean(await backup("before-import"));
+      const library = await load();
+      const result = applyImport(library, planImport(library, source.text, { ...choices, list: source.list }), { update, directions: choices.directions });
+      await save(library);
+      return { ...result, backedUp };
+    },
+
     // a reset is always preceded by a backup, so `dracosh restore` can undo it
     backupBeforeReset: () => backup("before-reset"),
 
@@ -207,4 +352,4 @@ export function libraryActions({ load = loadLibrary, save = saveLibrary, backup 
 
 // the app's own: reads and writes ~/.dracosh
 const actions = libraryActions();
-export const { allDecks, ownDecks, startDeck, setDirections, languagesOf, setLanguages, setLearning, existingDeck, existingCard, addCardTo, addCardsTo, updateCardIn, matchTourLanguage, backupBeforeReset, resetLibrary } = actions;
+export const { allDecks, ownDecks, startDeck, startFirstWords, setDirections, languagesOf, setLanguages, setLearning, existingDeck, existingCard, addCardTo, addCardsTo, updateCardIn, previewImport, importCards, renameDeck, deleteDeck, trash, restoreFromTrash, cardsIn, deleteCards, moveCards, mergeDecks, matchTourLanguage, backupBeforeReset, resetLibrary } = actions;

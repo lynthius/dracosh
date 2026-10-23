@@ -29,7 +29,7 @@ It's made for people who live in a terminal or spend most of the day at a comput
 - A pixel dragon that hatches from an egg, evolves over a year of streaks, blinks, and falls asleep if you ignore it
 - 8-bit sound effects, generated from code
 - Now and then, a short tip about Dracosh while you wait for the next card
-- Speaks English, Polish, German, French and Ukrainian: it follows your system's language, and `/settings` switches it
+- Speaks English, Polish, German, French and Ukrainian: the first start asks which one, and `/settings` switches it
 
 ## Install
 
@@ -39,7 +39,14 @@ You need Node 22.15 or newer.
 npm install -g dracosh
 ```
 
-A fresh install starts with a short "Getting started" deck, in the app's language: a tour where every card tells you what to type and shows you one more thing Dracosh can do. When you're through, `/add` starts your own deck and the tour makes room for it. Already have cards somewhere else? See [Import and export](#import-and-export).
+On the first start the dragon hatches, and Dracosh asks three things: the language it should speak, the language you speak and the one you're learning. Then you pick how to begin:
+
+- a short tour, where every card tells you what to type and shows you one more thing Dracosh can do
+- 30 everyday words in the language you're learning, which you translate into yours (for any pair of English, Polish, German, French, Ukrainian, Spanish and Italian)
+- cards you already have, from Anki, a CSV or a text file (`/import`)
+- a deck of your own, in `/add`
+
+The first words or a deck of your own take the tour's place. Already have cards somewhere else? See [Import and export](#import-and-export).
 
 Want a look first? `dracosh --preview` shows every screen and animation on made-up data.
 
@@ -62,10 +69,13 @@ Type the answer and press Enter. Not sure, or the answer is a whole sentence? Pr
 | Command | What it does |
 | --- | --- |
 | `/add` | add cards to one of your decks, or start a new deck (one line per card, ↑ fixes the last one) |
-| `/decks` | switch to another deck (Dracosh remembers it), start a new one, or press → to change how a deck is asked and which languages it's in |
+| `/import` | import cards from an Anki package, a CSV or a text file: type its path or drag the file in |
+| `/decks` | switch to another deck (Dracosh remembers it), practise several together (space marks them, or pick All decks), start a new one, or press → to change how a deck is asked, which languages it's in, its name, to merge it into another, or to delete it |
+| `/cards` | the deck's cards: type to search, Enter to fix a card, move it to another deck or delete it |
+| `/trash` | decks and cards you deleted, kept for 30 days with their progress: Enter brings one back |
 | `/hint` | reveal one more letter |
 | `/correct` | your answer was right after all; after a yes it's accepted from now on |
-| `/settings` | language, rhythm (a card every few minutes, or a study session), interval, daily goal, sound, pronunciation, quiet hours, weekends, tips, and a reset |
+| `/settings` | the app's language, the language you speak, rhythm (a card every few minutes, or a study session), interval, daily goal, sound, pronunciation, quiet hours, weekends, tips, the dragon's look once the die gave it an element, and a reset |
 | `/stats` | streak and a calendar of your month |
 | `/badges` | all badges and how to get them |
 | `/companion` | your dragon, its element and the forms ahead |
@@ -89,6 +99,8 @@ dracosh import words.csv --deck "Spanish"
 ```
 
 An import reads the file, then shows what it found before anything is saved: how it split the columns, which deck the cards go into, the new cards, the ones already there, and every line it can't use, with its line number. Cards already in the deck with other answers are listed as they are now and as the file has them, and you decide whether they're updated (their progress stays). Answers listed the way Anki and Quizlet decks often have them ("cat, kitty") can be taken as separate answers. A new deck asks which way to quiz, as in `/add`, and the last question says exactly what will be added and updated. When you already have cards, a backup is taken first, so `dracosh restore 1` undoes an import. Outside a terminal nothing is written without `--yes`: the preview ends with the command that imports for real. For scripts, `--update` takes the file's version of cards already there and `--split` splits listed answers.
+
+`/import` does the same inside the quiz: type the file's path or drag the file into the terminal, answer the same questions on screen, and the new deck is the one you practise next. Full backups (`.json`), other encodings (`--encoding`) and `--anki` stay with `dracosh import`.
 
 A header row (`front,back,example`, `term;definition`) is used to pick the columns, in any order. A file that isn't UTF-8 is never guessed at: Dracosh shows its first line read each likely way and asks for `--encoding`.
 
@@ -142,7 +154,9 @@ Fix the lines it lists, and tell me the command to import it for real.
 
 ## Your data
 
-Everything stays on your machine, in `~/.dracosh`; `dracosh --data` shows what's there. Progress is saved after every answer, so you can quit any time. One quiz runs at a time: a second window on the same data is refused, so the two can't overwrite each other's progress. The first start of each day also saves a backup of your cards, progress and settings to `~/.dracosh/backups` (the last 7 are kept); `dracosh restore` brings one back, and backs up what you have first, so a restore can be undone too. To start over, `/settings` → Reset clears your progress only (badges, streak, the dragon) or everything; a backup is made first. To move to another computer, `dracosh export everything.json` there and `dracosh import everything.json` here; to use Dracosh on two computers at once, put that folder somewhere synced and point `DRACOSH_HOME` at it.
+Everything stays on your machine, in `~/.dracosh`; `dracosh --data` shows what's there. Progress is saved after every answer, so you can quit any time. One quiz runs at a time: a second window on the same data is refused, so the two can't overwrite each other's progress. The first start of each day also saves a backup of your cards, progress and settings to `~/.dracosh/backups` (the last 7 are kept); `dracosh restore` brings one back, and backs up what you have first, so a restore can be undone too. To start over, `/settings` → Reset clears your progress only (badges, streak, the dragon) or everything; a backup is made first. Decks and cards you delete wait in `/trash` for 30 days, with their progress. To move to another computer, `dracosh export everything.json` there and `dracosh import everything.json` here; to use Dracosh on two computers at once, put that folder somewhere synced and point `DRACOSH_HOME` at it.
+
+Uninstalling Dracosh (`npm uninstall -g dracosh`) leaves `~/.dracosh` as it is, so installing it again brings everything back. To remove your data too, delete that folder.
 
 Sounds currently play on macOS only.
 
@@ -164,7 +178,6 @@ The other languages live next to it in `locales/`, the tour included. `npm test`
 
 Coming next, roughly in this order:
 
-- Decks and cards in the app: browse, edit and delete with undo, plus a welcome flow for new users.
 - Optional AI help for writing cards, with your own API key or a local model.
 - Linux and Windows, pronunciation there included.
 

@@ -61,7 +61,9 @@ function withRepeats(items) {
 // replaces the tour), then add cards one line each until Esc: "kot = cat; kitty // example". After a new
 // deck's first card it asks which way the deck is asked. A pasted list opens a review first.
 // `actions` reads and writes the library; `startNew` skips the deck list ("+ New deck" in /decks).
-export function AddCard({ current, actions, onDone, startNew = false }) {
+// `suggest` (from the welcome): { name, example }, a deck name to start from and a card in your pair.
+// `into`: straight to adding cards to this deck (+ Add cards in /cards).
+export function AddCard({ current, actions, onDone, startNew = false, suggest = null, into = null }) {
   const panel = usePanelWidth();
   const [step, setStep] = useState("loading"); // loading | pick | deck | line | back | direction | review | fix | saving
   const [decks, setDecks] = useState([]);
@@ -89,6 +91,9 @@ export function AddCard({ current, actions, onDone, startNew = false }) {
         setDecks(own);
         setPicked(Math.max(0, own.findIndex((d) => d.name === current)));
         setStep(own.length && !startNew ? "pick" : "deck");
+        if (suggest?.name && (startNew || !own.length)) clearField(suggest.name);
+        const given = into ? own.findIndex((d) => d.name === into) : -1;
+        if (given >= 0) pickDeck(given, own);
       },
       (err) => setError(err.message)
     );
@@ -263,10 +268,10 @@ export function AddCard({ current, actions, onDone, startNew = false }) {
     clearField(formatLine(last));
   }
 
-  function pickDeck(index) {
-    if (index === decks.length) return setStep("deck");
-    setDeck({ name: decks[index].name, directions: decks[index].directions, isNew: false });
-    actions.languagesOf(decks[index].name).then((found) => (shownPair.current = pairText(found)), () => {});
+  function pickDeck(index, list = decks) {
+    if (index === list.length) return setStep("deck");
+    setDeck({ name: list[index].name, directions: list[index].directions, isNew: false });
+    actions.languagesOf(list[index].name).then((found) => (shownPair.current = pairText(found)), () => {});
     clearField();
     setStep("line");
   }
@@ -417,7 +422,7 @@ export function AddCard({ current, actions, onDone, startNew = false }) {
         html`
           <${Box} flexDirection="column" marginTop=${1}>
             <${Text} bold>${t(`add.fields.${fieldLabel}.label`)}<//>
-            <${Text} dimColor>${t(`add.fields.${fieldLabel}.hint`)}<//>
+            <${Text} dimColor>${fieldLabel === "line" && suggest?.example ? t("add.lineHintFor", { example: suggest.example }) : t(`add.fields.${fieldLabel}.hint`)}<//>
             <${Box} marginTop=${1}>
               <${AnswerInput}
                 key=${`${fieldLabel}-${field.key}`}
@@ -427,6 +432,7 @@ export function AddCard({ current, actions, onDone, startNew = false }) {
                 onExit=${back}
                 onChange=${onType}
                 onRecall=${step === "line" ? recall : undefined}
+                cardLine=${step === "line" || step === "fix"}
                 onPaste=${step === "line" ? openPaste : undefined}
               />
             <//>
@@ -521,11 +527,7 @@ export function AddCard({ current, actions, onDone, startNew = false }) {
                 ? t("keyHints.pasteFix")
                 : step === "back"
                   ? t("keyHints.addBack")
-                  : step === "line" && editing
-                    ? t("keyHints.addFixing")
-                    : step === "line" && added.length
-                      ? t("keyHints.addMore")
-                      : t("keyHints.addFirst")}
+                  : `${t("keyHints.tabPart")} · ${editing ? t("keyHints.addFixing") : added.length ? t("keyHints.addMore") : t("keyHints.addFirst")}`}
         />
       <//>
     <//>

@@ -3,6 +3,8 @@ import { Box, useInput } from "ink";
 import { language, LANGUAGES, t } from "../i18n.js";
 import { GOALS, INTERVALS, QUIET_PRESETS, RHYTHMS, TIP_MODES, VOLUMES, formatInterval } from "../settings.js";
 import { formatQuiet } from "../quiet.js";
+import { languageName } from "../language.js";
+import { elementName } from "../progress.js";
 import { Bar, html, KeyHints, Text, theme, usePanelWidth } from "./kit.js";
 
 function VolumeValue({ value }) {
@@ -12,6 +14,7 @@ function VolumeValue({ value }) {
 // label and hint come from settings.rows.<key> in the locale
 const ALL_ROWS = [
   { key: "language", options: Object.keys(LANGUAGES), format: (code) => LANGUAGES[code] },
+  { key: "homeLanguage", action: true, format: (code) => languageName(code) ?? t("settings.notSet") },
   { key: "rhythm", options: RHYTHMS, format: (v) => t(`settings.rhythms.${v}`) },
   { key: "everyMs", options: INTERVALS, format: formatInterval },
   { key: "sound", options: [true, false], format: (v) => t(v ? "settings.on" : "settings.off"), toggle: true },
@@ -21,6 +24,7 @@ const ALL_ROWS = [
   { key: "tips", options: TIP_MODES, format: (v) => t(`settings.tipModes.${v}`) },
   { key: "skipWeekends", options: [true, false], format: (v) => t(v ? "settings.weekendsRest" : "settings.weekendsCount"), toggle: true },
   { key: "quiet", options: QUIET_PRESETS, format: formatQuiet },
+  { key: "dragonLook", action: true, onlyWith: "element", format: (element) => elementName(element) },
   { key: "reset", action: true, format: () => t("settings.pressEnter") }
 ];
 const label = (row) => t(`settings.rows.${row.key}.label`);
@@ -31,13 +35,21 @@ const nearestIndex = (options, value) => {
   return options.reduce((best, option, i) => (Math.abs(option - value) < Math.abs(options[best] - value) ? i : best), 0);
 };
 
-// Changes apply and persist immediately; there is no save step. Action rows (Reset) open their own
-// screen through `onAction`; without it (the preview) they are left out.
-export function Settings({ settings, onChange, onClose, onAction }) {
+// Changes apply and persist immediately; there is no save step. Action rows (Your language, Reset) open
+// their own screen through `onAction(key)`; without it (the preview) they are left out.
+// `startRow` and `onRow`: the row to open on, and each row moved to, so a screen opened from a row
+// comes back to it
+// `element`: the dragon's element, if the die gave it one (the row to go back to the default look)
+export function Settings({ settings, element = null, onChange, onClose, onAction, startRow = 0, onRow = () => {} }) {
   const panel = usePanelWidth();
-  const [row, setRow] = useState(0);
-  const ROWS = onAction ? ALL_ROWS : ALL_ROWS.filter((item) => !item.action);
-  const values = { ...settings, language: settings.language ?? language() };
+  const [row, setRowState] = useState(startRow);
+  const setRow = (next) => setRowState((r) => {
+    const value = typeof next === "function" ? next(r) : next;
+    onRow(value);
+    return value;
+  });
+  const ROWS = (onAction ? ALL_ROWS : ALL_ROWS.filter((item) => !item.action)).filter((item) => item.onlyWith !== "element" || element);
+  const values = { ...settings, language: settings.language ?? language(), dragonLook: element };
   const labelWidth = Math.max(...ROWS.map((item) => label(item).length)) + 2;
 
   useInput((input, key) => {

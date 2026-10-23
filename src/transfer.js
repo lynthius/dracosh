@@ -59,15 +59,15 @@ async function confirm(question, byDefault) {
 const answers = (back) => back.join("; ");
 // a cloze card keeps its {{gaps}} in the preview, so you see what will be asked
 // a cloze card's back is a hint, not an answer: "Ella {{come}} pan.  (hint: verb)"
-const cardText = (fields) => (!fields.back.length ? fields.front : fields.cloze ? `${fields.front}  ${t("import.hint", { hint: fields.back[0] })}` : `${fields.front} = ${answers(fields.back)}`);
+export const cardText = (fields) => (!fields.back.length ? fields.front : fields.cloze ? `${fields.front}  ${t("import.hint", { hint: fields.back[0] })}` : `${fields.front} = ${answers(fields.back)}`);
 const cut = (text, max = 60) => (Array.from(text).length > max ? `${Array.from(text).slice(0, max - 1).join("")}…` : text);
 const more = (count) => count > 0 && out(`  ${t("import.more", { count })}`);
 
 // a file's name without its extension, as a deck name: "spanish-verbs.csv" → "spanish-verbs"
-const deckFromFile = (file) => Array.from(basename(file, extname(file)).trim()).slice(0, MAX_DECK_NAME).join("");
+export const deckFromFile = (file) => Array.from(basename(file, extname(file)).trim()).slice(0, MAX_DECK_NAME).join("");
 
 const SEPARATOR_NAMES = { "\t": "tab", ",": "comma", ";": "semicolon", "|": "pipe", ":": "colon", " ": "space" };
-function describeRead(read) {
+export function describeRead(read) {
   if (read.format !== "table") return t(`import.formats.${read.format}`);
   const separator = SEPARATOR_NAMES[read.separator] ? t(`import.separators.${SEPARATOR_NAMES[read.separator]}`) : `"${read.separator}"`;
   const roles = ["deck", "front", "back", "example"].filter((role) => read.columns?.[role] !== null && read.columns?.[role] !== undefined);
@@ -76,7 +76,7 @@ function describeRead(read) {
 }
 
 // `notes`: the cards came from an Anki package, so a place in it is a note's number, not a line
-function issueText(problem, notes) {
+export function issueText(problem, notes) {
   if (problem.issue === "twice") return t(notes ? "import.issues.twiceNote" : "import.issues.twice", { line: problem.first });
   if (problem.issue === "tooLong") return t("import.issues.tooLong", { max: MAX_DECK_NAME, deck: cut(problem.deck, 30) });
   if (problem.issue === "tour") return t("import.issues.tour", { deck: problem.deck });
@@ -103,7 +103,7 @@ async function readPackage(file) {
   }
 }
 
-async function readInput(file, encoding) {
+async function readInput(file, encoding, { inApp = false } = {}) {
   let bytes;
   if (file === "-") {
     const chunks = [];
@@ -125,9 +125,26 @@ async function readInput(file, encoding) {
     return decodeText(bytes, encoding);
   } catch (err) {
     if (!err.samples) throw err;
+    if (inApp) throw new Error(t("importScreen.notUtf8", { file: name }));
     const lines = err.samples.map((sample) => `  --encoding ${sample.encoding}   ${sample.line}`);
     throw new Error([t("import.notUtf8", { file: name }), ...lines, t("import.notUtf8Hint")].join("\n"));
   }
+}
+
+// A file for /import, read as `dracosh import` reads it → { text, list, isPackage, csv, encoding }: an Anki
+// package's cards in `list`, a text file's `text`. Encodings other than UTF-8 and UTF-16 are left to the
+// command (--encoding), and so are full backups, which can't be brought back while the quiz runs.
+export async function readImportFile(file) {
+  const ending = extname(file).toLowerCase();
+  if (ending === ".json") {
+    if (!existsSync(file)) throw new Error(t("import.noFile", { file }));
+    const backup = await readJson(file, null).catch(() => null);
+    if (backup?.format !== 1 || !backup.files || typeof backup.files !== "object") throw new Error(t("errors.notABackup", { file: basename(file) }));
+    throw new Error(t("importScreen.backup", { file: shellQuote(file) }));
+  }
+  if (ending === ".apkg" || ending === ".colpkg") return { text: null, list: await readPackage(file), isPackage: true, csv: false, encoding: "utf-8" };
+  const { text, encoding } = await readInput(file, undefined, { inApp: true });
+  return { text, list: null, isPackage: false, csv: ending === ".csv", encoding };
 }
 
 // a full backup made by `dracosh export x.json`: brought back like `dracosh restore`, once each of its

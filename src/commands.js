@@ -4,7 +4,10 @@ import { t } from "./i18n.js";
 export const COMMANDS = [
   { name: "/hint", only: "asking", get hint() { return t("commands.hint"); } },
   { name: "/add", get hint() { return t("commands.add"); } },
+  { name: "/import", get hint() { return t("commands.import"); } },
+  { name: "/cards", get hint() { return t("commands.cards"); } },
   { name: "/decks", get hint() { return t("commands.decks"); } },
+  { name: "/trash", get hint() { return t("commands.trash"); } },
   { name: "/settings", get hint() { return t("commands.settings"); } },
   { name: "/stats", get hint() { return t("commands.stats"); } },
   { name: "/badges", get hint() { return t("commands.badges"); } },

@@ -187,6 +187,12 @@ test("the hatching intro plays only on a brand-new state, and only once", async 
   await session.markHatched();
   assert.equal(session.isFirstRun(), false);
   assert.equal(saves.at(-1).hatched, true);
+  assert.equal(session.welcomeStep(), "language", "the welcome follows, from its first step");
+  await session.setWelcomeStep("start");
+  assert.equal(saves.at(-1).welcome, "start", "kept, so a welcome left halfway goes on there");
+  await session.setWelcomeStep(null);
+  assert.equal(session.welcomeStep(), null);
+  assert.equal("welcome" in saves.at(-1), false);
 
   const veteran = setup();
   const q = await veteran.session.next();
@@ -421,4 +427,20 @@ test("a small difference isn't worth a line: only minutes against days, or a rea
   const session = createSession({ loadWords: async () => ({ words, deck: { name: "Polish", directions: "forward" } }), state, getSettings: () => DEFAULTS, save: async () => {}, now: () => entry.due });
   const result = await session.answer(await session.next(), "cat", { hinted: true });
   assert.ok(result.held === null || (result.held.would - result.held.days >= 2 && result.held.would >= result.held.days * 1.25), JSON.stringify(result.held));
+});
+
+test("a deck's progress can be taken along to the trash and given back", async () => {
+  const { session, state } = setup();
+  const q = await session.next();
+  await session.answer(q, q.expected[0]);
+  const key = Object.keys(state.items)[0];
+  const id = key.slice(0, key.lastIndexOf(":"));
+  state.accepted = { [key]: ["x"] };
+  const kept = session.progressOf([id]);
+  assert.deepEqual(Object.keys(kept.items), [key]);
+  await session.forget([id]);
+  assert.equal(state.items[key], undefined);
+  await session.restoreProgress(kept);
+  assert.deepEqual(state.items[key], kept.items[key]);
+  assert.deepEqual(state.accepted[key], ["x"]);
 });

@@ -15,7 +15,7 @@ test("'/' lists every command and a prefix narrows the list", () => {
 
 test("the menu only offers commands that make sense right now", () => {
   const names = (opts) => commandsFor(opts).map((c) => c.name);
-  const common = ["/add", "/decks", "/settings", "/stats", "/badges", "/companion", "/missed", "/pause"];
+  const common = ["/add", "/import", "/cards", "/decks", "/trash", "/settings", "/stats", "/badges", "/companion", "/missed", "/pause"];
   assert.deepEqual(names({ phase: "asking" }), ["/hint", ...common, "/help", "/quit"]);
   assert.deepEqual(names({ phase: "waiting" }), [...common, "/help", "/quit"]);
   assert.deepEqual(names({ phase: "waiting", canOverrule: true }), ["/correct", ...common, "/help", "/quit"]);
@@ -23,7 +23,7 @@ test("the menu only offers commands that make sense right now", () => {
 
 test("normalizeSettings falls back to defaults for invalid values", () => {
   const settings = normalizeSettings({ everyMs: "soon", sound: "yes", volume: 7, dailyGoal: 0 });
-  assert.deepEqual(settings, { everyMs: 600_000, rhythm: "minutes", sound: true, speak: false, volume: 0.5, dailyGoal: 20, tips: "sometimes", quiet: null, skipWeekends: true, deck: null, language: systemLanguage() });
+  assert.deepEqual(settings, { everyMs: 600_000, rhythm: "minutes", sound: true, speak: false, volume: 0.5, dailyGoal: 20, tips: "sometimes", quiet: null, skipWeekends: true, deck: null, mix: null, homeLanguage: null, learningLanguage: null, language: systemLanguage() });
   assert.equal(normalizeSettings({ everyMs: 300_000, sound: false, volume: 0.2, dailyGoal: 20 }).dailyGoal, 20);
   assert.equal(normalizeSettings({ rhythm: "session-10" }).rhythm, "session-10");
   assert.equal(normalizeSettings({ rhythm: "marathon" }).rhythm, "minutes");
@@ -51,4 +51,13 @@ test("quiet hours are validated", () => {
 test("helpers", () => {
   assert.equal(formatInterval(300_000), "5 min");
   assert.equal(formatInterval(3_600_000), "1 h");
+});
+
+test("decks practised together are kept as all, or two or more names; the welcome's languages as codes", () => {
+  assert.equal(normalizeSettings({ mix: "all" }).mix, "all");
+  assert.deepEqual(normalizeSettings({ mix: ["German", "Spanish", 3, " "] }).mix, ["German", "Spanish"]);
+  assert.equal(normalizeSettings({ mix: ["German"] }).mix, null, "one deck is just that deck");
+  assert.equal(normalizeSettings({ mix: "some" }).mix, null);
+  assert.deepEqual([normalizeSettings({ homeLanguage: "pl", learningLanguage: "und" }).homeLanguage, normalizeSettings({ learningLanguage: "und" }).learningLanguage], ["pl", "und"]);
+  assert.equal(normalizeSettings({ homeLanguage: "Polish" }).homeLanguage, null);
 });

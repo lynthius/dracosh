@@ -1,4 +1,4 @@
-import { t } from "../i18n.js";
+import { language, setLanguage, t } from "../i18n.js";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { Box, useApp, useInput } from "ink";
 import { DEMO_CLOZE, DEMO_SENTENCES, DEMO_WORDS } from "../demo.js";
@@ -16,6 +16,7 @@ import { Badges } from "./Badges.js";
 import { Confetti } from "./Confetti.js";
 import { Evolution } from "./Evolution.js";
 import { Hatch } from "./Hatch.js";
+import { Welcome } from "./Welcome.js";
 import { Header, Snore, useBlink, useMove } from "./Header.js";
 import { html, KeyHints, Text, theme, usePanelWidth } from "./kit.js";
 import { Mascot } from "./Mascot.js";
@@ -174,6 +175,24 @@ function ConfettiLab({ onBack }) {
   `;
 }
 
+// The welcome after the hatching, step by step; nothing is kept, and the app's language comes back
+// as it was when you leave
+function WelcomeLab({ onBack }) {
+  const [before] = useState(language);
+  const [step, setStep] = useState("language");
+  const [settings, setSettings] = useState({ language: before, homeLanguage: null, learningLanguage: null });
+  const leave = () => {
+    setLanguage(before);
+    onBack();
+  };
+  useInput((input, key) => key.escape && step === "language" && leave());
+  return html`<${Welcome} step=${step} settings=${settings} onPreviewLanguage=${setLanguage} onStep=${(next, patch) => {
+    if (patch?.language) setLanguage(patch.language);
+    setSettings((now) => ({ ...now, ...patch }));
+    setStep(next);
+  }} onStart=${leave} />`;
+}
+
 // labels and hints come from the locale, read each time the menu is drawn
 const scene = (id, text = () => [t(`preview.scenes.${id}.label`), t(`preview.scenes.${id}.hint`)]) => ({
   id,
@@ -186,6 +205,7 @@ const scene = (id, text = () => [t(`preview.scenes.${id}.label`), t(`preview.sce
 });
 const SCENES = [
   scene("hatch"),
+  scene("welcome"),
   ...STAGES.slice(1).map((stage, i) => scene(`evolve-${i + 1}`, () => [t("preview.evolution", { name: stage.name }), t("preview.evolutionHint", { count: stage.from })])),
   ...["mascot", "quiz", "add", "reveal", "cloze", "quiz-look", "unlock", "the-one", "die", "confetti", "stats", "badges", "summary"].map((id) => scene(id))
 ];
@@ -248,6 +268,7 @@ export function Preview({ alerts }) {
     const to = Number(scene.slice("evolve-".length));
     return wrap(html`<${Evolution} key=${run} from=${to - 1} to=${to} name=${STAGES[to].name} onClose=${back} />`);
   }
+  if (scene === "welcome") return wrap(html`<${WelcomeLab} key=${run} onBack=${back} />`);
   if (scene === "mascot") return wrap(html`<${MascotLab} onBack=${back} />`);
   if (scene === "quiz-look") return wrap(html`<${QuizLookLab} onBack=${back} />`);
   if (scene === "confetti") return wrap(html`<${ConfettiLab} onBack=${back} />`);

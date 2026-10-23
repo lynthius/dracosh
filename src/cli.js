@@ -9,6 +9,7 @@ import { language, setLanguage, t } from "./i18n.js";
 import { BACKUP_DIR, dailyBackup, listBackups, restoreBackup, saveUpgraded } from "./backup.js";
 import { ensureProgress, snapshot } from "./progress.js";
 import { intervalDays, MASTERED_DAYS } from "./scheduler.js";
+import { setOwnLanguage } from "./language.js";
 import { createSession } from "./session.js";
 import { DEFAULTS, formatInterval, normalizeSettings } from "./settings.js";
 import { seedLibrary } from "./starter.js";
@@ -112,7 +113,9 @@ async function restore(choice, { yes }) {
 }
 
 async function main() {
-  setLanguage(normalizeSettings(await loadSettingsRaw().catch(() => ({}))).language);
+  const early = normalizeSettings(await loadSettingsRaw().catch(() => ({})));
+  setLanguage(early.language);
+  setOwnLanguage(early.homeLanguage);
   const { values, positionals } = parseArgs({
     allowPositionals: true,
     options: {
@@ -174,7 +177,8 @@ async function main() {
 
   let current = settings; // the session reads settings live, so /settings changes apply immediately
   let active = deck.name; // /add can switch to your first own deck
-  const session = createSession({ loadWords: () => loadWords(active), loadAllWords, state, getSettings: () => current });
+  let mix = values.deck ? null : settings.mix; // decks practised together (/decks); --deck is one deck
+  const session = createSession({ loadWords: () => loadWords(mix ?? active), loadAllWords, state, getSettings: () => current });
   const alerts = createAlerts({ sound: settings.sound, volume: settings.volume, speak: settings.speak });
   const persistSettings = async (patch) => {
     current = { ...current, ...patch };
@@ -182,7 +186,7 @@ async function main() {
   };
 
   // the session summary screen stays on screen after exit, so nothing more to print here
-  const app = render(React.createElement(App, { session, deck: deck.name, initialSettings: settings, alerts, persistSettings, library: manage, onSwitchDeck: (name) => (active = name) }));
+  const app = render(React.createElement(App, { session, deck: deck.name, initialSettings: settings, initialMix: mix, alerts, persistSettings, library: manage, onSwitchDeck: (name) => (active = name), onMix: (decks) => (mix = decks) }));
   await app.waitUntilExit();
 }
 

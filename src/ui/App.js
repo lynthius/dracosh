@@ -11,6 +11,8 @@ import { Bar, cellWidth, cutToWidth, html, KeyHints, Marked, Text, theme, Typewr
 import { hintTarget, makeHint } from "../hint.js";
 import { formatClock, inQuietHours, quietEnd } from "../quiet.js";
 import { NEW_PER_DAY, startOfTomorrow } from "../scheduler.js";
+import { languageName, setOwnLanguage } from "../language.js";
+import { hasFirstWords, sampleCard } from "../firstwords.js";
 import { formatDay } from "../vacation.js";
 import { dayKey } from "../dates.js";
 import { shouldShowTip } from "../tips.js";
@@ -22,8 +24,15 @@ import { BadgeUnlock, badgeSound } from "./BadgeUnlock.js";
 import { DieRoll } from "./DieRoll.js";
 import { Evolution } from "./Evolution.js";
 import { Hatch } from "./Hatch.js";
+import { LanguageSearch } from "./Languages.js";
+import { Welcome } from "./Welcome.js";
 import { AddCard } from "./AddCard.js";
+import { ImportScreen } from "./Import.js";
 import { Decks } from "./Decks.js";
+import { Choice, choiceHints } from "./Choice.js";
+import { elementName } from "../progress.js";
+import { Trash } from "./Trash.js";
+import { Cards, CardsDeckPick } from "./Cards.js";
 import { Reset } from "./Reset.js";
 import { Help } from "./Help.js";
 import { Missed } from "./Missed.js";
@@ -178,6 +187,22 @@ function EmptyDeck({ deck, tour, count, nextDue, dayDone, heldNew = 0, now, widt
   `;
 }
 
+// /settings → the default look: asked first, since the element can't come back
+function DragonLook({ element, onConfirm, onClose }) {
+  const width = usePanelWidth();
+  const [selected, setSelected] = useState(1);
+  return html`
+    <${Fragment}>
+      <${Box} flexDirection="column" borderStyle="round" borderColor=${theme.bad} paddingX=${2} width=${width}>
+        <${Text} bold color=${theme.bad}>${t("settings.lookQuestion")}<//>
+        <${Text} dimColor>${t("settings.lookNote", { element: elementName(element) })}<//>
+        <${Box} marginTop=${1}><${Choice} options=${[{ label: t("settings.lookYes"), danger: true }, { label: t("settings.lookNo") }]} selected=${selected} onMove=${setSelected} onPick=${(i) => (i === 0 ? onConfirm() : onClose())} onCancel=${onClose} /><//>
+      <//>
+      <${Box} paddingX=${1}><${KeyHints} text=${choiceHints("cancel")} /><//>
+    <//>
+  `;
+}
+
 function TipBox({ tip, width }) {
   return html`
     <${Box} flexDirection="column" paddingX=${1} marginTop=${2} width=${width}>
@@ -189,17 +214,27 @@ function TipBox({ tip, width }) {
 
 // `library` holds the /add actions (src/manage.js) and `onSwitchDeck` points the session at another
 // deck; the preview gallery passes neither.
-export function App({ session, deck: initialDeck, initialSettings, alerts, persistSettings, onExit, library, onSwitchDeck }) {
+// `initialMix`: the decks practised together this run (null with --deck, while settings keep the saved ones)
+export function App({ session, deck: initialDeck, initialSettings, initialMix, alerts, persistSettings, onExit, library, onSwitchDeck, onMix }) {
   const { exit: exitApp } = useApp();
   const exit = onExit ?? exitApp; // the preview gallery runs the quiz as a scene and takes quitting back to its menu
   const { stdout } = useStdout();
   const [settings, setSettings] = useState(initialSettings);
   const [deck, setDeck] = useState(initialDeck);
+  const [mix, setMix] = useState(initialMix !== undefined ? initialMix : (initialSettings.mix ?? null)); // decks practised together: "all", or their names
   const [addNew, setAddNew] = useState(false); // /add opened from "+ New deck" in /decks
+  const [cardsDeck, setCardsDeck] = useState(null); // the deck /cards shows (one of several practised together)
+  const [addInto, setAddInto] = useState(null); // /add from /cards: straight into that deck
+  const [addSuggest, setAddSuggest] = useState(null); // /add from the welcome: a name and an example in your pair
+  const [importFrom, setImportFrom] = useState(null); // "welcome" when /import was picked there: cancelling goes back
   const [restUntil, setRestUntil] = useState(null); // nothing is waiting until then (after the last card due now)
   const [empty, setEmpty] = useState(null); // { tour, count, nextDue } when there is nothing to ask right now
-  // quiz | settings | reset | add | decks | stats | badges | companion | help | missed | evolve | the-one | die | summary | hatch
-  const [screen, setScreen] = useState(() => (session.isFirstRun() ? "hatch" : "quiz"));
+  // quiz | settings | reset | home-language | add | decks | stats | badges | companion | help | missed | evolve | the-one | die
+  // | summary | hatch | welcome
+  const [screen, setScreen] = useState(() => (session.isFirstRun() ? "hatch" : session.welcomeStep() ? "welcome" : "quiz"));
+  const [welcomeStep, setWelcomeStep] = useState(() => session.welcomeStep() ?? "language");
+  const [tourThere, setTourThere] = useState(true); // the welcome offers the tour only while there is one
+  const settingsRow = useRef(0); // /settings opens on the row it was left on (Your language comes back to it)
   const [tip, setTip] = useState(null);
   const [phase, setPhase] = useState("loading"); // loading | asking | grading (answer revealed) | waiting | empty
   const [nudge, setNudge] = useState(false); // Enter while grading: the 1/2 keys light up
@@ -402,6 +437,9 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
     if (name === "/missed") return setScreen("missed");
     if (name === "/help") return setScreen("help");
     if (name === "/add") return library ? (setAddNew(false), setScreen("add")) : setNotice(t("quiz.previewNoAdd"));
+    if (name === "/import") return library ? (setImportFrom(null), setScreen("import")) : setNotice(t("quiz.previewNoImport"));
+    if (name === "/cards") return !library ? setNotice(t("quiz.previewNoDecks")) : !mix && (question?.tour || empty?.tour) ? setNotice(t("cards.tourNot")) : mix ? setScreen("cards-pick") : (setCardsDeck(deck), setScreen("cards"));
+    if (name === "/trash") return library ? setScreen("trash") : setNotice(t("quiz.previewNoDecks"));
     if (name === "/decks") return library ? setScreen("decks") : setNotice(t("quiz.previewNoDecks"));
     if (name === "/hint" && phase === "asking") return setHintLevel((level) => level + 1);
     if (name === "/pause") {
@@ -455,6 +493,57 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
     }
     if (patch.volume !== undefined || patch.sound === true) alerts.play("correct-0"); // audible preview
     if (patch.language) changeLanguage(patch.language);
+    if (patch.homeLanguage !== undefined) setOwnLanguage(patch.homeLanguage);
+  }
+
+  // the welcome: each answer kept at once, and the step, so it goes on there after a restart
+  function welcomeTo(step, patch) {
+    if (patch) changeSettings(patch);
+    setWelcomeStep(step);
+    session.setWelcomeStep(step).catch(() => {});
+  }
+
+  useEffect(() => {
+    if (screen === "welcome" && library) library.allDecks().then((decks) => setTourThere(decks.some((d) => d.tour)), () => {});
+  }, [screen, library]);
+
+  async function startWith(how) {
+    if (busy.current) return; // a second Enter while the first words are being made
+    busy.current = true;
+    try {
+      await begin(how);
+    } finally {
+      busy.current = false;
+    }
+  }
+
+  async function begin(how) {
+    // the import may still be cancelled, back to the welcome: it ends the welcome once it's done
+    if (how === "import" && library) {
+      setImportFrom("welcome");
+      return setScreen("import");
+    }
+    session.setWelcomeStep(null).catch(() => {});
+    if (how === "tour" || !library) return setScreen("quiz");
+    if (how === "own") {
+      // the deck named after the language you're learning, and an example card in your pair
+      const { homeLanguage, language: ui, learningLanguage: learning } = settingsRef.current;
+      const home = homeLanguage ?? ui;
+      const name = languageName(learning) ?? "";
+      const sample = learning && hasFirstWords(home, learning) ? sampleCard(home, learning) : null;
+      setAddSuggest({ name: name && name.charAt(0).toLocaleUpperCase(ui) + name.slice(1), example: sample && `${sample.front} = ${sample.back[0]}` });
+      setAddNew(true);
+      return setScreen("add");
+    }
+    try {
+      const { deck: started, removed } = await library.startFirstWords({ home: settingsRef.current.homeLanguage ?? settingsRef.current.language, learning: settingsRef.current.learningLanguage });
+      if (removed.length) await session.forget(removed);
+      await session.workAdded();
+      switchDeck(started.name);
+    } catch (err) {
+      setScreen("quiz");
+      setProblem(err.message);
+    }
   }
 
   // Every text follows at the next render; the tour is translated too, and asked again in the new
@@ -524,15 +613,105 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
     }
   }
 
-  // /decks and a first deck from /add: quiz another deck from now on, and remember it
-  function switchDeck(name) {
-    setScreen("quiz");
+  // the deck practised from now on, without leaving the screen you're on (a deck deleted or renamed in /decks)
+  function followDeck(name) {
     if (name === deck) return;
     onSwitchDeck?.(name);
     setDeck(name);
     changeSettings({ deck: name });
     ask();
   }
+
+  // /decks → Delete, confirmed: the deck and its progress into the trash; another deck if it was this one
+  async function deleteDeck(name) {
+    const done = await library.deleteDeck(name, session.progressOf);
+    await session.forget(done.cardIds);
+    keepSavedMix((names) => names.filter((each) => each !== name));
+    if (Array.isArray(mix) && mix.includes(name)) {
+      const left = mix.filter((each) => each !== name);
+      practise({ deck: name === deck ? left[0] : deck, mix: left.length >= 2 ? left : null });
+    } else if (name === deck) followDeck(done.next);
+    else if (phase === "empty" || mix === "all" || question?.label === name) ask(); // its card may be the one on screen
+    return done;
+  }
+
+  // the decks saved to practise together when this run practises others (--deck): kept in step too
+  function keepSavedMix(change) {
+    const saved = settingsRef.current.mix;
+    if (!Array.isArray(saved) || saved === mix) return;
+    const next = [...new Set(change(saved))];
+    changeSettings({ mix: next.length >= 2 ? next : null });
+  }
+
+  // a deck back from the trash, with its progress; the tour gives way to it
+  async function restoreDeck(entryId) {
+    const back = await library.restoreFromTrash(entryId);
+    await session.restoreProgress(back.progress);
+    if (back.removed.length) await session.forget(back.removed);
+    await session.workAdded();
+    if (back.removed.length || (back.kind === "deck" && phase === "empty")) followDeck(back.deck);
+    else if (phase === "empty") ask();
+    return back;
+  }
+
+  // /cards → Delete: the cards and their progress into the trash
+  async function deleteCards(cardIds) {
+    const done = await library.deleteCards(cardsDeck ?? deck, cardIds, session.progressOf);
+    await session.forget(cardIds);
+    return done;
+  }
+
+  // /decks → Merge: the cards into the other deck, the emptied deck (with what was there already) to the
+  // trash; the decks practised follow
+  async function mergeDecks(from, into) {
+    const done = await library.mergeDecks(from, into, session.progressOf);
+    if (done.left.length) await session.forget(done.left);
+    if (Array.isArray(mix) && mix.includes(from)) {
+      const left = [...new Set(mix.map((name) => (name === from ? into : name)))];
+      practise({ deck: deck === from ? into : deck, mix: left.length >= 2 ? left : null });
+    } else if (deck === from) followDeck(into);
+    else if (phase === "empty") ask();
+    return done;
+  }
+
+  function cardsClosed(changed) {
+    setScreen("quiz");
+    if (changed && (phase === "asking" || phase === "empty")) ask(); // the card on screen may be one you changed
+  }
+
+  function deckRenamed(from, to) {
+    keepSavedMix((names) => names.map((name) => (name === from ? to : name)));
+    if (Array.isArray(mix) && mix.includes(from)) {
+      const renamed = mix.map((name) => (name === from ? to : name));
+      onMix?.(renamed);
+      setMix(renamed);
+      changeSettings({ mix: renamed });
+    }
+    if (from !== deck) return;
+    onSwitchDeck?.(to);
+    setDeck(to);
+    changeSettings({ deck: to });
+  }
+
+  // /decks and a first deck from /add: quiz another deck from now on, and remember it
+  function switchDeck(name) {
+    setScreen("quiz");
+    if (name === deck && !mix) return;
+    practise({ deck: name, mix: null });
+  }
+
+  // what the quiz asks from now on: one deck, or several together (`mix`: "all" or names), remembered
+  function practise({ deck: name = deck, mix: together }) {
+    onMix?.(together);
+    setMix(together);
+    if (name !== deck) {
+      onSwitchDeck?.(name);
+      setDeck(name);
+    }
+    changeSettings({ deck: name, mix: together });
+    ask();
+  }
+  const deckLabel = mix === "all" ? t("decks.allLabel") : mix ? t("decks.mixLabel", { count: mix.length }) : deck;
 
   // Reset (from /settings), after a backup. Everything brings back the tour and the hatching egg.
   async function reset(scope) {
@@ -546,15 +725,45 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
     const tour = await library.resetLibrary();
     onSwitchDeck?.(tour);
     setDeck(tour);
-    changeSettings({ deck: null });
+    onMix?.(null);
+    setMix(null);
+    changeSettings({ deck: null, mix: null });
     setScreen("hatch");
     ask();
+  }
+
+  // after /import: its first new deck (or the one cards went into) is the one you practise; the tour's
+  // progress goes if a deck of your own took its place
+  async function importDone({ deck: target, removed, added, updated }) {
+    if (importFrom === "welcome") session.setWelcomeStep(null).catch(() => {});
+    setImportFrom(null);
+    try {
+      if (removed.length) await session.forget(removed);
+      if (added || updated) await session.workAdded();
+    } catch {
+      // progress of removed tour cards stays: harmless
+    }
+    if (target && target !== deck) return switchDeck(target);
+    setScreen("quiz");
+    // the open card may be one the file just changed: asked again as it is now
+    if ((added || updated) && (phase === "asking" || phase === "empty")) ask();
+  }
+
+  function importCancelled() {
+    if (importFrom === "welcome") {
+      setImportFrom(null);
+      return setScreen("welcome");
+    }
+    setScreen("quiz");
+    setNotice(t("cli.restore.nothingChanged"));
   }
 
   // after /add: a first deck of your own replaces the tour; a deck started from /decks (or in place
   // of an empty one) becomes the one you practise; new cards end an empty state
   function addDone({ deck: started, removed, stale = [], added, dropped }) {
     setScreen("quiz");
+    setAddSuggest(null);
+    setAddInto(null);
     if (removed.length) session.forget(removed).catch(() => {});
     if (stale.length) session.forgetKeys(stale).catch(() => {});
     if (added) session.workAdded().catch(() => {});
@@ -585,8 +794,11 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
   if (screen === "hatch")
     return html`<${Box} flexDirection="column" marginY=${1}><${Hatch} play=${alerts.play} onDone=${() => {
       session.markHatched().catch(() => {});
-      setScreen("quiz");
+      setWelcomeStep("language");
+      setScreen("welcome");
     }} /><//>`;
+  if (screen === "welcome")
+    return html`<${Box} flexDirection="column" marginY=${1}><${Welcome} step=${welcomeStep} settings=${settings} tour=${tourThere} onPreviewLanguage=${setLanguage} onStep=${welcomeTo} onStart=${startWith} /><//>`;
   if (screen === "summary") return html`<${Box} flexDirection="column" marginY=${1}><${Summary} stats=${stats} totals=${session.totals} bestCombo=${bestCombo.current} onDone=${exit} /><//>`;
   if (screen === "evolve" && evolution)
     return html`<${Box} flexDirection="column" marginY=${1}><${Evolution} ...${evolution} onClose=${() => {
@@ -604,17 +816,23 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
 
   return html`
     <${Box} flexDirection="column" marginY=${1}>
-      <${Header} deck=${deck} everyMs=${settings.everyMs} rhythm=${settings.rhythm} wordCount=${question?.wordCount ?? empty?.count} stats=${stats} combo=${session.totals.combo} face=${face} event=${petEvent} tick=${tick} asleep=${asleep} />
+      <${Header} deck=${deckLabel} everyMs=${settings.everyMs} rhythm=${settings.rhythm} wordCount=${question?.wordCount ?? empty?.count} stats=${stats} combo=${session.totals.combo} face=${face} event=${petEvent} tick=${tick} asleep=${asleep} />
       <${Box} marginTop=${1} flexDirection="column">
-        ${screen === "settings" && html`<${Settings} settings=${settings} onChange=${changeSettings} onClose=${() => setScreen("quiz")} onAction=${library ? () => setScreen("reset") : null} />`}
+        ${screen === "settings" && html`<${Settings} settings=${settings} element=${stats.companion.element} startRow=${settingsRow.current} onRow=${(row) => (settingsRow.current = row)} onChange=${changeSettings} onClose=${() => setScreen("quiz")} onAction=${library ? (row) => setScreen({ reset: "reset", homeLanguage: "home-language", dragonLook: "dragon-look" }[row]) : null} />`}
+        ${screen === "dragon-look" && html`<${DragonLook} element=${stats.companion.element} onConfirm=${() => session.defaultLook().then(() => (setScreen("settings"), setNotice(t("settings.lookDropped")))).catch((err) => setProblem(err.message))} onClose=${() => setScreen("settings")} />`}
+        ${screen === "home-language" && html`<${LanguageSearch} title=${t("settings.homeTitle")} note=${t("welcome.homeNote")} current=${settings.homeLanguage ?? settings.language} currentNote=${settings.homeLanguage ? t("languages.current") : t("welcome.suggested")} onBack=${() => setScreen("settings")} onPick=${(code) => (changeSettings({ homeLanguage: code }), setScreen("settings"))} />`}
         ${screen === "reset" && html`<${Reset} stats=${stats} actions=${library} onConfirm=${reset} onClose=${() => setScreen("settings")} />`}
-        ${screen === "add" && html`<${AddCard} current=${deck} actions=${library} onDone=${addDone} startNew=${addNew} />`}
-        ${screen === "decks" && html`<${Decks} current=${deck} actions=${library} onDirections=${async (cardIds, directions) => {
+        ${screen === "import" && html`<${ImportScreen} actions=${library} fromWelcome=${importFrom === "welcome"} onDone=${importDone} onCancel=${importCancelled} />`}
+        ${screen === "add" && html`<${AddCard} current=${deck} actions=${library} onDone=${addDone} startNew=${addNew} suggest=${addSuggest} into=${addInto} />`}
+        ${screen === "decks" && html`<${Decks} current=${deck} mix=${mix} onPractise=${practise} actions=${library} onDirections=${async (cardIds, directions) => {
           await session.setDirections(cardIds, directions);
           await session.workAdded();
           if (phase === "asking" && question && cardIds.includes(question.word.noteId)) ask(); // the open card follows the new way at once
-        }} onLanguages=${(name) => name === deck && phase === "asking" && ask()} onPick=${switchDeck} onNew=${() => (setAddNew(true), setScreen("add"))} onClose=${() => setScreen("quiz")} />`}
-        ${!["settings", "reset", "add", "decks"].includes(screen) &&
+        }} onLanguages=${(name) => name === deck && phase === "asking" && ask()} onPick=${switchDeck} onNew=${() => (setAddNew(true), setScreen("add"))} onDeleted=${deleteDeck} onRestored=${restoreDeck} onRenamed=${deckRenamed} onMerged=${mergeDecks} onClose=${() => setScreen("quiz")} />`}
+        ${screen === "cards" && html`<${Cards} deck=${cardsDeck ?? deck} actions=${library} onDeleted=${deleteCards} onRestored=${restoreDeck} onEdited=${(keys) => session.forgetKeys(keys)} onAdd=${() => (setAddNew(false), setAddInto(cardsDeck ?? deck), setScreen("add"))} onClose=${cardsClosed} />`}
+        ${screen === "cards-pick" && html`<${CardsDeckPick} actions=${library} mix=${mix} current=${deck} onPick=${(name) => (setCardsDeck(name), setScreen("cards"))} onClose=${() => setScreen("quiz")} />`}
+        ${screen === "trash" && html`<${Trash} actions=${library} onRestore=${restoreDeck} onClose=${() => setScreen("quiz")} />`}
+        ${!["settings", "reset", "home-language", "dragon-look", "import", "add", "decks", "trash", "cards", "cards-pick"].includes(screen) &&
           html`
               <${Fragment}>
               ${question &&
@@ -633,7 +851,7 @@ export function App({ session, deck: initialDeck, initialSettings, alerts, persi
                   <//>
                 <//>
               `}
-              ${phase === "empty" && html`<${EmptyDeck} deck=${deck} ...${empty} now=${now} width=${width} />`}
+              ${phase === "empty" && html`<${EmptyDeck} deck=${deckLabel} ...${empty} now=${now} width=${width} />`}
               ${confetti && html`<${Confetti} width=${width} onDone=${() => setConfetti(false)} />`}
               ${outcome?.cheers?.length > 0 && html`<${Cheers} cheers=${outcome.cheers} play=${alerts.play} />`}
               ${phase === "waiting" && tip && html`<${TipBox} tip=${tip} width=${width} />`}

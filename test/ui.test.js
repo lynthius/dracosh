@@ -11,7 +11,7 @@ const { Text, theme } = await import("../src/ui/kit.js");
 async function frame(element, { stdin } = {}) {
   const stdout = Object.assign(new PassThrough(), { columns: 80, rows: 20, isTTY: true });
   let output = "";
-  stdout.on("data", (chunk) => (output = String(chunk)));
+  stdout.on("data", (chunk) => String(chunk).replace(/\x1b\[[\d;?]*[a-zA-Z]/g, "").trim() && (output = String(chunk))); // the last frame with anything in it
   const app = render(element, { stdout, ...(stdin && { stdin }), debug: true, patchConsole: false });
   await new Promise((resolve) => setTimeout(resolve, 50));
   const shown = output; // before unmounting, which writes a last cursor code
@@ -53,4 +53,33 @@ test("the session summary renders, its today row whole", async () => {
   const stdin = Object.assign(new PassThrough(), { isTTY: true, setRawMode: () => {}, ref: () => {}, unref: () => {} }); // it waits for a key
   const lines = await frame(React.createElement(Summary, { stats, totals: { asked: 6, correct: 4 }, bestCombo: 3, onDone: () => {} }), { stdin });
   assert.ok(lines.some((line) => line.includes("20/20")), JSON.stringify(lines));
+});
+
+test("a dragged-in file's path is read as the terminal pasted it", async () => {
+  const { cleanPath } = await import("../src/ui/Import.js");
+  const { homedir } = await import("node:os");
+  assert.equal(cleanPath("/tmp/My\\ Spanish.csv "), "/tmp/My Spanish.csv", "spaces escaped");
+  assert.equal(cleanPath("'/tmp/My Spanish.csv'"), "/tmp/My Spanish.csv", "in quotes");
+  assert.equal(cleanPath("file:///tmp/My%20Spanish.csv"), "/tmp/My Spanish.csv");
+  assert.equal(cleanPath("~/decks/a.apkg"), `${homedir()}/decks/a.apkg`);
+  assert.equal(cleanPath("   "), "");
+});
+
+test("Tab in a card line goes to its next part, starting the part that isn't there yet", async () => {
+  const { nextPart } = await import("../src/ui/AnswerInput.js");
+  assert.deepEqual(nextPart("kot", 3), { value: "kot = ", cursor: 6 });
+  assert.deepEqual(nextPart("kot = cat", 9), { value: "kot = cat // ", cursor: 13 });
+  assert.deepEqual(nextPart("kot = cat", 1), { value: "kot = cat", cursor: 6 }, "from the front to the back");
+  assert.deepEqual(nextPart("kot = cat // Mój kot", 7), { value: "kot = cat // Mój kot", cursor: 13 });
+  assert.deepEqual(nextPart("kot = cat // Mój kot", 15), { value: "kot = cat // Mój kot", cursor: 0 }, "and round to the front");
+});
+
+test("/add opens on the deck list, or straight in a deck when one is given", async () => {
+  const { AddCard } = await import("../src/ui/AddCard.js");
+  const stdin = () => Object.assign(new PassThrough(), { isTTY: true, setRawMode: () => {}, ref: () => {}, unref: () => {} });
+  const actions = { ownDecks: async () => [{ name: "Spanish", cards: 3, directions: "forward" }], languagesOf: async () => ({ front: "es", back: "en", guessed: false }), existingCard: async () => null };
+  const list = await frame(React.createElement(AddCard, { current: "Spanish", actions, onDone: () => {} }), { stdin: stdin() });
+  assert.ok(list.some((line) => line.includes("+ New deck")), list.join("\n"));
+  const into = await frame(React.createElement(AddCard, { current: "Spanish", actions, onDone: () => {}, into: "Spanish" }), { stdin: stdin() });
+  assert.ok(into.some((line) => line.includes("Add a card · Spanish")), into.join("\n"));
 });

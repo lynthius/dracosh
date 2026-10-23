@@ -2,7 +2,10 @@
   "commands": {
     "hint": "Révéler une lettre (la carte revient plus tôt)",
     "add": "Ajouter des cartes à un paquet, ou en créer un",
+    "import": "Importer des cartes depuis Anki, un CSV ou un fichier texte",
+    "cards": "Parcourir, chercher, corriger, déplacer ou supprimer les cartes du paquet",
     "decks": "Passer à un autre paquet, ou en créer un",
+    "trash": "Paquets et cartes supprimés : les récupérer",
     "settings": "Langue, rythme, intervalle, heures calmes, son, objectif, astuces",
     "stats": "Série, calendrier du mois et résumé des badges",
     "badges": "Tous les badges et comment les débloquer",
@@ -76,14 +79,28 @@
     "addName": "entrée créer · échap annuler",
     "confirm": "{yes} oui · {no} non",
     "languagePick": "tape pour chercher · ↑/↓ choisir · entrée valider · ← retour",
-    "choiceLeft": "{choose} · ← retour"
+    "choiceLeft": "{choose} · ← retour",
+    "importPath": "entrée lire le fichier · échap annuler",
+    "importDone": "entrée continuer",
+    "importName": "entrée continuer · échap retour",
+    "rename": "entrée enregistrer · échap annuler",
+    "undo": "u récupérer",
+    "trash": "↑/↓ choisir · entrée récupérer · échap retour",
+    "decksTogether": "espace réviser ensemble · → réglages · {choose}",
+    "cards": "tape pour chercher · ↑/↓ choisir · entrée ouvrir · échap retour",
+    "tabPart": "tab partie suivante",
+    "decksMixing": "espace ajouter/retirer · entrée seulement ce paquet · → réglages · échap terminé"
   },
   "settings": {
     "title": "Réglages",
     "rows": {
       "language": {
-        "label": "Langue",
+        "label": "Langue de l'appli",
         "hint": "la langue de Dracosh ; la visite change aussi"
+      },
+      "homeLanguage": {
+        "label": "Ta langue",
+        "hint": "la langue que tu parles : elle indique quel côté d'une carte est nouveau pour toi"
       },
       "rhythm": {
         "label": "Rythme",
@@ -121,6 +138,10 @@
         "label": "Heures calmes",
         "hint": "ni questions, ni sons, ni notifications pendant ces heures"
       },
+      "dragonLook": {
+        "label": "Apparence du dragon",
+        "hint": "son élément, tiré au dé ; Entrée revient au dragon vert par défaut"
+      },
       "reset": {
         "label": "Réinitialiser",
         "hint": "repartir de zéro : ta progression seulement, ou tout (une sauvegarde est faite avant)"
@@ -142,7 +163,14 @@
       "session": "session",
       "session-10": "session · 10 cartes",
       "session-20": "session · 20 cartes"
-    }
+    },
+    "notSet": "non choisie",
+    "homeTitle": "Quelle langue parles-tu ?",
+    "lookQuestion": "Revenir au dragon vert par défaut ?",
+    "lookNote": "Son élément ({element}) disparaît pour de bon : le dé ne roulera plus jamais.",
+    "lookYes": "Apparence par défaut",
+    "lookNo": "Garder l'élément",
+    "lookDropped": "Ton dragon a retrouvé son apparence par défaut."
   },
   "count": {
     "cards": {
@@ -205,7 +233,48 @@
     "languagesRow": "Langues",
     "detectRow": "Détecter d’après les cartes",
     "learningRow": "Langue apprise",
-    "learningShort": "langue apprise : {language}"
+    "learningShort": "langue apprise : {language}",
+    "renameRow": "Renommer",
+    "deleteRow": "Supprimer",
+    "renameTitle": "Nouveau nom pour « {deck} »",
+    "renamed": "« {from} » s'appelle maintenant « {to} ».",
+    "deleteQuestion": "Supprimer le paquet « {deck} » ({cards}) ?",
+    "deleteNote": "Il va à la corbeille avec sa progression : /trash le récupère pendant {days} jours.",
+    "deleteYes": "Supprimer",
+    "deleteNo": "Le garder",
+    "deleted": "« {deck} » supprimé. Appuie sur u pour le récupérer, ou retrouve-le dans /trash pendant {days} jours.",
+    "restored": "« {deck} » est de retour, avec sa progression.",
+    "allLabel": "Tous les paquets",
+    "mixLabel": {
+      "one": "{count} paquet",
+      "many": "{count} paquets",
+      "other": "{count} paquets"
+    },
+    "allRow": "Tous les paquets",
+    "togetherNow": {
+      "one": "Tu révises {count} paquet ensemble.",
+      "many": "Tu révises {count} paquets ensemble : leurs cartes arrivent mélangées.",
+      "other": "Tu révises {count} paquets ensemble : leurs cartes arrivent mélangées."
+    },
+    "aloneNow": "Seulement « {deck} » maintenant.",
+    "mergeRow": "Fusionner avec un autre paquet",
+    "mergeTitle": "Fusionner « {deck} » avec…",
+    "mergeQuestion": "Déplacer {cards} de « {from} » vers « {into} » ?",
+    "mergeNote": "Leur progression suit. « {from} » va à la corbeille pendant {days} jours, avec les cartes que « {into} » a déjà.",
+    "mergeYes": "Fusionner",
+    "merged": {
+      "one": "{count} carte déplacée de « {from} » vers « {into} ».",
+      "many": "{count} cartes déplacées de « {from} » vers « {into} ».",
+      "other": "{count} cartes déplacées de « {from} » vers « {into} »."
+    },
+    "mergedLeft": {
+      "one": "{count} y était déjà : elle est dans la corbeille avec le paquet.",
+      "many": "{count} y étaient déjà : elles sont dans la corbeille avec le paquet.",
+      "other": "{count} y étaient déjà : elles sont dans la corbeille avec le paquet."
+    },
+    "onlyOne": "« {deck} » est le seul paquet révisé. Marque-en un autre avec espace pour l'ajouter.",
+    "mergeNo": "Ne pas fusionner",
+    "mergeLanguages": "Attention : « {from} » est en {fromPair}, « {into} » en {intoPair}."
   },
   "add": {
     "fields": {
@@ -286,7 +355,8 @@
     "languagesNow": "On dirait : {pair}. Sinon, corrige dans /decks →.",
     "languagesSoon": "Langues : je les reconnaîtrai après quelques cartes",
     "learningLine": "Langue apprise : {language}",
-    "learningGuess": "ce n’est qu’une supposition : → modifier"
+    "learningGuess": "ce n’est qu’une supposition : → modifier",
+    "lineHintFor": "recto = verso, par ex. {example}  ·  ou colle une liste entière"
   },
   "quiz": {
     "youWrote": "ta réponse : ",
@@ -359,7 +429,8 @@
         "many": "dans environ {count} mois",
         "other": "dans environ {count} mois"
       }
-    }
+    },
+    "previewNoImport": "L'aperçu ne peut pas importer de cartes ; lance dracosh pour ça."
   },
   "dragon": {
     "stages": {
@@ -690,7 +761,7 @@
     "hatched": "Ton dragon est né !",
     "line": "Réponds aux cartes pour le garder heureux. Il grandit avec ta série.",
     "keysSkip": "une touche pour passer",
-    "keysStart": "une touche pour commencer"
+    "keysStart": "une touche pour continuer"
   },
   "evolution": {
     "evolved": "Ton compagnon a évolué : {name} !",
@@ -761,7 +832,8 @@
       "progressEntry": "une carte sans date de révision",
       "streak": "la série et les badges sont illisibles"
     },
-    "slashSwitch": "Il faudrait taper « {text} », et dans le quiz / ouvre les commandes. Modifie d'abord cette carte."
+    "slashSwitch": "Il faudrait taper « {text} », et dans le quiz / ouvre les commandes. Modifie d'abord cette carte.",
+    "notInTrash": "Ce paquet n'est plus dans la corbeille."
   },
   "cli": {
     "help": "Dracosh : un entraîneur de vocabulaire et de quiz pour ton terminal\n\nUsage : dracosh [options]\n        dracosh import <fichier|-> ajouter des cartes depuis un fichier (.txt, .csv, .tsv, un paquet Anki .apkg ou .colpkg, exports texte Anki ou Quizlet, une sauvegarde .json), ou « - » pour l'entrée standard\n        dracosh export <fichier>  écrire tes paquets en .apkg (Anki), .txt, .tsv, .csv ou .json (tout)\n        dracosh restore [numéro]  liste tes sauvegardes, ou en restaure une\n\n  --deck <nom>     réviser ce paquet, pour cette fois seulement (sinon celui choisi dans /decks)\n                   avec import ou export : le paquet à remplir ou à écrire\n  --every <durée>  pause entre les questions : 30s, 10m, 1h (par défaut : {interval})\n  --no-sound       couper les sons\n  --volume <0-1>   volume du son (par défaut : {volume})\n  --stats          afficher la progression et quitter\n  --data           montrer où sont gardées tes cartes, ta progression et tes sauvegardes\n  --preview        parcourir toutes les animations et tous les écrans sur des données inventées (rien n'est enregistré)\n  --update         import : les cartes déjà là prennent les réponses du fichier (sinon on te demande)\n  --split          import : une réponse qui en liste plusieurs (« cat, kitty ») devient une réponse par mot\n  --separator <s>  import : ce qui sépare les colonnes : tab, comma, semicolon, pipe, colon, space ou un caractère\n  --encoding <e>   import : un fichier qui n'est pas en UTF-8, p. ex. windows-1252\n  --anki           import ou export : directement depuis ou vers un Anki ouvert (greffon AnkiConnect)\n  -y, --yes        importer, exporter ou restaurer sans demander\n  -h, --help       afficher cette aide\n\nLes options remplacent tes réglages enregistrés pour ce lancement seulement. Change-les pour de bon dans /settings.\n\nPendant l'utilisation : Entrée valide (à vide, elle montre la réponse, puis 1 ou 2), « / » ouvre le menu des commandes (/add, /decks, /settings, /stats, /help…),\nÉchap quitte (efface d'abord ce que tu as tapé). Ctrl+C marche aussi.\nEntre deux cartes : Entrée demande la suivante tout de suite, q quitte. /help explique le reste.",
@@ -982,6 +1054,10 @@
       "hatch": {
         "label": "Éclosion",
         "hint": "l'intro du premier lancement"
+      },
+      "welcome": {
+        "label": "Bienvenue",
+        "hint": "les langues et une façon de commencer"
       },
       "mascot": {
         "label": "Labo de la mascotte",
@@ -1400,5 +1476,131 @@
     "badUrl": "DRACOSH_ANKI_URL n'est pas une adresse que Dracosh peut utiliser ({detail}) : elle ressemble à http://127.0.0.1:8765.",
     "noDeck": "Anki n'a plus de paquet « {detail} ».",
     "notImported": "Anki n'a pas pris les cartes : rien n'a été envoyé."
+  },
+  "welcome": {
+    "languageTitle": "Dans quelle langue Dracosh doit-il parler ?",
+    "languageNote": "Quelques questions rapides, puis on commence. Tu pourras changer la langue plus tard dans /settings.",
+    "homeTitle": "Quelle langue parles-tu ?",
+    "homeNote": "Dracosh pourra ainsi distinguer les nouveaux mots de leurs traductions.",
+    "learningTitle": "Quelle langue apprends-tu ?",
+    "learningNote": "Choisis-en une pour commencer ; tu pourras ajouter des paquets dans d'autres langues à tout moment. Tu n'apprends pas une langue ? Choisis « Autre chose » en bas de la liste.",
+    "notLanguage": "Autre chose (définitions, faits…)",
+    "startTitle": "Par quoi commencer ?",
+    "startNote": "Tu pourras changer plus tard : /decks change de paquet à tout moment.",
+    "start": {
+      "words": {
+        "one": "Commencer avec {count} mot du quotidien",
+        "many": "Commencer avec {count} mots du quotidien",
+        "other": "Commencer avec {count} mots du quotidien"
+      },
+      "wordsNote": "{language} → {home}",
+      "tour": "Montre-moi comment ça marche",
+      "tourNote": {
+        "one": "{count} carte courte sur le fonctionnement de Dracosh",
+        "many": "{count} cartes courtes sur le fonctionnement de Dracosh",
+        "other": "{count} cartes courtes sur le fonctionnement de Dracosh"
+      },
+      "import": "J'ai déjà des cartes",
+      "importNote": "depuis Anki, un CSV ou un fichier texte",
+      "own": "Créer mon propre paquet",
+      "ownNote": "tape ou colle tes cartes",
+      "noWords": "Des mots tout prêts existent en {languages}. Pas encore en {language} : crée ton propre paquet.",
+      "noWordsHome": "Les mots tout prêts sont pour des paires de ces langues : {languages}. Pas encore en {language} : commence par ton propre paquet."
+    },
+    "firstWordsDeck": "{language} : premiers mots",
+    "suggested": "suggérée"
+  },
+  "importScreen": {
+    "title": "Importer des cartes",
+    "pathLabel": "Quel fichier ?",
+    "pathHint": "Un fichier Anki (.apkg), un CSV ou un fichier texte. Glisse le fichier ici pour coller son chemin.",
+    "needPath": "Tape le chemin du fichier, ou glisse-le ici.",
+    "reading": "Lecture du fichier…",
+    "deckLabel": "Dans quel paquet mettre ces cartes ?",
+    "splitYes": "Oui, chacune est une bonne réponse",
+    "splitNo": "Non, les garder telles quelles",
+    "add": {
+      "one": "Ajouter {count} carte",
+      "many": "Ajouter {count} cartes",
+      "other": "Ajouter {count} cartes"
+    },
+    "addUpdate": {
+      "one": "Ajouter {cards} et en mettre {count} à jour",
+      "many": "Ajouter {cards} et en mettre {count} à jour",
+      "other": "Ajouter {cards} et en mettre {count} à jour"
+    },
+    "update": {
+      "one": "Mettre à jour {count} carte",
+      "many": "Mettre à jour {count} cartes",
+      "other": "Mettre à jour {count} cartes"
+    },
+    "cancel": "Annuler, ne rien changer",
+    "changedNote": "Une carte mise à jour prend les réponses du fichier et garde sa progression.",
+    "saving": "Enregistrement…",
+    "practise": "Ensuite : {deck}.",
+    "backup": "C'est une sauvegarde complète de Dracosh. Ferme Dracosh et restaure-la avec : dracosh import {file}",
+    "notUtf8": "{file} n'est pas enregistré en UTF-8. Enregistre-le en UTF-8 (dans Excel : CSV UTF-8), ou importe-le avec dracosh import, qui lit d'autres encodages (--encoding).",
+    "newDeck": "Un nouveau paquet : {deck}",
+    "otherName": "Un autre nom…",
+    "fromFile": "Dans le fichier :",
+    "slashLeft": {
+      "one": "{count} carte a été laissée de côté : une réponse à taper commence par /.",
+      "many": "{count} cartes ont été laissées de côté : une réponse à taper commence par /.",
+      "other": "{count} cartes ont été laissées de côté : une réponse à taper commence par /."
+    },
+    "undo": "Pour annuler : quitte Dracosh, puis lance dracosh restore 1 (la sauvegarde faite à l'instant).",
+    "close": "Fermer",
+    "problemLine": "ligne {line} : {text}  ({issue})",
+    "problemNote": "{text}  ({issue})",
+    "empty": "Ce fichier ne contient aucune carte."
+  },
+  "trash": {
+    "title": "Corbeille",
+    "note": "Les paquets et cartes supprimés restent ici {days} jours, avec leur progression.",
+    "row": "{cards} · supprimé le {deleted} · jusqu'au {until}",
+    "empty": "La corbeille est vide.",
+    "restored": "« {deck} » est de retour, avec sa progression.",
+    "cardsRow": "de « {deck} » · supprimé le {deleted} · jusqu'au {until}",
+    "cardsRestored": {
+      "one": "{count} carte est de retour dans « {deck} ».",
+      "many": "{count} cartes sont de retour dans « {deck} ».",
+      "other": "{count} cartes sont de retour dans « {deck} »."
+    },
+    "skipped": {
+      "one": "{count} reste dans la corbeille : le paquet a déjà une carte avec ce recto.",
+      "many": "{count} restent dans la corbeille : le paquet a déjà des cartes avec ces rectos.",
+      "other": "{count} restent dans la corbeille : le paquet a déjà des cartes avec ces rectos."
+    }
+  },
+  "cards": {
+    "title": {
+      "one": "{deck} · {count} carte",
+      "many": "{deck} · {count} cartes",
+      "other": "{deck} · {count} cartes"
+    },
+    "addRow": "+ Ajouter des cartes",
+    "undoRow": "↶ Récupérer « {card} »",
+    "editRow": "Corriger",
+    "moveRow": "Déplacer vers un autre paquet",
+    "deleteRow": "Supprimer",
+    "editTitle": "Corriger une carte · {deck}",
+    "moveTitle": "Déplacer « {card} » vers…",
+    "deleteQuestion": "Supprimer la carte « {card} » ?",
+    "deleteNote": "Elle va à la corbeille avec sa progression : /trash la récupère pendant {days} jours.",
+    "deleted": "Carte « {card} » supprimée. Elle reste {days} jours dans la corbeille.",
+    "restored": "La carte « {card} » est de retour.",
+    "moved": "Carte « {card} » déplacée vers « {deck} ».",
+    "alreadyThere": "« {deck} » a déjà une carte avec ce recto.",
+    "noOtherDeck": "Tu n'as pas d'autre paquet où la déplacer.",
+    "noMatch": "Aucune carte ne correspond à « {query} ».",
+    "found": {
+      "one": "{count} carte trouvée",
+      "many": "{count} cartes trouvées",
+      "other": "{count} cartes trouvées"
+    },
+    "tourNot": "Les cartes de la visite ne se modifient pas. /add crée ton propre paquet.",
+    "editHint": "recto = verso ; autre réponse // exemple",
+    "whichDeck": "Les cartes de quel paquet ?",
+    "deleteNo": "La garder"
   }
 }

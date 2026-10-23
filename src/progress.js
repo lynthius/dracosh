@@ -34,6 +34,14 @@ export const STAGES = [
   stage("legend", 365)
 ];
 
+// /settings → the default look: the element goes for good, and the die never rolls again
+export function dropElement(state, now = Date.now()) {
+  const progress = ensureProgress(state, now);
+  delete progress.element;
+  delete progress.elementRoll;
+  progress.elementDropped = true;
+}
+
 export function stageFor(bestStreak) {
   let index = 0;
   while (index + 1 < STAGES.length && bestStreak >= STAGES[index + 1].from) index += 1;

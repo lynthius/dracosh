@@ -2,7 +2,10 @@
   "commands": {
     "hint": "Odsłoń kolejną literę (karta wróci wcześniej)",
     "add": "Dodaj karty do talii albo stwórz nową",
+    "import": "Importuj karty z Anki, pliku CSV albo tekstowego",
+    "cards": "Przeglądaj, szukaj, poprawiaj, przenoś i usuwaj karty talii",
     "decks": "Przełącz się na inną talię albo stwórz nową",
+    "trash": "Usunięte talie i karty: przywróć je",
     "settings": "Język, rytm, interwał, godziny ciszy, dźwięk, cel, porady",
     "stats": "Seria, kalendarz miesiąca i podsumowanie odznak",
     "badges": "Wszystkie odznaki i co je odblokowuje",
@@ -76,14 +79,28 @@
     "addName": "enter utwórz · esc anuluj",
     "confirm": "{yes} tak · {no} nie",
     "languagePick": "pisz, by szukać · ↑/↓ wybierz · enter potwierdź · ← wstecz",
-    "choiceLeft": "{choose} · ← wstecz"
+    "choiceLeft": "{choose} · ← wstecz",
+    "importPath": "enter wczytaj plik · esc anuluj",
+    "importDone": "enter dalej",
+    "importName": "enter dalej · esc wstecz",
+    "rename": "enter zapisz · esc anuluj",
+    "undo": "u cofnij",
+    "trash": "↑/↓ wybierz · enter przywróć · esc wstecz",
+    "decksTogether": "spacja ćwicz razem · → ustawienia · {choose}",
+    "cards": "pisz, by szukać · ↑/↓ wybierz · enter otwórz · esc wstecz",
+    "tabPart": "tab następna część",
+    "decksMixing": "spacja dodaj/usuń · enter tylko ta talia · → ustawienia · esc gotowe"
   },
   "settings": {
     "title": "Ustawienia",
     "rows": {
       "language": {
-        "label": "Język",
+        "label": "Język aplikacji",
         "hint": "język Dracosha; samouczek też się przełączy"
+      },
+      "homeLanguage": {
+        "label": "Twój język",
+        "hint": "język, którym mówisz: po nim widać, która strona karty jest dla ciebie nowa"
       },
       "rhythm": {
         "label": "Rytm",
@@ -121,6 +138,10 @@
         "label": "Godziny ciszy",
         "hint": "w tych godzinach żadnych pytań, dźwięków ani powiadomień"
       },
+      "dragonLook": {
+        "label": "Wygląd smoka",
+        "hint": "jego żywioł, wylosowany kostką; Enter przywraca domyślnego zielonego smoka"
+      },
       "reset": {
         "label": "Reset",
         "hint": "zacznij od nowa: tylko postępy albo wszystko (najpierw powstaje kopia zapasowa)"
@@ -142,7 +163,14 @@
       "session": "sesja",
       "session-10": "sesja · 10 kart",
       "session-20": "sesja · 20 kart"
-    }
+    },
+    "notSet": "nie wybrano",
+    "homeTitle": "Jakim językiem mówisz?",
+    "lookQuestion": "Wrócić do domyślnego zielonego smoka?",
+    "lookNote": "Żywioł ({element}) zniknie na dobre: kostka już nigdy się nie potoczy.",
+    "lookYes": "Domyślny wygląd",
+    "lookNo": "Zostaw żywioł",
+    "lookDropped": "Twój smok znów ma domyślny wygląd."
   },
   "count": {
     "cards": {
@@ -209,7 +237,52 @@
     "languagesRow": "Języki",
     "detectRow": "Wróć do rozpoznawania z kart",
     "learningRow": "Język nauki",
-    "learningShort": "nauka: {language}"
+    "learningShort": "nauka: {language}",
+    "renameRow": "Zmień nazwę",
+    "deleteRow": "Usuń",
+    "renameTitle": "Nowa nazwa dla „{deck}”",
+    "renamed": "„{from}” nazywa się teraz „{to}”.",
+    "deleteQuestion": "Usunąć talię „{deck}” ({cards})?",
+    "deleteNote": "Trafi do kosza razem z postępem. Przez {days} dni przywrócisz ją z /trash.",
+    "deleteYes": "Usuń",
+    "deleteNo": "Zostaw",
+    "deleted": "Usunięto „{deck}”. Naciśnij u, żeby ją przywrócić, albo znajdź ją w /trash przez {days} dni.",
+    "restored": "Talia „{deck}” wróciła razem z postępem.",
+    "allLabel": "Wszystkie talie",
+    "mixLabel": {
+      "one": "{count} talia",
+      "few": "{count} talie",
+      "many": "{count} talii",
+      "other": "{count} talii"
+    },
+    "allRow": "Wszystkie talie",
+    "togetherNow": {
+      "one": "Ćwiczysz razem {count} talię.",
+      "few": "Ćwiczysz razem {count} talie: ich karty są wymieszane.",
+      "many": "Ćwiczysz razem {count} talii: ich karty są wymieszane.",
+      "other": "Ćwiczysz razem {count} talii: ich karty są wymieszane."
+    },
+    "aloneNow": "Teraz tylko „{deck}”.",
+    "mergeRow": "Dołącz do innej talii",
+    "mergeTitle": "Dołącz „{deck}” do…",
+    "mergeQuestion": "Przenieść karty z „{from}” do „{into}” ({cards})?",
+    "mergeNote": "Postęp idzie razem z nimi. „{from}” trafi do kosza na {days} dni, razem z kartami, które „{into}” już ma.",
+    "mergeYes": "Połącz",
+    "merged": {
+      "one": "Przeniesiono 1 kartę z „{from}” do „{into}”.",
+      "few": "Przeniesiono {count} karty z „{from}” do „{into}”.",
+      "many": "Przeniesiono {count} kart z „{from}” do „{into}”.",
+      "other": "Przeniesiono {count} karty z „{from}” do „{into}”."
+    },
+    "mergedLeft": {
+      "one": "1 już tam była: czeka w koszu razem z talią.",
+      "few": "{count} już tam były: czekają w koszu razem z talią.",
+      "many": "{count} już tam było: czeka w koszu razem z talią.",
+      "other": "{count} już tam było: czeka w koszu razem z talią."
+    },
+    "onlyOne": "Ćwiczysz tylko „{deck}”. Zaznacz spacją inną talię, żeby ją dodać.",
+    "mergeNo": "Nie łącz",
+    "mergeLanguages": "Uwaga: „{from}” to {fromPair}, a „{into}” to {intoPair}."
   },
   "add": {
     "fields": {
@@ -294,7 +367,8 @@
     "languagesNow": "Wygląda na: {pair}. Jeśli nie, popraw w /decks →.",
     "languagesSoon": "Języki: rozpoznam po kilku kartach",
     "learningLine": "Język nauki: {language}",
-    "learningGuess": "to tylko domysł: → zmień"
+    "learningGuess": "to tylko domysł: → zmień",
+    "lineHintFor": "przód = tył, np. {example}  ·  albo wklej całą listę"
   },
   "quiz": {
     "youWrote": "twoja odpowiedź: ",
@@ -371,7 +445,8 @@
         "many": "za około {count} miesięcy",
         "other": "za około {count} miesiąca"
       }
-    }
+    },
+    "previewNoImport": "Podgląd nie importuje kart; do tego uruchom dracosh."
   },
   "dragon": {
     "stages": {
@@ -714,7 +789,7 @@
     "hatched": "Twój smok się wykluł!",
     "line": "Odpowiadaj na karty, żeby był szczęśliwy. Rośnie razem z twoją serią.",
     "keysSkip": "dowolny klawisz, żeby pominąć",
-    "keysStart": "dowolny klawisz, żeby zacząć"
+    "keysStart": "dowolny klawisz, żeby kontynuować"
   },
   "evolution": {
     "evolved": "Twój towarzysz ewoluował: {name}!",
@@ -785,7 +860,8 @@
       "progressEntry": "karta bez terminu powtórki",
       "streak": "nie da się odczytać serii i odznak"
     },
-    "slashSwitch": "Trzeba by wpisać „{text}”, a w quizie / otwiera komendy. Najpierw popraw tę kartę."
+    "slashSwitch": "Trzeba by wpisać „{text}”, a w quizie / otwiera komendy. Najpierw popraw tę kartę.",
+    "notInTrash": "Tej talii nie ma już w koszu."
   },
   "cli": {
     "help": "Dracosh: trener słówek i quizów w terminalu\n\nUżycie: dracosh [opcje]\n        dracosh import <plik|->   dodaj karty z pliku (.txt, .csv, .tsv, pakiet Anki .apkg lub .colpkg, eksporty tekstowe z Anki i Quizletu, kopia .json) albo „-” ze standardowego wejścia\n        dracosh export <plik>     zapisz talie do .apkg (Anki), .txt, .tsv, .csv albo .json (wszystko)\n        dracosh restore [numer]   lista kopii zapasowych albo przywrócenie jednej z nich\n\n  --deck <nazwa>   quiz z tej talii, tylko tym razem (inaczej ta wybrana w /decks)\n                   przy import i export: talia do uzupełnienia albo zapisania\n  --every <czas>   odstęp między pytaniami: 30s, 10m, 1h (domyślnie: {interval})\n  --no-sound       wyłącz dźwięki\n  --volume <0-1>   głośność (domyślnie: {volume})\n  --stats          wypisz postępy i zakończ\n  --data           pokaż, gdzie są karty, postępy i kopie zapasowe\n  --preview        obejrzyj wszystkie animacje i ekrany na zmyślonych danych (nic się nie zapisuje)\n  --update         import: karty, które już są, dostają odpowiedzi z pliku (inaczej pytanie)\n  --split          import: odpowiedź z kilkoma wariantami („cat, kitty”) staje się kilkoma odpowiedziami\n  --separator <s>  import: co dzieli kolumny: tab, comma, semicolon, pipe, colon, space albo znak\n  --encoding <e>   import: plik, który nie jest w UTF-8, np. windows-1250\n  --anki           import albo eksport: prosto z działającego Anki albo do niego (dodatek AnkiConnect)\n  -y, --yes        import, eksport albo przywrócenie bez pytania\n  -h, --help       pokaż tę pomoc\n\nOpcje zmieniają zapisane ustawienia tylko na to uruchomienie. Zapisane zmienisz w /settings.\n\nW trakcie: Enter wysyła (pusty pokazuje odpowiedź, potem 1 albo 2), „/” otwiera menu komend (/add, /decks, /settings, /stats, /help…),\nEsc wychodzi (najpierw czyści wpisany tekst). Ctrl+C też działa.\nMiędzy kartami: Enter od razu zadaje następną, q wychodzi. Resztę wyjaśnia /help.",
@@ -1010,6 +1086,10 @@
       "hatch": {
         "label": "Wykluwanie",
         "hint": "wstęp przy pierwszym uruchomieniu"
+      },
+      "welcome": {
+        "label": "Powitanie",
+        "hint": "języki i sposób na start"
       },
       "mascot": {
         "label": "Laboratorium maskotki",
@@ -1448,5 +1528,141 @@
     "badUrl": "DRACOSH_ANKI_URL to nie adres, którego Dracosh może użyć ({detail}): powinien wyglądać jak http://127.0.0.1:8765.",
     "noDeck": "W Anki nie ma już talii „{detail}”.",
     "notImported": "Anki nie przyjęło kart: nic nie zostało wysłane."
+  },
+  "welcome": {
+    "languageTitle": "W jakim języku ma mówić Dracosh?",
+    "languageNote": "Kilka krótkich pytań i zaczynamy. Język możesz później zmienić w /settings.",
+    "homeTitle": "Jakim językiem mówisz?",
+    "homeNote": "Dzięki temu Dracosh odróżni nowe słowa od ich tłumaczeń.",
+    "learningTitle": "Jakiego języka się uczysz?",
+    "learningNote": "Na początek wybierz jeden; talie w innych językach dodasz w każdej chwili. Nie uczysz się języka? Wybierz „Czegoś innego” na końcu listy.",
+    "notLanguage": "Czegoś innego (definicje, fakty…)",
+    "startTitle": "Od czego zaczynamy?",
+    "startNote": "Możesz to później zmienić: /decks przełącza talie w każdej chwili.",
+    "start": {
+      "words": {
+        "one": "Zacznij od {count} codziennego słowa",
+        "few": "Zacznij od {count} codziennych słów",
+        "many": "Zacznij od {count} codziennych słów",
+        "other": "Zacznij od {count} codziennego słowa"
+      },
+      "wordsNote": "{language} → {home}",
+      "tour": "Pokaż, jak to działa",
+      "tourNote": {
+        "one": "{count} krótka karta o tym, jak działa Dracosh",
+        "few": "{count} krótkie karty o tym, jak działa Dracosh",
+        "many": "{count} krótkich kart o tym, jak działa Dracosh",
+        "other": "{count} krótkiej karty o tym, jak działa Dracosh"
+      },
+      "import": "Mam już swoje karty",
+      "importNote": "z Anki, pliku CSV albo tekstowego",
+      "own": "Stwórz własną talię",
+      "ownNote": "wpisz albo wklej swoje karty",
+      "noWords": "Gotowe słowa są dostępne w tych językach: {languages}. Język {language} ich jeszcze nie ma, więc zacznij od własnej talii.",
+      "noWordsHome": "Gotowe słowa są dla par z tych języków: {languages}. Język {language} jeszcze do nich nie należy, więc zacznij od własnej talii."
+    },
+    "firstWordsDeck": "{language}: pierwsze słowa",
+    "suggested": "propozycja"
+  },
+  "importScreen": {
+    "title": "Import kart",
+    "pathLabel": "Który plik?",
+    "pathHint": "Pakiet Anki (.apkg), plik CSV albo tekstowy. Przeciągnij tu plik, żeby wkleić jego ścieżkę.",
+    "needPath": "Wpisz ścieżkę do pliku albo przeciągnij go tutaj.",
+    "reading": "Wczytuję plik…",
+    "deckLabel": "Do której talii trafią te karty?",
+    "splitYes": "Tak, każdy jest dobrą odpowiedzią",
+    "splitNo": "Nie, zostaw bez zmian",
+    "add": {
+      "one": "Dodaj 1 kartę",
+      "few": "Dodaj {count} karty",
+      "many": "Dodaj {count} kart",
+      "other": "Dodaj {count} karty"
+    },
+    "addUpdate": {
+      "one": "Dodaj nowe ({cards}) i zaktualizuj 1 kartę",
+      "few": "Dodaj nowe ({cards}) i zaktualizuj {count} karty",
+      "many": "Dodaj nowe ({cards}) i zaktualizuj {count} kart",
+      "other": "Dodaj nowe ({cards}) i zaktualizuj {count} karty"
+    },
+    "update": {
+      "one": "Zaktualizuj 1 kartę",
+      "few": "Zaktualizuj {count} karty",
+      "many": "Zaktualizuj {count} kart",
+      "other": "Zaktualizuj {count} karty"
+    },
+    "cancel": "Anuluj, nic nie zmieniaj",
+    "changedNote": "Zaktualizowana karta dostaje odpowiedzi z pliku i zachowuje postęp.",
+    "saving": "Zapisuję…",
+    "practise": "Dalej: {deck}.",
+    "backup": "To pełna kopia zapasowa Dracosha. Zamknij Dracosha i przywróć ją poleceniem: dracosh import {file}",
+    "notUtf8": "{file} nie jest zapisany w UTF-8. Zapisz go w UTF-8 (w Excelu: CSV UTF-8) albo zaimportuj przez dracosh import, który czyta inne kodowania (--encoding).",
+    "newDeck": "Nowa talia: {deck}",
+    "otherName": "Inna nazwa…",
+    "fromFile": "Z pliku:",
+    "slashLeft": {
+      "one": "Pominięto 1 kartę: odpowiedź do wpisania zaczyna się od /.",
+      "few": "Pominięto {count} karty: odpowiedź do wpisania zaczyna się od /.",
+      "many": "Pominięto {count} kart: odpowiedź do wpisania zaczyna się od /.",
+      "other": "Pominięto {count} karty: odpowiedź do wpisania zaczyna się od /."
+    },
+    "undo": "Żeby to cofnąć: zamknij Dracosha i uruchom dracosh restore 1 (kopia zrobiona przed chwilą).",
+    "close": "Zamknij",
+    "problemLine": "wiersz {line}: {text}  ({issue})",
+    "problemNote": "{text}  ({issue})",
+    "empty": "W tym pliku nie ma kart."
+  },
+  "trash": {
+    "title": "Kosz",
+    "note": "Usunięte talie i karty czekają tu {days} dni, razem z postępem.",
+    "row": "{cards} · usunięta {deleted} · do {until}",
+    "empty": "Kosz jest pusty.",
+    "restored": "Talia „{deck}” wróciła razem z postępem.",
+    "cardsRow": "z „{deck}” · usunięto {deleted} · do {until}",
+    "cardsRestored": {
+      "one": "1 karta wróciła do „{deck}”.",
+      "few": "{count} karty wróciły do „{deck}”.",
+      "many": "{count} kart wróciło do „{deck}”.",
+      "other": "{count} karty wróciło do „{deck}”."
+    },
+    "skipped": {
+      "one": "1 zostaje w koszu: talia ma już kartę z tym samym przodem.",
+      "few": "{count} zostają w koszu: talia ma już karty z tymi samymi przodami.",
+      "many": "{count} zostaje w koszu: talia ma już karty z tymi samymi przodami.",
+      "other": "{count} zostaje w koszu: talia ma już karty z tymi samymi przodami."
+    }
+  },
+  "cards": {
+    "title": {
+      "one": "{deck} · {count} karta",
+      "few": "{deck} · {count} karty",
+      "many": "{deck} · {count} kart",
+      "other": "{deck} · {count} karty"
+    },
+    "addRow": "+ Dodaj karty",
+    "undoRow": "↶ Przywróć „{card}”",
+    "editRow": "Popraw",
+    "moveRow": "Przenieś do innej talii",
+    "deleteRow": "Usuń",
+    "editTitle": "Popraw kartę · {deck}",
+    "moveTitle": "Przenieś „{card}” do…",
+    "deleteQuestion": "Usunąć kartę „{card}”?",
+    "deleteNote": "Trafi do kosza razem z postępem: /trash przywraca ją przez {days} dni.",
+    "deleted": "Usunięto kartę „{card}”. Czeka w koszu {days} dni.",
+    "restored": "Karta „{card}” wróciła.",
+    "moved": "Przeniesiono kartę „{card}” do „{deck}”.",
+    "alreadyThere": "W „{deck}” jest już karta z tym przodem.",
+    "noOtherDeck": "Nie masz innej talii, do której można ją przenieść.",
+    "noMatch": "Żadna karta nie pasuje do „{query}”.",
+    "found": {
+      "one": "Znaleziono 1 kartę",
+      "few": "Znaleziono {count} karty",
+      "many": "Znaleziono {count} kart",
+      "other": "Znaleziono {count} karty"
+    },
+    "tourNot": "Kart samouczka nie da się zmieniać. /add zaczyna twoją własną talię.",
+    "editHint": "przód = tył; inna odpowiedź // przykład",
+    "whichDeck": "Karty której talii?",
+    "deleteNo": "Zostaw"
   }
 }
