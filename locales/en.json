@@ -71,6 +71,9 @@
     "addFixing": "enter save · esc leave it",
     "addBack": "enter add · esc back",
     "pasteReview": "↑/↓ move · e fix · x drop · enter add {count} · esc cancel",
+    "aiReview": "space keep · a keep all · e fix · enter add {count} · esc cancel",
+    "aiReviewNone": "space keep · a keep all · e fix · esc cancel",
+    "aiWaiting": "esc cancel",
     "pasteFix": "enter done · esc back",
     "grading": "1 or ← didn't know · 2 or → knew it",
     "sessionWaiting": "enter next card · / commands · q quit",
@@ -350,7 +353,20 @@
     "ai": {
       "suggested": "suggestion from {provider}",
       "thinking": "{provider} is writing a suggestion…",
-      "example": "example sentence from {provider}"
+      "example": "example sentence from {provider}",
+      "listHint": "✦ ?20 words for the kitchen asks AI for a list",
+      "listTitle": "✦ Cards from AI · {deck}",
+      "writing": "{provider} is writing… {count} so far",
+      "listSummary": {
+        "one": "{count} suggestion · {kept} kept",
+        "other": "{count} suggestions · {kept} kept"
+      },
+      "noList": "No cards came back. Try asking another way, or another model.",
+      "writingStart": "{provider} is writing…",
+      "request": "“{request}”",
+      "confirm": "Esc again drops the cards you kept. Any other key keeps them.",
+      "nothingKept": "Nothing kept yet: space keeps a card, a keeps them all.",
+      "listOff": "AI help is off: turn it on in /settings → AI help to ask for a list."
     }
   },
   "quiz": {

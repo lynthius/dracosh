@@ -7,7 +7,7 @@ import { after, before, test } from "node:test";
 
 process.env.DRACOSH_HOME = mkdtempSync(join(tmpdir(), "dracosh-"));
 for (const name of ["ANTHROPIC_API_KEY", "OPENAI_API_KEY", "OPENROUTER_API_KEY", "DRACOSH_AI_KEY"]) delete process.env[name];
-const { ask, checkAi, findKey, forgetKey, listModels, maskKey, normalizeAi, saveKey } = await import("../src/ai.js");
+const { ask, checkAi, stream, findKey, forgetKey, listModels, maskKey, normalizeAi, saveKey } = await import("../src/ai.js");
 const { DATA_FILES } = await import("../src/store.js");
 const { normalizeSettings } = await import("../src/settings.js");
 
@@ -24,6 +24,17 @@ before(async () => {
       seen.push({ method: req.method, url: req.url, headers: req.headers, body: body ? JSON.parse(body) : null });
       const send = (status, data) => (res.writeHead(status, { "content-type": "application/json" }), res.end(typeof data === "string" ? data : JSON.stringify(data)));
       if (reply) return send(...reply);
+      const asked = body ? JSON.parse(body) : {};
+      if (asked.stream) {
+        res.writeHead(200, { "content-type": "text/event-stream" });
+        const events = req.url === "/v1/messages"
+          ? [{ type: "message_start" }, { type: "content_block_delta", delta: { type: "text_delta", text: "ko" } }, { type: "ping" }, { type: "content_block_delta", delta: { type: "text_delta", text: "t\npies" } }]
+          : [{ choices: [{ delta: { role: "assistant" } }] }, { choices: [{ delta: { content: "ko" } }] }, { choices: [{ delta: { content: "t\npies" } }] }];
+        // split mid-event, the way a network may cut it
+        const raw = events.map((event) => `data: ${JSON.stringify(event)}\n\n`).join("") + (req.url === "/v1/messages" ? "" : "data: [DONE]\n\n");
+        res.write(raw.slice(0, 37));
+        return setTimeout(() => res.end(raw.slice(37)), 20);
+      }
       if (req.url.startsWith("/v1/models")) return send(200, { data: [{ id: "small" }, { id: "big" }, { id: "small" }, { id: "text-embedding-3-small" }, { id: "tts-1" }] });
       if (req.url === "/v1/messages") return send(200, { content: [{ type: "text", text: " kot " }] });
       if (req.url === "/v1/chat/completions") return send(200, { choices: [{ message: { content: "cat\n" } }] });
@@ -164,4 +175,23 @@ test("a server repeating the key or sending an odd error never shows it", async 
   fresh();
   reply = [400, { error: { code: 7 } }];
   await assert.rejects(ask({ provider: "openrouter", model: "x", url: base }, { key: "k", system: "s", prompt: "p" }), (err) => err.message.includes('{"code":7}'));
+});
+
+test("a streamed answer is heard piece by piece, from either API", async () => {
+  for (const ai of [{ provider: "anthropic", model: "m", url: base }, { provider: "ollama", model: "m", url: base }]) {
+    fresh();
+    const pieces = [];
+    const whole = await stream(ai, { key: "k", system: "s", prompt: "p", onText: (piece) => pieces.push(piece) });
+    assert.equal(whole, "kot\npies");
+    assert.deepEqual(pieces, ["ko", "t\npies"]);
+    assert.equal(seen[0].body.stream, true);
+  }
+});
+
+test("a server that ignores stream: true still gives its answer", async () => {
+  fresh();
+  const pieces = [];
+  reply = [200, { choices: [{ message: { content: "kot = cat" } }] }];
+  assert.equal(await stream({ provider: "openrouter", model: "m", url: base }, { key: "k", system: "s", prompt: "p", onText: (piece) => pieces.push(piece) }), "kot = cat");
+  assert.deepEqual(pieces, ["kot = cat"]);
 });

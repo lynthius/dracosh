@@ -71,6 +71,9 @@
     "addFixing": "enter speichern · esc abbrechen",
     "addBack": "enter hinzufügen · esc zurück",
     "pasteReview": "↑/↓ wählen · e korrigieren · x verwerfen · enter {count} hinzufügen · esc abbrechen",
+    "aiReview": "Leertaste behalten · a alle · e korrigieren · enter {count} hinzufügen · esc zurück",
+    "aiReviewNone": "Leertaste behalten · a alle · e korrigieren · esc zurück",
+    "aiWaiting": "esc zurück",
     "pasteFix": "enter fertig · esc zurück",
     "grading": "1 oder ← wusste ich nicht · 2 oder → wusste ich",
     "sessionWaiting": "enter nächste Karte · / Befehle · q beenden",
@@ -353,7 +356,20 @@
     "ai": {
       "suggested": "Vorschlag von {provider}",
       "thinking": "{provider} schreibt einen Vorschlag…",
-      "example": "Beispielsatz von {provider}"
+      "example": "Beispielsatz von {provider}",
+      "listHint": "✦ ?20 Wörter für die Küche: die KI schlägt eine Liste vor",
+      "listTitle": "✦ Karten von der KI · {deck}",
+      "writing": "{provider} schreibt… bisher {count}",
+      "listSummary": {
+        "one": "{count} Vorschlag · {kept} behalten",
+        "other": "{count} Vorschläge · {kept} behalten"
+      },
+      "noList": "Es kamen keine Karten zurück: Frag anders oder nimm ein anderes Modell.",
+      "writingStart": "{provider} schreibt…",
+      "request": "„{request}“",
+      "confirm": "Ein weiteres Esc verwirft die behaltenen Karten; jede andere Taste behält sie.",
+      "nothingKept": "Noch nichts behalten: Leertaste behält eine Karte, a alle.",
+      "listOff": "KI-Hilfe ist aus: Schalte sie unter /settings → KI-Hilfe ein, um eine Liste zu bekommen."
     }
   },
   "quiz": {

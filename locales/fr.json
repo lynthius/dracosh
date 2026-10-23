@@ -71,6 +71,9 @@
     "addFixing": "entrée enregistrer · échap laisser",
     "addBack": "entrée ajouter · échap retour",
     "pasteReview": "↑/↓ choisir · e corriger · x écarter · entrée ajouter {count} · échap annuler",
+    "aiReview": "espace garder · a tout garder · e corriger · entrée ajouter {count} · échap annuler",
+    "aiReviewNone": "espace garder · a tout garder · e corriger · échap annuler",
+    "aiWaiting": "échap annuler",
     "pasteFix": "entrée valider · échap retour",
     "grading": "1 ou ← je ne savais pas · 2 ou → je savais",
     "sessionWaiting": "entrée carte suivante · / commandes · q quitter",
@@ -365,7 +368,21 @@
     "ai": {
       "suggested": "suggestion de {provider}",
       "thinking": "{provider} écrit une suggestion…",
-      "example": "phrase d'exemple de {provider}"
+      "example": "phrase d'exemple de {provider}",
+      "listHint": "✦ ?20 mots pour la cuisine : l'IA propose une liste",
+      "listTitle": "✦ Cartes de l'IA · {deck}",
+      "writing": "{provider} écrit… {count} pour l'instant",
+      "listSummary": {
+        "one": "{count} suggestion · gardées : {kept}",
+        "many": "{count} suggestions · gardées : {kept}",
+        "other": "{count} suggestions · gardées : {kept}"
+      },
+      "noList": "L'IA n'a renvoyé aucune carte : reformule ta demande ou essaie un autre modèle.",
+      "writingStart": "{provider} écrit…",
+      "request": "« {request} »",
+      "confirm": "Appuie encore sur Échap pour abandonner les cartes gardées ; une autre touche les garde.",
+      "nothingKept": "Rien de gardé pour l'instant : espace garde une carte, a les garde toutes.",
+      "listOff": "L'aide IA est désactivée : active-la dans /settings → Aide IA pour demander une liste."
     }
   },
   "quiz": {

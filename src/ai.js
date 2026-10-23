@@ -100,7 +100,9 @@ export class AiError extends Error {
 
 const TIMEOUT_MS = 30_000;
 
-async function call(ai, key, path, body, { signal, timeoutMs = TIMEOUT_MS } = {}) {
+// `onText`: the request streams (server-sent events), each piece of the answer heard as it comes; → the
+// whole text then, the parsed JSON otherwise
+async function call(ai, key, path, body, { signal, timeoutMs = TIMEOUT_MS, onText } = {}) {
   const { api } = PROVIDERS[ai.provider];
   const url = `${urlOf(ai)}${path}`;
   const headers = { "content-type": "application/json" };
@@ -119,8 +121,16 @@ async function call(ai, key, path, body, { signal, timeoutMs = TIMEOUT_MS } = {}
   }
   let text;
   try {
+    // a server that doesn't stream answers whole: its text, all at once
+    if (onText && response.ok && !/event-stream/i.test(response.headers.get("content-type") ?? "")) {
+      const whole = textOf(api, JSON.parse(await response.text()));
+      onText(whole, whole);
+      return whole;
+    }
+    if (onText && response.ok) return await readStream(response, api, onText, { ...vars, key });
     text = await response.text();
   } catch (err) {
+    if (err instanceof AiError) throw err;
     if (signal?.aborted) throw err;
     throw new AiError(timeout.aborted ? "timeout" : "offline", vars);
   }
@@ -129,8 +139,7 @@ async function call(ai, key, path, body, { signal, timeoutMs = TIMEOUT_MS } = {}
     data = JSON.parse(text);
   } catch {}
   if (response.ok && data) return data;
-  const reason = data?.error?.message ?? data?.error ?? data?.message ?? "";
-  const said = (typeof reason === "string" ? reason : JSON.stringify(reason)).split(key || "\u0000").join("…").slice(0, 200); // a server repeating the key never shows it
+  const said = reasonOf(data, key);
   if (response.ok) throw new AiError("failed", { ...vars, status: response.status, detail: t("ai.errors.notJson") });
   if (response.status === 401 || response.status === 403) throw new AiError("badKey", vars);
   if (response.status === 404 && !body) throw new AiError("noApi", vars); // listing models: the address is wrong
@@ -138,6 +147,46 @@ async function call(ai, key, path, body, { signal, timeoutMs = TIMEOUT_MS } = {}
   if (response.status === 429) throw new AiError("rateLimit", vars);
   if (response.status >= 500) throw new AiError("server", { ...vars, status: response.status });
   throw new AiError("failed", { ...vars, status: response.status, detail: said || response.statusText });
+}
+
+// what a server said went wrong, never with the key in it (a server may repeat it)
+function reasonOf(data, key) {
+  const reason = data?.error?.message ?? data?.error ?? data?.message ?? "";
+  return (typeof reason === "string" ? reason : JSON.stringify(reason)).split(key || "\u0000").join("…").slice(0, 200);
+}
+
+const textOf = (api, data) => (api === "anthropic" ? (data.content ?? []).filter((part) => part.type === "text").map((part) => part.text).join("") : String(data.choices?.[0]?.message?.content ?? ""));
+
+// the text of a streamed answer: Anthropic's content_block_delta events, or OpenAI's chunks
+async function readStream(response, api, onText, { key, ...vars }) {
+  const decoder = new TextDecoder();
+  let pending = "";
+  let whole = "";
+  const event = (line) => {
+    if (!line.startsWith("data:")) return;
+    const payload = line.slice(5).trim();
+    if (!payload || payload === "[DONE]") return;
+    let data;
+    try {
+      data = JSON.parse(payload);
+    } catch {
+      return;
+    }
+    if (data.type === "error" || data.error) throw new AiError("failed", { ...vars, status: 200, detail: reasonOf(data, key) });
+    const piece = api === "anthropic" ? (data.type === "content_block_delta" && data.delta?.type === "text_delta" ? data.delta.text : "") : (data.choices?.[0]?.delta?.content ?? "");
+    if (piece) {
+      whole += piece;
+      onText(piece, whole);
+    }
+  };
+  for await (const chunk of response.body) {
+    pending += decoder.decode(chunk, { stream: true });
+    const lines = pending.split(/\r\n|\r|\n/);
+    pending = lines.pop();
+    lines.forEach(event);
+  }
+  event(pending);
+  return whole;
 }
 
 async function keyFor(ai) {
@@ -152,12 +201,20 @@ export async function ask(ai, { system, prompt, maxTokens = 400, signal, timeout
   if (key === undefined) key = await keyFor(ai);
   if (PROVIDERS[ai.provider].api === "anthropic") {
     const data = await call(ai, key, "/messages", { model: ai.model, max_tokens: maxTokens, system, messages: [{ role: "user", content: prompt }] }, { signal, timeoutMs });
-    return (data.content ?? []).filter((part) => part.type === "text").map((part) => part.text).join("").trim();
+    return textOf("anthropic", data).trim();
   }
   // OpenAI's newer models take max_completion_tokens; the compatible servers know max_tokens
   const limit = ai.provider === "openai" ? { max_completion_tokens: maxTokens } : { max_tokens: maxTokens };
   const data = await call(ai, key, "/chat/completions", { model: ai.model, ...limit, messages: [{ role: "system", content: system }, { role: "user", content: prompt }] }, { signal, timeoutMs });
-  return String(data.choices?.[0]?.message?.content ?? "").trim();
+  return textOf("openai", data).trim();
+}
+
+// One answer, streamed: `onText`(piece, sofar) hears it as it's written. → the whole text
+export async function stream(ai, { system, prompt, maxTokens = 2000, signal, timeoutMs = 120_000, key, onText }) {
+  if (key === undefined) key = await keyFor(ai);
+  if (PROVIDERS[ai.provider].api === "anthropic") return call(ai, key, "/messages", { model: ai.model, max_tokens: maxTokens, system, messages: [{ role: "user", content: prompt }], stream: true }, { signal, timeoutMs, onText });
+  const limit = ai.provider === "openai" ? { max_completion_tokens: maxTokens } : { max_tokens: maxTokens };
+  return call(ai, key, "/chat/completions", { model: ai.model, ...limit, messages: [{ role: "system", content: system }, { role: "user", content: prompt }], stream: true }, { signal, timeoutMs, onText });
 }
 
 // models that don't write text (embeddings, speech, images, moderation) can't suggest a card

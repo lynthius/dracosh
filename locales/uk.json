@@ -71,6 +71,9 @@
     "addFixing": "enter зберегти · esc залишити",
     "addBack": "enter додати · esc назад",
     "pasteReview": "↑/↓ вибрати · e виправити · x відкинути · enter додати {count} · esc скасувати",
+    "aiReview": "пробіл позначити · a всі · e виправити · enter додати {count} · esc скасувати",
+    "aiReviewNone": "пробіл позначити · a всі · e виправити · esc скасувати",
+    "aiWaiting": "esc скасувати",
     "pasteFix": "enter готово · esc назад",
     "grading": "1 або ← не пам'ятаю · 2 або → пам'ятаю",
     "sessionWaiting": "enter наступна картка · / команди · q вийти",
@@ -377,7 +380,22 @@
     "ai": {
       "suggested": "підказка: {provider}",
       "thinking": "{provider} пише підказку…",
-      "example": "приклад речення: {provider}"
+      "example": "приклад речення: {provider}",
+      "listHint": "✦ ?20 слів про кухню: ШІ запропонує список",
+      "listTitle": "✦ Картки від ШІ · {deck}",
+      "writing": "{provider} пише… поки що {count}",
+      "listSummary": {
+        "one": "{count} пропозиція · позначено: {kept}",
+        "few": "{count} пропозиції · позначено: {kept}",
+        "many": "{count} пропозицій · позначено: {kept}",
+        "other": "{count} пропозиції · позначено: {kept}"
+      },
+      "noList": "Жодної картки не надійшло: запитай інакше або спробуй іншу модель.",
+      "writingStart": "{provider} пише…",
+      "request": "«{request}»",
+      "confirm": "Ще раз Esc відкидає позначені картки. Будь-яка інша клавіша їх залишає.",
+      "nothingKept": "Ще нічого не позначено: пробіл позначає картку, a всі.",
+      "listOff": "Допомогу ШІ вимкнено: увімкни її в /settings → Допомога ШІ, щоб попросити список."
     }
   },
   "quiz": {

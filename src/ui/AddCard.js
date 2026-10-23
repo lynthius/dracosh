@@ -7,7 +7,7 @@ import { frontKey } from "../judge.js";
 import { isKnown, languageName } from "../language.js";
 import { LanguagePicker, pairText } from "./Languages.js";
 import { providerName } from "../ai.js";
-import { suggestCard } from "../assist.js";
+import { suggestCard, suggestCards } from "../assist.js";
 import { AnswerInput } from "./AnswerInput.js";
 import { Choice, choiceHints } from "./Choice.js";
 import { t } from "../i18n.js";
@@ -83,7 +83,16 @@ export function AddCard({ current, actions, onDone, startNew = false, suggest = 
   const [direction, setDirection] = useState(0);
   const [sample, setSample] = useState(null); // the card the direction question shows
   const busy = useRef(false); // a save in flight: Enter again does nothing
-  const [pasted, setPasted] = useState(null); // { items, selected, confirm, fixing }
+  const [pasted, setPasted] = useState(null); // { items, selected, confirm, total, ai? }: ai = { request, writing, problem } for a list from AI help
+  const listing = useRef(null); // the AI list being written: its AbortController
+  const [spin, setSpin] = useState(0);
+  const writing = Boolean(pasted?.ai?.writing);
+  useEffect(() => {
+    if (!writing) return;
+    const timer = setInterval(() => setSpin((n) => n + 1), 100);
+    return () => clearInterval(timer);
+  }, [writing]);
+  useEffect(() => () => listing.current?.abort(), []);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const lookup = useRef(0);
@@ -213,6 +222,10 @@ export function AddCard({ current, actions, onDone, startNew = false, suggest = 
     }
     if (step === "line") {
       if (!value) return setError(t("add.needFront"));
+      if (/^\?\s*\S/.test(value) && !value.includes(" = ")) {
+        if (ai) return askForList(value.slice(1).trim());
+        return setError(t("add.ai.listOff"));
+      }
       const fields = parseLine(value);
       if (!fields.front) return setError(t("add.needFront"));
       if (duplicate) return; // the warning is already under the field
@@ -238,7 +251,7 @@ export function AddCard({ current, actions, onDone, startNew = false, suggest = 
         .then((existing) => {
           setPasted((p) => {
             const issue = issueOf(fields, deck.isNew ? null : deck.directions, Boolean(existing));
-            return { ...p, items: p.items.map((item, i) => (i === p.selected ? { line: value, fields, issue, dropped: false } : item)), confirm: false };
+            return { ...p, items: p.items.map((item, i) => (i === p.selected ? { ...item, line: value, fields, issue, dropped: false } : item)), confirm: false };
           });
           setStep("review");
         });
@@ -322,6 +335,7 @@ export function AddCard({ current, actions, onDone, startNew = false, suggest = 
   async function openPaste(text) {
     const list = readCardList(text, { comments: false }); // a pasted "#tag = hashtag" is a card
     if (!list.items.length) return setStep("line");
+    setEditing(null);
     const fronts = await Promise.all(list.items.map((item) => actions.existingCard(deck.name, item.fields.front).catch(() => null)));
     const existing = new Set(fronts.filter(Boolean).map((card) => frontKey(card.front)));
     setPasted({ items: readPaste(list, existing, deck.isNew ? null : deck.directions), selected: 0, confirm: false, total: list.items.length });
@@ -330,9 +344,43 @@ export function AddCard({ current, actions, onDone, startNew = false, suggest = 
     setStep("review");
   }
 
+  // "?20 words for the kitchen": AI help writes a list into the review as it goes; none is kept
+  // until you keep it (space, or a for all)
+  async function askForList(request) {
+    listing.current?.abort();
+    const controller = (listing.current = new AbortController());
+    setEditing(null); // the list's cards are new ones: the last card isn't being fixed any more
+    setPasted({ items: [], selected: 0, confirm: false, total: 0, ai: { request, writing: true, problem: "" } });
+    setError("");
+    setMessage("");
+    clearField();
+    setStep("review");
+    const update = (change) => setPasted((p) => (p && listing.current === controller ? change(p) : p));
+    try {
+      const [languages, cards] = await Promise.all([actions.languagesOf(deck.name).catch(() => ({})), actions.cardsIn(deck.name).catch(() => [])]);
+      const known = new Set([...cards, ...added].map((card) => frontKey(card.front)));
+      const directions = deck.isNew ? null : deck.directions;
+      await suggestCards(ai, {
+        request,
+        languages,
+        cards: [...cards, ...added],
+        signal: controller.signal,
+        onCard: (fields) => update((p) => ({ ...p, total: p.total + 1, items: [...p.items, { line: formatLine(fields), fields, issue: issueOf(fields, directions, known.has(frontKey(fields.front))), dropped: true, ai: true }] }))
+      });
+      update((p) => ({ ...p, ai: { ...p.ai, writing: false, problem: p.items.length ? "" : t("add.ai.noList") } }));
+    } catch (err) {
+      if (controller.signal.aborted) return;
+      update((p) => ({ ...p, ai: { ...p.ai, writing: false, problem: err.message } }));
+    }
+  }
+
   async function addPasted() {
     const ready = withRepeats(pasted.items).filter((item) => !item.dropped && !item.issue);
-    if (!ready.length) return setError(t("add.paste.nothing"));
+    if (!ready.length) return setError(t(pasted.ai ? "add.ai.nothingKept" : "add.paste.nothing"));
+    // what's kept so far is added; the rest of the list isn't written
+    listing.current?.abort();
+    listing.current = null;
+    if (pasted.ai?.writing) setPasted((p) => ({ ...p, ai: { ...p.ai, writing: false } }));
     setStep("saving");
     try {
       const { added: cards } = await actions.addCardsTo(deck.name, ready.map((item) => item.fields));
@@ -363,8 +411,14 @@ export function AddCard({ current, actions, onDone, startNew = false, suggest = 
 
   useInput(
     (input, key) => {
+      const keeping = pasted.items.some((item) => !item.dropped && !item.issue);
       if (key.escape) {
-        if (pasted.confirm) {
+        // an AI list with nothing kept goes at once; anything kept or pasted is asked about first
+        if (pasted.confirm || (pasted.ai && !keeping)) {
+          listing.current?.abort();
+          listing.current = null;
+          // a list that failed or came back empty: the request is back in the field, to ask again
+          if (pasted.ai && (pasted.ai.problem || !pasted.items.length)) clearField(`?${pasted.ai.request}`);
           setPasted(null);
           setError("");
           return setStep("line");
@@ -372,9 +426,15 @@ export function AddCard({ current, actions, onDone, startNew = false, suggest = 
         return setPasted((p) => ({ ...p, confirm: true }));
       }
       if (pasted.confirm) setPasted((p) => ({ ...p, confirm: false }));
+      if (!pasted.items.length) return; // an AI list still on its way
       if (key.upArrow) return setPasted((p) => ({ ...p, selected: Math.max(0, p.selected - 1) }));
-      if (key.downArrow) return setPasted((p) => ({ ...p, selected: Math.min(p.items.length - 1, p.selected + 1) }));
-      if (input === "x") return setPasted((p) => ({ ...p, items: p.items.map((item, i) => (i === p.selected ? { ...item, dropped: !item.dropped } : item)) }));
+      if (key.downArrow) return setPasted((p) => ({ ...p, selected: Math.max(0, Math.min(p.items.length - 1, p.selected + 1)) }));
+      if (input === "x" || (pasted.ai && input === " ")) return setPasted((p) => ({ ...p, items: p.items.map((item, i) => (i === p.selected ? { ...item, dropped: !item.dropped } : item)) }));
+      if (pasted.ai && input === "a") {
+        // all kept, or with all kept already, none
+        const all = pasted.items.every((item) => item.issue || !item.dropped);
+        return setPasted((p) => ({ ...p, items: p.items.map((item) => (item.issue ? item : { ...item, dropped: all })) }));
+      }
       if (input === "e") {
         clearField(pasted.items[pasted.selected].line);
         return setStep("fix");
@@ -398,7 +458,7 @@ export function AddCard({ current, actions, onDone, startNew = false, suggest = 
   if (step === "languages") return html`<${LanguagePicker} deck=${deck.name} sample=${sample} languages=${langs} learning=${langs.learning} home=${langs.home} onDone=${saveLanguages} onCancel=${() => setStep("direction")} />`;
 
   const title =
-    step === "pick" ? t("add.titlePick") : step === "deck" ? t(decks.length ? "add.titleNew" : "add.titleFirst") : step === "review" || step === "fix" ? t("add.paste.title", { deck: deck.name }) : t("add.titleCard", { deck: deck?.name ?? "" });
+    step === "pick" ? t("add.titlePick") : step === "deck" ? t(decks.length ? "add.titleNew" : "add.titleFirst") : step === "review" || step === "fix" ? t(pasted?.ai ? "add.ai.listTitle" : "add.paste.title", { deck: deck.name }) : t("add.titleCard", { deck: deck?.name ?? "" });
   const fieldLabel = step === "deck" ? "deck" : step === "back" ? "back" : step === "line" || step === "fix" ? "line" : null;
   // with a suggestion on screen, the card it would make (Tab takes it)
   const parsed = step === "line" && typed.trim() ? parseLine(typed + help.ghost) : null;
@@ -430,6 +490,7 @@ export function AddCard({ current, actions, onDone, startNew = false, suggest = 
           <${Box} flexDirection="column" marginTop=${1}>
             <${Text} bold>${t(`add.fields.${fieldLabel}.label`)}<//>
             <${Text} dimColor>${fieldLabel === "line" && suggest?.example ? t("add.lineHintFor", { example: suggest.example }) : t(`add.fields.${fieldLabel}.hint`)}<//>
+            ${ai && step === "line" && !editing && html`<${Text} color=${theme.accent} dimColor>${t("add.ai.listHint")}<//>`}
             <${Box} marginTop=${1}>
               <${AnswerInput}
                 key=${`${fieldLabel}-${field.key}`}
@@ -495,29 +556,39 @@ export function AddCard({ current, actions, onDone, startNew = false, suggest = 
         pasted &&
         html`
           <${Box} flexDirection="column" marginTop=${1}>
-            <${Text}>${t("add.paste.summary", { lines: pasted.total, count: ready })}${shownPaste.some((item) => item.issue && !item.dropped) ? t("add.paste.attention", { count: shownPaste.filter((item) => item.issue && !item.dropped).length }) : ""}<//>
+            ${pasted.ai
+              ? html`<${Box} flexDirection="column">
+                  ${pasted.ai.writing
+                    ? html`<${Text} color=${theme.accent}>${SPIN[spin % SPIN.length]} ${t("add.ai.request", { request: pasted.ai.request })} · ${pasted.items.length ? t("add.ai.writing", { provider: providerName(ai.provider), count: pasted.items.length }) : t("add.ai.writingStart", { provider: providerName(ai.provider) })}<//>`
+                    : html`<${Text}>${t("add.ai.request", { request: pasted.ai.request })} · ${t("add.ai.listSummary", { count: pasted.items.length, kept: ready })}<//>`}
+                  ${pasted.ai.problem && html`<${Text} color=${theme.warn}>${pasted.ai.problem}<//>`}
+                <//>`
+              : html`<${Text}>${t("add.paste.summary", { lines: pasted.total, count: ready })}${shownPaste.some((item) => item.issue && !item.dropped) ? t("add.paste.attention", { count: shownPaste.filter((item) => item.issue && !item.dropped).length }) : ""}<//>`}
             <${Box} flexDirection="column" marginTop=${1}>
               ${shownPaste.slice(firstRow, firstRow + PASTE_ROWS).map((item, i) => {
                 const index = firstRow + i;
                 const on = index === pasted.selected && step === "review";
-                const mark = item.dropped ? "✗" : item.issue ? "!" : "✓";
-                const color = item.dropped ? undefined : item.issue ? theme.warn : theme.good;
+                // a suggestion not kept (yet) is a plain circle, not a line crossed out
+                const mark = item.ai ? (item.issue ? "!" : item.dropped ? "○" : "✓") : item.dropped ? "✗" : item.issue ? "!" : "✓";
+                const color = item.issue && (item.ai || !item.dropped) ? theme.warn : item.dropped ? undefined : theme.good;
+                const crossed = item.dropped && !item.ai;
+                const showIssue = item.issue && (item.ai || !item.dropped);
                 return html`
-                  <${Box} key=${index} flexDirection=${narrow && item.issue && !item.dropped ? "column" : "row"}>
+                  <${Box} key=${index} flexDirection=${narrow && showIssue ? "column" : "row"}>
                     <${Box}>
                     <${Box} flexShrink=${0}>
                       <${Text} color=${on ? theme.accent : undefined}>${on ? "❯ " : "  "}<//>
-                      <${Text} color=${color} dimColor=${item.dropped}>${mark} <//>
+                      <${Text} color=${color} dimColor=${item.dropped && !item.issue}>${mark} <//>
                     <//>
-                    <${Box} flexGrow=${1}><${Text} dimColor=${item.dropped} strikethrough=${item.dropped} wrap="truncate-end">${item.fields.cloze ? plainFront(item.fields.front) : item.fields.back.length ? `${item.fields.front} = ${answers(item.fields.back)}` : item.fields.front}<//><//>
+                    <${Box} flexGrow=${1}><${Text} dimColor=${item.dropped} strikethrough=${crossed} wrap="truncate-end">${item.fields.cloze ? plainFront(item.fields.front) : item.fields.back.length ? `${item.fields.front} = ${answers(item.fields.back)}${item.fields.example ? "  " : ""}` : item.fields.front}${item.fields.example && !item.fields.cloze ? html`<${Text} dimColor>${item.fields.example}<//>` : ""}<//><//>
                     <//>
-                    ${item.issue && !item.dropped && html`<${Box} flexShrink=${0} marginLeft=${narrow ? 4 : 0}><${Text} color=${theme.warn}>${narrow ? "" : "  "}${t(`add.paste.issues.${item.issue}`)}<//><//>`}
+                    ${showIssue && html`<${Box} flexShrink=${0} marginLeft=${narrow ? 4 : 0}><${Text} color=${theme.warn}>${narrow ? "" : "  "}${t(`add.paste.issues.${item.issue}`)}<//><//>`}
                   <//>
                 `;
               })}
             <//>
             ${pasted.items.length > PASTE_ROWS && html`<${Text} dimColor>${t("add.paste.position", { at: pasted.selected + 1, count: pasted.items.length })}<//>`}
-            ${pasted.confirm && html`<${Box} marginTop=${1}><${Text} color=${theme.warn}>${t("add.paste.confirm", { count: ready })}<//><//>`}
+            ${pasted.confirm && html`<${Box} marginTop=${1}><${Text} color=${theme.warn}>${t(pasted.ai ? "add.ai.confirm" : "add.paste.confirm", { count: ready })}<//><//>`}
           <//>
         `}
         ${error && html`<${Box} marginTop=${1}><${Text} color=${theme.bad}>${error}<//><//>`}
@@ -531,7 +602,9 @@ export function AddCard({ current, actions, onDone, startNew = false, suggest = 
             : step === "deck"
             ? t("keyHints.addName")
             : step === "review"
-              ? t("keyHints.pasteReview", { count: ready })
+              ? pasted?.ai
+                ? t(!pasted.items.length ? "keyHints.aiWaiting" : ready ? "keyHints.aiReview" : "keyHints.aiReviewNone", { count: ready })
+                : t("keyHints.pasteReview", { count: ready })
               : step === "fix"
                 ? t("keyHints.pasteFix")
                 : step === "back"
@@ -563,7 +636,7 @@ function useAssist({ ai, actions, deck, step, typed, draft, added }) {
   const target = (() => {
     if (!ai || !deck || stopped.current) return null;
     if (step === "back" && draft && !draft.cloze && !typed.includes(" // ")) return { front: draft.front, base: "" };
-    if (step !== "line") return null;
+    if (step !== "line" || typed.startsWith("?")) return null; // "?…" asks for a list
     const at = typed.indexOf(" = ");
     if (at < 1 || typed.includes(" // ") || typed.indexOf(" = ", at + 3) >= 0) return null;
     const fields = parseLine(typed.slice(0, at));
