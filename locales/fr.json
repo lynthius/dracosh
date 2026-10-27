@@ -462,7 +462,8 @@
         "other": "dans environ {count} mois"
       }
     },
-    "previewNoImport": "L'aperçu ne peut pas importer de cartes ; lance dracosh pour ça."
+    "previewNoImport": "L'aperçu ne peut pas importer de cartes ; lance dracosh pour ça.",
+    "fromAi": "✦ L'IA a écrit cette carte, pas encore vérifiée : /cards"
   },
   "dragon": {
     "stages": {
@@ -1612,6 +1613,7 @@
     },
     "addRow": "+ Ajouter des cartes",
     "undoRow": "↶ Récupérer « {card} »",
+    "confirmRow": "Tout est bon",
     "editRow": "Corriger",
     "moveRow": "Déplacer vers un autre paquet",
     "deleteRow": "Supprimer",
@@ -1633,7 +1635,9 @@
     "tourNot": "Les cartes de la visite ne se modifient pas. /add crée ton propre paquet.",
     "editHint": "recto = verso ; autre réponse // exemple",
     "whichDeck": "Les cartes de quel paquet ?",
-    "deleteNo": "La garder"
+    "deleteNo": "La garder",
+    "aiNote": "✦ Carte écrite par l'IA : vérifie-la avant de l'apprendre.",
+    "confirmed": "Vérifiée : {card}"
   },
   "ai": {
     "customName": "Autre",

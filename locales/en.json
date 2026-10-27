@@ -442,7 +442,8 @@
         "other": "in about {count} months"
       }
     },
-    "previewNoImport": "The preview can't import cards; run dracosh for that."
+    "previewNoImport": "The preview can't import cards; run dracosh for that.",
+    "fromAi": "✦ AI wrote this card and it isn't checked yet: /cards"
   },
   "dragon": {
     "stages": {
@@ -1508,6 +1509,7 @@
     },
     "addRow": "+ Add cards",
     "undoRow": "↶ Bring back \"{card}\"",
+    "confirmRow": "Looks right",
     "editRow": "Fix",
     "moveRow": "Move to another deck",
     "deleteRow": "Delete",
@@ -1528,7 +1530,9 @@
     "tourNot": "The tour's cards can't be changed. /add starts a deck of your own.",
     "editHint": "front = back; other answer // example",
     "whichDeck": "Which deck's cards?",
-    "deleteNo": "Keep it"
+    "deleteNo": "Keep it",
+    "aiNote": "✦ This card was written by AI: check it before you learn it.",
+    "confirmed": "Checked: {card}"
   },
   "ai": {
     "customName": "Other",

@@ -7,7 +7,7 @@ import { test } from "node:test";
 process.env.DRACOSH_HOME = mkdtempSync(join(tmpdir(), "dracosh-"));
 const { loadLibrary, saveLibrary } = await import("../src/store.js");
 const { seedLibrary, STARTER_DECK } = await import("../src/starter.js");
-const { addCardTo, addCardsTo, allDecks, existingCard, languagesOf, ownDecks, setDirections, setLanguages, startDeck, startFirstWords, updateCardIn, previewImport, importCards, deleteDeck, restoreFromTrash, renameDeck, trash, cardsIn, deleteCards, mergeDecks } = await import("../src/manage.js");
+const { addCardTo, addCardsTo, allDecks, existingCard, languagesOf, ownDecks, setDirections, setLanguages, startDeck, startFirstWords, updateCardIn, confirmCardIn, previewImport, importCards, deleteDeck, restoreFromTrash, renameDeck, trash, cardsIn, deleteCards, mergeDecks } = await import("../src/manage.js");
 const { listBackups } = await import("../src/backup.js");
 const { loadWords } = await import("../src/words.js");
 const { createSession } = await import("../src/session.js");
@@ -124,6 +124,17 @@ test("a card fixed right after adding keeps its id, so nothing is lost", async (
   assert.deepEqual(staleKeys, []);
   assert.deepEqual(fixed.back, ["house", "home"]);
   await assert.rejects(updateCardIn("Pasted", card.id, { front: "kot", back: ["cat"] }), /already/);
+});
+
+test("a card written by AI keeps its mark until it's changed or checked; the quiz knows it", async () => {
+  const [first, second] = (await addCardsTo("Pasted", [{ front: "łyżka", back: ["spoon"], ai: true }, { front: "widelec", back: ["fork"], ai: true }])).added;
+  assert.equal(first.ai, true);
+  assert.equal((await addCardTo("Pasted", { front: "nóż", back: ["knife"] })).card.ai, undefined);
+  assert.equal((await loadWords("Pasted")).words.find((word) => word.noteId === first.id)?.ai, true);
+  assert.equal((await updateCardIn("Pasted", first.id, { front: "łyżka", back: ["spoon", "teaspoon"] })).card.ai, undefined);
+  assert.equal((await cardsIn("Pasted")).find((card) => card.id === second.id).ai, true);
+  await confirmCardIn("Pasted", second.id);
+  assert.equal((await cardsIn("Pasted")).find((card) => card.id === second.id).ai, false);
 });
 
 test("fixing a card into another shape names the progress it no longer has", async () => {

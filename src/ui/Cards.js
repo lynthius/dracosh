@@ -9,6 +9,9 @@ import { Choice, choiceHints } from "./Choice.js";
 import { cutToWidth, html, KeyHints, Text, theme, usePanelWidth } from "./kit.js";
 
 const SHOWN = 8; // rows of the list at a time
+// a card's menu: checked first for a card written by AI help
+const menuOf = (card) => [...(card.ai ? ["confirm"] : []), "edit", "move", "delete"];
+const menuAt = (card, step) => menuOf(card).indexOf(step);
 
 const look = (text) => fold(String(text).toLowerCase());
 const lineOf = (card) => (card.cloze ? plainFront(card.front) : `${card.front} = ${card.back.join("; ")}`);
@@ -89,10 +92,20 @@ export function Cards({ deck, actions, onDeleted, onRestored, onEdited, onAdd, o
       const fields = parseLine(text);
       if (!fields.front) throw new Error(t("add.needFront"));
       if (!fields.cloze && !fields.back.length) throw new Error(t("add.needBack"));
-      const { staleKeys } = await actions.updateCardIn(deck, card.id, fields);
+      // Enter on the card as it was keeps it marked as AI's: only a change or "It's right" checks it
+      const { staleKeys } = await actions.updateCardIn(deck, card.id, { ...fields, ai: card.ai && formatLine(fields) === formatLine(card) });
       await onEdited(staleKeys);
       setOpen(null);
       setMessage(t("add.fixed", { front: cutToWidth(plainFront(fields.front), 40) }));
+      changed.current = true;
+      await load();
+    });
+
+  const confirm = (card) =>
+    run(async () => {
+      await actions.confirmCardIn(deck, card.id);
+      setOpen(null);
+      setMessage(t("cards.confirmed", { card: cutToWidth(lineOf(card), 40) }));
       changed.current = true;
       await load();
     });
@@ -145,7 +158,7 @@ export function Cards({ deck, actions, onDeleted, onRestored, onEdited, onAdd, o
       html`
         <${Box} flexDirection="column" marginTop=${1}>
           <${Text} dimColor>${t("cards.editHint")}<//>
-          <${Box} marginTop=${1}><${AnswerInput} plain escLeaves cardLine initial=${formatLine(open.card)} onSubmit=${(text) => edit(open.card, text)} onExit=${() => setOpen((o) => ({ ...o, step: "menu" }))} onChange=${() => setError("")} /><//>
+          <${Box} marginTop=${1}><${AnswerInput} plain escLeaves cardLine initial=${formatLine(open.card)} onSubmit=${(text) => edit(open.card, text)} onExit=${() => setOpen((o) => ({ ...o, step: "menu", selected: menuAt(o.card, "edit") }))} onChange=${() => setError("")} /><//>
         <//>
       `,
       `${t("keyHints.tabPart")} · ${t("keyHints.addFixing")}`
@@ -154,7 +167,7 @@ export function Cards({ deck, actions, onDeleted, onRestored, onEdited, onAdd, o
   if (open?.step === "move")
     return frame(
       t("cards.moveTitle", { card: cutToWidth(lineOf(open.card), 40) }),
-      html`<${Box} marginTop=${1}>${decks.length ? html`<${Choice} options=${decks.map((d) => ({ label: d.name, note: t("count.cards", { count: d.cards }) }))} selected=${open.selected} onMove=${(i) => setOpen((o) => ({ ...o, selected: i }))} onPick=${(i) => move(open.card, decks[i].name)} onCancel=${() => setOpen((o) => ({ ...o, step: "menu", selected: 1 }))} />` : html`<${Text}>${t("cards.noOtherDeck")}<//>`}<//>`,
+      html`<${Box} marginTop=${1}>${decks.length ? html`<${Choice} options=${decks.map((d) => ({ label: d.name, note: t("count.cards", { count: d.cards }) }))} selected=${open.selected} onMove=${(i) => setOpen((o) => ({ ...o, selected: i }))} onPick=${(i) => move(open.card, decks[i].name)} onCancel=${() => setOpen((o) => ({ ...o, step: "menu", selected: menuAt(o.card, "move") }))} />` : html`<${Text}>${t("cards.noOtherDeck")}<//>`}<//>`,
       choiceHints("back")
     );
 
@@ -164,7 +177,7 @@ export function Cards({ deck, actions, onDeleted, onRestored, onEdited, onAdd, o
       html`
         <${Box} flexDirection="column">
           <${Text} dimColor>${t("cards.deleteNote", { days: TRASH_DAYS })}<//>
-          <${Box} marginTop=${1}><${Choice} options=${[{ label: t("decks.deleteYes"), danger: true }, { label: t("cards.deleteNo") }]} selected=${open.selected} onMove=${(i) => setOpen((o) => ({ ...o, selected: i }))} onPick=${(i) => (i === 0 ? remove(open.card) : setOpen((o) => ({ ...o, step: "menu", selected: 2 })))} onCancel=${() => setOpen((o) => ({ ...o, step: "menu", selected: 2 }))} /><//>
+          <${Box} marginTop=${1}><${Choice} options=${[{ label: t("decks.deleteYes"), danger: true }, { label: t("cards.deleteNo") }]} selected=${open.selected} onMove=${(i) => setOpen((o) => ({ ...o, selected: i }))} onPick=${(i) => (i === 0 ? remove(open.card) : setOpen((o) => ({ ...o, step: "menu", selected: menuAt(o.card, "delete") })))} onCancel=${() => setOpen((o) => ({ ...o, step: "menu", selected: menuAt(o.card, "delete") }))} /><//>
         <//>
       `,
       choiceHints("cancel"),
@@ -172,14 +185,16 @@ export function Cards({ deck, actions, onDeleted, onRestored, onEdited, onAdd, o
     );
 
   if (open?.step === "menu") {
-    const options = [{ label: t("cards.editRow") }, { label: t("cards.moveRow") }, { label: t("cards.deleteRow"), danger: true }];
-    const steps = ["edit", "move", "delete"];
+    const steps = menuOf(open.card);
+    const labels = { confirm: t("cards.confirmRow"), edit: t("cards.editRow"), move: t("cards.moveRow"), delete: t("cards.deleteRow") };
+    const options = steps.map((step) => ({ label: labels[step], danger: step === "delete" }));
     return frame(
       cutToWidth(lineOf(open.card), panel - 8),
       html`
         <${Box} flexDirection="column">
           ${open.card.example && html`<${Text} dimColor italic>“${open.card.example}”<//>`}
-          <${Box} marginTop=${1}><${Choice} options=${options} selected=${open.selected} onMove=${(i) => setOpen((o) => ({ ...o, selected: i }))} onPick=${(i) => setOpen((o) => ({ ...o, step: steps[i], selected: steps[i] === "delete" ? 1 : 0 }))} onCancel=${() => setOpen(null)} /><//>
+          ${open.card.ai && html`<${Box} marginTop=${1}><${Text} color=${theme.accent}>${t("cards.aiNote")}<//><//>`}
+          <${Box} marginTop=${1}><${Choice} options=${options} selected=${open.selected} onMove=${(i) => setOpen((o) => ({ ...o, selected: i }))} onPick=${(i) => (steps[i] === "confirm" ? confirm(open.card) : setOpen((o) => ({ ...o, step: steps[i], selected: steps[i] === "delete" ? 1 : 0 })))} onCancel=${() => setOpen(null)} /><//>
         <//>
       `,
       t("keyHints.choiceLeft", { choose: t("choice.keys") })
@@ -188,6 +203,7 @@ export function Cards({ deck, actions, onDeleted, onRestored, onEdited, onAdd, o
 
   // the list, with the search on top
   const top = Math.max(0, Math.min(selected - Math.floor(SHOWN / 2), rows.length - SHOWN));
+  const gutter = (cards ?? []).some((card) => card.ai); // room for a ✦ before every card, so they line up
   const rowText = (row) => (row.undo ? t("cards.undoRow", { card: cutToWidth(lineOf(row.undo === true ? undo.card : row), 40) }) : row.add ? t("cards.addRow") : lineOf(row));
   return frame(
     t("cards.title", { deck, count: cards?.length ?? 0 }),
@@ -202,7 +218,7 @@ export function Cards({ deck, actions, onDeleted, onRestored, onEdited, onAdd, o
         <${Text} dimColor>${top > 0 ? "  ↑" : " "}<//>
         ${rows.slice(top, top + SHOWN).map((row, i) => {
           const on = top + i === selected;
-          return html`<${Text} key=${row.id ?? (row.undo ? "undo" : "add")} color=${on ? theme.accent : row.undo || row.add ? theme.good : undefined} bold=${on} wrap="truncate-end">${on ? "❯" : " "} ${rowText(row)}<//>`;
+          return html`<${Text} key=${row.id ?? (row.undo ? "undo" : "add")} color=${on ? theme.accent : row.undo || row.add ? theme.good : undefined} bold=${on} wrap="truncate-end">${on ? "❯" : " "} ${row.ai ? html`<${Text} color=${theme.accent}>✦ <//>` : gutter && row.id ? "  " : ""}${rowText(row)}<//>`;
         })}
         <${Text} dimColor>${top + SHOWN < rows.length ? "  ↓" : " "}<//>
         ${query && found.length > 0 && html`<${Text} dimColor>${t("cards.found", { count: found.length })}<//>`}

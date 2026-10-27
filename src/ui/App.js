@@ -96,10 +96,11 @@ function Verdict({ outcome, question }) {
   const held = outcome.held ? heldText(outcome.held) : null;
   return html`
     <${Box} flexDirection="column">
-      <${Text} color=${wrong ? theme.bad : theme.good} bold>${wrong ? "✗" : "✓"} ${outcome.result === "accent" || outcome.result === "umlaut" || outcome.result === "article-umlaut" ? html`<${AccentedAnswers} expected=${question.expected} given=${outcome.given} closest=${outcome.closest} />` : question.expected.join(" / ")}${outcome.result === "typo" ? t("quiz.closeEnough") : ""}<//>
+      <${Text} color=${wrong ? theme.bad : theme.good} bold>${wrong ? "✗" : "✓"} ${outcome.result === "accent" || outcome.result === "umlaut" || outcome.result === "article-umlaut" ? html`<${AccentedAnswers} expected=${question.expected} given=${outcome.given} closest=${outcome.closest} />` : question.expected.join(" / ")}${outcome.result === "typo" ? t("quiz.closeEnough") : ""}${question.word.ai ? html`<${Text} color=${theme.accent} bold=${false}> ✦<//>` : ""}<//>
       ${ALMOST.includes(outcome.result) && html`<${Text} color=${theme.warn}>${t(`quiz.almost.${outcome.result}`)}<//>`}
       ${showDiff && html`<${AnswerDiff} given=${outcome.given} closest=${outcome.closest} />`}
       ${question.word.example && html`<${Box} marginTop=${1}>${question.tour ? html`<${Marked} dimColor text=${question.word.example} />` : html`<${Text} dimColor italic>“${question.word.example}”<//>`}<//>`}
+      ${wrong && question.word.ai && html`<${Box} marginTop=${1}><${Text} color=${theme.accent}>${t("quiz.fromAi")}<//><//>`}
       ${(outcome.hinted || outcome.overruled || held) &&
       html`
         <${Box} marginTop=${1} flexDirection="column">
@@ -116,7 +117,7 @@ function Verdict({ outcome, question }) {
 function Revealed({ question, nudge }) {
   return html`
     <${Box} flexDirection="column">
-      <${Text} color=${theme.accent} bold>${question.expected.join(" / ")}<//>
+      <${Text} color=${theme.accent} bold>${question.expected.join(" / ")}${question.word.ai ? html`<${Text} bold=${false}> ✦<//>` : ""}<//>
       ${question.word.example && html`<${Box} marginTop=${1}>${question.tour ? html`<${Marked} dimColor text=${question.word.example} />` : html`<${Text} dimColor italic>“${question.word.example}”<//>`}<//>`}
       <${Box} marginTop=${1}>
         <${Text} bold>${t("quiz.didYouKnow")}  <//>

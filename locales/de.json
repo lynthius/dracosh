@@ -445,7 +445,8 @@
         "other": "in etwa {count} Monaten"
       }
     },
-    "previewNoImport": "Die Vorschau kann keine Karten importieren; starte dafür dracosh."
+    "previewNoImport": "Die Vorschau kann keine Karten importieren; starte dafür dracosh.",
+    "fromAi": "✦ Die KI hat diese Karte geschrieben, noch nicht geprüft: /cards"
   },
   "dragon": {
     "stages": {
@@ -1525,6 +1526,7 @@
     },
     "addRow": "+ Karten hinzufügen",
     "undoRow": "↶ „{card}“ zurückholen",
+    "confirmRow": "Stimmt",
     "editRow": "Korrigieren",
     "moveRow": "In einen anderen Stapel verschieben",
     "deleteRow": "Löschen",
@@ -1545,7 +1547,9 @@
     "tourNot": "Die Karten der Tour lassen sich nicht ändern. /add legt einen eigenen Stapel an.",
     "editHint": "Vorderseite = Rückseite; andere Antwort // Beispiel",
     "whichDeck": "Karten welches Stapels?",
-    "deleteNo": "Behalten"
+    "deleteNo": "Behalten",
+    "aiNote": "✦ Von der KI geschrieben: Prüf die Karte, bevor du sie lernst.",
+    "confirmed": "Geprüft: {card}"
   },
   "ai": {
     "customName": "Andere",

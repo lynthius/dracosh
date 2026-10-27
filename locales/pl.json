@@ -479,7 +479,8 @@
         "other": "za około {count} miesiąca"
       }
     },
-    "previewNoImport": "Podgląd nie importuje kart; do tego uruchom dracosh."
+    "previewNoImport": "Podgląd nie importuje kart; do tego uruchom dracosh.",
+    "fromAi": "✦ Tę kartę napisało AI i nie jest jeszcze sprawdzona: /cards"
   },
   "dragon": {
     "stages": {
@@ -1674,6 +1675,7 @@
     },
     "addRow": "+ Dodaj karty",
     "undoRow": "↶ Przywróć „{card}”",
+    "confirmRow": "Zgadza się",
     "editRow": "Popraw",
     "moveRow": "Przenieś do innej talii",
     "deleteRow": "Usuń",
@@ -1696,7 +1698,9 @@
     "tourNot": "Kart samouczka nie da się zmieniać. /add zaczyna twoją własną talię.",
     "editHint": "przód = tył; inna odpowiedź // przykład",
     "whichDeck": "Karty której talii?",
-    "deleteNo": "Zostaw"
+    "deleteNo": "Zostaw",
+    "aiNote": "✦ Kartę napisało AI: sprawdź ją, zanim zaczniesz się jej uczyć.",
+    "confirmed": "Sprawdzono: {card}"
   },
   "ai": {
     "customName": "Inny",

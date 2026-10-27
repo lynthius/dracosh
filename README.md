@@ -18,7 +18,7 @@ It's made for people who live in a terminal or spend most of the day at a comput
 - Add cards, start decks and switch between them right in the app (`/add`, `/decks`)
 - One line is a card: `el gato = the cat; the kitty // Mi gato duerme.` (`;` separates right answers, `//` adds an example). Paste a whole list, or rows copied from a spreadsheet, and check it before it's saved
 - Import cards from Anki and Quizlet exports, a spreadsheet's CSV or a plain text list, and export them as an Anki deck package, for a spreadsheet or as a text file you can edit (or have an AI assistant write); you see what changes before anything is saved
-- Optional AI help in `/add`: type `pies = ` and a suggested answer and example appear dimmed, Tab takes them; `?20 words for the kitchen` suggests a whole list to pick from. Works with your Anthropic, OpenAI or OpenRouter key, or free with a local model in Ollama or LM Studio
+- Optional AI help in `/add`: type `pies = ` and a suggested answer and example appear dimmed, Tab takes them; `?20 words for the kitchen` suggests a whole list to pick from. Cards AI wrote carry a ✦ until you check them. Works with your Anthropic, OpenAI or OpenRouter key, or free with a local model in Ollama or LM Studio
 - Each deck is asked the way you pick after its first card: front → back, back → front, or both ways; change it any time in `/decks`
 - Pronunciation, if you turn it on in `/settings`: once the answer is out, the word in the language you're learning in that deck is read aloud with a macOS voice (other systems later); decks in one language, like definitions, stay quiet
 - Dracosh works out which languages a deck is in (Spanish → English, say) and which of the two you're learning, from the cards, the deck's name and your other decks, whatever language you use Dracosh in, and says when it's only a guess; set either in `/decks` when it can't tell or guesses wrong
@@ -94,6 +94,8 @@ Optional, and everything works without it. Turn it on in `/settings` → AI help
 Then, in `/add`, type a word and ` = ` (`pies = `): a suggested answer appears dimmed after it. Tab or → takes it, and an example sentence follows the same way; typing on ignores the suggestion, and Enter saves only what's in the field.
 
 For a whole list, type `?` and what you want, like `?20 words for the kitchen`: the cards come in as they're written, and none is kept until you say so. Space keeps one, `a` keeps them all, `e` fixes one, and Enter adds the ones kept; cards already in the deck are marked.
+
+AI can be subtly wrong, so a card it wrote carries a ✦: in `/cards`, after its answer in the quiz, and in `/add`. Open it in `/cards` and pick "Looks right" or fix it: the ✦ goes. A card you wrote yourself, or whose AI parts you replaced before saving, isn't marked.
 
 Only the word or request you typed and a few cards of the same deck are sent (for a list, also the fronts it shouldn't repeat), so a request costs very little; a small model is plenty, and one that doesn't think first answers fastest. Nothing is added by AI alone: you keep or take every card.
 

@@ -118,6 +118,7 @@ export function AddCard({ current, actions, onDone, startNew = false, suggest = 
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const lookup = useRef(0);
+  const taken = useRef(new Set()); // the fronts whose suggestion was taken (Tab) in this /add
   const help = useAssist({ ai, actions, deck, step, typed, draft, added });
 
   useEffect(() => {
@@ -203,9 +204,15 @@ export function AddCard({ current, actions, onDone, startNew = false, suggest = 
     }, () => {});
   }
 
-  async function save(fields) {
+  async function save(typed) {
     if (busy.current) return;
     busy.current = true;
+    // an answer or the example AI suggested for this front, taken and still there: the card is AI's,
+    // marked until it's checked. A card fixed (↑) with nothing changed keeps its mark.
+    const same = (a, b) => a.trim().toLowerCase() === b.trim().toLowerCase();
+    const suggested = taken.current.has(frontKey(typed.front)) && help.suggestionFor(typed.front);
+    const written = Boolean(suggested && (typed.back.some((answer) => suggested.back.some((other) => same(answer, other))) || (typed.example && suggested.example && same(typed.example, suggested.example))));
+    const fields = { ...typed, ai: written || Boolean(editing?.ai && formatLine(typed) === formatLine(editing)) };
     try {
       if (editing) {
         const { card, staleKeys } = await actions.updateCardIn(deck.name, editing.id, fields);
@@ -273,7 +280,7 @@ export function AddCard({ current, actions, onDone, startNew = false, suggest = 
         .then((existing) => {
           setPasted((p) => {
             const issue = issueOf(fields, deck.isNew ? null : deck.directions, Boolean(existing));
-            return { ...p, items: p.items.map((item, i) => (i === p.selected ? { ...item, line: value, fields, issue, dropped: false } : item)), confirm: false };
+            return { ...p, items: p.items.map((item, i) => (i === p.selected ? { ...item, line: value, fields, issue, dropped: false, changed: item.changed || value !== item.line } : item)), confirm: false };
           });
           setStep("review");
         });
@@ -405,7 +412,7 @@ export function AddCard({ current, actions, onDone, startNew = false, suggest = 
     if (pasted.ai?.writing) setPasted((p) => ({ ...p, ai: { ...p.ai, writing: false } }));
     setStep("saving");
     try {
-      const { added: cards } = await actions.addCardsTo(deck.name, ready.map((item) => item.fields));
+      const { added: cards } = await actions.addCardsTo(deck.name, ready.map((item) => ({ ...item.fields, ai: Boolean(item.ai && !item.changed) })));
       setAdded((list) => [...list, ...cards]);
       setPasted(null);
       const skipped = pasted.items.length - ready.length - pasted.items.filter((item) => item.dropped).length;
@@ -501,7 +508,7 @@ export function AddCard({ current, actions, onDone, startNew = false, suggest = 
         html`
           <${Box} flexDirection="column" marginTop=${1}>
             ${added.length > SHOWN_CARDS && html`<${Text} dimColor>${t("add.more", { count: added.length - SHOWN_CARDS })}<//>`}
-            ${added.slice(-SHOWN_CARDS).map((card) => html`<${Text} key=${card.id} dimColor wrap="truncate-end"><${Text} color=${theme.good}>${card.fixed ? "✎" : "✓"}<//> ${card.cloze ? plainFront(card.front) : `${card.front} = ${answers(card.back)}`}<//>`)}
+            ${added.slice(-SHOWN_CARDS).map((card) => html`<${Text} key=${card.id} dimColor wrap="truncate-end"><${Text} color=${card.ai ? theme.accent : theme.good}>${card.ai ? "✦" : card.fixed ? "✎" : "✓"}<//> ${card.cloze ? plainFront(card.front) : `${card.front} = ${answers(card.back)}`}<//>`)}
           <//>
         `}
         ${message && html`<${Box} marginTop=${1}><${Text} color=${theme.good}>${message}<//><//>`}
@@ -526,6 +533,7 @@ export function AddCard({ current, actions, onDone, startNew = false, suggest = 
                 cardLine=${step === "line" || step === "fix"}
                 onPaste=${step === "line" ? openPaste : undefined}
                 ghost=${help.ghost}
+                onGhost=${() => help.front && taken.current.add(frontKey(help.front))}
               />
             <//>
             ${help.status && html`<${Box} paddingLeft=${2} marginTop=${1}><${Text} color=${help.problem ? theme.warn : theme.accent}>${help.spinner ?? "✦"} ${help.status}<//><//>`}
@@ -702,14 +710,17 @@ function useAssist({ ai, actions, deck, step, typed, draft, added }) {
     return () => clearInterval(timer);
   }, [waiting]);
 
-  if (!ai) return { ghost: "", status: "", problem: false };
+  // what was suggested for a front → { back, example } (null: nothing)
+  const suggestionFor = (asked) => (answers[asked] ? parseBack(answers[asked]) : null);
+  if (!ai) return { ghost: "", status: "", problem: false, suggestionFor };
   const line = target && answers[target.front] ? target.base + answers[target.front] : "";
   const rest = line && line.length > typed.length && line.toLowerCase().startsWith(typed.toLowerCase()) ? line.slice(typed.length) : "";
   const cut = rest.indexOf(" // ");
   const ghost = cut > 0 ? rest.slice(0, cut) : rest; // the back first; its example once the back is in
   const name = providerName(ai.provider);
-  if (problem) return { ghost, status: problem, problem: true };
-  if (ghost) return { ghost, status: t(ghost.startsWith(" // ") ? "add.ai.example" : "add.ai.suggested", { provider: name }), problem: false };
-  if (waiting) return { ghost, status: t("add.ai.thinking", { provider: name }), spinner: SPIN[spin % SPIN.length], problem: false };
-  return { ghost, status: "", problem: false };
+  const common = { ghost, front, suggestionFor };
+  if (problem) return { ...common, status: problem, problem: true };
+  if (ghost) return { ...common, status: t(ghost.startsWith(" // ") ? "add.ai.example" : "add.ai.suggested", { provider: name }), problem: false };
+  if (waiting) return { ...common, status: t("add.ai.thinking", { provider: name }), spinner: SPIN[spin % SPIN.length], problem: false };
+  return { ...common, status: "", problem: false };
 }

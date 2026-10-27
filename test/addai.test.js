@@ -53,11 +53,13 @@ const plain = (text) => text.replace(/\x1b\[[\d;?]*[a-zA-Z]/g, "");
 // /add on one deck, with the library's actions faked; → { type, screen, saved, close }
 async function openAdd() {
   const saved = [];
+  const updated = [];
   const actions = {
     ownDecks: async () => [{ name: "Polish", cards: 1, directions: "forward" }],
     languagesOf: async () => ({ front: "pl", back: "en", learning: { lang: "pl", sure: true } }),
     cardsIn: async () => [{ id: "1", front: "kot", back: ["cat"], example: "", cloze: false }],
     existingCard: async () => null,
+    updateCardIn: async (deck, id, fields) => (updated.push(fields), { card: { id, ...fields }, staleKeys: [] }),
     addCardTo: async (deck, fields) => (saved.push(fields), { card: { id: String(saved.length + 1), ...fields } }),
     addCardsTo: async (deck, list) => ({ added: list.map((fields) => (saved.push(fields), { id: String(saved.length + 1), ...fields })) })
   };
@@ -71,6 +73,7 @@ async function openAdd() {
     type: async (text, ms = 60) => (stdin.write(text), await wait(ms)),
     screen: () => plain(output),
     saved,
+    updated,
     close: () => app.unmount()
   };
 }
@@ -90,7 +93,7 @@ test("after the front and ' = ', the back shows dimmed; Tab takes it, then the e
   assert.match(add.screen(), /✦ example sentence from Ollama/);
   await add.type("\t");
   await add.type("\r", 100);
-  assert.deepEqual(add.saved.map(({ front, back, example }) => ({ front, back, example })), [{ front: "pies", back: ["dog"], example: "Mój pies śpi." }]);
+  assert.deepEqual(add.saved.map(({ front, back, example, ai }) => ({ front, back, example, ai })), [{ front: "pies", back: ["dog"], example: "Mój pies śpi.", ai: true }]);
   add.close();
 });
 
@@ -103,6 +106,7 @@ test("typing something else makes the suggestion go, and Enter saves only what's
   assert.doesNotMatch(add.screen(), /Mój pies/);
   await add.type("\r", 100);
   assert.deepEqual(add.saved[0].back, ["dx"]);
+  assert.equal(add.saved[0].ai, false, "typed, not taken");
   add.close();
 });
 
@@ -139,6 +143,7 @@ test("?topic asks for a list: nothing kept until kept, a card already in the dec
   await add.type("\r", 150);
   assert.deepEqual(add.saved.map((card) => card.front), ["spoon", "fork"]);
   assert.equal(add.saved[0].example, "Podaj łyżkę.");
+  assert.ok(add.saved.every((card) => card.ai));
   add.close();
 });
 
@@ -201,5 +206,46 @@ test("a list that came back empty gives the request back with Esc", async () => 
   await add.type("\x1b", 150);
   assert.match(add.screen(), /❯ \?kitchen/);
   listLines = null;
+  add.close();
+});
+
+test("a suggestion taken and then changed, or an AI card fixed in the list, isn't marked as AI's", async () => {
+  const add = await openAdd();
+  await add.type("pies = ", 700);
+  await add.type("\t");
+  await add.type("\x7f");
+  await add.type("x");
+  await add.type("\r", 150);
+  await add.type("?kitchen");
+  await add.type("\r", 400);
+  await add.type("e");
+  await add.type("\x15");
+  await add.type("spoon = łyżeczka");
+  await add.type("\r", 150);
+  await add.type("\r", 150);
+  assert.deepEqual(add.saved.map(({ front, ai }) => ({ front, ai })), [{ front: "pies", ai: false }, { front: "spoon", ai: false }]);
+  add.close();
+});
+
+test("a suggestion taken and then dropped with Esc doesn't mark the next card", async () => {
+  const add = await openAdd();
+  await add.type("pies = d", 700);
+  await add.type("\t");
+  await add.type("\x1b", 100);
+  await add.type("frog = żaba");
+  await add.type("\r", 150);
+  assert.deepEqual(add.saved.map(({ front, ai }) => ({ front, ai })), [{ front: "frog", ai: false }]);
+  add.close();
+});
+
+test("an AI card brought back with ↑ and saved unchanged keeps its mark", async () => {
+  const add = await openAdd();
+  await add.type("pies = ", 700);
+  await add.type("\t");
+  await add.type("\r", 150);
+  assert.equal(add.saved[0].ai, true);
+  await add.type("\x1b[A", 100);
+  await add.type("\r", 150);
+  assert.equal(add.updated[0].ai, true);
   add.close();
 });
