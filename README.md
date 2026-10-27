@@ -91,13 +91,15 @@ They're slash commands because "pause" and "quit" are perfectly good English ans
 
 Optional, and everything works without it. Turn it on in `/settings` → AI help: pick Anthropic, OpenAI, OpenRouter, Ollama, LM Studio or any other OpenAI-compatible address, paste a key (local models need none), pick a model, and Dracosh checks that they work together before saving anything.
 
-Then, in `/add`, type a word and ` = ` (`pies = `): a suggested answer appears dimmed after it. Tab or → takes it, and an example sentence follows the same way; typing on ignores the suggestion, and Enter saves only what's in the field.
+Then, in `/add`, type a word and ` = ` (`pies = `): a suggested answer appears dimmed after it. In a deck of definitions it suggests a short definition, and in a deck of questions (`Capital of Spain? = `) the answer. Tab or → takes it, and an example sentence follows the same way; typing on ignores the suggestion, and Enter saves only what's in the field.
 
 For a whole list, type `?` and what you want, like `?20 words for the kitchen`: the cards come in as they're written, and none is kept until you say so. Space keeps one, `a` keeps them all, `e` fixes one, and Enter adds the ones kept; cards already in the deck are marked.
 
 AI can be subtly wrong, so a card it wrote carries a ✦: in `/cards`, after its answer in the quiz, and in `/add`. Open it in `/cards` and pick "Looks right" or fix it: the ✦ goes. A card you wrote yourself, or whose AI parts you replaced before saving, isn't marked.
 
-Only the word or request you typed and a few cards of the same deck are sent (for a list, also the fronts it shouldn't repeat), so a request costs very little; a small model is plenty, and one that doesn't think first answers fastest. Nothing is added by AI alone: you keep or take every card.
+Any card can be checked too: open it in `/cards` and pick "Check with AI". It looks for a wrong answer, a misspelling, a wrong article or a question with more than one right answer, says what it found and suggests a fix, its changes highlighted, to take or leave. A fix you take checks the card; a card AI finds right keeps its ✦ until you say so.
+
+Only the word or request you typed and a few cards of the same deck are sent (for a list, also the fronts it shouldn't repeat; for a check, the card), so a request costs very little; a small model is plenty, and one that doesn't think first answers fastest. Nothing is added by AI alone: you keep or take every card.
 
 ## Import and export
 

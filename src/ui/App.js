@@ -832,7 +832,7 @@ export function App({ session, deck: initialDeck, initialSettings, initialMix, a
           await session.workAdded();
           if (phase === "asking" && question && cardIds.includes(question.word.noteId)) ask(); // the open card follows the new way at once
         }} onLanguages=${(name) => name === deck && phase === "asking" && ask()} onPick=${switchDeck} onNew=${() => (setAddNew(true), setScreen("add"))} onDeleted=${deleteDeck} onRestored=${restoreDeck} onRenamed=${deckRenamed} onMerged=${mergeDecks} onClose=${() => setScreen("quiz")} />`}
-        ${screen === "cards" && html`<${Cards} deck=${cardsDeck ?? deck} actions=${library} onDeleted=${deleteCards} onRestored=${restoreDeck} onEdited=${(keys) => session.forgetKeys(keys)} onAdd=${() => (setAddNew(false), setAddInto(cardsDeck ?? deck), setScreen("add"))} onClose=${cardsClosed} />`}
+        ${screen === "cards" && html`<${Cards} deck=${cardsDeck ?? deck} actions=${library} ai=${settings.ai} onDeleted=${deleteCards} onRestored=${restoreDeck} onEdited=${(keys) => session.forgetKeys(keys)} onAdd=${() => (setAddNew(false), setAddInto(cardsDeck ?? deck), setScreen("add"))} onClose=${cardsClosed} />`}
         ${screen === "cards-pick" && html`<${CardsDeckPick} actions=${library} mix=${mix} current=${deck} onPick=${(name) => (setCardsDeck(name), setScreen("cards"))} onClose=${() => setScreen("quiz")} />`}
         ${screen === "trash" && html`<${Trash} actions=${library} onRestore=${restoreDeck} onClose=${() => setScreen("quiz")} />`}
         ${!["settings", "ai", "reset", "home-language", "dragon-look", "import", "add", "decks", "trash", "cards", "cards-pick"].includes(screen) &&

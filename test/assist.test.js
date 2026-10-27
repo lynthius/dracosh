@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { test } from "node:test";
 
 process.env.DRACOSH_HOME = mkdtempSync(join(tmpdir(), "dracosh-"));
-const { listPrompt, readListLine, readSuggestion, suggestCards, suggestionPrompt } = await import("../src/assist.js");
+const { checkPrompt, deckKind, listPrompt, readCheck, readListLine, readSuggestion, suggestCards, suggestionPrompt } = await import("../src/assist.js");
 const { createServer } = await import("node:http");
 
 // a model that streams `lines` (OpenAI-style events), a piece at a time; → its url and how far it got
@@ -48,7 +48,7 @@ test("nothing usable is null; what's kept can't break the card line", () => {
   assert.equal(readSuggestion("{broken"), null);
   const odd = readSuggestion('{"back": ["a = b", "one; two", "x // y"], "example": "line\\nbreak"}');
   assert.deepEqual(odd, { back: ["a b", "one, two", "x y"], example: "line break" });
-  assert.equal(readSuggestion(`{"back": ["${"a".repeat(500)}"]}`).back[0].length, 120);
+  assert.equal(readSuggestion(`{"back": ["${"a".repeat(500)}"]}`).back[0].length, 200);
   assert.equal(readSuggestion('{"back": ["1", "2", "3", "4"]}').back.length, 3);
 });
 
@@ -112,4 +112,48 @@ test("a list stops being read at 50 cards", async (t) => {
   assert.equal(count, 50);
   await new Promise((resolve) => setTimeout(resolve, 50));
   assert.ok(model.state.written < 200, `the stream was cut short (${model.state.written} lines written)`);
+});
+
+test("a deck of questions, of definitions or of words is told apart, and asked for the right kind of back", () => {
+  const questions = [{ front: "Capital of France?", back: ["Paris"] }, { front: "Largest planet?", back: ["Jupiter"] }];
+  const terms = [{ front: "mitochondrion", back: ["the part of a cell that makes its energy"] }];
+  assert.equal(deckKind({ front: "Capital of Spain?" }), "question");
+  assert.equal(deckKind({ front: "x", cards: questions }), "question");
+  assert.equal(deckKind({ front: "ribosome", languages: { front: "en", back: "en" } }), "definition");
+  assert.equal(deckKind({ front: "ribosome", cards: terms }), "definition", "long backs");
+  assert.equal(deckKind({ front: "pies", languages: { front: "pl", back: "en" }, cards: [{ front: "kot", back: ["cat"] }] }), "word");
+  assert.match(suggestionPrompt({ front: "Capital of Spain?", cards: questions }).system, /correct answer[\s\S]*Leave "example" empty/);
+  assert.match(suggestionPrompt({ front: "ribosome", cards: terms }).system, /short, accurate definition[\s\S]*Leave "example" empty/);
+  assert.match(suggestionPrompt({ front: "pies" }).system, /example sentence that uses the word/);
+});
+
+test("a check: right, a fix with its note, only a note, or nothing readable", () => {
+  const card = { id: "1", front: "kot", back: ["cat"], example: "Kot śpi." };
+  assert.deepEqual(readCheck('<think>hm</think>{"ok": true}', card), { ok: true });
+  assert.deepEqual(readCheck('{"ok": false, "note": "kitty too", "front": "kot", "back": ["cat", "kitty"]}', card), { ok: false, note: "kitty too", fix: { front: "kot", back: ["cat", "kitty"], example: "Kot śpi." } });
+  assert.deepEqual(readCheck('{"ok": false, "front": "kot", "back": ["cat"], "example": "Kot śpi."}', card), { ok: true }, "a fix that changes nothing");
+  assert.deepEqual(readCheck('{"ok": false, "note": "the example is odd"}', card), { ok: false, note: "the example is odd", fix: null });
+  assert.deepEqual(readCheck('Like {"ok": false}? No: {"ok": "true"}', card), { ok: true }, "the last object, and true as text");
+  assert.equal(readCheck("Looks fine to me", card), null);
+  const { system, prompt } = checkPrompt({ card, languages: { front: "pl", back: "en" }, cards: [card, { id: "2", front: "pies", back: ["dog"] }], language: "pl" });
+  assert.match(system, /in Polish on what is wrong/);
+  assert.ok(prompt.endsWith('Card: {"front":"kot","back":["cat"],"example":"Kot śpi."}'));
+  assert.ok(prompt.includes('"front":"pies"') && !prompt.includes('Other cards in the deck:\n{"front":"kot"'), "the card itself isn't one of the others");
+});
+
+test("what a check gives back unchanged stays exactly as it was", () => {
+  const long = { id: "1", front: `${"a long front ".repeat(25)}end`, back: ["one", "two", "three", "four"], example: "" };
+  const { fix } = readCheck(JSON.stringify({ ok: false, front: long.front, back: [...long.back, "five"], example: "New." }), long);
+  assert.equal(fix.front, long.front, "not cut to 200");
+  assert.deepEqual(fix.back, ["one", "two", "three", "four", "five"]);
+  assert.deepEqual(readCheck('{"ok": false, "back": "cat; kitty", "front": {}}', { id: "2", front: "kot", back: ["cat"], example: "" }).fix, { front: "kot", back: ["cat", "kitty"], example: "" });
+});
+
+test("a deck in two languages is words, whatever its fronts look like; one question doesn't make a quiz", () => {
+  const phrases = [{ front: "Gdzie jest dworzec?", back: ["Where is the station?"] }];
+  assert.equal(deckKind({ front: "Ile to kosztuje?", languages: { front: "pl", back: "en" }, cards: phrases }), "word");
+  const sentences = [{ front: "Ich habe Hunger.", back: ["I am hungry, I'd like to eat something now"] }];
+  assert.equal(deckKind({ front: "x", languages: { front: "de", back: "en" }, cards: sentences }), "word");
+  const words = Array.from({ length: 6 }, (_, i) => ({ front: `palabra${i}`, back: [`word${i}`] }));
+  assert.equal(deckKind({ front: "¿Qué?", cards: words }), "word");
 });

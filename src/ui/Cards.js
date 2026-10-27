@@ -1,6 +1,8 @@
 import { Fragment, useEffect, useRef, useState } from "react";
 import { Box, useInput } from "ink";
-import { t } from "../i18n.js";
+import { language, t } from "../i18n.js";
+import { providerName } from "../ai.js";
+import { checkCard } from "../assist.js";
 import { formatLine, parseLine, plainFront } from "../cardline.js";
 import { fold } from "../judge.js";
 import { TRASH_DAYS } from "../library.js";
@@ -9,9 +11,9 @@ import { Choice, choiceHints } from "./Choice.js";
 import { cutToWidth, html, KeyHints, Text, theme, usePanelWidth } from "./kit.js";
 
 const SHOWN = 8; // rows of the list at a time
-// a card's menu: checked first for a card written by AI help
-const menuOf = (card) => [...(card.ai ? ["confirm"] : []), "edit", "move", "delete"];
-const menuAt = (card, step) => menuOf(card).indexOf(step);
+const SPIN = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
+// a card's menu: checked first for a card written by AI help; a check by AI when it's set up
+const menuOf = (card, ai) => [...(card.ai ? ["confirm"] : []), ...(ai && !card.cloze ? ["check"] : []), "edit", "move", "delete"];
 
 const look = (text) => fold(String(text).toLowerCase());
 const lineOf = (card) => (card.cloze ? plainFront(card.front) : `${card.front} = ${card.back.join("; ")}`);
@@ -22,7 +24,7 @@ const matches = (card, query) => !query || [card.front, ...card.back, card.examp
 // goes to the trash, and the row on top brings it straight back. `actions`: the library's;
 // `onDeleted`(cardIds) → { entry }, `onRestored`(entry), `onEdited`(staleKeys) let the app keep the
 // progress in step; `onAdd` opens /add for the deck; onClose(changed).
-export function Cards({ deck, actions, onDeleted, onRestored, onEdited, onAdd, onClose }) {
+export function Cards({ deck, actions, onDeleted, onRestored, onEdited, onAdd, onClose, ai = null }) {
   const panel = usePanelWidth();
   const [cards, setCards] = useState(null);
   const [decks, setDecks] = useState([]); // your other decks, to move a card to
@@ -34,6 +36,16 @@ export function Cards({ deck, actions, onDeleted, onRestored, onEdited, onAdd, o
   const [error, setError] = useState("");
   const changed = useRef(false);
   const busy = useRef(false);
+  const checking = useRef(null); // the check by AI in flight: its AbortController
+  const [spin, setSpin] = useState(0);
+  const menuAt = (card, step) => menuOf(card, ai).indexOf(step);
+  const waiting = open?.step === "check" && !open.verdict;
+  useEffect(() => {
+    if (!waiting) return;
+    const timer = setInterval(() => setSpin((n) => n + 1), 100);
+    return () => clearInterval(timer);
+  }, [waiting]);
+  useEffect(() => () => checking.current?.abort(), []);
 
   const load = () => actions.cardsIn(deck).then(setCards, (err) => setError(err.message));
   useEffect(() => {
@@ -110,6 +122,43 @@ export function Cards({ deck, actions, onDeleted, onRestored, onEdited, onAdd, o
       await load();
     });
 
+  // AI looks the card over: nothing wrong, or what is, with a fix to take or leave. One check at a time,
+  // and an answer that comes after Esc (or after the menu was left) changes nothing.
+  async function check(card) {
+    if (checking.current) return;
+    const controller = new AbortController();
+    checking.current = controller;
+    setError("");
+    setOpen((o) => ({ ...o, step: "check", verdict: null, selected: 0 }));
+    const name = providerName(ai.provider);
+    try {
+      const [languages, all] = await Promise.all([actions.languagesOf(deck).catch(() => ({})), actions.cardsIn(deck).catch(() => [])]);
+      const verdict = await checkCard(ai, { card, languages, cards: all, language: language(), signal: controller.signal });
+      if (controller.signal.aborted) return;
+      const still = (o) => o?.step === "check" && !o.verdict && o.card.id === card.id;
+      if (!verdict.ok) return setOpen((o) => (still(o) ? { ...o, verdict } : o));
+      // an AI card keeps its ✦: AI saying it's right isn't you checking it
+      setOpen((o) => (still(o) ? null : o));
+      setMessage(t("cards.checkOk", { provider: name, card: cutToWidth(lineOf(card), 40) }));
+    } catch (err) {
+      if (controller.signal.aborted) return;
+      setOpen((o) => (o?.step === "check" && !o.verdict ? { ...o, step: "menu", selected: menuAt(o.card, "check") } : o));
+      setError(err.code === "unreadable" ? t("cards.checkUnclear", { provider: name }) : err.message);
+    } finally {
+      if (checking.current === controller) checking.current = null;
+    }
+  }
+
+  const useFix = (card, fix) =>
+    run(async () => {
+      const { staleKeys } = await actions.updateCardIn(deck, card.id, fix);
+      await onEdited(staleKeys);
+      setOpen(null);
+      setMessage(t("add.fixed", { front: cutToWidth(plainFront(fix.front), 40) }));
+      changed.current = true;
+      await load();
+    });
+
   const move = (card, to) =>
     run(async () => {
       const { moved } = await actions.moveCards(deck, [card.id], to);
@@ -121,6 +170,14 @@ export function Cards({ deck, actions, onDeleted, onRestored, onEdited, onAdd, o
     });
 
   useInput((input, key) => {
+    if (open?.step === "check" && !open.verdict) {
+      if (key.escape || key.leftArrow) {
+        checking.current?.abort();
+        checking.current = null;
+        setOpen((o) => ({ ...o, step: "menu", selected: menuAt(o.card, "check") }));
+      }
+      return;
+    }
     if (open) {
       if (key.leftArrow && open.step === "menu") setOpen(null);
       return;
@@ -184,9 +241,36 @@ export function Cards({ deck, actions, onDeleted, onRestored, onEdited, onAdd, o
       theme.bad
     );
 
+  if (open?.step === "check") {
+    const name = providerName(ai.provider);
+    const { verdict } = open;
+    const back = () => setOpen((o) => ({ ...o, step: "menu", verdict: null, selected: menuAt(o.card, "check") }));
+    return frame(
+      cutToWidth(lineOf(open.card), panel - 8),
+      verdict
+        ? html`
+            <${Box} flexDirection="column">
+              ${open.card.example && html`<${Text} dimColor italic>“${open.card.example}”<//>`}
+              <${Box} marginTop=${1}><${Box} flexShrink=${0}><${Text} color=${theme.accent}>✦ <//><//><${Text} color=${theme.accent}>${verdict.note || t("cards.checkFix", { provider: name })}<//><//>
+              <${Box} marginTop=${1} flexDirection="column" paddingLeft=${2}>
+                ${verdict.fix && html`<${Fixed} card=${open.card} fix=${verdict.fix} />`}
+              <//>
+              <${Box} marginTop=${1}><${Choice} options=${verdict.fix ? [{ label: t("cards.useFix") }, { label: t("cards.keepMine") }] : [{ label: t("cards.keepMine") }]} selected=${open.selected} onMove=${(i) => setOpen((o) => ({ ...o, selected: i }))} onPick=${(i) => (verdict.fix && i === 0 ? useFix(open.card, verdict.fix) : back())} onCancel=${back} /><//>
+            <//>
+          `
+        : html`
+            <${Box} flexDirection="column">
+              ${open.card.example && html`<${Text} dimColor italic>“${open.card.example}”<//>`}
+              <${Box} marginTop=${1}><${Text} color=${theme.accent}>${SPIN[spin % SPIN.length]} ${t("cards.checking", { provider: name })}<//><//>
+            <//>
+          `,
+      verdict ? choiceHints("back") : t("keyHints.aiWaiting")
+    );
+  }
+
   if (open?.step === "menu") {
-    const steps = menuOf(open.card);
-    const labels = { confirm: t("cards.confirmRow"), edit: t("cards.editRow"), move: t("cards.moveRow"), delete: t("cards.deleteRow") };
+    const steps = menuOf(open.card, ai);
+    const labels = { confirm: t("cards.confirmRow"), check: t("cards.checkRow"), edit: t("cards.editRow"), move: t("cards.moveRow"), delete: t("cards.deleteRow") };
     const options = steps.map((step) => ({ label: labels[step], danger: step === "delete" }));
     return frame(
       cutToWidth(lineOf(open.card), panel - 8),
@@ -194,7 +278,7 @@ export function Cards({ deck, actions, onDeleted, onRestored, onEdited, onAdd, o
         <${Box} flexDirection="column">
           ${open.card.example && html`<${Text} dimColor italic>“${open.card.example}”<//>`}
           ${open.card.ai && html`<${Box} marginTop=${1}><${Text} color=${theme.accent}>${t("cards.aiNote")}<//><//>`}
-          <${Box} marginTop=${1}><${Choice} options=${options} selected=${open.selected} onMove=${(i) => setOpen((o) => ({ ...o, selected: i }))} onPick=${(i) => (steps[i] === "confirm" ? confirm(open.card) : setOpen((o) => ({ ...o, step: steps[i], selected: steps[i] === "delete" ? 1 : 0 })))} onCancel=${() => setOpen(null)} /><//>
+          <${Box} marginTop=${1}><${Choice} options=${options} selected=${open.selected} onMove=${(i) => setOpen((o) => ({ ...o, selected: i }))} onPick=${(i) => (steps[i] === "confirm" ? confirm(open.card) : steps[i] === "check" ? check(open.card) : setOpen((o) => ({ ...o, step: steps[i], selected: steps[i] === "delete" ? 1 : 0 })))} onCancel=${() => setOpen(null)} /><//>
         <//>
       `,
       t("keyHints.choiceLeft", { choose: t("choice.keys") })
@@ -226,6 +310,18 @@ export function Cards({ deck, actions, onDeleted, onRestored, onEdited, onAdd, o
     `,
     t("keyHints.cards")
   );
+}
+
+// the card as AI would fix it, what it changes in the accent colour
+function Fixed({ card, fix }) {
+  const changed = (on) => (on ? theme.accent : undefined);
+  const parts = fix.back.map((answer, i) => html`<${Text} key=${i} color=${changed(!card.back.includes(answer))}>${i ? "; " : ""}${answer}<//>`);
+  return html`
+    <${Box} flexDirection="column">
+      <${Text} bold wrap="truncate-end"><${Text} color=${changed(fix.front !== card.front)}>${fix.front}<//> = ${parts}<//>
+      ${fix.example && html`<${Text} italic color=${changed(fix.example !== (card.example ?? ""))} dimColor=${fix.example === (card.example ?? "")}>“${fix.example}”<//>`}
+    <//>
+  `;
 }
 
 // /cards while several decks are practised together: which deck's cards (`mix`: "all" or names)

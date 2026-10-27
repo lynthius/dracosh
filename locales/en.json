@@ -1510,6 +1510,7 @@
     "addRow": "+ Add cards",
     "undoRow": "↶ Bring back \"{card}\"",
     "confirmRow": "Looks right",
+    "checkRow": "Check with AI",
     "editRow": "Fix",
     "moveRow": "Move to another deck",
     "deleteRow": "Delete",
@@ -1532,7 +1533,13 @@
     "whichDeck": "Which deck's cards?",
     "deleteNo": "Keep it",
     "aiNote": "✦ This card was written by AI: check it before you learn it.",
-    "confirmed": "Checked: {card}"
+    "confirmed": "Checked: {card}",
+    "checking": "{provider} is checking the card…",
+    "checkOk": "{provider} sees nothing wrong: {card}",
+    "checkFix": "{provider} suggests a fix:",
+    "useFix": "Use the fix",
+    "keepMine": "Keep it as is",
+    "checkUnclear": "{provider}'s answer couldn't be read. Try again."
   },
   "ai": {
     "customName": "Other",

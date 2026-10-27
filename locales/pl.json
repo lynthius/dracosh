@@ -1676,6 +1676,7 @@
     "addRow": "+ Dodaj karty",
     "undoRow": "↶ Przywróć „{card}”",
     "confirmRow": "Zgadza się",
+    "checkRow": "Niech AI sprawdzi",
     "editRow": "Popraw",
     "moveRow": "Przenieś do innej talii",
     "deleteRow": "Usuń",
@@ -1700,7 +1701,13 @@
     "whichDeck": "Karty której talii?",
     "deleteNo": "Zostaw",
     "aiNote": "✦ Kartę napisało AI: sprawdź ją, zanim zaczniesz się jej uczyć.",
-    "confirmed": "Sprawdzono: {card}"
+    "confirmed": "Sprawdzono: {card}",
+    "checking": "{provider} sprawdza kartę…",
+    "checkOk": "{provider} nie widzi błędów: {card}",
+    "checkFix": "{provider} proponuje poprawkę:",
+    "useFix": "Przyjmij poprawkę",
+    "keepMine": "Zostaw bez zmian",
+    "checkUnclear": "Nie udało się odczytać odpowiedzi ({provider}). Spróbuj jeszcze raz."
   },
   "ai": {
     "customName": "Inny",

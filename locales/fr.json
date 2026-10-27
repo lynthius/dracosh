@@ -1614,6 +1614,7 @@
     "addRow": "+ Ajouter des cartes",
     "undoRow": "↶ Récupérer « {card} »",
     "confirmRow": "Tout est bon",
+    "checkRow": "Vérifier avec l'IA",
     "editRow": "Corriger",
     "moveRow": "Déplacer vers un autre paquet",
     "deleteRow": "Supprimer",
@@ -1637,7 +1638,13 @@
     "whichDeck": "Les cartes de quel paquet ?",
     "deleteNo": "La garder",
     "aiNote": "✦ Carte écrite par l'IA : vérifie-la avant de l'apprendre.",
-    "confirmed": "Vérifiée : {card}"
+    "confirmed": "Vérifiée : {card}",
+    "checking": "{provider} vérifie la carte…",
+    "checkOk": "{provider} ne voit pas d'erreur : {card}",
+    "checkFix": "{provider} propose une correction :",
+    "useFix": "Appliquer la correction",
+    "keepMine": "La laisser telle quelle",
+    "checkUnclear": "La réponse de {provider} est illisible. Réessaie."
   },
   "ai": {
     "customName": "Autre",

@@ -1527,6 +1527,7 @@
     "addRow": "+ Karten hinzufügen",
     "undoRow": "↶ „{card}“ zurückholen",
     "confirmRow": "Stimmt",
+    "checkRow": "Mit der KI prüfen",
     "editRow": "Korrigieren",
     "moveRow": "In einen anderen Stapel verschieben",
     "deleteRow": "Löschen",
@@ -1549,7 +1550,13 @@
     "whichDeck": "Karten welches Stapels?",
     "deleteNo": "Behalten",
     "aiNote": "✦ Von der KI geschrieben: Prüf die Karte, bevor du sie lernst.",
-    "confirmed": "Geprüft: {card}"
+    "confirmed": "Geprüft: {card}",
+    "checking": "{provider} prüft die Karte…",
+    "checkOk": "{provider} findet keinen Fehler: {card}",
+    "checkFix": "{provider} schlägt eine Korrektur vor:",
+    "useFix": "Korrektur übernehmen",
+    "keepMine": "Unverändert lassen",
+    "checkUnclear": "Die Antwort von {provider} war nicht lesbar. Versuch es noch mal."
   },
   "ai": {
     "customName": "Andere",
