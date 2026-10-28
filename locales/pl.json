@@ -1728,6 +1728,10 @@
     "noteWelcome": "Najpierw wybierz, gdzie działa AI, potem zaproponuje pierwszą talię. Wysyłana jest tylko prośba i kilka kart z talii.",
     "now": "Teraz: {label}",
     "current": "obecny",
+    "free": "za darmo",
+    "paid": "płatne",
+    "yourServer": "twój serwer",
+    "small": "mały, tani",
     "turnOff": "Wyłącz AI",
     "turnedOff": "Pomoc AI wyłączona. Zapisane klucze zostają: żeby usunąć klucz, wybierz tu ponownie jego dostawcę.",
     "providers": {
@@ -1772,6 +1776,7 @@
       "noModel": "{provider} nie ma modelu {model}.",
       "noApi": "Pod {url} nic nie odpowiada jak API zgodne z OpenAI: sprawdź adres (często kończy się na /v1).",
       "rateLimit": "{provider}: za dużo zapytań. Odczekaj chwilę i spróbuj ponownie.",
+      "noCredit": "{provider}: na koncie skończyły się środki. Doładuj konto na stronie dostawcy albo wybierz darmowy model lokalny w /settings → Pomoc AI.",
       "offline": "Brak połączenia z {provider} ({url}). Czy jest internet?",
       "offlineLocal": "Pod {url} nic nie odpowiada: czy {provider} działa?",
       "timeout": "{provider} zbyt długo nie odpowiada.",

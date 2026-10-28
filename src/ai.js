@@ -33,6 +33,11 @@ export const providerName = (provider) => PROVIDER_NAMES[provider] ?? t("ai.cust
 // the endpoint as the screens show it: "✦ ollama · llama3.2"
 export const aiLabel = (ai) => (ai ? `${providerName(ai.provider)} · ${ai.model}` : t("settings.off"));
 export const urlOf = (ai) => ai.url ?? PROVIDERS[ai.provider].url;
+// the settings row: the endpoint and what it costs, "LM Studio · free · qwen3" (the model last, as the
+// part a narrow row can lose)
+export const aiCostLabel = (ai) => (ai ? `${providerName(ai.provider)} · ${t(PROVIDERS[ai.provider].local ? "ai.free" : PROVIDERS[ai.provider].needsKey ? "ai.paid" : "ai.yourServer")} · ${ai.model}` : t("settings.off"));
+// a small, cheap model by its name (mini, nano, haiku, flash, lite…): offered first where you pay per use
+export const isSmallModel = (name) => /(^|[^a-z])(mini|ministral|nano|micro|haiku|flash|lite|small|tiny)([^a-z]|$)/i.test(name);
 
 // Keys live in keys.json next to the data, readable by you only, and are never part of a backup or an
 // export (DATA_FILES leaves the file out). A key in the environment wins over a saved one.
@@ -89,7 +94,7 @@ export async function forgetKey(provider, url) {
 export const maskKey = (key) => (key.length <= 10 ? "•".repeat(key.length) : `${key.slice(0, 4)}…${key.slice(-4)}`);
 
 // What went wrong, said as what to do: `code` is noKey, badKey, noModel, noApi (an address that isn't
-// such an API), rateLimit, offline, offlineLocal (a server on this computer that isn't running),
+// such an API), rateLimit, noCredit (the account is out of credit), offline, offlineLocal (a server on this computer that isn't running),
 // timeout, server or failed. The key is never part of the message.
 export class AiError extends Error {
   constructor(code, vars = {}) {
@@ -141,6 +146,10 @@ async function call(ai, key, path, body, { signal, timeoutMs = TIMEOUT_MS, onTex
   if (response.ok && data) return data;
   const said = reasonOf(data, key);
   if (response.ok) throw new AiError("failed", { ...vars, status: response.status, detail: t("ai.errors.notJson") });
+  // out of credit: 402, OpenAI's insufficient_quota (a 429, like a passing rate limit, told apart by its
+  // code), or a refusal that says so (Anthropic: "Your credit balance is too low")
+  const code = data?.error?.code ?? data?.error?.type;
+  if (response.status === 402 || code === "insufficient_quota" || ([400, 403].includes(response.status) && /credit|quota|billing|balance/i.test(said))) throw new AiError("noCredit", vars);
   if (response.status === 401 || response.status === 403) throw new AiError("badKey", vars);
   if (response.status === 404 && !body) throw new AiError("noApi", vars); // listing models: the address is wrong
   if (response.status === 404 || (response.status === 400 && /model/i.test(said) && /not|unknown|invalid|exist/i.test(said))) throw new AiError("noModel", vars);
@@ -218,7 +227,7 @@ export async function stream(ai, { system, prompt, maxTokens = 2000, signal, tim
 }
 
 // models that don't write text (embeddings, speech, images, moderation) can't suggest a card
-const NOT_CHAT = /embed|tts|whisper|transcribe|dall-e|image|moderation|rerank|audio|realtime/i;
+const NOT_CHAT = /embed|tts|whisper|transcribe|dall-e|image|moderation|rerank|audio|realtime|search|codex/i;
 
 // the models the endpoint offers, by name (a local server lists the ones downloaded)
 export async function listModels(ai, { key, signal } = {}) {

@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useRef, useState } from "react";
 import { Box, useInput } from "ink";
 import { t } from "../i18n.js";
-import { aiLabel, checkAi, cleanUrl, findKey, forgetKey, isUrl, listModels, maskKey, PROVIDERS, providerName, saveKey, urlOf } from "../ai.js";
+import { aiLabel, checkAi, cleanUrl, findKey, forgetKey, isSmallModel, isUrl, listModels, maskKey, PROVIDERS, providerName, saveKey, urlOf } from "../ai.js";
 import { fold } from "../judge.js";
 import { AnswerInput } from "./AnswerInput.js";
 import { Choice, choiceHints } from "./Choice.js";
@@ -88,8 +88,10 @@ export function AiSetup({ current, onSave, onClose, note = t("ai.note") }) {
     try {
       const list = await listModels(target, { key: withKey?.key ?? null });
       if (!fresh()) return;
-      setModels(list);
-      setSelected(Math.max(0, list.indexOf(target.model)));
+      // where you pay per use, the small, cheap models come first
+      const sorted = !PROVIDERS[target.provider].needsKey ? list : [...list.filter(isSmallModel), ...list.filter((name) => !isSmallModel(name))];
+      setModels(sorted);
+      setSelected(Math.max(0, sorted.indexOf(target.model ?? PROVIDERS[target.provider].model)));
     } catch (err) {
       if (!fresh()) return;
       // a key or an address to fix: back where it's typed, the reason with it
@@ -256,7 +258,7 @@ export function AiSetup({ current, onSave, onClose, note = t("ai.note") }) {
                   <${Text} dimColor>${top > 0 ? "  ↑" : " "}<//>
                   ${rows.slice(top, top + SHOWN).map((row, i) => {
                     const on = top + i === selected;
-                    return html`<${Text} key=${row ?? "type"} color=${on ? theme.accent : row === null ? theme.good : undefined} bold=${on} wrap="truncate-end">${on ? "❯" : " "} ${row === null ? t("ai.typeModel") : cutToWidth(row, panel - 12)}${row && row === current?.model && draft.provider === current?.provider ? html`<${Text} dimColor> · ${t("ai.current")}<//>` : ""}<//>`;
+                    return html`<${Text} key=${row ?? "type"} color=${on ? theme.accent : row === null ? theme.good : undefined} bold=${on} wrap="truncate-end">${on ? "❯" : " "} ${row === null ? t("ai.typeModel") : cutToWidth(row, panel - 12)}${row && row === current?.model && draft.provider === current?.provider ? html`<${Text} dimColor> · ${t("ai.current")}<//>` : row && preset.needsKey && isSmallModel(row) ? html`<${Text} dimColor> · ${t("ai.small")}<//>` : ""}<//>`;
                   })}
                   <${Text} dimColor>${top + SHOWN < rows.length ? "  ↓" : " "}<//>
                 <//>

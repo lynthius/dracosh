@@ -1558,6 +1558,10 @@
     "noteWelcome": "First pick where AI runs, then it suggests your first deck. Only your request and a few cards of the deck are sent.",
     "now": "Now: {label}",
     "current": "current",
+    "free": "free",
+    "paid": "paid",
+    "yourServer": "your server",
+    "small": "small, cheap",
     "turnOff": "Turn AI off",
     "turnedOff": "AI help is off. Saved keys stay: to remove one, pick its provider here again.",
     "providers": {
@@ -1602,6 +1606,7 @@
       "noModel": "{provider} has no model called {model}.",
       "noApi": "Nothing at {url} answers like an OpenAI-compatible API: check the address (often it ends in /v1).",
       "rateLimit": "{provider} says too many requests: wait a moment and try again.",
+      "noCredit": "{provider} says the account is out of credit: top it up on its site, or pick a free local model in /settings → AI help.",
       "offline": "Can't reach {provider} ({url}). Are you online?",
       "offlineLocal": "Nothing answers at {url}: is {provider} running?",
       "timeout": "{provider} took too long to answer.",

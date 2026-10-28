@@ -654,7 +654,7 @@ export function AddCard({ current, actions, onDone, startNew = false, suggest = 
 
 const PAUSE_MS = 350; // typing stops this long before a suggestion is asked for
 const SPIN = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
-const STOPPING = new Set(["noKey", "badKey", "noModel", "offline", "offlineLocal"]); // no point asking again in this /add
+const STOPPING = new Set(["noKey", "badKey", "noModel", "noCredit", "offline", "offlineLocal"]); // no point asking again in this /add
 
 // Suggestions for the card being typed: once its front is followed by " = " (or on the back's own
 // field), the model is asked for the back and an example, shown dimmed after what's typed (`ghost`).

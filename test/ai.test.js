@@ -7,7 +7,7 @@ import { after, before, test } from "node:test";
 
 process.env.DRACOSH_HOME = mkdtempSync(join(tmpdir(), "dracosh-"));
 for (const name of ["ANTHROPIC_API_KEY", "OPENAI_API_KEY", "OPENROUTER_API_KEY", "DRACOSH_AI_KEY"]) delete process.env[name];
-const { ask, checkAi, stream, findKey, forgetKey, listModels, maskKey, normalizeAi, saveKey } = await import("../src/ai.js");
+const { aiCostLabel, ask, checkAi, isSmallModel, stream, findKey, forgetKey, listModels, maskKey, normalizeAi, saveKey } = await import("../src/ai.js");
 const { DATA_FILES } = await import("../src/store.js");
 const { normalizeSettings } = await import("../src/settings.js");
 
@@ -92,6 +92,10 @@ test("failures are told by what to do about them, never with the key", async () 
   assert.equal(await codeOf(404, { error: { message: "model x not found" } }), "noModel");
   assert.equal(await codeOf(400, { error: { message: "The model `x` does not exist" } }), "noModel");
   assert.equal(await codeOf(429, { error: "slow down" }), "rateLimit");
+  assert.equal(await codeOf(402, { error: { message: "Insufficient credits" } }), "noCredit");
+  assert.equal(await codeOf(429, { error: { message: "You exceeded your current quota", code: "insufficient_quota" } }), "noCredit");
+  assert.equal(await codeOf(429, { error: { message: "Rate limit reached. Add a payment method: https://platform.openai.com/account/billing" } }), "rateLimit", "a passing limit, whatever it mentions");
+  assert.equal(await codeOf(400, { error: { message: "Your credit balance is too low" } }), "noCredit");
   assert.equal(await codeOf(503, "oops"), "server");
   assert.equal(await codeOf(400, { error: { message: "max_tokens too large" } }), "failed");
   assert.equal(await codeOf(200, "not json"), "failed");
@@ -194,4 +198,12 @@ test("a server that ignores stream: true still gives its answer", async () => {
   reply = [200, { choices: [{ message: { content: "kot = cat" } }] }];
   assert.equal(await stream({ provider: "openrouter", model: "m", url: base }, { key: "k", system: "s", prompt: "p", onText: (piece) => pieces.push(piece) }), "kot = cat");
   assert.deepEqual(pieces, ["kot = cat"]);
+});
+
+test("small models are told by their names, and the settings say what AI costs", () => {
+  for (const name of ["gpt-5-mini", "claude-haiku-5-5", "gemini-2.5-flash", "google/gemini-flash-lite", "gpt-4.1-nano", "ministral-8b-latest", "amazon/nova-micro-v1"]) assert.ok(isSmallModel(name), name);
+  for (const name of ["gpt-5", "claude-opus-5-5", "minimax-m1", "llama-3.3-70b"]) assert.ok(!isSmallModel(name), name);
+  assert.equal(aiCostLabel({ provider: "lmstudio", model: "qwen" }), "LM Studio · free · qwen");
+  assert.equal(aiCostLabel({ provider: "anthropic", model: "claude-haiku-5-5" }), "Anthropic · paid · claude-haiku-5-5");
+  assert.equal(aiCostLabel({ provider: "custom", model: "m", url: "http://x/v1" }), "Other · your server · m");
 });

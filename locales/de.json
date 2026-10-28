@@ -1575,6 +1575,10 @@
     "noteWelcome": "Wähl zuerst, wo die KI läuft, danach schlägt sie deinen ersten Stapel vor. Gesendet werden nur die Anfrage und ein paar Karten des Stapels.",
     "now": "Jetzt: {label}",
     "current": "aktuell",
+    "free": "kostenlos",
+    "paid": "kostenpflichtig",
+    "yourServer": "dein Server",
+    "small": "klein, günstig",
     "turnOff": "KI ausschalten",
     "turnedOff": "KI-Hilfe ist aus. Gespeicherte Schlüssel bleiben: Um einen zu löschen, wähle hier wieder seinen Anbieter.",
     "providers": {
@@ -1619,6 +1623,7 @@
       "noModel": "{provider} hat kein Modell namens {model}.",
       "noApi": "Unter {url} antwortet keine OpenAI-kompatible API: Prüfe die Adresse (oft endet sie auf /v1).",
       "rateLimit": "{provider} meldet zu viele Anfragen: Warte kurz und versuche es erneut.",
+      "noCredit": "{provider}: Dein Guthaben ist aufgebraucht. Lade es auf der Seite des Anbieters auf oder wähl in /settings → KI-Hilfe ein kostenloses lokales Modell.",
       "offline": "{provider} ist nicht erreichbar ({url}). Bist du online?",
       "offlineLocal": "Unter {url} antwortet nichts: Läuft {provider}?",
       "timeout": "{provider} hat zu lange für die Antwort gebraucht.",

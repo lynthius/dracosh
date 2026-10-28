@@ -1664,6 +1664,10 @@
     "noteWelcome": "Choisis d'abord où tourne l'IA, ensuite elle propose ton premier paquet. Seuls ta demande et quelques cartes du paquet sont envoyés.",
     "now": "Actuellement : {label}",
     "current": "actuel",
+    "free": "gratuit",
+    "paid": "payant",
+    "yourServer": "ton serveur",
+    "small": "petit, peu coûteux",
     "turnOff": "Désactiver l'IA",
     "turnedOff": "L'aide IA est désactivée. Les clés enregistrées restent : pour en supprimer une, choisis à nouveau son fournisseur ici.",
     "providers": {
@@ -1708,6 +1712,7 @@
       "noModel": "{provider} n'a pas de modèle nommé {model}.",
       "noApi": "Rien à {url} ne répond comme une API compatible OpenAI : vérifie l'adresse (elle finit souvent par /v1).",
       "rateLimit": "{provider} signale trop de requêtes : patiente un peu et réessaie.",
+      "noCredit": "{provider} : plus de crédit sur le compte. Recharge-le sur le site du fournisseur, ou choisis un modèle local gratuit dans /settings → Aide IA.",
       "offline": "Impossible de joindre {provider} ({url}). Es-tu en ligne ?",
       "offlineLocal": "Rien ne répond à {url} : {provider} est-il lancé ?",
       "timeout": "{provider} a mis trop de temps à répondre.",

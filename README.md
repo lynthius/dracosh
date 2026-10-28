@@ -102,6 +102,8 @@ Any card can be checked too: open it in `/cards` and pick "Check with AI". It lo
 
 Only the word or request you typed and a few cards of the same deck are sent (for a list, also the fronts it shouldn't repeat; for a check, the card), so a request costs very little; a small model is plenty, and one that doesn't think first answers fastest. Nothing is added by AI alone: you keep or take every card.
 
+What it costs stays in sight: `/settings` shows "free" next to a model on your computer and "paid per use" next to a cloud one, and when you pick a cloud model the small, cheap ones come first. If something goes wrong, the message says what to do: a missing or wrong key, a local server that isn't running, too many requests, or an account out of credit.
+
 ## Import and export
 
 ```bash
