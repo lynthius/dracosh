@@ -67,6 +67,7 @@
     "badges": "↑/↓ przeglądaj · ←/→ kolumna · esc wstecz",
     "keyNames": "dowolny klawisz|enter|esc|tab",
     "addFirst": "enter dodaj · esc anuluj",
+    "askList": "enter zapytaj AI · esc anuluj",
     "addMore": "enter dodaj · ↑ popraw ostatnią · esc koniec",
     "addFixing": "enter zapisz · esc zostaw",
     "addBack": "enter dodaj · esc wstecz",
@@ -313,6 +314,7 @@
     "titleFirst": "Stwórz swoją pierwszą talię",
     "titleCard": "Dodaj kartę · {deck}",
     "deckReady": "Talia „{deck}” jest gotowa. Teraz jej pierwsza karta:",
+    "deckReadyAi": "Talia „{deck}” jest gotowa. Enter poprosi AI o pierwsze słowa; prośbę możesz najpierw zmienić.",
     "duplicateCard": "„{front}” już jest w talii {deck}.",
     "duplicateDeck": "Talia „{deck}” już istnieje.",
     "nameTooLong": "Nazwa może mieć najwyżej {max} znaków.",
@@ -400,7 +402,8 @@
       "request": "„{request}”",
       "confirm": "Esc jeszcze raz odrzuca zaznaczone karty. Inny klawisz je zostawia.",
       "nothingKept": "Nic jeszcze nie zaznaczono: spacja zaznacza kartę, a wszystkie.",
-      "listOff": "Pomoc AI jest wyłączona: włącz ją w /settings → Pomoc AI, żeby prosić o listę."
+      "listOff": "Pomoc AI jest wyłączona: włącz ją w /settings → Pomoc AI, żeby prosić o listę.",
+      "needRequest": "Po ? wpisz, o co poprosić AI, np. ?słówka z kuchni."
     }
   },
   "quiz": {
@@ -1581,6 +1584,8 @@
         "other": "Zacznij od {count} codziennego słowa"
       },
       "wordsNote": "{language} → {home}",
+      "ai": "Niech AI zaproponuje pierwszą talię",
+      "aiNote": "wybierz karty z listy · klucz API albo model lokalny",
       "tour": "Pokaż, jak to działa",
       "tourNote": {
         "one": "{count} krótka karta o tym, jak działa Dracosh",
@@ -1596,6 +1601,7 @@
       "noWordsHome": "Gotowe słowa są dla par z tych języków: {languages}. Język {language} jeszcze do nich nie należy, więc zacznij od własnej talii."
     },
     "firstWordsDeck": "{language}: pierwsze słowa",
+    "aiRequest": "{count} codziennych słów: {language} → {home}",
     "suggested": "propozycja"
   },
   "importScreen": {
@@ -1719,6 +1725,7 @@
     "customName": "Inny",
     "title": "Pomoc AI",
     "note": "Opcjonalnie: AI podpowiada tłumaczenia i przykłady przy dodawaniu kart. Wysyłana jest tylko pisana karta i kilka kart z tej samej talii.",
+    "noteWelcome": "Najpierw wybierz, gdzie działa AI, potem zaproponuje pierwszą talię. Wysyłana jest tylko prośba i kilka kart z talii.",
     "now": "Teraz: {label}",
     "current": "obecny",
     "turnOff": "Wyłącz AI",

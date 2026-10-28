@@ -44,6 +44,7 @@ On the first start the dragon hatches, and Dracosh asks three things: the langua
 
 - a short tour, where every card tells you what to type and shows you one more thing Dracosh can do
 - 30 everyday words in the language you're learning, which you translate into yours (for any pair of English, Polish, German, French, Ukrainian, Spanish and Italian)
+- a first deck from AI: Dracosh helps you set up AI help (your own key or a free local model), asks it for everyday words in your language pair, and you pick the cards you want from its list
 - cards you already have, from Anki, a CSV or a text file (`/import`)
 - a deck of your own, in `/add`
 

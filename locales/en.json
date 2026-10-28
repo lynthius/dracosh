@@ -67,6 +67,7 @@
     "badges": "↑/↓ browse · ←/→ column · esc back",
     "keyNames": "any key|enter|esc|tab",
     "addFirst": "enter add · esc cancel",
+    "askList": "enter ask AI · esc cancel",
     "addMore": "enter add · ↑ fix the last one · esc done",
     "addFixing": "enter save · esc leave it",
     "addBack": "enter add · esc back",
@@ -294,6 +295,7 @@
     "titleFirst": "Start your first deck",
     "titleCard": "Add a card · {deck}",
     "deckReady": "Your deck \"{deck}\" is ready. Now its first card:",
+    "deckReadyAi": "Your deck \"{deck}\" is ready. Enter asks AI for its first words; you can change the request first.",
     "duplicateCard": "\"{front}\" is already in {deck}.",
     "duplicateDeck": "There is already a deck called \"{deck}\".",
     "nameTooLong": "Keep the name to {max} characters or fewer.",
@@ -371,7 +373,8 @@
       "request": "“{request}”",
       "confirm": "Esc again drops the cards you kept. Any other key keeps them.",
       "nothingKept": "Nothing kept yet: space keeps a card, a keeps them all.",
-      "listOff": "AI help is off: turn it on in /settings → AI help to ask for a list."
+      "listOff": "AI help is off: turn it on in /settings → AI help to ask for a list.",
+      "needRequest": "Type what to ask AI for after the ?, like ?kitchen words."
     }
   },
   "quiz": {
@@ -1431,6 +1434,8 @@
         "other": "Start with {count} everyday words"
       },
       "wordsNote": "{language} → {home}",
+      "ai": "Let AI suggest my first deck",
+      "aiNote": "you pick the cards · API key or local model",
       "tour": "Show me how it works",
       "tourNote": {
         "one": "{count} short card on how Dracosh works",
@@ -1444,6 +1449,7 @@
       "noWordsHome": "Ready-made words are for pairs of these: {languages}. {language} isn't one yet, so start with a deck of your own."
     },
     "firstWordsDeck": "{language}: first words",
+    "aiRequest": "{count} everyday words: {language} → {home}",
     "suggested": "suggested"
   },
   "importScreen": {
@@ -1549,6 +1555,7 @@
     "customName": "Other",
     "title": "AI help",
     "note": "Optional: AI suggests translations and examples while you add cards. Only the card you're writing and a few from the same deck are sent.",
+    "noteWelcome": "First pick where AI runs, then it suggests your first deck. Only your request and a few cards of the deck are sent.",
     "now": "Now: {label}",
     "current": "current",
     "turnOff": "Turn AI off",

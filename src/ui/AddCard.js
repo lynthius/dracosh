@@ -63,7 +63,8 @@ function withRepeats(items) {
 // replaces the tour), then add cards one line each until Esc: "kot = cat; kitty // example". After a new
 // deck's first card it asks which way the deck is asked. A pasted list opens a review first.
 // `actions` reads and writes the library; `startNew` skips the deck list ("+ New deck" in /decks).
-// `suggest` (from the welcome): { name, example }, a deck name to start from and a card in your pair.
+// `suggest` (from the welcome): { name, example, request? }, a deck name to start from, a card in your
+// pair and, for a first deck from AI help, what to ask it for.
 // `into`: straight to adding cards to this deck (+ Add cards in /cards). `ai`: settings.ai, for
 // suggestions while a card is typed (null: none).
 // the ways to add a card, a name and what to type side by side
@@ -162,8 +163,8 @@ export function AddCard({ current, actions, onDone, startNew = false, suggest = 
       const { deck: created, removed } = await actions.startDeck({ name });
       setDeck({ name: created.name, directions: created.directions, isNew: true });
       setNewDeck({ name: created.name, removed });
-      setMessage(t("add.deckReady", { deck: created.name }));
-      clearField();
+      setMessage(t(suggest?.request ? "add.deckReadyAi" : "add.deckReady", { deck: created.name }));
+      clearField(suggest?.request ? `?${suggest.request}` : ""); // from the welcome: a list from AI, ready to ask for
       setStep("line");
     } catch (err) {
       setError(err.message);
@@ -251,6 +252,7 @@ export function AddCard({ current, actions, onDone, startNew = false, suggest = 
     }
     if (step === "line") {
       if (!value) return setError(t("add.needFront"));
+      if (ai && value === "?") return setError(t("add.ai.needRequest"));
       if (/^\?\s*\S/.test(value) && !value.includes(" = ")) {
         if (ai) return askForList(value.slice(1).trim());
         return setError(t("add.ai.listOff"));
@@ -446,8 +448,8 @@ export function AddCard({ current, actions, onDone, startNew = false, suggest = 
         if (pasted.confirm || (pasted.ai && !keeping)) {
           listing.current?.abort();
           listing.current = null;
-          // a list that failed or came back empty: the request is back in the field, to ask again
-          if (pasted.ai && (pasted.ai.problem || !pasted.items.length)) clearField(`?${pasted.ai.request}`);
+          // an AI list let go: its request is back in the field, to change and ask again
+          if (pasted.ai) clearField(`?${pasted.ai.request}`);
           setPasted(null);
           setError("");
           return setStep("line");
@@ -490,7 +492,8 @@ export function AddCard({ current, actions, onDone, startNew = false, suggest = 
     step === "pick" ? t("add.titlePick") : step === "deck" ? t(decks.length ? "add.titleNew" : "add.titleFirst") : step === "review" || step === "fix" ? t(pasted?.ai ? "add.ai.listTitle" : "add.paste.title", { deck: deck.name }) : t("add.titleCard", { deck: deck?.name ?? "" });
   const fieldLabel = step === "deck" ? "deck" : step === "back" ? "back" : step === "line" || step === "fix" ? "line" : null;
   // with a suggestion on screen, the card it would make (Tab takes it)
-  const parsed = step === "line" && typed.trim() ? parseLine(typed + help.ghost) : null;
+  const asking = Boolean(ai && step === "line" && !editing && typed.startsWith("?")); // "?…" asks AI for a list
+  const parsed = step === "line" && typed.trim() && !asking ? parseLine(typed + help.ghost) : null;
   // only what isn't plain from the line itself: a cloze's gaps, or how a lone front goes on (unless AI
   // help is busy with its back)
   const preview = !parsed ? null : parsed.cloze ? askedAs(parsed, null) : parsed.back.length || parsed.hasBack || help.status ? null : t("add.preview.noBack");
@@ -519,7 +522,7 @@ export function AddCard({ current, actions, onDone, startNew = false, suggest = 
           <${Box} flexDirection="column" marginTop=${1}>
             <${Text} bold>${t(`add.fields.${fieldLabel}.label`)}<//>
             ${fieldLabel === "line"
-              ? html`<${Ways} example=${suggest?.example || t("add.fields.line.hint")} ai=${ai && !editing} />`
+              ? !asking && html`<${Ways} example=${suggest?.example || t("add.fields.line.hint")} ai=${ai && !editing} />`
               : html`<${Text} dimColor>${t(`add.fields.${fieldLabel}.hint`)}<//>`}
             <${Box} marginTop=${1}>
               <${AnswerInput}
@@ -590,8 +593,8 @@ export function AddCard({ current, actions, onDone, startNew = false, suggest = 
             ${pasted.ai
               ? html`<${Box} flexDirection="column">
                   ${pasted.ai.writing
-                    ? html`<${Text} color=${theme.accent}>${SPIN[spin % SPIN.length]} ${t("add.ai.request", { request: pasted.ai.request })} · ${pasted.items.length ? t("add.ai.writing", { provider: providerName(ai.provider), count: pasted.items.length }) : t("add.ai.writingStart", { provider: providerName(ai.provider) })}<//>`
-                    : html`<${Text}>${t("add.ai.request", { request: pasted.ai.request })} · ${t("add.ai.listSummary", { count: pasted.items.length, kept: ready })}<//>`}
+                    ? html`<${Text} color=${theme.accent}>${SPIN[spin % SPIN.length]} ${t("add.ai.request", { request: cutToWidth(pasted.ai.request, Math.max(16, panel - 40)) })} · ${pasted.items.length ? t("add.ai.writing", { provider: providerName(ai.provider), count: pasted.items.length }) : t("add.ai.writingStart", { provider: providerName(ai.provider) })}<//>`
+                    : html`<${Text}>${t("add.ai.request", { request: cutToWidth(pasted.ai.request, Math.max(16, panel - 40)) })} · ${t("add.ai.listSummary", { count: pasted.items.length, kept: ready })}<//>`}
                   ${pasted.ai.problem && html`<${Text} color=${theme.warn}>${pasted.ai.problem}<//>`}
                 <//>`
               : html`<${Text}>${t("add.paste.summary", { lines: pasted.total, count: ready })}${shownPaste.some((item) => item.issue && !item.dropped) ? t("add.paste.attention", { count: shownPaste.filter((item) => item.issue && !item.dropped).length }) : ""}<//>`}
@@ -640,7 +643,9 @@ export function AddCard({ current, actions, onDone, startNew = false, suggest = 
                 ? t("keyHints.pasteFix")
                 : step === "back"
                   ? (help.ghost ? `${t("keyHints.takeSuggestion")} · ` : "") + t("keyHints.addBack")
-                  : `${help.ghost ? t("keyHints.takeSuggestion") : t("keyHints.tabPart")} · ${editing ? t("keyHints.addFixing") : added.length ? t("keyHints.addMore") : t("keyHints.addFirst")}`}
+                  : asking
+                    ? t("keyHints.askList")
+                    : `${help.ghost ? t("keyHints.takeSuggestion") : t("keyHints.tabPart")} · ${editing ? t("keyHints.addFixing") : added.length ? t("keyHints.addMore") : t("keyHints.addFirst")}`}
         />
       <//>
     <//>

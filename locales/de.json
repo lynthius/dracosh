@@ -67,6 +67,7 @@
     "badges": "↑/↓ blättern · ←/→ Spalte · esc zurück",
     "keyNames": "beliebige Taste|enter|esc|tab",
     "addFirst": "enter hinzufügen · esc abbrechen",
+    "askList": "enter KI fragen · esc abbrechen",
     "addMore": "enter hinzufügen · ↑ letzte korrigieren · esc fertig",
     "addFixing": "enter speichern · esc abbrechen",
     "addBack": "enter hinzufügen · esc zurück",
@@ -297,6 +298,7 @@
     "titleFirst": "Lege deinen ersten Stapel an",
     "titleCard": "Karte hinzufügen · {deck}",
     "deckReady": "Dein Stapel „{deck}“ ist bereit. Jetzt seine erste Karte:",
+    "deckReadyAi": "Dein Stapel „{deck}“ ist bereit. Enter fragt die KI nach den ersten Wörtern; die Anfrage kannst du vorher ändern.",
     "duplicateCard": "„{front}“ ist schon in {deck}.",
     "duplicateDeck": "Es gibt schon einen Stapel namens „{deck}“.",
     "nameTooLong": "Der Name darf höchstens {max} Zeichen lang sein.",
@@ -374,7 +376,8 @@
       "request": "„{request}“",
       "confirm": "Ein weiteres Esc verwirft die behaltenen Karten; jede andere Taste behält sie.",
       "nothingKept": "Noch nichts behalten: Leertaste behält eine Karte, a alle.",
-      "listOff": "KI-Hilfe ist aus: Schalte sie unter /settings → KI-Hilfe ein, um eine Liste zu bekommen."
+      "listOff": "KI-Hilfe ist aus: Schalte sie unter /settings → KI-Hilfe ein, um eine Liste zu bekommen.",
+      "needRequest": "Schreib nach dem ?, worum du die KI bittest, z. B. ?Küchenwörter."
     }
   },
   "quiz": {
@@ -1448,6 +1451,8 @@
         "other": "Mit {count} Alltagswörtern anfangen"
       },
       "wordsNote": "{language} → {home}",
+      "ai": "Stapel von der KI vorschlagen lassen",
+      "aiNote": "Karten aus der Liste wählen · API-Schlüssel oder lokales Modell",
       "tour": "Zeig mir, wie es geht",
       "tourNote": {
         "one": "{count} kurze Karte dazu, wie Dracosh funktioniert",
@@ -1461,6 +1466,7 @@
       "noWordsHome": "Fertige Wörter gibt es für Paare aus diesen Sprachen: {languages}. {language} ist noch nicht dabei, also fang mit einem eigenen Stapel an."
     },
     "firstWordsDeck": "{language}: erste Wörter",
+    "aiRequest": "{count} Alltagswörter: {language} → {home}",
     "suggested": "Vorschlag"
   },
   "importScreen": {
@@ -1566,6 +1572,7 @@
     "customName": "Andere",
     "title": "KI-Hilfe",
     "note": "Optional: Die KI schlägt beim Hinzufügen von Karten Übersetzungen und Beispiele vor. Gesendet werden nur die Karte, die du gerade schreibst, und einige aus demselben Stapel.",
+    "noteWelcome": "Wähl zuerst, wo die KI läuft, danach schlägt sie deinen ersten Stapel vor. Gesendet werden nur die Anfrage und ein paar Karten des Stapels.",
     "now": "Jetzt: {label}",
     "current": "aktuell",
     "turnOff": "KI ausschalten",

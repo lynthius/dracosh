@@ -67,6 +67,7 @@
     "badges": "↑/↓ parcourir · ←/→ colonne · échap retour",
     "keyNames": "une touche|entrée|échap|tab",
     "addFirst": "entrée ajouter · échap annuler",
+    "askList": "entrée demander à l'IA · échap annuler",
     "addMore": "entrée ajouter · ↑ corriger la dernière · échap terminer",
     "addFixing": "entrée enregistrer · échap laisser",
     "addBack": "entrée ajouter · échap retour",
@@ -305,6 +306,7 @@
     "titleFirst": "Crée ton premier paquet",
     "titleCard": "Ajouter une carte · {deck}",
     "deckReady": "Ton paquet « {deck} » est prêt. Maintenant, sa première carte :",
+    "deckReadyAi": "Ton paquet « {deck} » est prêt. Entrée demande ses premiers mots à l'IA ; tu peux d'abord modifier la demande.",
     "duplicateCard": "« {front} » est déjà dans {deck}.",
     "duplicateDeck": "Il y a déjà un paquet nommé « {deck} ».",
     "nameTooLong": "Le nom ne doit pas dépasser {max} caractères.",
@@ -387,7 +389,8 @@
       "request": "« {request} »",
       "confirm": "Appuie encore sur Échap pour abandonner les cartes gardées ; une autre touche les garde.",
       "nothingKept": "Rien de gardé pour l'instant : espace garde une carte, a les garde toutes.",
-      "listOff": "L'aide IA est désactivée : active-la dans /settings → Aide IA pour demander une liste."
+      "listOff": "L'aide IA est désactivée : active-la dans /settings → Aide IA pour demander une liste.",
+      "needRequest": "Après le ?, écris ce que tu demandes à l'IA, par ex. ?mots de cuisine."
     }
   },
   "quiz": {
@@ -1527,6 +1530,8 @@
         "other": "Commencer avec {count} mots du quotidien"
       },
       "wordsNote": "{language} → {home}",
+      "ai": "Laisser l'IA proposer un premier paquet",
+      "aiNote": "choisis tes cartes · clé API ou modèle local",
       "tour": "Montre-moi comment ça marche",
       "tourNote": {
         "one": "{count} carte courte sur le fonctionnement de Dracosh",
@@ -1541,6 +1546,7 @@
       "noWordsHome": "Les mots tout prêts sont pour des paires de ces langues : {languages}. Pas encore en {language} : commence par ton propre paquet."
     },
     "firstWordsDeck": "{language} : premiers mots",
+    "aiRequest": "{count} mots du quotidien : {language} → {home}",
     "suggested": "suggérée"
   },
   "importScreen": {
@@ -1655,6 +1661,7 @@
     "customName": "Autre",
     "title": "Aide IA",
     "note": "Facultatif : l'IA propose des traductions et des exemples quand tu ajoutes des cartes. Seules la carte en cours et quelques cartes du même paquet sont envoyées.",
+    "noteWelcome": "Choisis d'abord où tourne l'IA, ensuite elle propose ton premier paquet. Seuls ta demande et quelques cartes du paquet sont envoyés.",
     "now": "Actuellement : {label}",
     "current": "actuel",
     "turnOff": "Désactiver l'IA",

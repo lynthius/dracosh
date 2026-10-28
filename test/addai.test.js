@@ -12,6 +12,7 @@ const { default: React } = await import("react");
 const { render } = await import("ink");
 const { setLanguage } = await import("../src/i18n.js");
 const { AddCard } = await import("../src/ui/AddCard.js");
+const { Welcome } = await import("../src/ui/Welcome.js");
 setLanguage("en");
 
 // a local model that suggests "dog" for anything, after `delay` ms
@@ -51,7 +52,7 @@ const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const plain = (text) => text.replace(/\x1b\[[\d;?]*[a-zA-Z]/g, "");
 
 // /add on one deck, with the library's actions faked; → { type, screen, saved, close }
-async function openAdd() {
+async function openAdd(props = {}) {
   const saved = [];
   const updated = [];
   const actions = {
@@ -61,13 +62,15 @@ async function openAdd() {
     existingCard: async () => null,
     updateCardIn: async (deck, id, fields) => (updated.push(fields), { card: { id, ...fields }, staleKeys: [] }),
     addCardTo: async (deck, fields) => (saved.push(fields), { card: { id: String(saved.length + 1), ...fields } }),
+    existingDeck: async () => null,
+    startDeck: async ({ name }) => ({ deck: { name, directions: "both" }, removed: [] }),
     addCardsTo: async (deck, list) => ({ added: list.map((fields) => (saved.push(fields), { id: String(saved.length + 1), ...fields })) })
   };
   const stdout = Object.assign(new PassThrough(), { columns: 80, rows: 30, isTTY: true });
   let output = "";
   stdout.on("data", (chunk) => plain(String(chunk)).trim() && (output = String(chunk)));
   const stdin = Object.assign(new PassThrough(), { isTTY: true, setRawMode: () => {}, ref: () => {}, unref: () => {}, setEncoding() {} });
-  const app = render(React.createElement(AddCard, { current: "Polish", into: "Polish", actions, ai: { provider: "ollama", model: "m", url }, onDone: () => {} }), { stdout, stdin, debug: true, patchConsole: false });
+  const app = render(React.createElement(AddCard, { current: "Polish", into: "Polish", actions, ai: { provider: "ollama", model: "m", url }, onDone: () => {}, ...props }), { stdout, stdin, debug: true, patchConsole: false });
   await wait(100);
   return {
     type: async (text, ms = 60) => (stdin.write(text), await wait(ms)),
@@ -147,7 +150,7 @@ test("?topic asks for a list: nothing kept until kept, a card already in the dec
   add.close();
 });
 
-test("an AI list with nothing kept goes at once with Esc; a keeps all and a again none", async () => {
+test("an AI list with nothing kept goes at once with Esc, its request back in the field; a keeps all and a again none", async () => {
   const add = await openAdd();
   await add.type("?kitchen");
   await add.type("\r", 400);
@@ -156,7 +159,7 @@ test("an AI list with nothing kept goes at once with Esc; a keeps all and a agai
   await add.type("a");
   assert.match(add.screen(), /0 kept/);
   await add.type("\x1b", 120);
-  assert.match(add.screen(), /New card/);
+  assert.match(add.screen(), /❯ \?kitchen/);
   assert.deepEqual(add.saved, []);
   add.close();
 });
@@ -194,6 +197,15 @@ test("a list asked for while fixing the last card adds new cards, the fixed one 
   await add.type("apple = jabłko");
   await add.type("\r", 150);
   assert.deepEqual(add.saved.map((card) => card.front), ["pear", "spoon", "apple"]);
+  add.close();
+});
+
+test("a bare ? asks what to ask for, instead of starting a card", async () => {
+  const add = await openAdd();
+  await add.type("?");
+  await add.type("\r", 100);
+  assert.match(add.screen(), /Type what to ask AI for/);
+  assert.match(add.screen(), /❯ \?/);
   add.close();
 });
 
@@ -247,5 +259,26 @@ test("an AI card brought back with ↑ and saved unchanged keeps its mark", asyn
   await add.type("\x1b[A", 100);
   await add.type("\r", 150);
   assert.equal(add.updated[0].ai, true);
+  add.close();
+});
+
+test("the welcome offers a first deck from AI, and it opens with the request in the field", async () => {
+  const stdout = Object.assign(new PassThrough(), { columns: 80, rows: 30, isTTY: true });
+  let output = "";
+  stdout.on("data", (chunk) => plain(String(chunk)).trim() && (output = String(chunk)));
+  const stdin = Object.assign(new PassThrough(), { isTTY: true, setRawMode: () => {}, ref: () => {}, unref: () => {}, setEncoding() {} });
+  const app = render(React.createElement(Welcome, { step: "start", settings: { language: "en", homeLanguage: "en", learningLanguage: "es" }, onStep: () => {}, onStart: () => {}, onPreviewLanguage: () => {} }), { stdout, stdin, debug: true, patchConsole: false });
+  await wait(50);
+  assert.match(plain(output), /2\. Let AI suggest my first deck/);
+  app.unmount();
+
+  const add = await openAdd({ startNew: true, current: null, into: null, suggest: { name: "Spanish", request: "30 everyday words: Spanish → English" } });
+  assert.match(add.screen(), /❯ Spanish/);
+  await add.type("\r", 150);
+  assert.match(add.screen(), /❯ \?30 everyday words: Spanish → English/);
+  assert.doesNotMatch(add.screen(), /then the back/i, "no hint for a lone front under a request");
+  assert.match(add.screen(), /Enter asks AI for its first words/);
+  assert.match(add.screen(), /enter\sask\sAI/);
+  assert.doesNotMatch(add.screen(), /Paste/, "the ways to add a card make way for the request");
   add.close();
 });

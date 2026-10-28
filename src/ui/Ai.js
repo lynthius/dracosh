@@ -14,7 +14,7 @@ const look = (text) => fold(text.toLowerCase());
 // /settings → AI help: where it comes from (provider, the address for "other"), the key, the model, then
 // a tiny request to check they work together; only then is anything saved. `current`: settings.ai.
 // onSave(ai | null) keeps the choice (null: AI off). Esc goes back a step, from the first one it leaves.
-export function AiSetup({ current, onSave, onClose }) {
+export function AiSetup({ current, onSave, onClose, note = t("ai.note") }) {
   const panel = usePanelWidth();
   const [step, setStep] = useState("provider");
   const [selected, setSelected] = useState(() => Math.max(0, ORDER.indexOf(current?.provider)));
@@ -165,7 +165,7 @@ export function AiSetup({ current, onSave, onClose }) {
       t("ai.title"),
       html`
         <${Box} flexDirection="column">
-          <${Text} dimColor>${t("ai.note")}<//>
+          <${Text} dimColor>${note}<//>
           ${current && html`<${Text} dimColor>${t("ai.now", { label: aiLabel(current) })}<//>`}
           <${Box} marginTop=${1}><${Choice} options=${options} selected=${selected} onMove=${setSelected} onPick=${(i) => pickProvider(i).catch((err) => setError(err.message))} onCancel=${() => onClose()} /><//>
         <//>
