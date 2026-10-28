@@ -1674,6 +1674,12 @@
       "many": "{deck} · {count} карток",
       "other": "{deck} · {count} картки"
     },
+    "toCheck": {
+      "one": "✦ {count} на перевірку",
+      "few": "✦ {count} на перевірку",
+      "many": "✦ {count} на перевірку",
+      "other": "✦ {count} на перевірку"
+    },
     "addRow": "+ Додати картки",
     "undoRow": "↶ Повернути «{card}»",
     "confirmRow": "Усе правильно",

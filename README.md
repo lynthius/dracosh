@@ -95,7 +95,7 @@ Then, in `/add`, type a word and ` = ` (`pies = `): a suggested answer appears d
 
 For a whole list, type `?` and what you want, like `?20 words for the kitchen`: the cards come in as they're written, and none is kept until you say so. Space keeps one, `a` keeps them all, `e` fixes one, and Enter adds the ones kept; cards already in the deck are marked.
 
-AI can be subtly wrong, so a card it wrote carries a ✦: in `/cards`, after its answer in the quiz, and in `/add`. Open it in `/cards` and pick "Looks right" or fix it: the ✦ goes. A card you wrote yourself, or whose AI parts you replaced before saving, isn't marked.
+AI can be subtly wrong, so a card it wrote carries a ✦: in `/cards`, after its answer in the quiz, and in `/add`. `/cards` counts the cards still to check and lists them first: open one and pick "Looks right" or fix it, and the ✦ goes. A card you wrote yourself, or whose AI parts you replaced before saving, isn't marked.
 
 Any card can be checked too: open it in `/cards` and pick "Check with AI". It looks for a wrong answer, a misspelling, a wrong article or a question with more than one right answer, says what it found and suggests a fix, its changes highlighted, to take or leave. A fix you take checks the card; a card AI finds right keeps its ✦ until you say so.
 

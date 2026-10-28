@@ -53,7 +53,9 @@ export function Cards({ deck, actions, onDeleted, onRestored, onEdited, onAdd, o
     actions.ownDecks().then((own) => setDecks(own.filter((d) => d.name !== deck)), () => {});
   }, []);
 
-  const found = (cards ?? []).filter((card) => matches(card, query));
+  // the cards AI wrote and you haven't checked come first, in their own order
+  const found = (cards ?? []).filter((card) => matches(card, query)).sort((a, b) => Number(Boolean(b.ai)) - Number(Boolean(a.ai)));
+  const toCheck = (cards ?? []).filter((card) => card.ai).length;
   // the rows: bring back the card just deleted, add cards (with no search), then the cards found
   // (both only with no search: Enter on what's found never brings a card back by accident)
   const rows = [...(undo && !query ? [{ undo: true }] : []), ...(query ? [] : [{ add: true }]), ...found];
@@ -290,7 +292,7 @@ export function Cards({ deck, actions, onDeleted, onRestored, onEdited, onAdd, o
   const gutter = (cards ?? []).some((card) => card.ai); // room for a ✦ before every card, so they line up
   const rowText = (row) => (row.undo ? t("cards.undoRow", { card: cutToWidth(lineOf(row.undo === true ? undo.card : row), 40) }) : row.add ? t("cards.addRow") : lineOf(row));
   return frame(
-    t("cards.title", { deck, count: cards?.length ?? 0 }),
+    html`<${Fragment}>${t("cards.title", { deck, count: cards?.length ?? 0 })}${toCheck > 0 ? html`<${Text} bold=${false}>  ${t("cards.toCheck", { count: toCheck })}<//>` : ""}<//>`,
     html`
       <${Box} flexDirection="column">
         <${Box} marginTop=${1}>

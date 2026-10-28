@@ -1611,6 +1611,11 @@
       "many": "{deck} · {count} cartes",
       "other": "{deck} · {count} cartes"
     },
+    "toCheck": {
+      "one": "✦ {count} à vérifier",
+      "many": "✦ {count} à vérifier",
+      "other": "✦ {count} à vérifier"
+    },
     "addRow": "+ Ajouter des cartes",
     "undoRow": "↶ Récupérer « {card} »",
     "confirmRow": "Tout est bon",

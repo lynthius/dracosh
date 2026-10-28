@@ -1524,6 +1524,10 @@
       "one": "{deck} · {count} Karte",
       "other": "{deck} · {count} Karten"
     },
+    "toCheck": {
+      "one": "✦ {count} zu prüfen",
+      "other": "✦ {count} zu prüfen"
+    },
     "addRow": "+ Karten hinzufügen",
     "undoRow": "↶ „{card}“ zurückholen",
     "confirmRow": "Stimmt",

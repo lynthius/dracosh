@@ -137,3 +137,9 @@ test("a check that only says what's wrong shows it, with nothing to take", async
   assert.doesNotMatch(list.screen(), /Use the fix/);
   list.close();
 });
+
+test("the cards AI wrote and you haven't checked are counted and listed first", async () => {
+  const list = await openCards();
+  assert.match(list.screen(), /Polish · 1 card  ✦ 1 to check/);
+  list.close();
+});

@@ -1507,6 +1507,10 @@
       "one": "{deck} · {count} card",
       "other": "{deck} · {count} cards"
     },
+    "toCheck": {
+      "one": "✦ {count} to check",
+      "other": "✦ {count} to check"
+    },
     "addRow": "+ Add cards",
     "undoRow": "↶ Bring back \"{card}\"",
     "confirmRow": "Looks right",

@@ -1673,6 +1673,12 @@
       "many": "{deck} · {count} kart",
       "other": "{deck} · {count} karty"
     },
+    "toCheck": {
+      "one": "✦ {count} do sprawdzenia",
+      "few": "✦ {count} do sprawdzenia",
+      "many": "✦ {count} do sprawdzenia",
+      "other": "✦ {count} do sprawdzenia"
+    },
     "addRow": "+ Dodaj karty",
     "undoRow": "↶ Przywróć „{card}”",
     "confirmRow": "Zgadza się",
