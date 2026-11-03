@@ -4,6 +4,7 @@ import { language, LANGUAGES, t } from "../i18n.js";
 import { GOALS, INTERVALS, QUIET_PRESETS, RHYTHMS, TIP_MODES, VOLUMES, formatInterval } from "../settings.js";
 import { formatQuiet } from "../quiet.js";
 import { aiCostLabel } from "../ai.js";
+import { voiceLabel } from "../voice.js";
 import { languageName } from "../language.js";
 import { elementName } from "../progress.js";
 import { Bar, html, KeyHints, Text, theme, usePanelWidth } from "./kit.js";
@@ -21,6 +22,7 @@ const ALL_ROWS = [
   { key: "everyMs", options: INTERVALS, format: formatInterval },
   { key: "sound", options: [true, false], format: (v) => t(v ? "settings.on" : "settings.off"), toggle: true },
   { key: "speak", options: [false, true], format: (v) => t(v ? "settings.on" : "settings.off"), toggle: true },
+  { key: "voice", action: true, format: voiceLabel },
   { key: "volume", options: VOLUMES, format: (v) => html`<${VolumeValue} value=${v} />` },
   { key: "dailyGoal", options: GOALS, format: (n) => t("settings.goal", { n }) },
   { key: "tips", options: TIP_MODES, format: (v) => t(`settings.tipModes.${v}`) },

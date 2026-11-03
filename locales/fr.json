@@ -126,7 +126,11 @@
       },
       "speak": {
         "label": "Prononciation",
-        "hint": "lit à voix haute le mot dans la langue que tu apprends, une fois la réponse affichée (voix de macOS)"
+        "hint": "lit à voix haute le mot dans la langue que tu apprends, une fois la réponse affichée"
+      },
+      "voice": {
+        "label": "Voix",
+        "hint": "qui lit les mots : les voix de macOS, ou une voix naturelle d'ElevenLabs avec ta propre clé"
       },
       "volume": {
         "label": "Volume",
@@ -1719,6 +1723,46 @@
       "server": "{provider} a un problème de son côté ({status}). Réessaie plus tard.",
       "failed": "{provider} a refusé la requête ({status}) : {detail}",
       "notJson": "la réponse n'était pas du JSON"
+    }
+  },
+  "voice": {
+    "title": "Voix",
+    "note": "La voix qui lit les mots quand la prononciation est activée. ElevenLabs est facultatif : chaque mot est créé une fois et gardé sur cet ordinateur, tu paies donc une fois par nouvelle carte, pas à chaque révision.",
+    "now": "Actuellement : {label}",
+    "system": "Voix de macOS",
+    "systemNote": "gratuites, intégrées",
+    "elevenNote": "voix naturelles, ta clé, facturation au caractère",
+    "systemSet": "Les mots sont de nouveau lus par les voix de macOS.",
+    "keyTitle": "Clé ElevenLabs",
+    "keyNote": "Crée une clé sur {site} ; ElevenLabs te facture l'utilisation. Colle-la ici : elle reste dans ton dossier Dracosh, lisible par ton compte uniquement, et n'est jamais incluse dans les sauvegardes ni les exports. Tu peux aussi définir {env} dans ton shell.",
+    "pickTitle": "Choisis une voix",
+    "pickNote": "Une seule voix lit tous tes paquets, dans chaque langue qu'elle parle. Tu entendras un court extrait avant que ton choix soit enregistré.",
+    "loading": "Chargement des voix d'ElevenLabs…",
+    "noVoices": "Ton compte ElevenLabs n'a aucune voix à choisir. Ajoute-en une sur elevenlabs.io, puis reviens ici.",
+    "current": "actuelle",
+    "checking": "Lecture d'un extrait avec {label}…",
+    "ready": "Les mots sont lus par {label}. Les langues que cette voix ne parle pas restent confiées aux voix de macOS.",
+    "readyOn": "Prononciation activée : les mots sont lus par {label}. Les langues que cette voix ne parle pas restent confiées aux voix de macOS.",
+    "failedTitle": "{label} ne fonctionne pas",
+    "otherVoice": "Choisir une autre voix",
+    "sample": "Bonjour ! Je vais lire tes mots à voix haute.",
+    "short": {
+      "noKey": "Pas de clé ElevenLabs : colles-en une ici, ou définis {env}.",
+      "badKey": "ElevenLabs n'a pas accepté la clé.",
+      "noCredit": "ElevenLabs : plus de crédit sur le compte. Recharge-le sur le site d'ElevenLabs.",
+      "noVoice": "ElevenLabs n'a plus cette voix : choisis-en une autre."
+    },
+    "errors": {
+      "noKey": "Pas de clé ElevenLabs : ajoute-en une dans /settings → Voix, ou définis {env}. En attendant, les voix de macOS lisent les mots.",
+      "badKey": "ElevenLabs n'a pas accepté la clé. Colle une nouvelle clé dans /settings → Voix. En attendant, les voix de macOS lisent les mots.",
+      "noCredit": "ElevenLabs : plus de crédit sur le compte. Recharge-le sur le site d'ElevenLabs. En attendant, les voix de macOS lisent les mots.",
+      "noVoice": "ElevenLabs n'a plus cette voix : choisis-en une autre dans /settings → Voix. En attendant, les voix de macOS lisent les mots.",
+      "rateLimit": "ElevenLabs signale trop de requêtes : attends un peu et réessaie.",
+      "offline": "Impossible de joindre ElevenLabs. Es-tu en ligne ?",
+      "timeout": "ElevenLabs a mis trop de temps à répondre.",
+      "server": "ElevenLabs a un problème de son côté ({status}). Réessaie plus tard.",
+      "failed": "ElevenLabs a refusé la requête ({status}) : {detail}",
+      "empty": "l'audio est revenu vide"
     }
   }
 }

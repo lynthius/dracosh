@@ -126,7 +126,11 @@
       },
       "speak": {
         "label": "Read aloud",
-        "hint": "reads the word aloud in the language you're learning, once the answer is out (macOS voices)"
+        "hint": "reads the word aloud in the language you're learning, once the answer is out"
+      },
+      "voice": {
+        "label": "Voice",
+        "hint": "who reads the words: macOS voices, or a natural voice from ElevenLabs with your own key"
       },
       "volume": {
         "label": "Volume",
@@ -1613,6 +1617,46 @@
       "server": "{provider} had a problem on its side ({status}). Try again later.",
       "failed": "{provider} refused the request ({status}): {detail}",
       "notJson": "the answer wasn't JSON"
+    }
+  },
+  "voice": {
+    "title": "Voice",
+    "note": "The voice that reads words aloud when Read aloud is on. ElevenLabs is optional: each word is generated once and kept on this computer, so you pay once per new card, not per review.",
+    "now": "Now: {label}",
+    "system": "macOS voices",
+    "systemNote": "free, built in",
+    "elevenNote": "natural voices, your own key, paid per character",
+    "systemSet": "Words are read by macOS voices again.",
+    "keyTitle": "ElevenLabs key",
+    "keyNote": "Get a key at {site}; ElevenLabs bills you for what you use. Paste it here: it's kept in your Dracosh folder, readable by you only, and never goes into backups or exports. Or set {env} in your shell instead.",
+    "pickTitle": "Pick a voice",
+    "pickNote": "One voice reads all your decks, in every language it speaks. You'll hear a short sample before it's saved.",
+    "loading": "Loading voices from ElevenLabs…",
+    "noVoices": "Your ElevenLabs account has no voices to pick. Add one on elevenlabs.io, then come back.",
+    "current": "current",
+    "checking": "Reading a sample with {label}…",
+    "ready": "Words are read by {label}. Languages it can't speak stay with macOS voices.",
+    "readyOn": "Read aloud is on: words are read by {label}. Languages it can't speak stay with macOS voices.",
+    "failedTitle": "{label} isn't working",
+    "otherVoice": "Pick another voice",
+    "sample": "Hello! I'll read your words aloud.",
+    "short": {
+      "noKey": "No ElevenLabs key: paste one here, or set {env}.",
+      "badKey": "ElevenLabs didn't accept the key.",
+      "noCredit": "ElevenLabs says the account is out of credit: top it up on its site.",
+      "noVoice": "ElevenLabs no longer has this voice: pick another."
+    },
+    "errors": {
+      "noKey": "No ElevenLabs key: add one in /settings → Voice, or set {env}. Words are read by macOS voices for now.",
+      "badKey": "ElevenLabs didn't accept the key. Paste a new one in /settings → Voice. Words are read by macOS voices for now.",
+      "noCredit": "ElevenLabs says the account is out of credit: top it up on its site. Words are read by macOS voices for now.",
+      "noVoice": "ElevenLabs no longer has this voice: pick another in /settings → Voice. Words are read by macOS voices for now.",
+      "rateLimit": "ElevenLabs says too many requests: wait a moment and try again.",
+      "offline": "Can't reach ElevenLabs. Are you online?",
+      "timeout": "ElevenLabs took too long to answer.",
+      "server": "ElevenLabs had a problem on its side ({status}). Try again later.",
+      "failed": "ElevenLabs refused the request ({status}): {detail}",
+      "empty": "the audio came back empty"
     }
   }
 }

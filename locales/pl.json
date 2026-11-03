@@ -126,7 +126,11 @@
       },
       "speak": {
         "label": "Wymowa",
-        "hint": "czyta na głos słowo w języku, którego się uczysz, gdy odpowiedź jest już widoczna (głosy macOS)"
+        "hint": "czyta na głos słowo w języku, którego się uczysz, gdy odpowiedź jest już widoczna"
+      },
+      "voice": {
+        "label": "Głos",
+        "hint": "kto czyta słowa: głosy macOS albo naturalny głos ElevenLabs (z twoim kluczem)"
       },
       "volume": {
         "label": "Głośność",
@@ -1783,6 +1787,46 @@
       "server": "Problem po stronie {provider} ({status}). Spróbuj później.",
       "failed": "{provider} odrzuca zapytanie ({status}): {detail}",
       "notJson": "odpowiedź nie była w formacie JSON"
+    }
+  },
+  "voice": {
+    "title": "Głos",
+    "note": "Głos, który czyta słowa, gdy wymowa jest włączona. ElevenLabs jest opcjonalny: każde słowo powstaje raz i zostaje na tym komputerze, więc płacisz raz za nową kartę, a nie za każdą powtórkę.",
+    "now": "Teraz: {label}",
+    "system": "Głosy macOS",
+    "systemNote": "za darmo, wbudowane",
+    "elevenNote": "naturalne głosy, twój klucz, płatne od znaku",
+    "systemSet": "Słowa znów czytają głosy macOS.",
+    "keyTitle": "Klucz ElevenLabs",
+    "keyNote": "Klucz utworzysz na {site}; ElevenLabs rozlicza cię za użycie. Wklej go tutaj: zostaje w folderze Dracosha, dostępny tylko dla ciebie, i nigdy nie trafia do kopii zapasowych ani eksportu. Możesz też zamiast tego ustawić {env} w powłoce.",
+    "pickTitle": "Wybierz głos",
+    "pickNote": "Jeden głos czyta wszystkie twoje talie, w każdym języku, który zna. Zanim zapiszesz wybór, usłyszysz krótką próbkę.",
+    "loading": "Pobieranie głosów z ElevenLabs…",
+    "noVoices": "Na twoim koncie ElevenLabs nie ma głosów do wyboru. Dodaj jakiś na elevenlabs.io i wróć tutaj.",
+    "current": "obecny",
+    "checking": "Czytanie próbki głosem {label}…",
+    "ready": "Słowa czyta {label}. Języki, których ten głos nie zna, zostają przy głosach macOS.",
+    "readyOn": "Wymowa włączona: słowa czyta {label}. Języki, których ten głos nie zna, zostają przy głosach macOS.",
+    "failedTitle": "{label} nie działa",
+    "otherVoice": "Wybierz inny głos",
+    "sample": "Cześć! Będę czytać twoje słowa na głos.",
+    "short": {
+      "noKey": "Brak klucza ElevenLabs: wklej go tutaj albo ustaw {env}.",
+      "badKey": "ElevenLabs nie przyjął klucza.",
+      "noCredit": "ElevenLabs: na koncie skończyły się środki. Doładuj konto na stronie ElevenLabs.",
+      "noVoice": "ElevenLabs nie ma już tego głosu: wybierz inny."
+    },
+    "errors": {
+      "noKey": "Brak klucza ElevenLabs: dodaj go w /settings → Głos albo ustaw {env}. Na razie słowa czytają głosy macOS.",
+      "badKey": "ElevenLabs nie przyjął klucza. Wklej nowy w /settings → Głos. Na razie słowa czytają głosy macOS.",
+      "noCredit": "ElevenLabs: na koncie skończyły się środki. Doładuj konto na stronie ElevenLabs. Na razie słowa czytają głosy macOS.",
+      "noVoice": "ElevenLabs nie ma już tego głosu: wybierz inny w /settings → Głos. Na razie słowa czytają głosy macOS.",
+      "rateLimit": "ElevenLabs: za dużo zapytań. Odczekaj chwilę i spróbuj ponownie.",
+      "offline": "Brak połączenia z ElevenLabs. Czy jest internet?",
+      "timeout": "ElevenLabs zbyt długo nie odpowiada.",
+      "server": "Problem po stronie ElevenLabs ({status}). Spróbuj później.",
+      "failed": "ElevenLabs odrzucił zapytanie ({status}): {detail}",
+      "empty": "nagranie przyszło puste"
     }
   }
 }

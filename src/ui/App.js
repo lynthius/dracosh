@@ -27,6 +27,7 @@ import { Hatch } from "./Hatch.js";
 import { LanguageSearch } from "./Languages.js";
 import { FIRST_WORDS_COUNT, Welcome } from "./Welcome.js";
 import { AiSetup } from "./Ai.js";
+import { VoiceSetup } from "./Voice.js";
 import { AddCard } from "./AddCard.js";
 import { ImportScreen } from "./Import.js";
 import { Decks } from "./Decks.js";
@@ -322,6 +323,12 @@ export function App({ session, deck: initialDeck, initialSettings, initialMix, a
     ask();
   }, [ask]);
 
+  // a natural voice that stopped working (key, credit) says so once; words go on in the system's voice
+  useEffect(() => {
+    alerts.configure({ onVoiceProblem: (message) => setNotice(message) });
+    return () => alerts.configure({ onVoiceProblem: null });
+  }, [alerts]);
+
   // one steady clock for the whole app: spinner, countdown, mascot blink and combo flicker
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), TICK_MS);
@@ -487,7 +494,7 @@ export function App({ session, deck: initialDeck, initialSettings, initialMix, a
     const next = { ...previous, ...patch };
     settingsRef.current = next;
     setSettings(next);
-    alerts.configure({ sound: next.sound, volume: next.volume, speak: next.speak });
+    alerts.configure({ sound: next.sound, volume: next.volume, speak: next.speak, voice: next.voice });
     persistSettings(patch).catch(() => {});
     if (patch.everyMs && phase === "waiting") setNextAt((at) => at - previous.everyMs + patch.everyMs);
     if (patch.rhythm) {
@@ -836,10 +843,11 @@ export function App({ session, deck: initialDeck, initialSettings, initialMix, a
     <${Box} flexDirection="column" marginY=${1}>
       <${Header} deck=${deckLabel} everyMs=${settings.everyMs} rhythm=${settings.rhythm} wordCount=${question?.wordCount ?? empty?.count} stats=${stats} combo=${session.totals.combo} face=${face} event=${petEvent} tick=${tick} asleep=${asleep} />
       <${Box} marginTop=${1} flexDirection="column">
-        ${screen === "settings" && html`<${Settings} settings=${settings} element=${stats.companion.element} startRow=${settingsRow.current} onRow=${(row) => (settingsRow.current = row)} onChange=${changeSettings} onClose=${() => setScreen("quiz")} onAction=${library ? (row) => setScreen({ reset: "reset", homeLanguage: "home-language", dragonLook: "dragon-look", ai: "ai" }[row]) : null} />`}
+        ${screen === "settings" && html`<${Settings} settings=${settings} element=${stats.companion.element} startRow=${settingsRow.current} onRow=${(row) => (settingsRow.current = row)} onChange=${changeSettings} onClose=${() => setScreen("quiz")} onAction=${library ? (row) => setScreen({ reset: "reset", homeLanguage: "home-language", dragonLook: "dragon-look", ai: "ai", voice: "voice" }[row]) : null} />`}
         ${screen === "dragon-look" && html`<${DragonLook} element=${stats.companion.element} onConfirm=${() => session.defaultLook().then(() => (setScreen("settings"), setNotice(t("settings.lookDropped")))).catch((err) => setProblem(err.message))} onClose=${() => setScreen("settings")} />`}
         ${screen === "home-language" && html`<${LanguageSearch} title=${t("settings.homeTitle")} note=${t("welcome.homeNote")} current=${settings.homeLanguage ?? settings.language} currentNote=${settings.homeLanguage ? t("languages.current") : t("welcome.suggested")} onBack=${() => setScreen("settings")} onPick=${(code) => (changeSettings({ homeLanguage: code }), setScreen("settings"))} />`}
         ${screen === "ai" && html`<${AiSetup} current=${settings.ai} onSave=${(ai) => changeSettings({ ai })} onClose=${aiClosed} note=${aiFrom === "welcome" ? t("ai.noteWelcome") : undefined} />`}
+        ${screen === "voice" && html`<${VoiceSetup} current=${settings.voice} speakOn=${settings.speak} play=${alerts.playFile} onSave=${(voice) => changeSettings(voice && !settingsRef.current.speak ? { voice, speak: true } : { voice })} onClose=${(said) => (setScreen("settings"), said && setNotice(said))} />`}
         ${screen === "reset" && html`<${Reset} stats=${stats} actions=${library} onConfirm=${reset} onClose=${() => setScreen("settings")} />`}
         ${screen === "import" && html`<${ImportScreen} actions=${library} fromWelcome=${importFrom === "welcome"} onDone=${importDone} onCancel=${importCancelled} />`}
         ${screen === "add" && html`<${AddCard} current=${deck} actions=${library} ai=${settings.ai} onDone=${addDone} startNew=${addNew} suggest=${addSuggest} into=${addInto} />`}
@@ -851,7 +859,7 @@ export function App({ session, deck: initialDeck, initialSettings, initialMix, a
         ${screen === "cards" && html`<${Cards} deck=${cardsDeck ?? deck} actions=${library} ai=${settings.ai} onDeleted=${deleteCards} onRestored=${restoreDeck} onEdited=${(keys) => session.forgetKeys(keys)} onAdd=${() => (setAddNew(false), setAddInto(cardsDeck ?? deck), setScreen("add"))} onClose=${cardsClosed} />`}
         ${screen === "cards-pick" && html`<${CardsDeckPick} actions=${library} mix=${mix} current=${deck} onPick=${(name) => (setCardsDeck(name), setScreen("cards"))} onClose=${() => setScreen("quiz")} />`}
         ${screen === "trash" && html`<${Trash} actions=${library} onRestore=${restoreDeck} onClose=${() => setScreen("quiz")} />`}
-        ${!["settings", "ai", "reset", "home-language", "dragon-look", "import", "add", "decks", "trash", "cards", "cards-pick"].includes(screen) &&
+        ${!["settings", "ai", "voice", "reset", "home-language", "dragon-look", "import", "add", "decks", "trash", "cards", "cards-pick"].includes(screen) &&
           html`
               <${Fragment}>
               ${question &&

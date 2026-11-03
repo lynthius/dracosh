@@ -126,7 +126,11 @@
       },
       "speak": {
         "label": "Aussprache",
-        "hint": "liest das Wort in der Sprache vor, die du lernst, sobald die Antwort steht (macOS-Stimmen)"
+        "hint": "liest das Wort in der Sprache vor, die du lernst, sobald die Antwort steht"
+      },
+      "voice": {
+        "label": "Stimme",
+        "hint": "wer die Wörter vorliest: macOS-Stimmen oder eine natürliche Stimme von ElevenLabs mit deinem Schlüssel"
       },
       "volume": {
         "label": "Lautstärke",
@@ -1630,6 +1634,46 @@
       "server": "{provider} hat ein Problem auf seiner Seite ({status}). Versuche es später noch einmal.",
       "failed": "{provider} hat die Anfrage abgelehnt ({status}): {detail}",
       "notJson": "die Antwort war kein JSON"
+    }
+  },
+  "voice": {
+    "title": "Stimme",
+    "note": "Die Stimme, die Wörter vorliest, wenn die Aussprache an ist. ElevenLabs ist optional: Jedes Wort wird einmal erzeugt und auf diesem Computer gespeichert, du zahlst also einmal pro neuer Karte, nicht pro Wiederholung.",
+    "now": "Jetzt: {label}",
+    "system": "macOS-Stimmen",
+    "systemNote": "kostenlos, eingebaut",
+    "elevenNote": "natürliche Stimmen, dein Schlüssel, Abrechnung pro Zeichen",
+    "systemSet": "Die Wörter liest wieder eine macOS-Stimme vor.",
+    "keyTitle": "ElevenLabs-Schlüssel",
+    "keyNote": "Einen Schlüssel bekommst du auf {site}; ElevenLabs berechnet dir die Nutzung. Füge ihn hier ein: Er bleibt in deinem Dracosh-Ordner, nur für dich lesbar, und landet nie in Sicherungen oder Exporten. Alternativ setzt du {env} in deiner Shell.",
+    "pickTitle": "Stimme wählen",
+    "pickNote": "Eine Stimme liest alle deine Stapel vor, in jeder Sprache, die sie spricht. Bevor sie gespeichert wird, hörst du eine kurze Probe.",
+    "loading": "Stimmen werden von ElevenLabs geladen…",
+    "noVoices": "Dein ElevenLabs-Konto hat keine Stimmen zur Auswahl. Füg auf elevenlabs.io eine hinzu und komm dann zurück.",
+    "current": "aktuell",
+    "checking": "Probe wird mit {label} vorgelesen…",
+    "ready": "Die Wörter liest jetzt {label} vor. Sprachen, die diese Stimme nicht kann, bleiben bei den macOS-Stimmen.",
+    "readyOn": "Aussprache ist an: Die Wörter liest {label} vor. Sprachen, die diese Stimme nicht kann, bleiben bei den macOS-Stimmen.",
+    "failedTitle": "{label} funktioniert nicht",
+    "otherVoice": "Andere Stimme wählen",
+    "sample": "Hallo! Ich lese dir deine Wörter vor.",
+    "short": {
+      "noKey": "Kein ElevenLabs-Schlüssel: Füg hier einen ein oder setz {env}.",
+      "badKey": "ElevenLabs hat den Schlüssel nicht akzeptiert.",
+      "noCredit": "ElevenLabs: Dein Guthaben ist aufgebraucht. Lade es auf der Seite von ElevenLabs auf.",
+      "noVoice": "ElevenLabs hat diese Stimme nicht mehr: Wähl eine andere."
+    },
+    "errors": {
+      "noKey": "Kein ElevenLabs-Schlüssel: Füg einen in /settings → Stimme hinzu oder setz {env}. Bis dahin lesen macOS-Stimmen vor.",
+      "badKey": "ElevenLabs hat den Schlüssel nicht akzeptiert. Füg in /settings → Stimme einen neuen ein. Bis dahin lesen macOS-Stimmen vor.",
+      "noCredit": "ElevenLabs: Dein Guthaben ist aufgebraucht. Lade es auf der Seite von ElevenLabs auf. Bis dahin lesen macOS-Stimmen vor.",
+      "noVoice": "ElevenLabs hat diese Stimme nicht mehr: Wähl in /settings → Stimme eine andere. Bis dahin lesen macOS-Stimmen vor.",
+      "rateLimit": "ElevenLabs meldet zu viele Anfragen: Warte kurz und versuch es noch einmal.",
+      "offline": "ElevenLabs ist nicht erreichbar. Bist du online?",
+      "timeout": "ElevenLabs hat zu lange gebraucht.",
+      "server": "ElevenLabs hat ein Problem auf seiner Seite ({status}). Versuch es später noch einmal.",
+      "failed": "ElevenLabs hat die Anfrage abgelehnt ({status}): {detail}",
+      "empty": "die Aufnahme kam leer zurück"
     }
   }
 }

@@ -63,8 +63,11 @@ async function writeKeys(keys) {
 // a key for "other" belongs to its address: it's never sent to another server
 const slot = (provider, url) => (provider === "custom" ? `custom ${cleanUrl(url ?? "")}` : provider);
 
+// keys kept here for more than AI help: natural voices (voice.js)
+const OTHER_KEY_ENVS = { elevenlabs: "ELEVENLABS_API_KEY" };
+
 const envKey = (provider) => {
-  const name = PROVIDERS[provider]?.keyEnv;
+  const name = PROVIDERS[provider]?.keyEnv ?? OTHER_KEY_ENVS[provider];
   const value = name && process.env[name]?.trim();
   return value ? { key: value, from: "env", env: name } : null;
 };
