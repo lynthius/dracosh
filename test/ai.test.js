@@ -207,3 +207,26 @@ test("small models are told by their names, and the settings say what AI costs",
   assert.equal(aiCostLabel({ provider: "anthropic", model: "claude-haiku-5-5" }), "Anthropic · paid · claude-haiku-5-5");
   assert.equal(aiCostLabel({ provider: "custom", model: "m", url: "http://x/v1" }), "Other · your server · m");
 });
+
+test("the model list keeps a space before a model's note", async () => {
+  fresh();
+  process.env.FORCE_COLOR = "0";
+  const { PassThrough } = await import("node:stream");
+  const { default: React } = await import("react");
+  const { render } = await import("ink");
+  const { setLanguage } = await import("../src/i18n.js");
+  const { AiSetup } = await import("../src/ui/Ai.js");
+  setLanguage("en");
+  const stdout = Object.assign(new PassThrough(), { columns: 80, rows: 30, isTTY: true });
+  let output = "";
+  const plain = (text) => text.replace(/\x1b\[[\d;?]*[a-zA-Z]/g, "");
+  stdout.on("data", (chunk) => plain(String(chunk)).trim() && (output = plain(String(chunk))));
+  const stdin = Object.assign(new PassThrough(), { isTTY: true, setRawMode: () => {}, ref: () => {}, unref: () => {}, setEncoding() {} });
+  const app = render(React.createElement(AiSetup, { current: { provider: "lmstudio", model: "big", url: base }, onSave: () => {}, onClose: () => {} }), { stdout, stdin, debug: true, patchConsole: false });
+  const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  await wait(400);
+  stdin.write("\r");
+  await wait(400);
+  app.unmount();
+  assert.match(output, /big · current/);
+});

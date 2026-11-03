@@ -258,7 +258,7 @@ export function AiSetup({ current, onSave, onClose, note = t("ai.note") }) {
                   <${Text} dimColor>${top > 0 ? "  ↑" : " "}<//>
                   ${rows.slice(top, top + SHOWN).map((row, i) => {
                     const on = top + i === selected;
-                    return html`<${Text} key=${row ?? "type"} color=${on ? theme.accent : row === null ? theme.good : undefined} bold=${on} wrap="truncate-end">${on ? "❯" : " "} ${row === null ? t("ai.typeModel") : cutToWidth(row, panel - 12)}${row && row === current?.model && draft.provider === current?.provider ? html`<${Text} dimColor> · ${t("ai.current")}<//>` : row && preset.needsKey && isSmallModel(row) ? html`<${Text} dimColor> · ${t("ai.small")}<//>` : ""}<//>`;
+                    return html`<${Text} key=${row ?? "type"} color=${on ? theme.accent : row === null ? theme.good : undefined} bold=${on} wrap="truncate-end">${on ? "❯" : " "} ${row === null ? t("ai.typeModel") : cutToWidth(row, panel - 12)} ${row && row === current?.model && draft.provider === current?.provider ? html`<${Text} dimColor>· ${t("ai.current")}<//>` : row && preset.needsKey && isSmallModel(row) ? html`<${Text} dimColor>· ${t("ai.small")}<//>` : ""}<//>`;
                   })}
                   <${Text} dimColor>${top + SHOWN < rows.length ? "  ↓" : " "}<//>
                 <//>
