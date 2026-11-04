@@ -18,8 +18,9 @@ It's made for people who live in a terminal or spend most of the day at a comput
 - Add cards, start decks and switch between them right in the app (`/add`, `/decks`)
 - One line is a card: `el gato = the cat; the kitty // Mi gato duerme.` (`;` separates right answers, `//` adds an example). Paste a whole list, or rows copied from a spreadsheet, and check it before it's saved
 - Import cards from Anki and Quizlet exports, a spreadsheet's CSV or a plain text list, and export them as an Anki deck package, for a spreadsheet or as a text file you can edit (or have an AI assistant write); you see what changes before anything is saved
+- Optional AI help in `/add`: type `pies = ` and a suggested answer and example appear dimmed, Tab takes them; `?20 words for the kitchen` suggests a whole list to pick from. Cards AI wrote carry a ✦ until you check them. Works with your Anthropic, OpenAI or OpenRouter key, or free with a local model in Ollama or LM Studio
 - Each deck is asked the way you pick after its first card: front → back, back → front, or both ways; change it any time in `/decks`
-- Pronunciation, if you turn it on in `/settings`: once the answer is out, the word in the language you're learning in that deck is read aloud with a macOS voice (other systems later); decks in one language, like definitions, stay quiet
+- Pronunciation, if you turn it on in `/settings`: once the answer is out, the word in the language you're learning in that deck is read aloud with a macOS voice (other systems later), or with a natural ElevenLabs voice if you set one up; decks in one language, like definitions, stay quiet
 - Dracosh works out which languages a deck is in (Spanish → English, say) and which of the two you're learning, from the cards, the deck's name and your other decks, whatever language you use Dracosh in, and says when it's only a guess; set either in `/decks` when it can't tell or guesses wrong
 - Type the answer, or press Enter with nothing typed to see it and say whether you knew it (`1` or `2`): handy for whole sentences, and it counts just the same
 - Cloze cards for sentences: `I {{look forward}} to it` asks one gap at a time
@@ -43,6 +44,7 @@ On the first start the dragon hatches, and Dracosh asks three things: the langua
 
 - a short tour, where every card tells you what to type and shows you one more thing Dracosh can do
 - 30 everyday words in the language you're learning, which you translate into yours (for any pair of English, Polish, German, French, Ukrainian, Spanish and Italian)
+- a first deck from AI: Dracosh helps you set up AI help (your own key or a free local model), asks it for everyday words in your language pair, and you pick the cards you want from its list
 - cards you already have, from Anki, a CSV or a text file (`/import`)
 - a deck of your own, in `/add`
 
@@ -75,7 +77,7 @@ Type the answer and press Enter. Not sure, or the answer is a whole sentence? Pr
 | `/trash` | decks and cards you deleted, kept for 30 days with their progress: Enter brings one back |
 | `/hint` | reveal one more letter |
 | `/correct` | your answer was right after all; after a yes it's accepted from now on |
-| `/settings` | the app's language, the language you speak, rhythm (a card every few minutes, or a study session), interval, daily goal, sound, pronunciation, quiet hours, weekends, tips, the dragon's look once the die gave it an element, and a reset |
+| `/settings` | the app's language, the language you speak, AI help (optional), rhythm (a card every few minutes, or a study session), interval, daily goal, sound, pronunciation and its voice, quiet hours, weekends, tips, the dragon's look once the die gave it an element, and a reset |
 | `/stats` | streak and a calendar of your month |
 | `/badges` | all badges and how to get them |
 | `/companion` | your dragon, its element and the forms ahead |
@@ -85,6 +87,28 @@ Type the answer and press Enter. Not sure, or the answer is a whole sentence? Pr
 | `/quit` | quit (you'll get a short session summary) |
 
 They're slash commands because "pause" and "quit" are perfectly good English answers.
+
+## AI help
+
+Optional, and everything works without it. Turn it on in `/settings` → AI help: pick Anthropic, OpenAI, OpenRouter, Ollama, LM Studio or any other OpenAI-compatible address, paste a key (local models need none), pick a model, and Dracosh checks that they work together before saving anything.
+
+Then, in `/add`, type a word and ` = ` (`pies = `): a suggested answer appears dimmed after it. In a deck of definitions it suggests a short definition, and in a deck of questions (`Capital of Spain? = `) the answer. Tab or → takes it, and an example sentence follows the same way; typing on ignores the suggestion, and Enter saves only what's in the field.
+
+For a whole list, type `?` and what you want, like `?20 words for the kitchen`: the cards come in as they're written, and none is kept until you say so. Space keeps one, `a` keeps them all, `e` fixes one, and Enter adds the ones kept; cards already in the deck are marked.
+
+AI can be subtly wrong, so a card it wrote carries a ✦: in `/cards`, after its answer in the quiz, and in `/add`. `/cards` counts the cards still to check and lists them first: open one and pick "Looks right" or fix it, and the ✦ goes. A card you wrote yourself, or whose AI parts you replaced before saving, isn't marked.
+
+Any card can be checked too: open it in `/cards` and pick "Check with AI". It looks for a wrong answer, a misspelling, a wrong article or a question with more than one right answer, says what it found and suggests a fix, its changes highlighted, to take or leave. A fix you take checks the card; a card AI finds right keeps its ✦ until you say so.
+
+Only the word or request you typed and a few cards of the same deck are sent (for a list, also the fronts it shouldn't repeat; for a check, the card), so a request costs very little; a small model is plenty, and one that doesn't think first answers fastest. Nothing is added by AI alone: you keep or take every card.
+
+What it costs stays in sight: `/settings` shows "free" next to a model on your computer and "paid per use" next to a cloud one, and when you pick a cloud model the small, cheap ones come first. If something goes wrong, the message says what to do: a missing or wrong key, a local server that isn't running, too many requests, or an account out of credit.
+
+## Natural voices
+
+Optional. Pronunciation uses the macOS voices by default, free and built in. For a more natural voice, pick ElevenLabs in `/settings` → Voice, paste your ElevenLabs API key (or set `ELEVENLABS_API_KEY`), choose a voice, and you'll hear a short sample before anything is saved. Choosing a voice also turns pronunciation on.
+
+ElevenLabs bills your account per character. Each word is generated once and kept in `~/.dracosh/audio`, so a word costs once per voice, not on every review. Languages the voice doesn't speak, and any word that can't be fetched (offline, say), are read by the macOS voice instead. If the key stops working or the account runs out of credit, Dracosh says so once and carries on with the macOS voice. To go back, pick macOS voices in the same place.
 
 ## Import and export
 
@@ -154,7 +178,7 @@ Fix the lines it lists, and tell me the command to import it for real.
 
 ## Your data
 
-Everything stays on your machine, in `~/.dracosh`; `dracosh --data` shows what's there. Progress is saved after every answer, so you can quit any time. One quiz runs at a time: a second window on the same data is refused, so the two can't overwrite each other's progress. The first start of each day also saves a backup of your cards, progress and settings to `~/.dracosh/backups` (the last 7 are kept); `dracosh restore` brings one back, and backs up what you have first, so a restore can be undone too. To start over, `/settings` → Reset clears your progress only (badges, streak, the dragon) or everything; a backup is made first. Decks and cards you delete wait in `/trash` for 30 days, with their progress. To move to another computer, `dracosh export everything.json` there and `dracosh import everything.json` here; to use Dracosh on two computers at once, put that folder somewhere synced and point `DRACOSH_HOME` at it.
+Everything stays on your machine, in `~/.dracosh`; `dracosh --data` shows what's there. Progress is saved after every answer, so you can quit any time. One quiz runs at a time: a second window on the same data is refused, so the two can't overwrite each other's progress. The first start of each day also saves a backup of your cards, progress and settings to `~/.dracosh/backups` (the last 7 are kept); `dracosh restore` brings one back, and backs up what you have first, so a restore can be undone too. To start over, `/settings` → Reset clears your progress only (badges, streak, the dragon) or everything; a backup is made first. Decks and cards you delete wait in `/trash` for 30 days, with their progress. API keys for AI help and natural voices are kept in `~/.dracosh/keys.json`, readable by you only, and never go into a backup or an export; a key in `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `OPENROUTER_API_KEY` or `ELEVENLABS_API_KEY` is used instead when it's set. Audio from a natural voice is kept in `~/.dracosh/audio`; it isn't backed up, and deleting the folder only means words are fetched again. To move to another computer, `dracosh export everything.json` there and `dracosh import everything.json` here; to use Dracosh on two computers at once, put that folder somewhere synced and point `DRACOSH_HOME` at it.
 
 Uninstalling Dracosh (`npm uninstall -g dracosh`) leaves `~/.dracosh` as it is, so installing it again brings everything back. To remove your data too, delete that folder.
 
@@ -178,7 +202,7 @@ The other languages live next to it in `locales/`, the tour included. `npm test`
 
 Coming next, roughly in this order:
 
-- Optional AI help for writing cards, with your own API key or a local model.
+- Optional AI help for writing cards, with your own API key or a local model, and natural voices from ElevenLabs.
 - Linux and Windows, pronunciation there included.
 
 ## License

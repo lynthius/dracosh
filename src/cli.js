@@ -154,7 +154,7 @@ async function main() {
 
   if (values.preview) {
     if (!process.stdin.isTTY) throw new Error(t("cli.needsTerminal"));
-    const alerts = createAlerts({ sound: settings.sound, volume: settings.volume, speak: settings.speak });
+    const alerts = createAlerts({ sound: settings.sound, volume: settings.volume, speak: settings.speak, voice: settings.voice });
     return render(React.createElement(Preview, { alerts })).waitUntilExit();
   }
 
@@ -179,7 +179,7 @@ async function main() {
   let active = deck.name; // /add can switch to your first own deck
   let mix = values.deck ? null : settings.mix; // decks practised together (/decks); --deck is one deck
   const session = createSession({ loadWords: () => loadWords(mix ?? active), loadAllWords, state, getSettings: () => current });
-  const alerts = createAlerts({ sound: settings.sound, volume: settings.volume, speak: settings.speak });
+  const alerts = createAlerts({ sound: settings.sound, volume: settings.volume, speak: settings.speak, voice: settings.voice });
   const persistSettings = async (patch) => {
     current = { ...current, ...patch };
     await patchSettings(patch);

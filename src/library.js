@@ -260,7 +260,7 @@ export const frontIndex = (library, deckId) => new Map(cardsOf(library, deckId).
 // `index`: the deck's frontIndex, kept up to date here (see findDuplicate)
 // `guid`: the note in a Dracosh package it came from, so going back to Anki it's that note again;
 // `fromAnki`: it came from a note of Anki's own (see apkg.js), which Anki still has
-export function addCard(library, deckId, { front, back, example = "", tags = [], cloze = false, id, guid, fromAnki = false, now = Date.now() }, index = null) {
+export function addCard(library, deckId, { front, back, example = "", tags = [], cloze = false, id, guid, fromAnki = false, ai = false, now = Date.now() }, index = null) {
   if (!library.decks.some((deck) => deck.id === deckId)) throw new Error("That deck doesn't exist.");
   const cleanFront = String(front ?? "").trim();
   const cleanBack = cleanList(back);
@@ -271,7 +271,7 @@ export function addCard(library, deckId, { front, back, example = "", tags = [],
   const duplicate = findDuplicate(library, deckId, cleanFront, index);
   if (duplicate) return { card: null, duplicate };
 
-  const card = { id: id ? String(id) : newId("c"), deckId, front: cleanFront, back: cleanBack, example: String(example).trim(), tags: cleanList(tags), ...(isCloze && { cloze: true }), ...(guid && { guid: String(guid) }), ...(fromAnki && { fromAnki: true }), created: now, updated: now };
+  const card = { id: id ? String(id) : newId("c"), deckId, front: cleanFront, back: cleanBack, example: String(example).trim(), tags: cleanList(tags), ...(isCloze && { cloze: true }), ...(guid && { guid: String(guid) }), ...(fromAnki && { fromAnki: true }), ...(ai && { ai: true }), created: now, updated: now };
   if (id && library.cards.some((c) => c.id === card.id)) throw new Error(`A card with id ${card.id} already exists.`);
   library.cards.push(card);
   index?.set(frontKey(cleanFront), card);
@@ -293,7 +293,18 @@ export function updateCard(library, cardId, patch, now = Date.now()) {
   else delete card.cloze;
   if (patch.example !== undefined) card.example = String(patch.example).trim();
   if (patch.tags !== undefined) card.tags = cleanList(patch.tags);
+  // a card written by AI help stays marked (`ai`) until it's changed or checked
+  if (patch.ai) card.ai = true;
+  else delete card.ai;
   card.updated = now;
+  return card;
+}
+
+// a card written by AI help, looked over and found right: its mark goes
+export function confirmCard(library, cardId) {
+  const card = library.cards.find((c) => c.id === cardId);
+  if (!card) throw new Error("That card doesn't exist.");
+  delete card.ai;
   return card;
 }
 
@@ -305,5 +316,6 @@ export const toWords = (cards) =>
     word: card.front,
     translations: card.back,
     example: card.example,
+    ...(card.ai && { ai: true }),
     ...(card.cloze && { cloze: gapsOf(card.front), directions: gapsOf(card.front).map((_, i) => `c${i + 1}`) })
   }));

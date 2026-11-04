@@ -25,7 +25,9 @@ import { DieRoll } from "./DieRoll.js";
 import { Evolution } from "./Evolution.js";
 import { Hatch } from "./Hatch.js";
 import { LanguageSearch } from "./Languages.js";
-import { Welcome } from "./Welcome.js";
+import { FIRST_WORDS_COUNT, Welcome } from "./Welcome.js";
+import { AiSetup } from "./Ai.js";
+import { VoiceSetup } from "./Voice.js";
 import { AddCard } from "./AddCard.js";
 import { ImportScreen } from "./Import.js";
 import { Decks } from "./Decks.js";
@@ -95,10 +97,11 @@ function Verdict({ outcome, question }) {
   const held = outcome.held ? heldText(outcome.held) : null;
   return html`
     <${Box} flexDirection="column">
-      <${Text} color=${wrong ? theme.bad : theme.good} bold>${wrong ? "✗" : "✓"} ${outcome.result === "accent" || outcome.result === "umlaut" || outcome.result === "article-umlaut" ? html`<${AccentedAnswers} expected=${question.expected} given=${outcome.given} closest=${outcome.closest} />` : question.expected.join(" / ")}${outcome.result === "typo" ? t("quiz.closeEnough") : ""}<//>
+      <${Text} color=${wrong ? theme.bad : theme.good} bold>${wrong ? "✗" : "✓"} ${outcome.result === "accent" || outcome.result === "umlaut" || outcome.result === "article-umlaut" ? html`<${AccentedAnswers} expected=${question.expected} given=${outcome.given} closest=${outcome.closest} />` : question.expected.join(" / ")}${outcome.result === "typo" ? t("quiz.closeEnough") : ""}${question.word.ai ? html`<${Text} color=${theme.accent} bold=${false}> ✦<//>` : ""}<//>
       ${ALMOST.includes(outcome.result) && html`<${Text} color=${theme.warn}>${t(`quiz.almost.${outcome.result}`)}<//>`}
       ${showDiff && html`<${AnswerDiff} given=${outcome.given} closest=${outcome.closest} />`}
       ${question.word.example && html`<${Box} marginTop=${1}>${question.tour ? html`<${Marked} dimColor text=${question.word.example} />` : html`<${Text} dimColor italic>“${question.word.example}”<//>`}<//>`}
+      ${wrong && question.word.ai && html`<${Box} marginTop=${1}><${Text} color=${theme.accent}>${t("quiz.fromAi")}<//><//>`}
       ${(outcome.hinted || outcome.overruled || held) &&
       html`
         <${Box} marginTop=${1} flexDirection="column">
@@ -115,7 +118,7 @@ function Verdict({ outcome, question }) {
 function Revealed({ question, nudge }) {
   return html`
     <${Box} flexDirection="column">
-      <${Text} color=${theme.accent} bold>${question.expected.join(" / ")}<//>
+      <${Text} color=${theme.accent} bold>${question.expected.join(" / ")}${question.word.ai ? html`<${Text} bold=${false}> ✦<//>` : ""}<//>
       ${question.word.example && html`<${Box} marginTop=${1}>${question.tour ? html`<${Marked} dimColor text=${question.word.example} />` : html`<${Text} dimColor italic>“${question.word.example}”<//>`}<//>`}
       <${Box} marginTop=${1}>
         <${Text} bold>${t("quiz.didYouKnow")}  <//>
@@ -226,6 +229,7 @@ export function App({ session, deck: initialDeck, initialSettings, initialMix, a
   const [cardsDeck, setCardsDeck] = useState(null); // the deck /cards shows (one of several practised together)
   const [addInto, setAddInto] = useState(null); // /add from /cards: straight into that deck
   const [addSuggest, setAddSuggest] = useState(null); // /add from the welcome: a name and an example in your pair
+  const [aiFrom, setAiFrom] = useState(null); // "welcome" while AI help is set up for a first deck
   const [importFrom, setImportFrom] = useState(null); // "welcome" when /import was picked there: cancelling goes back
   const [restUntil, setRestUntil] = useState(null); // nothing is waiting until then (after the last card due now)
   const [empty, setEmpty] = useState(null); // { tour, count, nextDue } when there is nothing to ask right now
@@ -318,6 +322,12 @@ export function App({ session, deck: initialDeck, initialSettings, initialMix, a
   useEffect(() => {
     ask();
   }, [ask]);
+
+  // a natural voice that stopped working (key, credit) says so once; words go on in the system's voice
+  useEffect(() => {
+    alerts.configure({ onVoiceProblem: (message) => setNotice(message) });
+    return () => alerts.configure({ onVoiceProblem: null });
+  }, [alerts]);
 
   // one steady clock for the whole app: spinner, countdown, mascot blink and combo flicker
   useEffect(() => {
@@ -484,7 +494,7 @@ export function App({ session, deck: initialDeck, initialSettings, initialMix, a
     const next = { ...previous, ...patch };
     settingsRef.current = next;
     setSettings(next);
-    alerts.configure({ sound: next.sound, volume: next.volume, speak: next.speak });
+    alerts.configure({ sound: next.sound, volume: next.volume, speak: next.speak, voice: next.voice });
     persistSettings(patch).catch(() => {});
     if (patch.everyMs && phase === "waiting") setNextAt((at) => at - previous.everyMs + patch.everyMs);
     if (patch.rhythm) {
@@ -523,15 +533,22 @@ export function App({ session, deck: initialDeck, initialSettings, initialMix, a
       setImportFrom("welcome");
       return setScreen("import");
     }
+    // a first deck from AI help: set up first, Esc there goes back to the welcome
+    if (how === "ai" && library && !settingsRef.current.ai) {
+      setAiFrom("welcome");
+      return setScreen("ai");
+    }
     session.setWelcomeStep(null).catch(() => {});
     if (how === "tour" || !library) return setScreen("quiz");
-    if (how === "own") {
-      // the deck named after the language you're learning, and an example card in your pair
+    if (how === "own" || how === "ai") {
+      // the deck named after the language you're learning, and an example card in your pair; from AI
+      // help, a list of everyday words of the pair to ask for
       const { homeLanguage, language: ui, learningLanguage: learning } = settingsRef.current;
       const home = homeLanguage ?? ui;
       const name = languageName(learning) ?? "";
       const sample = learning && hasFirstWords(home, learning) ? sampleCard(home, learning) : null;
-      setAddSuggest({ name: name && name.charAt(0).toLocaleUpperCase(ui) + name.slice(1), example: sample && `${sample.front} = ${sample.back[0]}` });
+      const request = how === "ai" && name ? t("welcome.aiRequest", { count: FIRST_WORDS_COUNT, language: name, home: languageName(home) }) : null;
+      setAddSuggest({ name: name && name.charAt(0).toLocaleUpperCase(ui) + name.slice(1), example: sample && `${sample.front} = ${sample.back[0]}`, request });
       setAddNew(true);
       return setScreen("add");
     }
@@ -749,6 +766,14 @@ export function App({ session, deck: initialDeck, initialSettings, initialMix, a
     if ((added || updated) && (phase === "asking" || phase === "empty")) ask();
   }
 
+  // AI help set up (or not): from the welcome, on to the first deck, or back to the welcome
+  function aiClosed(said) {
+    if (aiFrom !== "welcome") return setScreen("settings"), said && setNotice(said);
+    setAiFrom(null);
+    if (settingsRef.current.ai) return begin("ai");
+    setScreen("welcome");
+  }
+
   function importCancelled() {
     if (importFrom === "welcome") {
       setImportFrom(null);
@@ -818,21 +843,23 @@ export function App({ session, deck: initialDeck, initialSettings, initialMix, a
     <${Box} flexDirection="column" marginY=${1}>
       <${Header} deck=${deckLabel} everyMs=${settings.everyMs} rhythm=${settings.rhythm} wordCount=${question?.wordCount ?? empty?.count} stats=${stats} combo=${session.totals.combo} face=${face} event=${petEvent} tick=${tick} asleep=${asleep} />
       <${Box} marginTop=${1} flexDirection="column">
-        ${screen === "settings" && html`<${Settings} settings=${settings} element=${stats.companion.element} startRow=${settingsRow.current} onRow=${(row) => (settingsRow.current = row)} onChange=${changeSettings} onClose=${() => setScreen("quiz")} onAction=${library ? (row) => setScreen({ reset: "reset", homeLanguage: "home-language", dragonLook: "dragon-look" }[row]) : null} />`}
+        ${screen === "settings" && html`<${Settings} settings=${settings} element=${stats.companion.element} startRow=${settingsRow.current} onRow=${(row) => (settingsRow.current = row)} onChange=${changeSettings} onClose=${() => setScreen("quiz")} onAction=${library ? (row) => setScreen({ reset: "reset", homeLanguage: "home-language", dragonLook: "dragon-look", ai: "ai", voice: "voice" }[row]) : null} />`}
         ${screen === "dragon-look" && html`<${DragonLook} element=${stats.companion.element} onConfirm=${() => session.defaultLook().then(() => (setScreen("settings"), setNotice(t("settings.lookDropped")))).catch((err) => setProblem(err.message))} onClose=${() => setScreen("settings")} />`}
         ${screen === "home-language" && html`<${LanguageSearch} title=${t("settings.homeTitle")} note=${t("welcome.homeNote")} current=${settings.homeLanguage ?? settings.language} currentNote=${settings.homeLanguage ? t("languages.current") : t("welcome.suggested")} onBack=${() => setScreen("settings")} onPick=${(code) => (changeSettings({ homeLanguage: code }), setScreen("settings"))} />`}
+        ${screen === "ai" && html`<${AiSetup} current=${settings.ai} onSave=${(ai) => changeSettings({ ai })} onClose=${aiClosed} note=${aiFrom === "welcome" ? t("ai.noteWelcome") : undefined} />`}
+        ${screen === "voice" && html`<${VoiceSetup} current=${settings.voice} speakOn=${settings.speak} play=${alerts.playFile} onSave=${(voice) => changeSettings(voice && !settingsRef.current.speak ? { voice, speak: true } : { voice })} onClose=${(said) => (setScreen("settings"), said && setNotice(said))} />`}
         ${screen === "reset" && html`<${Reset} stats=${stats} actions=${library} onConfirm=${reset} onClose=${() => setScreen("settings")} />`}
         ${screen === "import" && html`<${ImportScreen} actions=${library} fromWelcome=${importFrom === "welcome"} onDone=${importDone} onCancel=${importCancelled} />`}
-        ${screen === "add" && html`<${AddCard} current=${deck} actions=${library} onDone=${addDone} startNew=${addNew} suggest=${addSuggest} into=${addInto} />`}
+        ${screen === "add" && html`<${AddCard} current=${deck} actions=${library} ai=${settings.ai} onDone=${addDone} startNew=${addNew} suggest=${addSuggest} into=${addInto} />`}
         ${screen === "decks" && html`<${Decks} current=${deck} mix=${mix} onPractise=${practise} actions=${library} onDirections=${async (cardIds, directions) => {
           await session.setDirections(cardIds, directions);
           await session.workAdded();
           if (phase === "asking" && question && cardIds.includes(question.word.noteId)) ask(); // the open card follows the new way at once
         }} onLanguages=${(name) => name === deck && phase === "asking" && ask()} onPick=${switchDeck} onNew=${() => (setAddNew(true), setScreen("add"))} onDeleted=${deleteDeck} onRestored=${restoreDeck} onRenamed=${deckRenamed} onMerged=${mergeDecks} onClose=${() => setScreen("quiz")} />`}
-        ${screen === "cards" && html`<${Cards} deck=${cardsDeck ?? deck} actions=${library} onDeleted=${deleteCards} onRestored=${restoreDeck} onEdited=${(keys) => session.forgetKeys(keys)} onAdd=${() => (setAddNew(false), setAddInto(cardsDeck ?? deck), setScreen("add"))} onClose=${cardsClosed} />`}
+        ${screen === "cards" && html`<${Cards} deck=${cardsDeck ?? deck} actions=${library} ai=${settings.ai} onDeleted=${deleteCards} onRestored=${restoreDeck} onEdited=${(keys) => session.forgetKeys(keys)} onAdd=${() => (setAddNew(false), setAddInto(cardsDeck ?? deck), setScreen("add"))} onClose=${cardsClosed} />`}
         ${screen === "cards-pick" && html`<${CardsDeckPick} actions=${library} mix=${mix} current=${deck} onPick=${(name) => (setCardsDeck(name), setScreen("cards"))} onClose=${() => setScreen("quiz")} />`}
         ${screen === "trash" && html`<${Trash} actions=${library} onRestore=${restoreDeck} onClose=${() => setScreen("quiz")} />`}
-        ${!["settings", "reset", "home-language", "dragon-look", "import", "add", "decks", "trash", "cards", "cards-pick"].includes(screen) &&
+        ${!["settings", "ai", "voice", "reset", "home-language", "dragon-look", "import", "add", "decks", "trash", "cards", "cards-pick"].includes(screen) &&
           html`
               <${Fragment}>
               ${question &&

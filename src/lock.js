@@ -59,6 +59,6 @@ export function acquireLock() {
   };
   process.on("exit", release);
   // with the lock held no other window writes here: temp files left by a crash can go
-  for (const name of readdirSync(HOME)) if (/^(library|state|settings)\.json\.\d+\.tmp$/.test(name)) rmSync(join(HOME, name), { force: true });
+  for (const name of readdirSync(HOME)) if (/^(library|state|settings|keys)\.json\.\d+\.tmp$/.test(name)) rmSync(join(HOME, name), { force: true });
   return release;
 }

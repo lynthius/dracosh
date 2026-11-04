@@ -2,7 +2,7 @@ import { language as uiLanguage, t } from "./i18n.js";
 import { backupNow } from "./backup.js";
 import { seedLibrary } from "./starter.js";
 import { gapsOf } from "./cardline.js";
-import { addCard, cardsOf, createDeck, emptyLibrary, emptyOldTrash, findDeck, findDuplicate, moveCards as moveLibraryCards, removeDeck, renameDeck as renameLibraryDeck, restoreDeck, trashCards, setDirections as setLibraryDirections, setLanguages as setLibraryLanguages, trashDeck, trashedUntil, typedSides, updateCard } from "./library.js";
+import { addCard, cardsOf, confirmCard, createDeck, emptyLibrary, emptyOldTrash, findDeck, findDuplicate, moveCards as moveLibraryCards, removeDeck, renameDeck as renameLibraryDeck, restoreDeck, trashCards, setDirections as setLibraryDirections, setLanguages as setLibraryLanguages, trashDeck, trashedUntil, typedSides, updateCard } from "./library.js";
 import { firstWords } from "./firstwords.js";
 import { applyImport, planImport } from "./importer.js";
 import { deckLanguages, homeLanguages, languageName, learningSide } from "./language.js";
@@ -194,8 +194,19 @@ export function libraryActions({ load = loadLibrary, save = saveLibrary, backup 
       return { added, duplicates };
     },
 
+    // a card written by AI help, checked: it loses its ✦
+    async confirmCardIn(deckName, cardId) {
+      const library = await load();
+      const deck = await deckNamed(library, deckName);
+      if (!cardsOf(library, deck.id).some((card) => card.id === cardId)) throw new Error("That card doesn't exist.");
+      const card = confirmCard(library, cardId);
+      await save(library);
+      return card;
+    },
+
     // A card fixed right after adding it (↑ in /add) → { card, staleKeys }: the progress keys it no
     // longer has (a gap removed, a cloze card turned plain or the other way round), for the session to drop
+
     async updateCardIn(deckName, cardId, fields) {
       const library = await load();
       const deck = await deckNamed(library, deckName);
@@ -263,7 +274,7 @@ export function libraryActions({ load = loadLibrary, save = saveLibrary, backup 
     // /cards: a deck's cards as they are now, in the order they were added
     async cardsIn(deckName) {
       const library = await load();
-      return cardsOf(library, (await deckNamed(library, deckName)).id).map(({ id, front, back, example, cloze }) => ({ id, front, back, example: example ?? "", cloze: Boolean(cloze) }));
+      return cardsOf(library, (await deckNamed(library, deckName)).id).map(({ id, front, back, example, cloze, ai }) => ({ id, front, back, example: example ?? "", cloze: Boolean(cloze), ai: Boolean(ai) }));
     },
 
     // /cards → Delete: into the trash with their progress (`progressOf`, from the session); the deck stays,
@@ -352,4 +363,4 @@ export function libraryActions({ load = loadLibrary, save = saveLibrary, backup 
 
 // the app's own: reads and writes ~/.dracosh
 const actions = libraryActions();
-export const { allDecks, ownDecks, startDeck, startFirstWords, setDirections, languagesOf, setLanguages, setLearning, existingDeck, existingCard, addCardTo, addCardsTo, updateCardIn, previewImport, importCards, renameDeck, deleteDeck, trash, restoreFromTrash, cardsIn, deleteCards, moveCards, mergeDecks, matchTourLanguage, backupBeforeReset, resetLibrary } = actions;
+export const { allDecks, ownDecks, startDeck, startFirstWords, setDirections, languagesOf, setLanguages, setLearning, existingDeck, existingCard, addCardTo, addCardsTo, confirmCardIn, updateCardIn, previewImport, importCards, renameDeck, deleteDeck, trash, restoreFromTrash, cardsIn, deleteCards, moveCards, mergeDecks, matchTourLanguage, backupBeforeReset, resetLibrary } = actions;

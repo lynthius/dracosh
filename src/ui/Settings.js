@@ -3,6 +3,8 @@ import { Box, useInput } from "ink";
 import { language, LANGUAGES, t } from "../i18n.js";
 import { GOALS, INTERVALS, QUIET_PRESETS, RHYTHMS, TIP_MODES, VOLUMES, formatInterval } from "../settings.js";
 import { formatQuiet } from "../quiet.js";
+import { aiCostLabel } from "../ai.js";
+import { voiceLabel } from "../voice.js";
 import { languageName } from "../language.js";
 import { elementName } from "../progress.js";
 import { Bar, html, KeyHints, Text, theme, usePanelWidth } from "./kit.js";
@@ -15,10 +17,12 @@ function VolumeValue({ value }) {
 const ALL_ROWS = [
   { key: "language", options: Object.keys(LANGUAGES), format: (code) => LANGUAGES[code] },
   { key: "homeLanguage", action: true, format: (code) => languageName(code) ?? t("settings.notSet") },
+  { key: "ai", action: true, format: aiCostLabel },
   { key: "rhythm", options: RHYTHMS, format: (v) => t(`settings.rhythms.${v}`) },
   { key: "everyMs", options: INTERVALS, format: formatInterval },
   { key: "sound", options: [true, false], format: (v) => t(v ? "settings.on" : "settings.off"), toggle: true },
   { key: "speak", options: [false, true], format: (v) => t(v ? "settings.on" : "settings.off"), toggle: true },
+  { key: "voice", action: true, format: voiceLabel },
   { key: "volume", options: VOLUMES, format: (v) => html`<${VolumeValue} value=${v} />` },
   { key: "dailyGoal", options: GOALS, format: (n) => t("settings.goal", { n }) },
   { key: "tips", options: TIP_MODES, format: (v) => t(`settings.tipModes.${v}`) },
@@ -76,7 +80,7 @@ export function Settings({ settings, element = null, onChange, onClose, onAction
           (item, i) => html`
             <${Box} key=${item.key}>
               <${Box} flexShrink=${0}><${Text} color=${i === row ? theme.accent : undefined} bold=${i === row}>${i === row ? "❯" : " "} ${label(item).padEnd(labelWidth)}<//><//>
-              <${Text} color=${i === row ? theme.accent : undefined}>${i === row && !item.action ? "❮ " : "  "}${item.format(values[item.key])}${i === row && !item.action ? " ❯" : ""}<//>
+              <${Text} wrap="truncate-end" color=${i === row ? theme.accent : undefined}>${i === row && !item.action ? "❮ " : "  "}${item.format(values[item.key])}${i === row && !item.action ? " ❯" : ""}<//>
             <//>
           `
         )}

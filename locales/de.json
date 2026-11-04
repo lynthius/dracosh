@@ -67,10 +67,14 @@
     "badges": "↑/↓ blättern · ←/→ Spalte · esc zurück",
     "keyNames": "beliebige Taste|enter|esc|tab",
     "addFirst": "enter hinzufügen · esc abbrechen",
+    "askList": "enter KI fragen · esc abbrechen",
     "addMore": "enter hinzufügen · ↑ letzte korrigieren · esc fertig",
     "addFixing": "enter speichern · esc abbrechen",
     "addBack": "enter hinzufügen · esc zurück",
     "pasteReview": "↑/↓ wählen · e korrigieren · x verwerfen · enter {count} hinzufügen · esc abbrechen",
+    "aiReview": "Leertaste behalten · a alle · e korrigieren · enter {count} hinzufügen · esc zurück",
+    "aiReviewNone": "Leertaste behalten · a alle · e korrigieren · esc zurück",
+    "aiWaiting": "esc zurück",
     "pasteFix": "enter fertig · esc zurück",
     "grading": "1 oder ← wusste ich nicht · 2 oder → wusste ich",
     "sessionWaiting": "enter nächste Karte · / Befehle · q beenden",
@@ -88,7 +92,9 @@
     "trash": "↑/↓ wählen · enter zurückholen · esc zurück",
     "decksTogether": "Leertaste zusammen üben · → Einstellungen · {choose}",
     "cards": "tippen zum Suchen · ↑/↓ wählen · enter öffnen · esc zurück",
+    "modelPick": "tippen zum Suchen · ↑/↓ wählen · enter bestätigen · esc zurück",
     "tabPart": "Tab nächster Teil",
+    "takeSuggestion": "Tab oder → Vorschlag übernehmen",
     "decksMixing": "Leertaste dazu/weg · enter nur dieser Stapel · → Einstellungen · esc fertig"
   },
   "settings": {
@@ -101,6 +107,10 @@
       "homeLanguage": {
         "label": "Deine Sprache",
         "hint": "die Sprache, die du sprichst: daran sieht Dracosh, welche Kartenseite für dich neu ist"
+      },
+      "ai": {
+        "label": "KI-Hilfe",
+        "hint": "Vorschläge beim Hinzufügen von Karten, mit deinem API-Schlüssel oder einem Modell auf diesem Computer"
       },
       "rhythm": {
         "label": "Rhythmus",
@@ -116,7 +126,11 @@
       },
       "speak": {
         "label": "Aussprache",
-        "hint": "liest das Wort in der Sprache vor, die du lernst, sobald die Antwort steht (macOS-Stimmen)"
+        "hint": "liest das Wort in der Sprache vor, die du lernst, sobald die Antwort steht"
+      },
+      "voice": {
+        "label": "Stimme",
+        "hint": "wer die Wörter vorliest: macOS-Stimmen oder eine natürliche Stimme von ElevenLabs mit deinem Schlüssel"
       },
       "volume": {
         "label": "Lautstärke",
@@ -276,7 +290,7 @@
       },
       "line": {
         "label": "Neue Karte",
-        "hint": "Vorderseite = Rückseite, z. B. cat = Katze; Mieze // Beispiel  ·  oder füg eine ganze Liste ein"
+        "hint": "cat = Katze; Mieze // Beispiel"
       },
       "back": {
         "label": "Rückseite",
@@ -288,6 +302,7 @@
     "titleFirst": "Lege deinen ersten Stapel an",
     "titleCard": "Karte hinzufügen · {deck}",
     "deckReady": "Dein Stapel „{deck}“ ist bereit. Jetzt seine erste Karte:",
+    "deckReadyAi": "Dein Stapel „{deck}“ ist bereit. Enter fragt die KI nach den ersten Wörtern; die Anfrage kannst du vorher ändern.",
     "duplicateCard": "„{front}“ ist schon in {deck}.",
     "duplicateDeck": "Es gibt schon einen Stapel namens „{deck}“.",
     "nameTooLong": "Der Name darf höchstens {max} Zeichen lang sein.",
@@ -295,7 +310,6 @@
     "needFront": "Eine Karte braucht eine Vorderseite.",
     "needBack": "Eine Karte braucht eine Antwort.",
     "preview": {
-      "pair": "{front} = {back}  ·  danach wählst du, wie gefragt wird",
       "asks": "{prompt} → ?  du tippst {answer}",
       "both": "{forward}  ·  {backward}",
       "cloze": {
@@ -344,7 +358,31 @@
     "languagesSoon": "Sprachen: erkenne ich nach ein paar Karten",
     "learningLine": "Lernsprache: {language}",
     "learningGuess": "nur geraten: → ändern",
-    "lineHintFor": "Vorderseite = Rückseite, z. B. {example}  ·  oder füg eine ganze Liste ein"
+    "ways": {
+      "type": "Schreib",
+      "paste": "Füg ein",
+      "pasteWhat": "eine ganze Liste, eine Karte pro Zeile",
+      "ai": "Frag die KI",
+      "aiExample": "?Küchenwörter"
+    },
+    "ai": {
+      "suggested": "Vorschlag von {provider}",
+      "thinking": "{provider} schreibt einen Vorschlag…",
+      "example": "Beispielsatz von {provider}",
+      "listTitle": "✦ Karten von der KI · {deck}",
+      "writing": "{provider} schreibt… bisher {count}",
+      "listSummary": {
+        "one": "{count} Vorschlag · {kept} behalten",
+        "other": "{count} Vorschläge · {kept} behalten"
+      },
+      "noList": "Es kamen keine Karten zurück: Frag anders oder nimm ein anderes Modell.",
+      "writingStart": "{provider} schreibt…",
+      "request": "„{request}“",
+      "confirm": "Ein weiteres Esc verwirft die behaltenen Karten; jede andere Taste behält sie.",
+      "nothingKept": "Noch nichts behalten: Leertaste behält eine Karte, a alle.",
+      "listOff": "KI-Hilfe ist aus: Schalte sie unter /settings → KI-Hilfe ein, um eine Liste zu bekommen.",
+      "needRequest": "Schreib nach dem ?, worum du die KI bittest, z. B. ?Küchenwörter."
+    }
   },
   "quiz": {
     "youWrote": "deine Antwort: ",
@@ -414,7 +452,8 @@
         "other": "in etwa {count} Monaten"
       }
     },
-    "previewNoImport": "Die Vorschau kann keine Karten importieren; starte dafür dracosh."
+    "previewNoImport": "Die Vorschau kann keine Karten importieren; starte dafür dracosh.",
+    "fromAi": "✦ Die KI hat diese Karte geschrieben, noch nicht geprüft: /cards"
   },
   "dragon": {
     "stages": {
@@ -1416,6 +1455,8 @@
         "other": "Mit {count} Alltagswörtern anfangen"
       },
       "wordsNote": "{language} → {home}",
+      "ai": "Stapel von der KI vorschlagen lassen",
+      "aiNote": "Karten aus der Liste wählen · API-Schlüssel oder lokales Modell",
       "tour": "Zeig mir, wie es geht",
       "tourNote": {
         "one": "{count} kurze Karte dazu, wie Dracosh funktioniert",
@@ -1429,6 +1470,7 @@
       "noWordsHome": "Fertige Wörter gibt es für Paare aus diesen Sprachen: {languages}. {language} ist noch nicht dabei, also fang mit einem eigenen Stapel an."
     },
     "firstWordsDeck": "{language}: erste Wörter",
+    "aiRequest": "{count} Alltagswörter: {language} → {home}",
     "suggested": "Vorschlag"
   },
   "importScreen": {
@@ -1492,8 +1534,14 @@
       "one": "{deck} · {count} Karte",
       "other": "{deck} · {count} Karten"
     },
+    "toCheck": {
+      "one": "✦ {count} zu prüfen",
+      "other": "✦ {count} zu prüfen"
+    },
     "addRow": "+ Karten hinzufügen",
     "undoRow": "↶ „{card}“ zurückholen",
+    "confirmRow": "Stimmt",
+    "checkRow": "Mit der KI prüfen",
     "editRow": "Korrigieren",
     "moveRow": "In einen anderen Stapel verschieben",
     "deleteRow": "Löschen",
@@ -1514,6 +1562,118 @@
     "tourNot": "Die Karten der Tour lassen sich nicht ändern. /add legt einen eigenen Stapel an.",
     "editHint": "Vorderseite = Rückseite; andere Antwort // Beispiel",
     "whichDeck": "Karten welches Stapels?",
-    "deleteNo": "Behalten"
+    "deleteNo": "Behalten",
+    "aiNote": "✦ Von der KI geschrieben: Prüf die Karte, bevor du sie lernst.",
+    "confirmed": "Geprüft: {card}",
+    "checking": "{provider} prüft die Karte…",
+    "checkOk": "{provider} findet keinen Fehler: {card}",
+    "checkFix": "{provider} schlägt eine Korrektur vor:",
+    "useFix": "Korrektur übernehmen",
+    "keepMine": "Unverändert lassen",
+    "checkUnclear": "Die Antwort von {provider} war nicht lesbar. Versuch es noch mal."
+  },
+  "ai": {
+    "customName": "Andere",
+    "title": "KI-Hilfe",
+    "note": "Optional: Die KI schlägt beim Hinzufügen von Karten Übersetzungen und Beispiele vor. Gesendet werden nur die Karte, die du gerade schreibst, und einige aus demselben Stapel.",
+    "noteWelcome": "Wähl zuerst, wo die KI läuft, danach schlägt sie deinen ersten Stapel vor. Gesendet werden nur die Anfrage und ein paar Karten des Stapels.",
+    "now": "Jetzt: {label}",
+    "current": "aktuell",
+    "free": "kostenlos",
+    "paid": "kostenpflichtig",
+    "yourServer": "dein Server",
+    "small": "klein, günstig",
+    "turnOff": "KI ausschalten",
+    "turnedOff": "KI-Hilfe ist aus. Gespeicherte Schlüssel bleiben: Um einen zu löschen, wähle hier wieder seinen Anbieter.",
+    "providers": {
+      "anthropic": "Claude-Modelle, eigener API-Schlüssel",
+      "openai": "GPT-Modelle, eigener API-Schlüssel",
+      "openrouter": "viele Modelle mit einem Schlüssel",
+      "ollama": "kostenlos, läuft auf diesem Computer",
+      "lmstudio": "kostenlos, läuft auf diesem Computer",
+      "custom": "jede OpenAI-kompatible Adresse"
+    },
+    "urlTitle": "Serveradresse",
+    "urlNote": "Die Adresse einer OpenAI-kompatiblen API, z. B. http://localhost:8080/v1",
+    "badUrl": "Das ist keine Adresse: Sie muss mit http:// oder https:// beginnen.",
+    "keyTitle": "API-Schlüssel für {provider}",
+    "keyTitleCustom": "API-Schlüssel (nur falls der Server einen verlangt)",
+    "keyNote": "Einen Schlüssel bekommst du auf {site}; der Anbieter berechnet dir die Nutzung. Füge ihn hier ein: Er bleibt in deinem Dracosh-Ordner, nur für dich lesbar, und landet nie in Sicherungen oder Exporten. Alternativ setzt du {env} in deiner Shell.",
+    "keyOptional": "Falls der Server einen Schlüssel verlangt, füge ihn ein, sonst drücke Enter.",
+    "needKey": "Füge zuerst den Schlüssel ein (Esc geht zurück).",
+    "keepKey": "Gespeicherten Schlüssel verwenden",
+    "newKey": "Neuen Schlüssel einfügen",
+    "forgetKey": "Gespeicherten Schlüssel löschen",
+    "keyForgotten": "Der gespeicherte Schlüssel ({provider}) ist gelöscht.",
+    "keyFromEnv": "Schlüssel aus {env}.",
+    "localNote": "Verfügbare Modelle unter {url}. Ein kleines Modell ohne Denkphase antwortet am schnellsten.",
+    "modelNote": "Ein kleines, schnelles Modell reicht und kostet wenig.",
+    "noModels": "Keine Modelle zur Auswahl: Gib den Namen eines Modells ein.",
+    "noModelsLocal": "Noch keine Modelle heruntergeladen. Ollama: Führe ollama pull llama3.2 im Terminal aus; LM Studio: Lade eines in der App herunter. Dann komm hierher zurück.",
+    "modelTitle": "Welches Modell?",
+    "loadingModels": "Modelle werden geladen ({provider})…",
+    "typeModel": "Modellnamen eingeben…",
+    "modelNameNote": "Der Name des Modells, wie {provider} ihn schreibt.",
+    "needModel": "Gib zuerst den Modellnamen ein (Esc geht zurück).",
+    "checking": "Prüfe {label}…",
+    "ready": "KI-Hilfe ist an: ✦ {label}",
+    "failedTitle": "{label} funktioniert nicht",
+    "tryAgain": "Noch einmal versuchen",
+    "otherModel": "Anderes Modell wählen",
+    "otherKey": "Anderen Schlüssel verwenden",
+    "errors": {
+      "noKey": "Noch kein Schlüssel für {provider}: Füge ihn unter /settings → KI-Hilfe hinzu oder setze {env}.",
+      "badKey": "{provider} hat den Schlüssel nicht angenommen. Prüfe ihn oder füge einen neuen ein.",
+      "noModel": "{provider} hat kein Modell namens {model}.",
+      "noApi": "Unter {url} antwortet keine OpenAI-kompatible API: Prüfe die Adresse (oft endet sie auf /v1).",
+      "rateLimit": "{provider} meldet zu viele Anfragen: Warte kurz und versuche es erneut.",
+      "noCredit": "{provider}: Dein Guthaben ist aufgebraucht. Lade es auf der Seite des Anbieters auf oder wähl in /settings → KI-Hilfe ein kostenloses lokales Modell.",
+      "offline": "{provider} ist nicht erreichbar ({url}). Bist du online?",
+      "offlineLocal": "Unter {url} antwortet nichts: Läuft {provider}?",
+      "timeout": "{provider} hat zu lange für die Antwort gebraucht.",
+      "server": "{provider} hat ein Problem auf seiner Seite ({status}). Versuche es später noch einmal.",
+      "failed": "{provider} hat die Anfrage abgelehnt ({status}): {detail}",
+      "notJson": "die Antwort war kein JSON"
+    }
+  },
+  "voice": {
+    "title": "Stimme",
+    "note": "Die Stimme, die Wörter vorliest, wenn die Aussprache an ist. ElevenLabs ist optional: Jedes Wort wird einmal erzeugt und auf diesem Computer gespeichert, du zahlst also einmal pro neuer Karte, nicht pro Wiederholung.",
+    "now": "Jetzt: {label}",
+    "system": "macOS-Stimmen",
+    "systemNote": "kostenlos, eingebaut",
+    "elevenNote": "natürliche Stimmen, dein Schlüssel, Abrechnung pro Zeichen",
+    "systemSet": "Die Wörter liest wieder eine macOS-Stimme vor.",
+    "keyTitle": "ElevenLabs-Schlüssel",
+    "keyNote": "Einen Schlüssel bekommst du auf {site}; ElevenLabs berechnet dir die Nutzung. Füge ihn hier ein: Er bleibt in deinem Dracosh-Ordner, nur für dich lesbar, und landet nie in Sicherungen oder Exporten. Alternativ setzt du {env} in deiner Shell.",
+    "pickTitle": "Stimme wählen",
+    "pickNote": "Eine Stimme liest alle deine Stapel vor, in jeder Sprache, die sie spricht. Bevor sie gespeichert wird, hörst du eine kurze Probe.",
+    "loading": "Stimmen werden von ElevenLabs geladen…",
+    "noVoices": "Dein ElevenLabs-Konto hat keine Stimmen zur Auswahl. Füg auf elevenlabs.io eine hinzu und komm dann zurück.",
+    "current": "aktuell",
+    "checking": "Probe wird mit {label} vorgelesen…",
+    "ready": "Die Wörter liest jetzt {label} vor. Sprachen, die diese Stimme nicht kann, bleiben bei den macOS-Stimmen.",
+    "readyOn": "Aussprache ist an: Die Wörter liest {label} vor. Sprachen, die diese Stimme nicht kann, bleiben bei den macOS-Stimmen.",
+    "failedTitle": "{label} funktioniert nicht",
+    "otherVoice": "Andere Stimme wählen",
+    "sample": "Hallo! Ich lese dir deine Wörter vor.",
+    "short": {
+      "noKey": "Kein ElevenLabs-Schlüssel: Füg hier einen ein oder setz {env}.",
+      "badKey": "ElevenLabs hat den Schlüssel nicht akzeptiert.",
+      "noCredit": "ElevenLabs: Dein Guthaben ist aufgebraucht. Lade es auf der Seite von ElevenLabs auf.",
+      "noVoice": "ElevenLabs hat diese Stimme nicht mehr: Wähl eine andere."
+    },
+    "errors": {
+      "noKey": "Kein ElevenLabs-Schlüssel: Füg einen in /settings → Stimme hinzu oder setz {env}. Bis dahin lesen macOS-Stimmen vor.",
+      "badKey": "ElevenLabs hat den Schlüssel nicht akzeptiert. Füg in /settings → Stimme einen neuen ein. Bis dahin lesen macOS-Stimmen vor.",
+      "noCredit": "ElevenLabs: Dein Guthaben ist aufgebraucht. Lade es auf der Seite von ElevenLabs auf. Bis dahin lesen macOS-Stimmen vor.",
+      "noVoice": "ElevenLabs hat diese Stimme nicht mehr: Wähl in /settings → Stimme eine andere. Bis dahin lesen macOS-Stimmen vor.",
+      "rateLimit": "ElevenLabs meldet zu viele Anfragen: Warte kurz und versuch es noch einmal.",
+      "offline": "ElevenLabs ist nicht erreichbar. Bist du online?",
+      "timeout": "ElevenLabs hat zu lange gebraucht.",
+      "server": "ElevenLabs hat ein Problem auf seiner Seite ({status}). Versuch es später noch einmal.",
+      "failed": "ElevenLabs hat die Anfrage abgelehnt ({status}): {detail}",
+      "empty": "die Aufnahme kam leer zurück"
+    }
   }
 }

@@ -67,10 +67,14 @@
     "badges": "↑/↓ przeglądaj · ←/→ kolumna · esc wstecz",
     "keyNames": "dowolny klawisz|enter|esc|tab",
     "addFirst": "enter dodaj · esc anuluj",
+    "askList": "enter zapytaj AI · esc anuluj",
     "addMore": "enter dodaj · ↑ popraw ostatnią · esc koniec",
     "addFixing": "enter zapisz · esc zostaw",
     "addBack": "enter dodaj · esc wstecz",
     "pasteReview": "↑/↓ wybierz · e popraw · x odrzuć · enter dodaj {count} · esc anuluj",
+    "aiReview": "spacja zaznacz · a wszystkie · e popraw · enter dodaj {count} · esc anuluj",
+    "aiReviewNone": "spacja zaznacz · a wszystkie · e popraw · esc anuluj",
+    "aiWaiting": "esc anuluj",
     "pasteFix": "enter gotowe · esc wstecz",
     "grading": "1 lub ← nie pamiętam · 2 lub → pamiętam",
     "sessionWaiting": "enter następna karta · / komendy · q wyjdź",
@@ -88,7 +92,9 @@
     "trash": "↑/↓ wybierz · enter przywróć · esc wstecz",
     "decksTogether": "spacja ćwicz razem · → ustawienia · {choose}",
     "cards": "pisz, by szukać · ↑/↓ wybierz · enter otwórz · esc wstecz",
+    "modelPick": "pisz, by szukać · ↑/↓ wybierz · enter potwierdź · esc wstecz",
     "tabPart": "tab następna część",
+    "takeSuggestion": "tab lub → weź podpowiedź",
     "decksMixing": "spacja dodaj/usuń · enter tylko ta talia · → ustawienia · esc gotowe"
   },
   "settings": {
@@ -101,6 +107,10 @@
       "homeLanguage": {
         "label": "Twój język",
         "hint": "język, którym mówisz: po nim widać, która strona karty jest dla ciebie nowa"
+      },
+      "ai": {
+        "label": "Pomoc AI",
+        "hint": "podpowiedzi przy dodawaniu kart, z twojego klucza API albo z modelu na tym komputerze"
       },
       "rhythm": {
         "label": "Rytm",
@@ -116,7 +126,11 @@
       },
       "speak": {
         "label": "Wymowa",
-        "hint": "czyta na głos słowo w języku, którego się uczysz, gdy odpowiedź jest już widoczna (głosy macOS)"
+        "hint": "czyta na głos słowo w języku, którego się uczysz, gdy odpowiedź jest już widoczna"
+      },
+      "voice": {
+        "label": "Głos",
+        "hint": "kto czyta słowa: głosy macOS albo naturalny głos ElevenLabs (z twoim kluczem)"
       },
       "volume": {
         "label": "Głośność",
@@ -292,7 +306,7 @@
       },
       "line": {
         "label": "Nowa karta",
-        "hint": "przód = tył, np. cat = kot; kotek // My cat sleeps.  ·  albo wklej całą listę"
+        "hint": "cat = kot; kotek // My cat sleeps."
       },
       "back": {
         "label": "Tył",
@@ -304,6 +318,7 @@
     "titleFirst": "Stwórz swoją pierwszą talię",
     "titleCard": "Dodaj kartę · {deck}",
     "deckReady": "Talia „{deck}” jest gotowa. Teraz jej pierwsza karta:",
+    "deckReadyAi": "Talia „{deck}” jest gotowa. Enter poprosi AI o pierwsze słowa; prośbę możesz najpierw zmienić.",
     "duplicateCard": "„{front}” już jest w talii {deck}.",
     "duplicateDeck": "Talia „{deck}” już istnieje.",
     "nameTooLong": "Nazwa może mieć najwyżej {max} znaków.",
@@ -311,7 +326,6 @@
     "needFront": "Karta potrzebuje przodu.",
     "needBack": "Karta potrzebuje odpowiedzi.",
     "preview": {
-      "pair": "{front} = {back}  ·  po tej karcie wybierzesz, jak pytać",
       "asks": "{prompt} → ?  wpisujesz {answer}",
       "both": "{forward}  ·  {backward}",
       "cloze": {
@@ -368,7 +382,33 @@
     "languagesSoon": "Języki: rozpoznam po kilku kartach",
     "learningLine": "Język nauki: {language}",
     "learningGuess": "to tylko domysł: → zmień",
-    "lineHintFor": "przód = tył, np. {example}  ·  albo wklej całą listę"
+    "ways": {
+      "type": "Wpisz",
+      "paste": "Wklej",
+      "pasteWhat": "całą listę, jedna karta w linii",
+      "ai": "Zapytaj AI",
+      "aiExample": "?słówka z kuchni"
+    },
+    "ai": {
+      "suggested": "podpowiedź: {provider}",
+      "thinking": "{provider} pisze podpowiedź…",
+      "example": "przykładowe zdanie: {provider}",
+      "listTitle": "✦ Karty od AI · {deck}",
+      "writing": "{provider} pisze… na razie {count}",
+      "listSummary": {
+        "one": "{count} propozycja · zaznaczone: {kept}",
+        "few": "{count} propozycje · zaznaczone: {kept}",
+        "many": "{count} propozycji · zaznaczone: {kept}",
+        "other": "{count} propozycji · zaznaczone: {kept}"
+      },
+      "noList": "Nie przyszła żadna karta. Zapytaj inaczej albo spróbuj innego modelu.",
+      "writingStart": "{provider} pisze…",
+      "request": "„{request}”",
+      "confirm": "Esc jeszcze raz odrzuca zaznaczone karty. Inny klawisz je zostawia.",
+      "nothingKept": "Nic jeszcze nie zaznaczono: spacja zaznacza kartę, a wszystkie.",
+      "listOff": "Pomoc AI jest wyłączona: włącz ją w /settings → Pomoc AI, żeby prosić o listę.",
+      "needRequest": "Po ? wpisz, o co poprosić AI, np. ?słówka z kuchni."
+    }
   },
   "quiz": {
     "youWrote": "twoja odpowiedź: ",
@@ -446,7 +486,8 @@
         "other": "za około {count} miesiąca"
       }
     },
-    "previewNoImport": "Podgląd nie importuje kart; do tego uruchom dracosh."
+    "previewNoImport": "Podgląd nie importuje kart; do tego uruchom dracosh.",
+    "fromAi": "✦ Tę kartę napisało AI i nie jest jeszcze sprawdzona: /cards"
   },
   "dragon": {
     "stages": {
@@ -1547,6 +1588,8 @@
         "other": "Zacznij od {count} codziennego słowa"
       },
       "wordsNote": "{language} → {home}",
+      "ai": "Niech AI zaproponuje pierwszą talię",
+      "aiNote": "wybierz karty z listy · klucz API albo model lokalny",
       "tour": "Pokaż, jak to działa",
       "tourNote": {
         "one": "{count} krótka karta o tym, jak działa Dracosh",
@@ -1562,6 +1605,7 @@
       "noWordsHome": "Gotowe słowa są dla par z tych języków: {languages}. Język {language} jeszcze do nich nie należy, więc zacznij od własnej talii."
     },
     "firstWordsDeck": "{language}: pierwsze słowa",
+    "aiRequest": "{count} codziennych słów: {language} → {home}",
     "suggested": "propozycja"
   },
   "importScreen": {
@@ -1639,8 +1683,16 @@
       "many": "{deck} · {count} kart",
       "other": "{deck} · {count} karty"
     },
+    "toCheck": {
+      "one": "✦ {count} do sprawdzenia",
+      "few": "✦ {count} do sprawdzenia",
+      "many": "✦ {count} do sprawdzenia",
+      "other": "✦ {count} do sprawdzenia"
+    },
     "addRow": "+ Dodaj karty",
     "undoRow": "↶ Przywróć „{card}”",
+    "confirmRow": "Zgadza się",
+    "checkRow": "Niech AI sprawdzi",
     "editRow": "Popraw",
     "moveRow": "Przenieś do innej talii",
     "deleteRow": "Usuń",
@@ -1663,6 +1715,118 @@
     "tourNot": "Kart samouczka nie da się zmieniać. /add zaczyna twoją własną talię.",
     "editHint": "przód = tył; inna odpowiedź // przykład",
     "whichDeck": "Karty której talii?",
-    "deleteNo": "Zostaw"
+    "deleteNo": "Zostaw",
+    "aiNote": "✦ Kartę napisało AI: sprawdź ją, zanim zaczniesz się jej uczyć.",
+    "confirmed": "Sprawdzono: {card}",
+    "checking": "{provider} sprawdza kartę…",
+    "checkOk": "{provider} nie widzi błędów: {card}",
+    "checkFix": "{provider} proponuje poprawkę:",
+    "useFix": "Przyjmij poprawkę",
+    "keepMine": "Zostaw bez zmian",
+    "checkUnclear": "Nie udało się odczytać odpowiedzi ({provider}). Spróbuj jeszcze raz."
+  },
+  "ai": {
+    "customName": "Inny",
+    "title": "Pomoc AI",
+    "note": "Opcjonalnie: AI podpowiada tłumaczenia i przykłady przy dodawaniu kart. Wysyłana jest tylko pisana karta i kilka kart z tej samej talii.",
+    "noteWelcome": "Najpierw wybierz, gdzie działa AI, potem zaproponuje pierwszą talię. Wysyłana jest tylko prośba i kilka kart z talii.",
+    "now": "Teraz: {label}",
+    "current": "obecny",
+    "free": "za darmo",
+    "paid": "płatne",
+    "yourServer": "twój serwer",
+    "small": "mały, tani",
+    "turnOff": "Wyłącz AI",
+    "turnedOff": "Pomoc AI wyłączona. Zapisane klucze zostają: żeby usunąć klucz, wybierz tu ponownie jego dostawcę.",
+    "providers": {
+      "anthropic": "modele Claude, własny klucz API",
+      "openai": "modele GPT, własny klucz API",
+      "openrouter": "wiele modeli na jednym kluczu",
+      "ollama": "za darmo, działa na tym komputerze",
+      "lmstudio": "za darmo, działa na tym komputerze",
+      "custom": "dowolny adres zgodny z OpenAI"
+    },
+    "urlTitle": "Adres serwera",
+    "urlNote": "Adres API zgodnego z OpenAI, np. http://localhost:8080/v1",
+    "badUrl": "To nie jest adres: musi zaczynać się od http:// albo https://",
+    "keyTitle": "Klucz API: {provider}",
+    "keyTitleCustom": "Klucz API (tylko jeśli serwer go wymaga)",
+    "keyNote": "Klucz utworzysz na {site}; dostawca rozlicza cię za użycie. Wklej go tutaj: zostaje w folderze Dracosha, dostępny tylko dla ciebie, i nigdy nie trafia do kopii zapasowych ani eksportu. Możesz też zamiast tego ustawić {env} w powłoce.",
+    "keyOptional": "Jeśli serwer wymaga klucza, wklej go; jeśli nie, naciśnij Enter.",
+    "needKey": "Najpierw wklej klucz (Esc wraca).",
+    "keepKey": "Użyj zapisanego klucza",
+    "newKey": "Wklej nowy klucz",
+    "forgetKey": "Usuń zapisany klucz",
+    "keyForgotten": "Zapisany klucz ({provider}) usunięty.",
+    "keyFromEnv": "Klucz ze zmiennej {env}.",
+    "localNote": "Modele dostępne pod {url}. Najszybciej odpowiada mały model bez myślenia.",
+    "modelNote": "Wystarczy mały, szybki model: kosztuje grosze.",
+    "noModels": "Brak modeli do wyboru: wpisz nazwę modelu.",
+    "noModelsLocal": "Nie ma jeszcze pobranych modeli. Ollama: uruchom w terminalu ollama pull llama3.2; LM Studio: pobierz model w aplikacji. Potem wróć tutaj.",
+    "modelTitle": "Który model?",
+    "loadingModels": "Pobieranie listy modeli ({provider})…",
+    "typeModel": "Wpisz nazwę modelu…",
+    "modelNameNote": "Nazwa modelu w takiej postaci, jak podaje ją {provider}.",
+    "needModel": "Najpierw wpisz nazwę modelu (Esc wraca).",
+    "checking": "Sprawdzam {label}…",
+    "ready": "Pomoc AI włączona: ✦ {label}",
+    "failedTitle": "{label} nie działa",
+    "tryAgain": "Spróbuj jeszcze raz",
+    "otherModel": "Wybierz inny model",
+    "otherKey": "Użyj innego klucza",
+    "errors": {
+      "noKey": "Brak klucza ({provider}): dodaj go w /settings → Pomoc AI albo ustaw {env}.",
+      "badKey": "{provider} nie przyjmuje klucza. Sprawdź go albo wklej nowy.",
+      "noModel": "{provider} nie ma modelu {model}.",
+      "noApi": "Pod {url} nic nie odpowiada jak API zgodne z OpenAI: sprawdź adres (często kończy się na /v1).",
+      "rateLimit": "{provider}: za dużo zapytań. Odczekaj chwilę i spróbuj ponownie.",
+      "noCredit": "{provider}: na koncie skończyły się środki. Doładuj konto na stronie dostawcy albo wybierz darmowy model lokalny w /settings → Pomoc AI.",
+      "offline": "Brak połączenia z {provider} ({url}). Czy jest internet?",
+      "offlineLocal": "Pod {url} nic nie odpowiada: czy {provider} działa?",
+      "timeout": "{provider} zbyt długo nie odpowiada.",
+      "server": "Problem po stronie {provider} ({status}). Spróbuj później.",
+      "failed": "{provider} odrzuca zapytanie ({status}): {detail}",
+      "notJson": "odpowiedź nie była w formacie JSON"
+    }
+  },
+  "voice": {
+    "title": "Głos",
+    "note": "Głos, który czyta słowa, gdy wymowa jest włączona. ElevenLabs jest opcjonalny: każde słowo powstaje raz i zostaje na tym komputerze, więc płacisz raz za nową kartę, a nie za każdą powtórkę.",
+    "now": "Teraz: {label}",
+    "system": "Głosy macOS",
+    "systemNote": "za darmo, wbudowane",
+    "elevenNote": "naturalne głosy, twój klucz, płatne od znaku",
+    "systemSet": "Słowa znów czytają głosy macOS.",
+    "keyTitle": "Klucz ElevenLabs",
+    "keyNote": "Klucz utworzysz na {site}; ElevenLabs rozlicza cię za użycie. Wklej go tutaj: zostaje w folderze Dracosha, dostępny tylko dla ciebie, i nigdy nie trafia do kopii zapasowych ani eksportu. Możesz też zamiast tego ustawić {env} w powłoce.",
+    "pickTitle": "Wybierz głos",
+    "pickNote": "Jeden głos czyta wszystkie twoje talie, w każdym języku, który zna. Zanim zapiszesz wybór, usłyszysz krótką próbkę.",
+    "loading": "Pobieranie głosów z ElevenLabs…",
+    "noVoices": "Na twoim koncie ElevenLabs nie ma głosów do wyboru. Dodaj jakiś na elevenlabs.io i wróć tutaj.",
+    "current": "obecny",
+    "checking": "Czytanie próbki głosem {label}…",
+    "ready": "Słowa czyta {label}. Języki, których ten głos nie zna, zostają przy głosach macOS.",
+    "readyOn": "Wymowa włączona: słowa czyta {label}. Języki, których ten głos nie zna, zostają przy głosach macOS.",
+    "failedTitle": "{label} nie działa",
+    "otherVoice": "Wybierz inny głos",
+    "sample": "Cześć! Będę czytać twoje słowa na głos.",
+    "short": {
+      "noKey": "Brak klucza ElevenLabs: wklej go tutaj albo ustaw {env}.",
+      "badKey": "ElevenLabs nie przyjął klucza.",
+      "noCredit": "ElevenLabs: na koncie skończyły się środki. Doładuj konto na stronie ElevenLabs.",
+      "noVoice": "ElevenLabs nie ma już tego głosu: wybierz inny."
+    },
+    "errors": {
+      "noKey": "Brak klucza ElevenLabs: dodaj go w /settings → Głos albo ustaw {env}. Na razie słowa czytają głosy macOS.",
+      "badKey": "ElevenLabs nie przyjął klucza. Wklej nowy w /settings → Głos. Na razie słowa czytają głosy macOS.",
+      "noCredit": "ElevenLabs: na koncie skończyły się środki. Doładuj konto na stronie ElevenLabs. Na razie słowa czytają głosy macOS.",
+      "noVoice": "ElevenLabs nie ma już tego głosu: wybierz inny w /settings → Głos. Na razie słowa czytają głosy macOS.",
+      "rateLimit": "ElevenLabs: za dużo zapytań. Odczekaj chwilę i spróbuj ponownie.",
+      "offline": "Brak połączenia z ElevenLabs. Czy jest internet?",
+      "timeout": "ElevenLabs zbyt długo nie odpowiada.",
+      "server": "Problem po stronie ElevenLabs ({status}). Spróbuj później.",
+      "failed": "ElevenLabs odrzucił zapytanie ({status}): {detail}",
+      "empty": "nagranie przyszło puste"
+    }
   }
 }

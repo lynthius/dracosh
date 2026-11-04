@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { readdirSync, readFileSync } from "node:fs";
+import { PROVIDERS } from "../src/ai.js";
 import { test } from "node:test";
 import { englishMessages, isPlural, keysOf, LANGUAGES, setLanguage, systemLanguage, t } from "../src/i18n.js";
 import { EXPORT_FORMATS } from "../src/exporter.js";
@@ -29,8 +30,12 @@ const dynamicKeys = [
   ...TIPS.flatMap((tip) => [`tips.${tip.id}.cat`, `tips.${tip.id}.text`]),
   "tour.deck",
   "tour.cards",
-  ...["language", "homeLanguage", "rhythm", "everyMs", "sound", "speak", "volume", "dailyGoal", "tips", "skipWeekends", "quiet", "dragonLook", "reset"].flatMap((row) => [`settings.rows.${row}.label`, `settings.rows.${row}.hint`]),
+  ...["language", "homeLanguage", "ai", "rhythm", "everyMs", "sound", "speak", "voice", "volume", "dailyGoal", "tips", "skipWeekends", "quiet", "dragonLook", "reset"].flatMap((row) => [`settings.rows.${row}.label`, `settings.rows.${row}.hint`]),
   ...RHYTHMS.map((rhythm) => `settings.rhythms.${rhythm}`),
+  ...Object.keys(PROVIDERS).map((provider) => `ai.providers.${provider}`),
+  ...["noKey", "badKey", "noModel", "noApi", "rateLimit", "noCredit", "offline", "offlineLocal", "timeout", "server", "failed"].map((code) => `ai.errors.${code}`),
+  ...["noKey", "badKey", "noCredit", "noVoice", "rateLimit", "offline", "timeout", "server", "failed"].map((code) => `voice.errors.${code}`),
+  ...["noKey", "badKey", "noCredit", "noVoice"].map((code) => `voice.short.${code}`),
   ...["always", "sometimes", "off"].map((mode) => `settings.tipModes.${mode}`),
   ...["deck", "line", "back"].flatMap((field) => [`add.fields.${field}.label`, `add.fields.${field}.hint`]),
   ...["noBack", "noFront", "slash", "inDeck", "twice"].map((issue) => `add.paste.issues.${issue}`),

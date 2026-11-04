@@ -67,10 +67,14 @@
     "badges": "↑/↓ parcourir · ←/→ colonne · échap retour",
     "keyNames": "une touche|entrée|échap|tab",
     "addFirst": "entrée ajouter · échap annuler",
+    "askList": "entrée demander à l'IA · échap annuler",
     "addMore": "entrée ajouter · ↑ corriger la dernière · échap terminer",
     "addFixing": "entrée enregistrer · échap laisser",
     "addBack": "entrée ajouter · échap retour",
     "pasteReview": "↑/↓ choisir · e corriger · x écarter · entrée ajouter {count} · échap annuler",
+    "aiReview": "espace garder · a tout garder · e corriger · entrée ajouter {count} · échap annuler",
+    "aiReviewNone": "espace garder · a tout garder · e corriger · échap annuler",
+    "aiWaiting": "échap annuler",
     "pasteFix": "entrée valider · échap retour",
     "grading": "1 ou ← je ne savais pas · 2 ou → je savais",
     "sessionWaiting": "entrée carte suivante · / commandes · q quitter",
@@ -88,7 +92,9 @@
     "trash": "↑/↓ choisir · entrée récupérer · échap retour",
     "decksTogether": "espace réviser ensemble · → réglages · {choose}",
     "cards": "tape pour chercher · ↑/↓ choisir · entrée ouvrir · échap retour",
+    "modelPick": "tape pour chercher · ↑/↓ choisir · entrée valider · échap retour",
     "tabPart": "tab partie suivante",
+    "takeSuggestion": "tab ou → prendre la suggestion",
     "decksMixing": "espace ajouter/retirer · entrée seulement ce paquet · → réglages · échap terminé"
   },
   "settings": {
@@ -101,6 +107,10 @@
       "homeLanguage": {
         "label": "Ta langue",
         "hint": "la langue que tu parles : elle indique quel côté d'une carte est nouveau pour toi"
+      },
+      "ai": {
+        "label": "Aide IA",
+        "hint": "des suggestions quand tu ajoutes des cartes, avec ta clé API ou un modèle sur cet ordinateur"
       },
       "rhythm": {
         "label": "Rythme",
@@ -116,7 +126,11 @@
       },
       "speak": {
         "label": "Prononciation",
-        "hint": "lit à voix haute le mot dans la langue que tu apprends, une fois la réponse affichée (voix de macOS)"
+        "hint": "lit à voix haute le mot dans la langue que tu apprends, une fois la réponse affichée"
+      },
+      "voice": {
+        "label": "Voix",
+        "hint": "qui lit les mots : les voix de macOS, ou une voix naturelle d'ElevenLabs avec ta propre clé"
       },
       "volume": {
         "label": "Volume",
@@ -284,7 +298,7 @@
       },
       "line": {
         "label": "Nouvelle carte",
-        "hint": "recto = verso, par ex. cat = chat; minou // My cat sleeps.  ·  ou colle une liste entière"
+        "hint": "cat = chat; minou // My cat sleeps."
       },
       "back": {
         "label": "Verso",
@@ -296,6 +310,7 @@
     "titleFirst": "Crée ton premier paquet",
     "titleCard": "Ajouter une carte · {deck}",
     "deckReady": "Ton paquet « {deck} » est prêt. Maintenant, sa première carte :",
+    "deckReadyAi": "Ton paquet « {deck} » est prêt. Entrée demande ses premiers mots à l'IA ; tu peux d'abord modifier la demande.",
     "duplicateCard": "« {front} » est déjà dans {deck}.",
     "duplicateDeck": "Il y a déjà un paquet nommé « {deck} ».",
     "nameTooLong": "Le nom ne doit pas dépasser {max} caractères.",
@@ -303,7 +318,6 @@
     "needFront": "Une carte a besoin d'un recto.",
     "needBack": "Une carte a besoin d'une réponse.",
     "preview": {
-      "pair": "{front} = {back}  ·  ensuite, tu choisis le sens des questions",
       "asks": "{prompt} → ?  tu tapes {answer}",
       "both": "{forward}  ·  {backward}",
       "cloze": {
@@ -356,7 +370,32 @@
     "languagesSoon": "Langues : je les reconnaîtrai après quelques cartes",
     "learningLine": "Langue apprise : {language}",
     "learningGuess": "ce n’est qu’une supposition : → modifier",
-    "lineHintFor": "recto = verso, par ex. {example}  ·  ou colle une liste entière"
+    "ways": {
+      "type": "Écris",
+      "paste": "Colle",
+      "pasteWhat": "une liste entière, une carte par ligne",
+      "ai": "Demande à l'IA",
+      "aiExample": "?mots de cuisine"
+    },
+    "ai": {
+      "suggested": "suggestion de {provider}",
+      "thinking": "{provider} écrit une suggestion…",
+      "example": "phrase d'exemple de {provider}",
+      "listTitle": "✦ Cartes de l'IA · {deck}",
+      "writing": "{provider} écrit… {count} pour l'instant",
+      "listSummary": {
+        "one": "{count} suggestion · gardées : {kept}",
+        "many": "{count} suggestions · gardées : {kept}",
+        "other": "{count} suggestions · gardées : {kept}"
+      },
+      "noList": "L'IA n'a renvoyé aucune carte : reformule ta demande ou essaie un autre modèle.",
+      "writingStart": "{provider} écrit…",
+      "request": "« {request} »",
+      "confirm": "Appuie encore sur Échap pour abandonner les cartes gardées ; une autre touche les garde.",
+      "nothingKept": "Rien de gardé pour l'instant : espace garde une carte, a les garde toutes.",
+      "listOff": "L'aide IA est désactivée : active-la dans /settings → Aide IA pour demander une liste.",
+      "needRequest": "Après le ?, écris ce que tu demandes à l'IA, par ex. ?mots de cuisine."
+    }
   },
   "quiz": {
     "youWrote": "ta réponse : ",
@@ -430,7 +469,8 @@
         "other": "dans environ {count} mois"
       }
     },
-    "previewNoImport": "L'aperçu ne peut pas importer de cartes ; lance dracosh pour ça."
+    "previewNoImport": "L'aperçu ne peut pas importer de cartes ; lance dracosh pour ça.",
+    "fromAi": "✦ L'IA a écrit cette carte, pas encore vérifiée : /cards"
   },
   "dragon": {
     "stages": {
@@ -1494,6 +1534,8 @@
         "other": "Commencer avec {count} mots du quotidien"
       },
       "wordsNote": "{language} → {home}",
+      "ai": "Laisser l'IA proposer un premier paquet",
+      "aiNote": "choisis tes cartes · clé API ou modèle local",
       "tour": "Montre-moi comment ça marche",
       "tourNote": {
         "one": "{count} carte courte sur le fonctionnement de Dracosh",
@@ -1508,6 +1550,7 @@
       "noWordsHome": "Les mots tout prêts sont pour des paires de ces langues : {languages}. Pas encore en {language} : commence par ton propre paquet."
     },
     "firstWordsDeck": "{language} : premiers mots",
+    "aiRequest": "{count} mots du quotidien : {language} → {home}",
     "suggested": "suggérée"
   },
   "importScreen": {
@@ -1578,8 +1621,15 @@
       "many": "{deck} · {count} cartes",
       "other": "{deck} · {count} cartes"
     },
+    "toCheck": {
+      "one": "✦ {count} à vérifier",
+      "many": "✦ {count} à vérifier",
+      "other": "✦ {count} à vérifier"
+    },
     "addRow": "+ Ajouter des cartes",
     "undoRow": "↶ Récupérer « {card} »",
+    "confirmRow": "Tout est bon",
+    "checkRow": "Vérifier avec l'IA",
     "editRow": "Corriger",
     "moveRow": "Déplacer vers un autre paquet",
     "deleteRow": "Supprimer",
@@ -1601,6 +1651,118 @@
     "tourNot": "Les cartes de la visite ne se modifient pas. /add crée ton propre paquet.",
     "editHint": "recto = verso ; autre réponse // exemple",
     "whichDeck": "Les cartes de quel paquet ?",
-    "deleteNo": "La garder"
+    "deleteNo": "La garder",
+    "aiNote": "✦ Carte écrite par l'IA : vérifie-la avant de l'apprendre.",
+    "confirmed": "Vérifiée : {card}",
+    "checking": "{provider} vérifie la carte…",
+    "checkOk": "{provider} ne voit pas d'erreur : {card}",
+    "checkFix": "{provider} propose une correction :",
+    "useFix": "Appliquer la correction",
+    "keepMine": "La laisser telle quelle",
+    "checkUnclear": "La réponse de {provider} est illisible. Réessaie."
+  },
+  "ai": {
+    "customName": "Autre",
+    "title": "Aide IA",
+    "note": "Facultatif : l'IA propose des traductions et des exemples quand tu ajoutes des cartes. Seules la carte en cours et quelques cartes du même paquet sont envoyées.",
+    "noteWelcome": "Choisis d'abord où tourne l'IA, ensuite elle propose ton premier paquet. Seuls ta demande et quelques cartes du paquet sont envoyés.",
+    "now": "Actuellement : {label}",
+    "current": "actuel",
+    "free": "gratuit",
+    "paid": "payant",
+    "yourServer": "ton serveur",
+    "small": "petit, peu coûteux",
+    "turnOff": "Désactiver l'IA",
+    "turnedOff": "L'aide IA est désactivée. Les clés enregistrées restent : pour en supprimer une, choisis à nouveau son fournisseur ici.",
+    "providers": {
+      "anthropic": "modèles Claude, ta clé API",
+      "openai": "modèles GPT, ta clé API",
+      "openrouter": "beaucoup de modèles avec une seule clé",
+      "ollama": "gratuit, tourne sur cet ordinateur",
+      "lmstudio": "gratuit, tourne sur cet ordinateur",
+      "custom": "toute adresse compatible OpenAI"
+    },
+    "urlTitle": "Adresse du serveur",
+    "urlNote": "L'adresse d'une API compatible OpenAI, par exemple http://localhost:8080/v1",
+    "badUrl": "Ce n'est pas une adresse : elle doit commencer par http:// ou https://",
+    "keyTitle": "Clé API {provider}",
+    "keyTitleCustom": "Clé API (seulement si le serveur en demande une)",
+    "keyNote": "Crée une clé sur {site} ; le fournisseur te facture l'utilisation. Colle-la ici : elle reste dans ton dossier Dracosh, lisible par ton compte uniquement, et n'est jamais incluse dans les sauvegardes ni les exports. Tu peux aussi définir {env} dans ton shell.",
+    "keyOptional": "Si le serveur demande une clé, colle-la ; sinon, appuie sur Entrée.",
+    "needKey": "Colle d'abord la clé (Échap pour revenir).",
+    "keepKey": "Utiliser la clé enregistrée",
+    "newKey": "Coller une nouvelle clé",
+    "forgetKey": "Supprimer la clé enregistrée",
+    "keyForgotten": "La clé enregistrée ({provider}) est supprimée.",
+    "keyFromEnv": "Clé lue dans {env}.",
+    "localNote": "Modèles disponibles sur {url}. Un petit modèle sans réflexion répond le plus vite.",
+    "modelNote": "Un petit modèle rapide suffit et coûte peu.",
+    "noModels": "Aucun modèle à choisir : saisis le nom d'un modèle.",
+    "noModelsLocal": "Aucun modèle téléchargé pour l'instant. Ollama : lance ollama pull llama3.2 dans un terminal ; LM Studio : télécharge-en un dans l'application. Puis reviens ici.",
+    "modelTitle": "Quel modèle ?",
+    "loadingModels": "Récupération des modèles ({provider})…",
+    "typeModel": "Saisir un nom de modèle…",
+    "modelNameNote": "Le nom du modèle, tel que {provider} l'écrit.",
+    "needModel": "Saisis d'abord le nom du modèle (Échap pour revenir).",
+    "checking": "Vérification de {label}…",
+    "ready": "Aide IA activée : ✦ {label}",
+    "failedTitle": "{label} ne fonctionne pas",
+    "tryAgain": "Réessayer",
+    "otherModel": "Choisir un autre modèle",
+    "otherKey": "Utiliser une autre clé",
+    "errors": {
+      "noKey": "Pas encore de clé {provider} : ajoute-en une dans /settings → Aide IA, ou définis {env}.",
+      "badKey": "{provider} n'a pas accepté la clé. Vérifie-la ou colles-en une nouvelle.",
+      "noModel": "{provider} n'a pas de modèle nommé {model}.",
+      "noApi": "Rien à {url} ne répond comme une API compatible OpenAI : vérifie l'adresse (elle finit souvent par /v1).",
+      "rateLimit": "{provider} signale trop de requêtes : patiente un peu et réessaie.",
+      "noCredit": "{provider} : plus de crédit sur le compte. Recharge-le sur le site du fournisseur, ou choisis un modèle local gratuit dans /settings → Aide IA.",
+      "offline": "Impossible de joindre {provider} ({url}). Es-tu en ligne ?",
+      "offlineLocal": "Rien ne répond à {url} : {provider} est-il lancé ?",
+      "timeout": "{provider} a mis trop de temps à répondre.",
+      "server": "{provider} a un problème de son côté ({status}). Réessaie plus tard.",
+      "failed": "{provider} a refusé la requête ({status}) : {detail}",
+      "notJson": "la réponse n'était pas du JSON"
+    }
+  },
+  "voice": {
+    "title": "Voix",
+    "note": "La voix qui lit les mots quand la prononciation est activée. ElevenLabs est facultatif : chaque mot est créé une fois et gardé sur cet ordinateur, tu paies donc une fois par nouvelle carte, pas à chaque révision.",
+    "now": "Actuellement : {label}",
+    "system": "Voix de macOS",
+    "systemNote": "gratuites, intégrées",
+    "elevenNote": "voix naturelles, ta clé, facturation au caractère",
+    "systemSet": "Les mots sont de nouveau lus par les voix de macOS.",
+    "keyTitle": "Clé ElevenLabs",
+    "keyNote": "Crée une clé sur {site} ; ElevenLabs te facture l'utilisation. Colle-la ici : elle reste dans ton dossier Dracosh, lisible par ton compte uniquement, et n'est jamais incluse dans les sauvegardes ni les exports. Tu peux aussi définir {env} dans ton shell.",
+    "pickTitle": "Choisis une voix",
+    "pickNote": "Une seule voix lit tous tes paquets, dans chaque langue qu'elle parle. Tu entendras un court extrait avant que ton choix soit enregistré.",
+    "loading": "Chargement des voix d'ElevenLabs…",
+    "noVoices": "Ton compte ElevenLabs n'a aucune voix à choisir. Ajoute-en une sur elevenlabs.io, puis reviens ici.",
+    "current": "actuelle",
+    "checking": "Lecture d'un extrait avec {label}…",
+    "ready": "Les mots sont lus par {label}. Les langues que cette voix ne parle pas restent confiées aux voix de macOS.",
+    "readyOn": "Prononciation activée : les mots sont lus par {label}. Les langues que cette voix ne parle pas restent confiées aux voix de macOS.",
+    "failedTitle": "{label} ne fonctionne pas",
+    "otherVoice": "Choisir une autre voix",
+    "sample": "Bonjour ! Je vais lire tes mots à voix haute.",
+    "short": {
+      "noKey": "Pas de clé ElevenLabs : colles-en une ici, ou définis {env}.",
+      "badKey": "ElevenLabs n'a pas accepté la clé.",
+      "noCredit": "ElevenLabs : plus de crédit sur le compte. Recharge-le sur le site d'ElevenLabs.",
+      "noVoice": "ElevenLabs n'a plus cette voix : choisis-en une autre."
+    },
+    "errors": {
+      "noKey": "Pas de clé ElevenLabs : ajoute-en une dans /settings → Voix, ou définis {env}. En attendant, les voix de macOS lisent les mots.",
+      "badKey": "ElevenLabs n'a pas accepté la clé. Colle une nouvelle clé dans /settings → Voix. En attendant, les voix de macOS lisent les mots.",
+      "noCredit": "ElevenLabs : plus de crédit sur le compte. Recharge-le sur le site d'ElevenLabs. En attendant, les voix de macOS lisent les mots.",
+      "noVoice": "ElevenLabs n'a plus cette voix : choisis-en une autre dans /settings → Voix. En attendant, les voix de macOS lisent les mots.",
+      "rateLimit": "ElevenLabs signale trop de requêtes : attends un peu et réessaie.",
+      "offline": "Impossible de joindre ElevenLabs. Es-tu en ligne ?",
+      "timeout": "ElevenLabs a mis trop de temps à répondre.",
+      "server": "ElevenLabs a un problème de son côté ({status}). Réessaie plus tard.",
+      "failed": "ElevenLabs a refusé la requête ({status}) : {detail}",
+      "empty": "l'audio est revenu vide"
+    }
   }
 }
