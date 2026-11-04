@@ -202,8 +202,8 @@ The other languages live next to it in `locales/`, the tour included. `npm test`
 
 Coming next, roughly in this order:
 
-- Optional AI help for writing cards, with your own API key or a local model, and natural voices from ElevenLabs.
 - Linux and Windows, pronunciation there included.
+- 1.0: a stability promise for your data, narrow terminals, a colorblind-friendly mode and a quiet notice when a new version is out.
 
 ## License
 
